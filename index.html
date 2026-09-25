@@ -123,6 +123,15 @@
                         <input type="text" id="order-name" placeholder="اسمك الكريم">
                         <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع)">
                         <textarea id="order-address" placeholder="عنوان التوصيل بالتفصيل"></textarea>
+                        
+                        <!-- زر تحديد وتثبيت موقع الاستلام عبر GPS -->
+                        <div style="margin-bottom: 10px;">
+                            <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-secondary" style="background-color: #0284c7; color: white; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                                <i class="fa-solid fa-location-crosshairs"></i> تحديد وتثبيت موقع الاستلام عبر GPS 📍
+                            </button>
+                            <div id="customer-gps-status" style="font-size: 0.85rem; color: #16a34a; margin-top: 5px; text-align: center; font-weight: bold;"></div>
+                        </div>
+
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <button onclick="submitOrder()" class="btn-primary" style="flex: 1;">إرسال الطلب للتتبع 🚀</button>
                             <button onclick="sendWhatsAppOrder()" class="btn-secondary" style="flex: 1; background-color: #25d366;"><i class="fa-brands fa-whatsapp"></i> اطلب عبر واتساب 💬</button>
