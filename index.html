@@ -167,27 +167,169 @@
         <!-- 6. قسم حساب الزبون وتتبع الشحنة والولاء -->
         <section id="tab-customer" class="tab-content">
             <h2>👤 بوابة متابعة طلبات العميل ونقاط الولاء</h2>
-            <div class="customer-login-box" id="cust-login-box">
-                <p>أدخل رقم هاتفك لمتابعة طلباتك السابقة، نقاط ولائك، وفواتيرك الرقمية:</p>
-                <input type="text" id="login-phone" placeholder="رقم الهاتف المسجل">
-                <button onclick="customerLogin()" class="btn-primary">دخول لحسابي</button>
-            </div>
-            <div id="customer-dashboard" class="customer-dashboard hidden">
-                <div class="cust-info">
-                    <div>
-                        مرحباً بك يا <span id="cust-display-name"></span> (<span id="cust-display-phone"></span>)
-                    </div>
-                    <button onclick="customerLogout()" class="btn-secondary btn-sm">تسجيل خروج</button>
+            
+            <div class="customer-login-box" id="cust-login-box" style="max-width: 450px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button type="button" onclick="window.switchAuthMode('login')" id="mode-login-btn" class="btn-primary" style="flex: 1; padding: 8px;">تسجيل الدخول</button>
+                    <button type="button" onclick="window.switchAuthMode('register')" id="mode-reg-btn" class="btn-secondary" style="flex: 1; padding: 8px;">حساب جديد</button>
                 </div>
-                <div class="cust-info" style="background: #e0f2fe; margin-top: 10px; color: #0369a1;">
+
+                <!-- زر تسجيل الدخول عبر جوجل -->
+                <button type="button" onclick="window.loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff;">
+                    <i class="fa-brands fa-google" style="color: #ea4335;"></i> المتابعة باستخدام حساب جوجل 🚀
+                </button>
+
+                <div style="text-align: center; color: #78716c; margin-bottom: 15px; font-size: 0.85rem; border-bottom: 1px solid #e7e5e4; line-height: 0.1em;"><span style="background: #fff; padding: 0 10px;">أو بالبريد وكلمة المرور</span></div>
+
+                <!-- حقول حساب جديد إضافية (الاسم ورقم الهاتف) -->
+                <div id="register-extra-fields" class="hidden" style="margin-bottom: 10px;">
+                    <input type="text" id="auth-name" placeholder="الاسم الكريم" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                    <input type="text" id="auth-phone" placeholder="رقم الهاتف (للتواصل والتوصيل)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                </div>
+
+                <input type="email" id="auth-email" placeholder="البريد الإلكتروني" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                <input type="password" id="auth-password" placeholder="كلمة المرور" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #d6d3d1; border-radius: 6px;">
+
+                <button type="button" id="auth-submit-btn" onclick="window.handleEmailAuth()" class="btn-primary" style="width: 100%; padding: 10px;">تسجيل الدخول</button>
+            </div>
+
+            <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div class="cust-info" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        مرحباً بك يا <span id="cust-display-name" style="font-weight: bold; color: #b45309;"></span> (<span id="cust-display-phone"></span>)
+                    </div>
+                    <button onclick="window.customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white;">تسجيل خروج</button>
+                </div>
+                <div class="cust-info" style="background: #e0f2fe; margin-top: 15px; padding: 10px; border-radius: 8px; color: #0369a1;">
                     ⭐ رصيد نقاط الولاء: <span id="cust-points" style="font-weight: bold; font-size: 1.1rem;">0</span> نقطة (كل 100 جنيه = 10 نقاط هدية)
                 </div>
                 <h3 style="margin-top: 20px; color: #292524;">📦 سجل طلباتك ومؤشر التوصيل الحي:</h3>
-                <div id="customer-orders-list" class="orders-list"></div>
+                <div id="customer-orders-list" class="orders-list" style="margin-top: 10px;"></div>
             </div>
         </section>
 
     </main>
+
+    <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل والبريد -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
+            authDomain: "omda-a750f.firebaseapp.com",
+            projectId: "omda-a750f",
+            storageBucket: "omda-a750f.firebasestorage.app",
+            messagingSenderId: "1078714497381",
+            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
+            measurementId: "G-P763CFS7GG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        let isRegisterMode = false;
+
+        window.switchAuthMode = function(mode) {
+            const regFields = document.getElementById('register-extra-fields');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const loginBtn = document.getElementById('mode-login-btn');
+            const regBtn = document.getElementById('mode-reg-btn');
+
+            if (mode === 'register') {
+                isRegisterMode = true;
+                regFields.classList.remove('hidden');
+                submitBtn.innerText = 'إنشاء الحساب الجديد';
+                regBtn.className = 'btn-primary';
+                loginBtn.className = 'btn-secondary';
+            } else {
+                isRegisterMode = false;
+                regFields.classList.add('hidden');
+                submitBtn.innerText = 'تسجيل الدخول';
+                loginBtn.className = 'btn-primary';
+                regBtn.className = 'btn-secondary';
+            }
+        };
+
+        window.loginWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+                alert(`أهلاً بك يا ${user.displayName || 'عميلنا العزيز'} عبر جوجل! 👑`);
+            } catch (error) {
+                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+            }
+        };
+
+        window.handleEmailAuth = async function() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            
+            if (!email || !password) {
+                alert('من فضلك أدخل البريد الإلكتروني وكلمة المرور!');
+                return;
+            }
+
+            try {
+                if (isRegisterMode) {
+                    const name = document.getElementById('auth-name').value.trim();
+                    const phone = document.getElementById('auth-phone').value.trim();
+                    if (!name || !phone) {
+                        alert('من فضلك أدخل الاسم ورقم الهاتف لإتمام إنشاء الحساب.');
+                        return;
+                    }
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await updateProfile(userCredential.user, { displayName: name });
+                    localStorage.setItem('omda_user_phone', phone);
+                    alert(`مرحباً بك يا ${name}! تم إنشاء حسابك بنجاح 🚀`);
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    alert('تم تسجيل الدخول بنجاح! أهلاً بك مجدداً.');
+                }
+            } catch (error) {
+                alert("خطأ في المصادقة: " + error.message);
+            }
+        };
+
+        window.customerLogout = async function() {
+            try {
+                await signOut(auth);
+                localStorage.removeItem('omda_current_cust');
+                document.getElementById('customer-dashboard').classList.add('hidden');
+                document.getElementById('cust-login-box').classList.remove('hidden');
+                alert('تم تسجيل الخروج بنجاح.');
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                const custName = user.displayName || user.email.split('@')[0];
+                const custPhone = localStorage.getItem('omda_user_phone') || user.phoneNumber || 'غير متوفر';
+                window.currentCustomer = { name: custName, phone: custPhone, email: user.email };
+                localStorage.setItem('omda_current_cust', JSON.stringify(window.currentCustomer));
+                
+                document.getElementById('cust-login-box').classList.add('hidden');
+                document.getElementById('customer-dashboard').classList.remove('hidden');
+                document.getElementById('cust-display-name').innerText = custName;
+                document.getElementById('cust-display-phone').innerText = custPhone;
+                
+                if (typeof loadCustomerDashboard === 'function') {
+                    loadCustomerDashboard();
+                }
+            }
+        });
+
+        // جعل قاعدة البيانات وأدواتها متاحة في المتصفح لكي يستطيع app.js استخدامها
+        window.db = db;
+        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot };
+        
+        console.log("🔥 تم توصيل مشروع العمدة بقاعدة بيانات Firebase ومصادقة المستخدمين بنجاح!");
+    </script>
 
     <script src="app.js"></script>
 </body>
