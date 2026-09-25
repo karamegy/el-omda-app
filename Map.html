@@ -145,13 +145,23 @@
                 <button id="tabPortal" onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
-            <!-- تبويب الطلبات والشحنات الحية -->
+            <!-- تبويب الطلبات والشحنات الحية وتتبع العميل -->
             <div id="tab-content-orders">
                 <div class="flex justify-between items-center mb-2">
                     <h3 style="color: var(--primary);" class="font-bold text-xs"><i class="fa-solid fa-truck-fast"></i> تتبع الشحنات والطلبات</h3>
                     <button id="autoDispatchBtn" onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.65rem; background: #16a34a; display:none;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي</button>
                 </div>
                 
+                <!-- صندوق تتبع العميل برقم الهاتف أو رقم الفاتورة -->
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mb-3 space-y-2">
+                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-map-location-dot ml-1"></i> تتبع طلبك أو فاتورتك على الخريطة:</h4>
+                    <div class="flex gap-1">
+                        <input type="text" id="customerTrackInput" placeholder="أدخل رقم الهاتف أو رقم الفاتورة (مثل OMDA-...)" class="corporate-input text-xs">
+                        <button onclick="trackCustomerOrder()" class="btn-primary text-xs py-1.5 px-3 bg-amber-700 hover:bg-amber-800 whitespace-nowrap">تتبع 🔍</button>
+                    </div>
+                    <div id="customerTrackResult" class="text-[11px] text-slate-700 mt-2"></div>
+                </div>
+
                 <div class="filter-bar">
                     <button onclick="filterOrders('all', this)" class="filter-btn active">الكل</button>
                     <button onclick="filterOrders('pending', this)" class="filter-btn">قيد المراجعة</button>
@@ -252,7 +262,7 @@
         let watchId = null;
         let pickingBranchMode = false;
 
-        // التحقق من صلاحيات المدير (Admin) - محدثة وشاملة
+        // التحقق من صلاحيات المدير (Admin)
         function checkAdminPermission() {
             const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
             let userEmail = '';
@@ -294,7 +304,6 @@
             if (isAdmin) {
                 if (badge) badge.innerText = "صلاحيات الإدارة الكاملة (Admin Mode) 👑";
                 if (adminPanelLink) adminPanelLink.style.display = 'flex';
-                // إظهار تبويبات الإدارة وأزرار التعديل
                 const tabD = document.getElementById('tabDrivers');
                 const tabB = document.getElementById('tabBranches');
                 const tabP = document.getElementById('tabPortal');
@@ -306,7 +315,6 @@
             } else {
                 if (badge) badge.innerText = "وضع تتبع الشحنة والطلبات للعملاء والزوار 📦";
                 if (adminPanelLink) adminPanelLink.style.display = 'none';
-                // إخفاء تبويبات الإدارة وتأمينها تماماً
                 const tabD = document.getElementById('tabDrivers');
                 const tabB = document.getElementById('tabBranches');
                 const tabP = document.getElementById('tabPortal');
@@ -321,7 +329,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             enforceAdminSecurity();
 
-            // تهيئة الخريطة بمحرك التدوير الحر الأصلي
             map = L.map('leafletMap', { 
                 zoomControl: true,
                 rotate: true,
@@ -341,7 +348,6 @@
             driversLayer = L.layerGroup().addTo(map);
             branchesLayer = L.layerGroup().addTo(map);
 
-            // أيقونة مطعم العمدة الرئيسي المميزة
             const omdaIcon = L.divIcon({
                 className: 'custom-map-icon',
                 html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.5); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
@@ -351,7 +357,6 @@
             L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
                 .bindPopup("<b>👑 كبابجي ومشويات العمدة (الرئيسي)</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
 
-            // الاستماع للنقر على الخريطة (للإدارة فقط عند إضافة الفروع)
             map.on('click', function(e) {
                 const lat = e.latlng.lat.toFixed(6);
                 const lng = e.latlng.lng.toFixed(6);
@@ -456,6 +461,61 @@
         }
 
         // ==========================================
+        // 🔍 دالة تتبع العميل برقم الهاتف أو الفاتورة
+        // ==========================================
+        function trackCustomerOrder() {
+            const query = document.getElementById('customerTrackInput').value.trim().toUpperCase();
+            const resultBox = document.getElementById('customerTrackResult');
+            if(!query) {
+                alert("يرجى إدخال رقم الهاتف أو رقم الفاتورة أولاً!");
+                return;
+            }
+
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+
+            let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
+
+            if(!foundOrder) {
+                resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على طلب بهذا الرقم أو الهاتف. تأكد من إدخال البيانات بشكل صحيح.</span>`;
+                return;
+            }
+
+            let assignedDriverObj = drivers.find(d => d.name === foundOrder.assignedDriver) || (drivers.length > 0 ? drivers[0] : null);
+            let driverName = foundOrder.assignedDriver || (assignedDriverObj ? assignedDriverObj.name : 'لم يُسند بعد');
+            let driverPhone = assignedDriverObj ? assignedDriverObj.phone : 'غير متوفر';
+
+            if(foundOrder.lat && foundOrder.lng && map) {
+                map.setView([foundOrder.lat, foundOrder.lng], 16);
+            }
+
+            resultBox.innerHTML = `
+                <div class="bg-white p-2.5 rounded-lg border border-amber-300 space-y-1.5 shadow-sm">
+                    <div class="flex justify-between items-center">
+                        <strong class="text-amber-900">طلب رقم: ${foundOrder.id}</strong>
+                        <span class="status-badge status-${foundOrder.status}">${getStatusText(foundOrder.status)}</span>
+                    </div>
+                    <div>👤 العميل: ${foundOrder.name} (${foundOrder.phone})</div>
+                    <div>📍 العنوان: ${foundOrder.address}</div>
+                    <div class="border-t border-slate-100 pt-1 mt-1 text-emerald-800 font-bold">
+                        🏍️ السائق المسؤول: ${driverName}
+                        ${driverPhone !== 'غير متوفر' ? `<br>📞 هاتف السائق: <span class="mono-font">${driverPhone}</span>` : ''}
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        ${driverPhone !== 'غير متوفر' ? `<a href="tel:${driverPhone}" class="flex-1 bg-emerald-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-solid fa-phone"></i> اتصال بالسائق</a>` : ''}
+                        <a href="https://wa.me/2${foundOrder.phone}" target="_blank" class="flex-1 bg-sky-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-brands fa-whatsapp"></i> مراسلة</a>
+                    </div>
+                </div>
+            `;
+
+            if(foundOrder.lat && foundOrder.lng) {
+                let dLat = assignedDriverObj && assignedDriverObj.lat ? assignedDriverObj.lat : restaurantCoords[0];
+                let dLng = assignedDriverObj && assignedDriverObj.lng ? assignedDriverObj.lng : restaurantCoords[1];
+                calculateRoute(dLat, dLng, foundOrder.lat, foundOrder.lng, foundOrder.name);
+            }
+        }
+
+        // ==========================================
         // 🏪 إدارة الفروع (محمية للإدارة فقط)
         // ==========================================
         function enableBranchPickMode() {
@@ -488,7 +548,7 @@
 
         function addNewBranch() {
             if (!checkAdminPermission()) {
-                alert("🚫 غير مسموح لك بإضافة فروع. هذه الصلاحية لمسؤول الإدارة (admin@omda.com) فقط.");
+                alert("🚫 غير مسموح لك بإضافة فروع. هذه الصلاحية لمسؤول الإدارة فقط.");
                 return;
             }
 
@@ -621,8 +681,7 @@
             driversLayer.clearLayers();
 
             let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-            document.getElementById('statOrdersCount').innerText = allOrders.length + ' طلب';
-
+            
             if(allOrders.length > previousOrdersCount && previousOrdersCount > 0) playAlertSound();
             previousOrdersCount = allOrders.length;
 
@@ -688,8 +747,16 @@
             loadDriversOnMap();
         }
 
+        // ==========================================
+        // 🏍️ إدارة وعرض السائقين على الخريطة
+        // ==========================================
         function loadDriversOnMap() {
+            if(!driversLayer) return;
+            driversLayer.clearLayers();
+
             let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            document.getElementById('statDriversCount').innerText = drivers.length + ' طيار';
+
             const driverIcon = L.divIcon({
                 className: 'custom-map-icon',
                 html: `<div style="background: #16a34a; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(22,163,74,0.4); border:2px solid white;"><i class="fa-solid fa-motorcycle text-xs"></i></div>`,
@@ -699,7 +766,13 @@
             drivers.forEach(driver => {
                 if(driver.lat && driver.lng) {
                     L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(driversLayer)
-                        .bindPopup(`<b>🏍️ السائق: ${driver.name}</b><br>الهاتف: ${driver.phone}<br>آخر تحديث حي للموقع.`);
+                        .bindPopup(`
+                            <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
+                                <b>🏍️ السائق: ${driver.name}</b><br>
+                                الهاتف: <a href="tel:${driver.phone}" class="mono-font text-amber-800 font-bold">${driver.phone}</a><br>
+                                حالة البث: متصل وجاهز للتوصيل 🔥
+                            </div>
+                        `);
                 }
             });
         }
@@ -743,8 +816,6 @@
 
                 const clearBtn = document.getElementById('clearRouteBtn');
                 if(clearBtn) clearBtn.classList.remove('hidden');
-
-                alert(`🧭 تم حساب المسار إلى [ ${destName} ]\n• المسافة: ${distanceKm} كم\n• الوقت المتوقع: ${timeMin} دقيقة`);
             });
         }
 
@@ -805,11 +876,11 @@
         }
 
         // ==========================================
-        // إدارة السائقين (محمية للإدارة فقط)
+        // إدارة السائقين وإضافتهم للخريطة
         // ==========================================
         function addNewDriver() {
             if (!checkAdminPermission()) {
-                alert("🚫 غير مسموح لك بإضافة طيارين. هذه الصلاحية لمسؤول الإدارة (admin@omda.com) فقط.");
+                alert("🚫 غير مسموح لك بإضافة طيارين. هذه الصلاحية لمسؤول الإدارة فقط.");
                 return;
             }
 
@@ -818,12 +889,22 @@
             if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
 
             let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0], lng: restaurantCoords[1] });
+            drivers.push({ 
+                id: Date.now(), 
+                name, 
+                phone, 
+                lat: restaurantCoords[0] + (Math.random() - 0.5) * 0.01, 
+                lng: restaurantCoords[1] + (Math.random() - 0.5) * 0.01 
+            });
+            
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
-            alert('تم إضافة السائق بنجاح 🏍️');
+            alert('تم إضافة السائق بنجاح ووضعه على الخريطة 🏍️');
+            
             document.getElementById('driver-name').value = '';
             document.getElementById('driver-phone').value = '';
+            
             loadDriversAdminList();
+            loadDriversOnMap();
             loadLiveTrackingMap();
         }
 
@@ -850,6 +931,7 @@
             drivers.splice(idx, 1);
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
             loadDriversAdminList();
+            loadDriversOnMap();
             loadLiveTrackingMap();
         }
 
@@ -895,6 +977,7 @@
                         localStorage.setItem('omda_drivers', JSON.stringify(drivers));
                     }
                     statusBox.innerText = `تم بث الموقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                    loadDriversOnMap();
                 }, (error) => {
                     alert('تعذر الوصول لـ GPS: ' + error.message);
                 }, { enableHighAccuracy: true });
