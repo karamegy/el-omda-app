@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كبابجي ومشويات العمدة | عمدة المشويات في مصر</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- الهيدر وشريط التنقل -->
+    <header class="main-header">
+        <div class="logo-container">
+            <i class="fa-solid fa-fire-flame-curved logo-icon"></i>
+            <h1>مشويات العمدة</h1>
+        </div>
+        <nav class="nav-links">
+            <button onclick="switchTab('menu')" class="nav-btn active"><i class="fa-solid fa-utensils"></i> المنيو</button>
+            <button onclick="switchTab('cart')" class="nav-btn"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
+            <button onclick="switchTab('customer')" class="nav-btn"><i class="fa-solid fa-user"></i> حسابي وتتبعي</button>
+            <button onclick="switchTab('admin')" class="nav-btn admin-link"><i class="fa-solid fa-lock"></i> لوحة الأدمن</button>
+        </nav>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="container">
+
+        <!-- 1. قسم المنيو والطلب -->
+        <section id="tab-menu" class="tab-content active">
+            <div class="banner">
+                <h2>👑 عمدة المشويات في مصر 👑</h2>
+                <p>لو جعان.. شد مع العمدة وشبع بطنك بأجمل طرب وكباب وصواني على الفحم!</p>
+            </div>
+            
+            <div class="categories-bar">
+                <button onclick="filterCategory('all')" class="cat-btn active">الكل</button>
+                <button onclick="filterCategory('trays')" class="cat-btn">ركن الصواني 🔥</button>
+                <button onclick="filterCategory('grills')" class="cat-btn">ركن المشويات</button>
+                <button onclick="filterCategory('meals')" class="cat-btn">الوجبات السريعة</button>
+                <button onclick="filterCategory('tagines')" class="cat-btn">الطواجن</button>
+                <button onclick="filterCategory('appetizers')" class="cat-btn">المقبلات والسلطات</button>
+            </div>
+
+            <div id="menu-grid" class="menu-grid">
+                <!-- يتم تعبئة المنتجات تلقائياً عبر JavaScript -->
+            </div>
+        </section>
+
+        <!-- 2. قسم سلة المبيعات -->
+        <section id="tab-cart" class="tab-content">
+            <h2>🛒 سلة المبيعات والطلبات</h2>
+            <div class="cart-container">
+                <div id="cart-items-list" class="cart-items">
+                    <!-- عناصر السلة -->
+                </div>
+                <div class="cart-summary">
+                    <h3>إجمالي الطلب: <span id="cart-total">0</span> جنيه</h3>
+                    <div class="checkout-form">
+                        <input type="text" id="order-name" placeholder="اسمك الكريم">
+                        <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع)">
+                        <textarea id="order-address" placeholder="عنوان التوصيل بالتفصيل"></textarea>
+                        <button onclick="submitOrder()" class="btn-primary">إرسال الطلب الآن 🚀</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. قسم حساب الزبون وتتبع الشحنة -->
+        <section id="tab-customer" class="tab-content">
+            <h2>👤 بوابة متابعة طلبات العميل</h2>
+            <div class="customer-login-box" id="cust-login-box">
+                <p>أدخل رقم هاتفك لمتابعة طلباتك السابقة وتتبع الشحنة مع الدليفري:</p>
+                <input type="text" id="login-phone" placeholder="رقم الهاتف المسجل">
+                <button onclick="customerLogin()" class="btn-primary">دخول لحسابي</button>
+            </div>
+            <div id="customer-dashboard" class="customer-dashboard hidden">
+                <div class="cust-info">
+                    مرحباً بك يا <span id="cust-display-name"></span> (<span id="cust-display-phone"></span>)
+                    <button onclick="customerLogout()" class="btn-secondary btn-sm">تسجيل خروج</button>
+                </div>
+                <h3>📦 سجل طلباتك وحالة الشحنة الحالية:</h3>
+                <div id="customer-orders-list" class="orders-list">
+                    <!-- طلبات الزبون -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. لوحة تحكم الأدمن الماستر -->
+        <section id="tab-admin" class="tab-content">
+            <h2>🛡️ لوحة التحكم الرئيسية (Master Admin)</h2>
+            <div id="admin-login-box" class="admin-login-box">
+                <p>أدخل كلمة مرور الأدمن الماستر للتحكم:</p>
+                <input type="password" id="admin-pass" placeholder="كلمة المرور">
+                <button onclick="adminLogin()" class="btn-danger">دخول الأدمن</button>
+            </div>
+            <div id="admin-dashboard" class="admin-dashboard hidden">
+                <div class="admin-header-actions">
+                    <h3>إدارة طلبات الزبائن والدليفري</h3>
+                    <button onclick="adminLogout()" class="btn-secondary">خروج الأدمن</button>
+                </div>
+                <div id="admin-orders-list" class="admin-orders-list">
+                    <!-- طلبات العملاء للأدمن -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
