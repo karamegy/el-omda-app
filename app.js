@@ -1,21 +1,21 @@
 // بيانات المنيو الأساسية مع صور تفصيلية للمشويات
 const defaultProducts = [
-    { id: 1, name: "صينية العمدة الكبرى", category: "trays", price: 2750, desc: "فرخة شيش + نص طرب + كيلو كفتة + نص كباب + نص سجق + 4 حمام + أرز + نص ممبار + 2 لتر بيبيسي", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500" },
-    { id: 2, name: "صينية الصحاب", category: "trays", price: 830, desc: "نص فرخة شيش + نص طرب + ربع سجق + طبق محشي مشكل + ربع ممبار + ورق عنب + 2 سمبوسة + أرز", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500" },
-    { id: 3, name: "صينية العروسة", category: "trays", price: 2000, desc: "4 حمام + فرخة شيش + فرخة شواية + كيلو كفتة + طاجن ورق عنب بالكوارع + أرز", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500" },
-    { id: 4, name: "كباب ضاني (كيلو)", category: "grills", price: 1200, desc: "لحم ضاني بلدي طازج مشوي على الفحم الحطب", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500" },
-    { id: 5, name: "طرب ضاني (كيلو)", category: "grills", price: 480, desc: "أجمل طرب ضاني محشي بالطعم الخرافي", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500" },
-    { id: 6, name: "كفتة ضاني (كيلو)", category: "grills", price: 500, desc: "كفتة ضاني متبلة على طريقة العمدة الخاصة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500" },
-    { id: 7, name: "كفتة كندوز (كيلو)", category: "grills", price: 320, desc: "كفتة بلدي كندوز مشوية بإتقان", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500" },
-    { id: 8, name: "ريش ضاني (كيلو)", category: "grills", price: 1300, desc: "ريش ضاني ممتازة للعزومات", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500" },
-    { id: 9, name: "وجبة النعنشة", category: "meals", price: 130, desc: "ربع فراخ + سيخ كفتة + أرز + سلطة + طحينة", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500" },
-    { id: 10, name: "وجبة اللقلقانة", category: "meals", price: 80, desc: "سيخ كفتة + أرز + ملوخية + سلطة + عيش", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500" },
-    { id: 11, name: "وجبة السعادة", category: "meals", price: 310, desc: "ربع فراخ + 1 حمام + ثمن طرب", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500" },
-    { id: 12, name: "وجبة الكرم", category: "meals", price: 160, desc: "ربع فراخ + كفتة + أرز + خضار سادة + عيش", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500" },
-    { id: 13, name: "حمام محشي أرز", category: "tagines", price: 180, desc: "حمام بلدي محشي أرز بالخلطة الممتازة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500" },
-    { id: 14, name: "ورق عنب بالكوارع", category: "tagines", price: 150, desc: "طاجن ورق عنب بالكوارع اللذيذة", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500" },
-    { id: 15, name: "ورقة لحمة", category: "appetizers", price: 100, desc: "ورقة لحمة بالبصل والفلفل على الفحم", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500" },
-    { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500" }
+    { id: 1, name: "صينية العمدة الكبرى", category: "trays", price: 2750, desc: "فرخة شيش + نص طرب + كيلو كفتة + نص كباب + نص سجق + 4 حمام + أرز + نص ممبار + 2 لتر بيبيسي", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
+    { id: 2, name: "صينية الصحاب", category: "trays", price: 830, desc: "نص فرخة شيش + نص طرب + ربع سجق + طبق محشي مشكل + ربع ممبار + ورق عنب + 2 سمبوسة + أرز", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
+    { id: 3, name: "صينية العروسة", category: "trays", price: 2000, desc: "4 حمام + فرخة شيش + فرخة شواية + كيلو كفتة + طاجن ورق عنب بالكوارع + أرز", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", mediaType: 'image' },
+    { id: 4, name: "كباب ضاني (كيلو)", category: "grills", price: 1200, desc: "لحم ضاني بلدي طازج مشوي على الفحم الحطب", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
+    { id: 5, name: "طرب ضاني (كيلو)", category: "grills", price: 480, desc: "أجمل طرب ضاني محشي بالطعم الخرافي", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500", mediaType: 'image' },
+    { id: 6, name: "كفتة ضاني (كيلو)", category: "grills", price: 500, desc: "كفتة ضاني متبلة على طريقة العمدة الخاصة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500", mediaType: 'image' },
+    { id: 7, name: "كفتة كندوز (كيلو)", category: "grills", price: 320, desc: "كفتة بلدي كندوز مشوية بإتقان", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
+    { id: 8, name: "ريش ضاني (كيلو)", category: "grills", price: 1300, desc: "ريش ضاني ممتازة للعزومات", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
+    { id: 9, name: "وجبة النعنشة", category: "meals", price: 130, desc: "ربع فراخ + سيخ كفتة + أرز + سلطة + طحينة", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
+    { id: 10, name: "وجبة اللقلقانة", category: "meals", price: 80, desc: "سيخ كفتة + أرز + ملوخية + سلطة + عيش", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
+    { id: 11, name: "وجبة السعادة", category: "meals", price: 310, desc: "ربع فراخ + 1 حمام + ثمن طرب", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500", mediaType: 'image' },
+    { id: 12, name: "وجبة الكرم", category: "meals", price: 160, desc: "ربع فراخ + كفتة + أرز + خضار سادة + عيش", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", mediaType: 'image' },
+    { id: 13, name: "حمام محشي أرز", category: "tagines", price: 180, desc: "حمام بلدي محشي أرز بالخلطة الممتازة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500", mediaType: 'image' },
+    { id: 14, name: "ورق عنب بالكوارع", category: "tagines", price: 150, desc: "طاجن ورق عنب بالكوارع اللذيذة", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
+    { id: 15, name: "ورقة لحمة", category: "appetizers", price: 100, desc: "ورقة لحمة بالبصل والفلفل على الفحم", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
+    { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' }
 ];
 
 let menuProducts = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
@@ -75,7 +75,7 @@ function switchTab(tabId) {
     }
 }
 
-// عرض المنيو مع صور الأطباق
+// عرض المنيو مع دعم عرض الصور أو الفيديوهات المرفوعة
 function renderMenu(filter = 'all') {
     const grid = document.getElementById('menu-grid');
     if(!grid) return;
@@ -85,10 +85,16 @@ function renderMenu(filter = 'all') {
 
     filtered.forEach(product => {
         const isFav = favorites.includes(product.id);
-        const prodImg = product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
+
+        let mediaHtml = isVid 
+            ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>`
+            : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
+
         grid.innerHTML += `
             <div class="menu-card">
-                <img src="${prodImg}" alt="${product.name}" class="menu-img">
+                ${mediaHtml}
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <h3>${product.name}</h3>
@@ -113,10 +119,16 @@ function renderOffers() {
 
     offers.forEach(product => {
         const isFav = favorites.includes(product.id);
-        const prodImg = product.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500';
+        const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
+
+        let mediaHtml = isVid 
+            ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>`
+            : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
+
         grid.innerHTML += `
             <div class="menu-card" style="border: 2px solid #d97706;">
-                <img src="${prodImg}" alt="${product.name}" class="menu-img">
+                ${mediaHtml}
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <h3 style="color: #991b1b;">👑 ${product.name}</h3>
@@ -171,7 +183,8 @@ function addCustomTrayToCart() {
         name: customName,
         price: totalPrice,
         desc: customDesc,
-        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500"
+        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500",
+        mediaType: 'image'
     };
 
     cart.push({ ...customTrayProd, qty: 1 });
@@ -180,12 +193,12 @@ function addCustomTrayToCart() {
     switchTab('cart');
 }
 
-// إضافة منتج جديد مع الصورة من قبل الأدمن
-function addNewProduct() {
+// إضافة منتج جديد مع دعم رفع صورة أو فيديو من الجهاز
+function addNewProductWithMedia() {
     const name = document.getElementById('new-prod-name').value.trim();
     const category = document.getElementById('new-prod-cat').value;
     const price = parseFloat(document.getElementById('new-prod-price').value);
-    const image = document.getElementById('new-prod-img').value.trim() || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+    const fileInput = document.getElementById('new-prod-file');
     const desc = document.getElementById('new-prod-desc').value.trim();
 
     if(!name || isNaN(price) || !desc) {
@@ -193,22 +206,55 @@ function addNewProduct() {
         return;
     }
 
-    const newProd = { id: Date.now(), name, category, price, image, desc };
+    if(fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            const mediaData = e.target.result;
+            const isVideo = file.type.startsWith('video');
 
-    menuProducts.push(newProd);
+            const newProd = {
+                id: Date.now(),
+                name,
+                category,
+                price,
+                media: mediaData,
+                mediaType: isVideo ? 'video' : 'image',
+                desc
+            };
+
+            saveAndAddNewProduct(newProd);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        const newProd = {
+            id: Date.now(),
+            name,
+            category,
+            price,
+            media: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500",
+            mediaType: 'image',
+            desc
+        };
+        saveAndAddNewProduct(newProd);
+    }
+}
+
+function saveAndAddNewProduct(prod) {
+    menuProducts.push(prod);
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
-
-    alert(`تم إضافة المنتج (${name}) بنجاح إلى المنيو الرئيسي! 👑`);
+    alert(`تم إضافة المنتج (${prod.name}) بنجاح إلى المنيو مع الوسائط! 👑`);
     
     document.getElementById('new-prod-name').value = '';
     document.getElementById('new-prod-price').value = '';
-    document.getElementById('new-prod-img').value = '';
+    document.getElementById('new-prod-file').value = '';
     document.getElementById('new-prod-desc').value = '';
 
-    loadAdminDashboard();
+    if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
 }
 
-// حذف صنف من المنيو بواسطة الأدمن (ميزة جديدة)
+// حذف صنف من المنيو بواسطة الأدمن
 function adminDeleteProduct(id) {
     if(!confirm('هل أنت متأكد من حذف هذا الصنف نهائياً من المنيو؟')) return;
     menuProducts = menuProducts.filter(p => p.id !== id);
@@ -247,10 +293,13 @@ function renderFavorites() {
     }
 
     favProducts.forEach(product => {
-        const prodImg = product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && mediaSrc.startsWith('data:video'));
+        let mediaHtml = isVid ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>` : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
+
         grid.innerHTML += `
             <div class="menu-card">
-                <img src="${prodImg}" alt="${product.name}" class="menu-img">
+                ${mediaHtml}
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
                         <h3>${product.name}</h3>
@@ -302,11 +351,11 @@ function updateCartUI() {
     let subtotal = 0;
     cart.forEach(item => {
         subtotal += item.price * item.qty;
-        const itemImg = item.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100';
+        const itemImg = item.media || item.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100';
         list.innerHTML += `
             <div class="cart-item-row">
                 <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                    <img src="${itemImg}" alt="${item.name}" class="cart-item-img">
+                    <img src="${itemImg}" alt="${item.name}" class="cart-item-img" style="object-fit:cover;">
                     <div>
                         <strong style="color: #292524; font-size: 1.05rem;">${item.name}</strong><br>
                         <span style="color: #78716c; font-size: 0.85rem;">السعر: ${item.price} ج | العدد: ${item.qty}</span>
@@ -628,23 +677,103 @@ function customerLogout() {
     if(loginBox) loginBox.classList.remove('hidden');
 }
 
-// لوحة تحكم الأدمن والخزنة والمبيعات اليومية
+// ----------------- إدارة تسجيل دخول وطاقم الإدارة -----------------
+
 function adminLogin() {
-    const passInput = document.getElementById('admin-pass');
-    if(!passInput) return;
-    const pass = passInput.value;
-    if(pass === '1234') { 
-        localStorage.setItem('omda_admin_logged', 'true');
+    const idInput = document.getElementById('admin-login-id').value.trim();
+    const passInput = document.getElementById('admin-pass').value.trim();
+
+    if(!idInput || !passInput) {
+        alert('من فضلك أدخل البريد الإلكتروني (أو الهاتف) مع كلمة المرور!');
+        return;
+    }
+
+    // حساب المدير الافتراضي
+    if((idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === '1234') {
+        const masterUser = { name: 'المدير العام', email: 'admin@omda.com', role: 'admin' };
+        localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
         loadAdminDashboard();
+        return;
+    }
+
+    // البحث في الحسابات المضافة للموظفين والمحاسبين
+    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+    let foundStaff = staffList.find(s => (s.email === idInput || s.phone === idInput) && s.password === passInput);
+
+    if(foundStaff) {
+        localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
+        loadAdminDashboard();
+        alert(`أهلاً بك يا ${foundStaff.name}! تم تسجيل دخولك بنجاح.`);
     } else {
-        alert('كلمة المرور غير صحيحة!');
+        alert('بيانات الدخول غير صحيحة! تأكد من البريد/الهاتف وكلمة المرور.');
     }
 }
 
-function checkAdminSession() {
-    if(localStorage.getItem('omda_admin_logged') === 'true') {
-        loadAdminDashboard();
+function createNewStaff() {
+    const name = document.getElementById('staff-name').value.trim();
+    const email = document.getElementById('staff-email').value.trim();
+    const phone = document.getElementById('staff-phone').value.trim();
+    const password = document.getElementById('staff-pass').value.trim();
+    const role = document.getElementById('staff-role').value;
+
+    if(!name || !email || !phone || !password) {
+        alert('من فضلك املأ كافة بيانات الموظف أو المحاسب بدقة!');
+        return;
     }
+
+    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+    
+    // التحقق من عدم تكرار الإيميل أو الهاتف
+    if(staffList.some(s => s.email === email || s.phone === phone)) {
+        alert('هذا البريد أو الهاتف مسجل مسبقاً لموظف آخر!');
+        return;
+    }
+
+    const newStaff = { id: Date.now(), name, email, phone, password, role };
+    staffList.push(newStaff);
+    localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
+
+    alert(`تم إنشاء حساب (${name}) بنجاح! يمكنه الآن تسجيل الدخول.`);
+    document.getElementById('staff-name').value = '';
+    document.getElementById('staff-email').value = '';
+    document.getElementById('staff-phone').value = '';
+    document.getElementById('staff-pass').value = '';
+
+    loadStaffList();
+}
+
+function loadStaffList() {
+    const container = document.getElementById('staff-list-container');
+    if(!container) return;
+    container.innerHTML = '<strong>قائمة الموظفين والمحاسبين المسجلين:</strong>';
+
+    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+    if(staffList.length === 0) {
+        container.innerHTML += '<p style="color:#78716c; font-size:0.85rem;">لا توجد حسابات موظفين إضافية مسجلة حالياً.</p>';
+        return;
+    }
+
+    staffList.forEach((staff, index) => {
+        let roleName = staff.role === 'accountant' ? 'محاسب' : (staff.role === 'staff' ? 'موظف' : 'مدير فرع');
+        container.innerHTML += `
+            <div style="background:#fff; padding:8px; margin:5px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid #d6d3d1;">
+                <div>
+                    <strong>${staff.name}</strong> (${roleName})<br>
+                    <span style="font-size:0.8rem; color:#57534e;">الإيميل: ${staff.email} | الهاتف: ${staff.phone}</span>
+                </div>
+                <button onclick="deleteStaff(${index})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;">حذف</button>
+            </div>
+        `;
+    });
+}
+
+function deleteStaff(index) {
+    if(!confirm('هل أنت متأكد من حذف حساب هذا الموظف؟')) return;
+    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+    staffList.splice(index, 1);
+    localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
+    loadStaffList();
+    alert('تم حذف الحساب بنجاح.');
 }
 
 function loadAdminDashboard() {
@@ -655,7 +784,22 @@ function loadAdminDashboard() {
     loginBox.classList.add('hidden');
     dashBox.classList.remove('hidden');
 
-    // حساب الخزنة، المبيعات، والمصروفات وصافي الأرباح
+    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+    const nameEl = document.getElementById('logged-user-name');
+    const roleEl = document.getElementById('logged-user-role');
+    const staffSection = document.getElementById('staff-management-section');
+
+    if(nameEl) nameEl.innerText = loggedUser.name || 'مدير النظام';
+    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.role === 'admin' ? 'مدير ماستر (Master Admin)' : (loggedUser.role === 'accountant' ? 'محاسب' : 'موظف'));
+
+    // إذا لم يكن المدير الماستر، نخفي قسم إدارة الموظفين
+    if(loggedUser.email !== 'admin@omda.com' && loggedUser.role !== 'admin') {
+        if(staffSection) staffSection.style.display = 'none';
+    } else {
+        if(staffSection) staffSection.style.display = 'block';
+        loadStaffList();
+    }
+
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let totalSales = allOrders.reduce((sum, o) => sum + o.total, 0);
 
@@ -687,7 +831,6 @@ function loadAdminDashboard() {
         }
     }
 
-    // عرض وإدارة أصناف المنيو في لوحة الأدمن (ميزة جديدة)
     const adminMenuList = document.getElementById('admin-menu-items-list');
     if(adminMenuList) {
         adminMenuList.innerHTML = '';
@@ -838,7 +981,6 @@ function updateOrderStatus(index, newStatus) {
     loadAdminDashboard();
 }
 
-// حذف أوردر من لوحة الأدمن (ميزة جديدة)
 function adminDeleteOrder(index) {
     if(!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
@@ -855,7 +997,6 @@ function confirmReservation(index) {
     loadAdminDashboard();
 }
 
-// حذف حجز من لوحة الأدمن (ميزة جديدة)
 function adminDeleteReservation(index) {
     if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
     let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
@@ -866,11 +1007,10 @@ function adminDeleteReservation(index) {
 }
 
 function adminLogout() {
-    localStorage.removeItem('omda_admin_logged');
-    window.location.href = 'index.html';
+    localStorage.removeItem('omda_logged_user');
+    window.location.href = 'admin.html';
 }
 
-// تهيئة أولية عند فتح الصفحة
 window.onload = function() {
     renderMenu();
     updateCartUI();
@@ -880,7 +1020,6 @@ window.onload = function() {
     }
 };
 
-// تسجيل Service Worker لعمل التطبيق كـ PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
