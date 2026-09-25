@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خريطة التتبع الحي والأسطول وإدارة الفروع | مشويات العمدة</title>
+    <title>خريطة التتبع الحي والأسطول والمكالمات | مشويات العمدة</title>
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ربط ملف التنسيقات الخارجي -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="p-3 sm:p-6 space-y-4">
@@ -30,7 +29,7 @@
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md"><i class="fa-solid fa-fire-burner"></i></div>
             <div>
-                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // خريطة التتبع الحي والشحنات 👑</h1>
+                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // نظام التتبع والاتصال الحي 👑</h1>
                 <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
             </div>
         </div>
@@ -43,7 +42,7 @@
     <!-- إحصائيات سريعة للأداء -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600">
-            <div><span class="text-slate-500">إجمالي الفروع والمطعم</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">0 فرع</h4></div>
+            <div><span class="text-slate-500">المطعم الرئيسي</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">شبرا منت</h4></div>
             <i class="fa-solid fa-store text-amber-600 text-xl"></i>
         </div>
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600">
@@ -55,8 +54,8 @@
             <i class="fa-solid fa-clock text-blue-600 text-xl"></i>
         </div>
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-purple-600">
-            <div><span class="text-slate-500">حالة المطعم</span><h4 class="text-xs font-black text-purple-600 mono-font">شغال ع الفحم 🔥</h4></div>
-            <i class="fa-solid fa-shop text-purple-600 text-xl"></i>
+            <div><span class="text-slate-500">حالة الاتصال الآمن</span><h4 class="text-xs font-black text-purple-600 mono-font">WebRTC نشط 📞</h4></div>
+            <i class="fa-solid fa-headset text-purple-600 text-xl"></i>
         </div>
     </div>
 
@@ -211,7 +210,25 @@
         </div>
     </div>
 
-    <!-- Leaflet JS & Plugins & Leaflet-Rotate المحرك الأصلي للتدوير الحر والمسارات -->
+    <!-- نافذة الاتصال الصوتي والمرئي (WebRTC Modal) -->
+    <div id="callModal" class="hidden fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4">
+        <div class="corporate-card bg-white w-full max-w-md p-5 space-y-4 text-center shadow-2xl border-2 border-amber-600">
+            <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل صاحب الطلب</h3>
+            <div id="callOrderInfo" class="text-xs text-slate-600">جاري الاتصال...</div>
+            
+            <div class="grid grid-cols-2 gap-3 bg-black rounded-xl overflow-hidden relative aspect-video">
+                <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover bg-slate-900"></video>
+                <video id="localVideo" autoplay playsinline muted class="w-24 h-20 object-cover absolute bottom-2 left-2 rounded-lg border-2 border-white shadow-md"></video>
+            </div>
+
+            <div class="flex justify-center gap-3 pt-2">
+                <button onclick="answerIncomingCall()" id="answerCallBtn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-phone ml-1"></i> رد</button>
+                <button onclick="endWebRtcCall()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-phone-slash ml-1"></i> إنهاء المكالمة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS & Plugins -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
