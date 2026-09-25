@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خريطة التتبع الحي والأسطول اللجستي المتقدمة | مشويات العمدة</title>
+    <title>خريطة التتبع الحي والأسطول وإدارة الفروع | مشويات العمدة</title>
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -52,8 +52,8 @@
         .leaflet-popup-content-wrapper { border-radius: 14px !important; padding: 2px !important; font-family: 'Cairo', sans-serif !important; }
         .leaflet-routing-container { display: none !important; }
 
-        .sidebar-tabs { display: flex; gap: 4px; margin-bottom: 10px; }
-        .sidebar-tab { flex: 1; padding: 8px; background: #f5f5f4; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-align: center; color: #57534e; }
+        .sidebar-tabs { display: flex; gap: 3px; margin-bottom: 10px; }
+        .sidebar-tab { flex: 1; padding: 6px 4px; background: #f5f5f4; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.7rem; font-weight: bold; cursor: pointer; text-align: center; color: #57534e; }
         .sidebar-tab.active { background: var(--primary); color: #fff; border-color: var(--primary); }
         .filter-bar { display: flex; gap: 4px; margin-bottom: 8px; overflow-x: auto; padding-bottom: 4px; }
         .filter-btn { background: #f5f5f4; border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; font-weight: bold; color: #57534e; }
@@ -74,8 +74,8 @@
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md"><i class="fa-solid fa-fire-burner"></i></div>
             <div>
-                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // خريطة التتبع الحي والأسطول 👑</h1>
-                <span class="text-xs text-amber-700 font-bold">إدارة الشحنات، المناديب، وملاحة التوصيل الذكية (GPS)</span>
+                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // خريطة الفروع والأسطول 👑</h1>
+                <span class="text-xs text-amber-700 font-bold">إدارة الفروع، الشحنات، والمناديب، وملاحة التوصيل الذكية (GPS)</span>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -87,8 +87,8 @@
     <!-- إحصائيات سريعة للأداء -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600">
-            <div><span class="text-slate-500">إجمالي الطلبات</span><h4 class="text-base font-black text-slate-900 mono-font" id="statOrdersCount">0 طلب</h4></div>
-            <i class="fa-solid fa-box text-amber-600 text-xl"></i>
+            <div><span class="text-slate-500">إجمالي الفروع</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">0 فرع</h4></div>
+            <i class="fa-solid fa-store text-amber-600 text-xl"></i>
         </div>
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600">
             <div><span class="text-slate-500">الأسطول والطيارين</span><h4 class="text-base font-black text-emerald-600 mono-font" id="statDriversCount">0 طيار</h4></div>
@@ -123,7 +123,7 @@
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
             <span class="font-bold text-amber-800 whitespace-nowrap"><i class="fa-solid fa-route ml-1"></i> ملاحة مسار الدليفري:</span>
             <input type="text" id="routeStartInput" placeholder="نقطة البداية (المطعم أو موقعك GPS)" class="corporate-input flex-1 min-w-[180px]">
-            <input type="text" id="routeEndInput" placeholder="وجهة العميل (مثال: فيصل، الهرم، كبرة منت)" class="corporate-input flex-1 min-w-[180px]">
+            <input type="text" id="routeEndInput" placeholder="وجهة العميل (مثال: فيصل، الهرم، شبرا منت)" class="corporate-input flex-1 min-w-[180px]">
             <button onclick="searchAndCalculateRoute()" class="btn-primary py-2 px-4 text-xs cursor-pointer bg-amber-700 hover:bg-amber-800">
                 <i class="fa-solid fa-location-arrow ml-1"></i> رسم المسار و حساب ETA
             </button>
@@ -136,12 +136,13 @@
     <!-- التخطيط الرئيسي (القائمة الجانبية + الخريطة التفاعلية) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
-        <!-- القائمة الجانبية لإدارة الطلبات والطيارين -->
+        <!-- القائمة الجانبية لإدارة الطلبات والطيارين والفروع -->
         <div class="corporate-card p-4 lg:col-span-1 space-y-3 max-h-[72vh] overflow-y-auto">
             <div class="sidebar-tabs">
                 <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الطلبات</button>
                 <button onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
-                <button onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> وضع السائق</button>
+                <button onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> الفروع</button>
+                <button onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
             <!-- تبويب الطلبات والشحنات الحية -->
@@ -172,12 +173,36 @@
                 <div id="drivers-list-container" class="space-y-2 mt-3"></div>
             </div>
 
+            <!-- تبويب إدارة وإضافة الفروع -->
+            <div id="tab-content-branches" style="display: none;" class="space-y-3">
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-store"></i> إضافة فرع جديد للمطعم</h3>
+                <div class="space-y-2">
+                    <input type="text" id="branch-name" placeholder="اسم الفرع (مثال: فرع الهرم)" class="corporate-input">
+                    <input type="text" id="branch-phone" placeholder="هاتف الفرع" class="corporate-input">
+                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" step="any" id="branch-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
+                        <input type="number" step="any" id="branch-lng" placeholder="خط الطول Lng" class="corporate-input mono-font">
+                    </div>
+                    <div class="flex gap-1">
+                        <button type="button" onclick="fetchGpsForBranch()" class="flex-1 bg-amber-50 text-amber-800 py-1.5 rounded-lg text-[11px] font-bold border border-amber-200 cursor-pointer">
+                            <i class="fa-solid fa-location-crosshairs"></i> موقعي GPS
+                        </button>
+                        <button type="button" onclick="enableBranchPickMode()" class="flex-1 bg-slate-100 text-slate-700 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 cursor-pointer">
+                            <i class="fa-solid fa-map-pin"></i> حدد من الخريطة
+                        </button>
+                    </div>
+                    <button onclick="addNewBranch()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وإضافة الفرع ➕</button>
+                </div>
+                <div id="branches-list-container" class="space-y-2 mt-3"></div>
+            </div>
+
             <!-- تبويب بوابة السائق (بث GPS الحي) -->
             <div id="tab-content-portal" style="display: none;" class="space-y-3">
                 <h3 class="text-purple-700 font-bold text-xs"><i class="fa-solid fa-satellite-dish"></i> البث الحي لموقع السائق (GPS Tracker)</h3>
                 <p class="text-[11px] text-slate-500">اختر اسمك كسايق لبث موقعك الجغرافي الحي على الخريطة تلقائياً:</p>
                 <select id="portal-driver-select" class="corporate-input"></select>
-                <button onclick="toggleGpsTracking()" id="gps-toggle-btn" class="btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700">بدء بث الموقع الحي 🛰️</button>
+                <button onclick="toggleGpsTracking()" id="gps-toggle-btn" class="btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer">بدء بث الموقع الحي 🛰️</button>
                 <div id="gps-status-box" class="text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold">الوضع: متوقف</div>
             </div>
         </div>
@@ -215,16 +240,17 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
     <script>
-        // إحداثيات مطعم مشويات العمدة (شبرا منت / الجيزة)
+        // إحداثيات مطعم مشويات العمدة الرئيسي (شبرا منت / الجيزة)
         const restaurantCoords = [30.005, 31.185];
 
         let map;
         let streetLayer, topoLayer, satelliteLayer;
-        let markersLayer, polylinesLayer, driversLayer;
+        let markersLayer, polylinesLayer, driversLayer, branchesLayer;
         let activeRoutingControl = null;
         let currentFilter = 'all';
         let previousOrdersCount = 0;
         let watchId = null;
+        let pickingBranchMode = false;
 
         document.addEventListener('DOMContentLoaded', () => {
             // تهيئة الخريطة بمحرك التدوير الحر الأصلي
@@ -245,8 +271,9 @@
             markersLayer = L.layerGroup().addTo(map);
             polylinesLayer = L.layerGroup().addTo(map);
             driversLayer = L.layerGroup().addTo(map);
+            branchesLayer = L.layerGroup().addTo(map);
 
-            // أيقونة مطعم العمدة المميزة
+            // أيقونة مطعم العمدة الرئيسي المميزة
             const omdaIcon = L.divIcon({
                 className: 'custom-map-icon',
                 html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.5); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
@@ -254,7 +281,36 @@
             });
 
             L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
-                .bindPopup("<b>👑 كبابجي ومشويات العمدة</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
+                .bindPopup("<b>👑 كبابجي ومشويات العمدة (الرئيسي)</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
+
+            // الاستماع للنقر على الخريطة (لتحديد مواقع الفروع عند تفعيل وضع الالتقاط)
+            map.on('click', function(e) {
+                const lat = e.latlng.lat.toFixed(6);
+                const lng = e.latlng.lng.toFixed(6);
+
+                if (pickingBranchMode) {
+                    document.getElementById('branch-lat').value = lat;
+                    document.getElementById('branch-lng').value = lng;
+                    pickingBranchMode = false;
+                    map.getContainer().style.cursor = '';
+                    alert(`✓ تم التقاط إحداثيات الفرع بنجاح: (${lat}, ${lng})`);
+                    // فتح تبويب الفروع تلقائياً
+                    switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+                    return;
+                }
+
+                L.popup()
+                    .setLatLng(e.latlng)
+                    .setContent(`
+                        <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
+                            <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
+                            <button onclick="openBranchAtCoords(${lat}, ${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold;">
+                                <i class="fa-solid fa-store"></i> إضافة فرع هنا
+                            </button>
+                        </div>
+                    `)
+                    .openOn(map);
+            });
 
             // الاستماع لحركة تدوير الخريطة لتحديث بوصلة اللمس
             map.on('rotate', function() {
@@ -266,6 +322,7 @@
             });
 
             loadLiveTrackingMap();
+            loadBranchesOnMap();
             setInterval(loadLiveTrackingMap, 8000);
         });
 
@@ -324,12 +381,136 @@
 
             document.getElementById('tab-content-orders').style.display = tabName === 'orders' ? 'block' : 'none';
             document.getElementById('tab-content-drivers').style.display = tabName === 'drivers' ? 'block' : 'none';
+            document.getElementById('tab-content-branches').style.display = tabName === 'branches' ? 'block' : 'none';
             document.getElementById('tab-content-portal').style.display = tabName === 'portal' ? 'block' : 'none';
 
             if(tabName === 'drivers') loadDriversAdminList();
+            if(tabName === 'branches') loadBranchesAdminList();
             if(tabName === 'portal') populateDriverPortalSelect();
         }
 
+        // ==========================================
+        // 🏪 إدارة الفروع وإضافتها على الخريطة
+        // ==========================================
+        function enableBranchPickMode() {
+            pickingBranchMode = true;
+            if(map) {
+                map.getContainer().style.cursor = 'crosshair';
+                alert("💡 انقر الآن على المكان المطلوب داخل الخريطة لتحديد موقع الفرع الجديد!");
+            }
+        }
+
+        function fetchGpsForBranch() {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(pos => {
+                    document.getElementById('branch-lat').value = pos.coords.latitude.toFixed(6);
+                    document.getElementById('branch-lng').value = pos.coords.longitude.toFixed(6);
+                    alert("✓ تم جلب إحداثيات موقعك الحالي بنجاح للفرع.");
+                }, () => alert("تعذر جلب موقع GPS."));
+            } else {
+                alert("الخدمة غير متوفرة في المتصفح.");
+            }
+        }
+
+        function openBranchAtCoords(lat, lng) {
+            switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+            document.getElementById('branch-lat').value = lat;
+            document.getElementById('branch-lng').value = lng;
+            document.getElementById('branch-name').focus();
+        }
+
+        function addNewBranch() {
+            const name = document.getElementById('branch-name').value.trim();
+            const phone = document.getElementById('branch-phone').value.trim();
+            const address = document.getElementById('branch-address').value.trim();
+            const lat = parseFloat(document.getElementById('branch-lat').value);
+            const lng = parseFloat(document.getElementById('branch-lng').value);
+
+            if(!name || isNaN(lat) || isNaN(lng)) {
+                alert('يرجى إدخال اسم الفرع والإحداثيات بشكل صحيح!');
+                return;
+            }
+
+            let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+            branches.push({ id: Date.now(), name, phone, address, lat, lng });
+            localStorage.setItem('omda_branches', JSON.stringify(branches));
+
+            alert('تم إضافة الفرع بنجاح وحفظه على الخريطة 👑');
+            document.getElementById('branch-name').value = '';
+            document.getElementById('branch-phone').value = '';
+            document.getElementById('branch-address').value = '';
+            document.getElementById('branch-lat').value = '';
+            document.getElementById('branch-lng').value = '';
+
+            loadBranchesAdminList();
+            loadBranchesOnMap();
+        }
+
+        function loadBranchesAdminList() {
+            const container = document.getElementById('branches-list-container');
+            if(!container) return;
+            container.innerHTML = '';
+            let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+            
+            document.getElementById('statBranchesCount').innerText = (branches.length + 1) + ' فرع';
+
+            if(branches.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد فروع مضافة حديثاً (المطعم الرئيسي مفعل).</p>';
+                return;
+            }
+
+            branches.forEach((b, idx) => {
+                container.innerHTML += `
+                    <div class="bg-amber-50/60 p-2 rounded-lg border border-amber-200 flex justify-between items-center text-xs">
+                        <div>
+                            <strong>${b.name}</strong><br>
+                            <span class="text-[10px] text-slate-500">${b.address || b.phone || ''}</span>
+                        </div>
+                        <button onclick="deleteBranch(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteBranch(idx) {
+            let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+            branches.splice(idx, 1);
+            localStorage.setItem('omda_branches', JSON.stringify(branches));
+            loadBranchesAdminList();
+            loadBranchesOnMap();
+        }
+
+        function loadBranchesOnMap() {
+            if(!branchesLayer) return;
+            branchesLayer.clearLayers();
+
+            let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+            document.getElementById('statBranchesCount').innerText = (branches.length + 1) + ' فرع';
+
+            const branchIcon = L.divIcon({
+                className: 'custom-map-icon',
+                html: `<div style="background: linear-gradient(135deg, #d97706, #b45309); color:white; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(217,119,6,0.4); border:2.5px solid white;"><i class="fa-solid fa-store text-xs"></i></div>`,
+                iconSize: [38, 38], iconAnchor: [19, 19]
+            });
+
+            branches.forEach(b => {
+                if(!isNaN(b.lat) && !isNaN(b.lng)) {
+                    L.marker([b.lat, b.lng], { icon: branchIcon }).addTo(branchesLayer)
+                        .bindPopup(`
+                            <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
+                                <b>🏪 ${b.name}</b><br>
+                                هاتف: ${b.phone || 'غير مسجل'}<br>
+                                العنوان: ${b.address || 'العنوان غير محدد'}<br>
+                                <button onclick="navigateRouteTo(${b.lat}, ${b.lng}, '${b.name}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; margin-top:5px; cursor:pointer; font-weight:bold;">رسم مسار للفرع</button>
+                            </div>
+                        `);
+                }
+            });
+        }
+
+        // ==========================================
+        // وظائف الطلبات والمسارات والأسطول
+        // ==========================================
         function calculateDistance(lat1, lon1, lat2, lon2) {
             const R = 6371;
             const dLat = (lat2 - lat1) * (Math.PI / 180);
@@ -357,7 +538,6 @@
             loadLiveTrackingMap();
         }
 
-        // تحميل الطلبات ورسمها على الخريطة
         function loadLiveTrackingMap() {
             const listContainer = document.getElementById('live-orders-list');
             if(!listContainer) return;
@@ -451,7 +631,6 @@
             });
         }
 
-        // ملاحة المسارات باستخدام Leaflet Routing Machine
         function calculateRoute(startLat, startLng, destLat, destLng, destName = 'الوجهة') {
             if (!map) return;
             if (activeRoutingControl) {
@@ -552,7 +731,6 @@
             } catch(e) {}
         }
 
-        // إدارة السائقين
         function addNewDriver() {
             const name = document.getElementById('driver-name').value.trim();
             const phone = document.getElementById('driver-phone').value.trim();
@@ -579,7 +757,7 @@
                 container.innerHTML += `
                     <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
                         <div><strong>${d.name}</strong> (${d.phone})</div>
-                        <button onclick="deleteDriver(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100">حذف</button>
+                        <button onclick="deleteDriver(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
                     </div>
                 `;
             });
