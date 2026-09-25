@@ -50,7 +50,7 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام جلب موقع العميل عبر GPS
+// نظام جلب موقع العميل عبر GPS مع دعم البدائل (Fallback)
 // ==========================================
 function fetchCustomerGpsLocation() {
     const statusEl = document.getElementById('customer-gps-status');
@@ -60,8 +60,9 @@ function fetchCustomerGpsLocation() {
         return;
     }
 
-    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقعك بدقة عبر الأقمار الصناعية...";
+    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقعك بدقة عبر الأقمار الصناعية والشبكة...";
 
+    // المحاولة الأولى: دقة عالية مع مهلة 15 ثانية
     navigator.geolocation.getCurrentPosition(
         (position) => {
             customerLat = position.coords.latitude;
@@ -70,10 +71,24 @@ function fetchCustomerGpsLocation() {
             alert("✓ تم تحديد موقع الاستلام بدقة بنجاح!");
         },
         (error) => {
-            if(statusEl) statusEl.innerText = "❌ تعذر تحديد الموقع. تأكد من تفعيل صلاحية الـ GPS.";
-            alert("تعذر تحديد موقعك: " + error.message);
+            console.warn("High accuracy GPS timeout, trying network location...", error);
+            
+            // المحاولة الثانية (احتيايطية): بدون إجبار الـ GPS الخالص لضمان السرعة وعدم حدوث Timeout
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    customerLat = position.coords.latitude;
+                    customerLng = position.coords.longitude;
+                    if(statusEl) statusEl.innerText = `✓ تم تحديد موقعك بنجاح عبر الشبكة! (${customerLat.toFixed(4)}, ${customerLng.toFixed(4)})`;
+                    alert("✓ تم تحديد موقع الاستلام بنجاح!");
+                },
+                (err2) => {
+                    if(statusEl) statusEl.innerText = "❌ تعذر تحديد الموقع. تأكد من تفعيل صلاحية الـ GPS.";
+                    alert("تعذر تحديد موقعك: تأكد من إعطاء إذن الموقع للمتصفح أو تفعيل الـ GPS في هاتفك.");
+                },
+                { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+            );
         },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
 }
 
