@@ -110,6 +110,7 @@
                 <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> المنيو الحالي</button>
                 <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> أوردر يدوي</button>
                 <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين</button>
+                <button onclick="switchAdminSection('account-settings', this)" class="admin-section-btn"><i class="fa-solid fa-key"></i> كلمة المرور</button>
                 <button onclick="switchAdminSection('ticker', this)" class="admin-section-btn"><i class="fa-solid fa-bullhorn"></i> الإعلانات</button>
             </div>
 
@@ -219,7 +220,18 @@
                 <div id="staff-list-container" style="margin-top: 15px; max-height: 200px; overflow-y: auto;"></div>
             </div>
 
-            <!-- 8. التحكم في شريط الإعلانات -->
+            <!-- 8. قسم تغيير كلمة المرور للحساب الحالي -->
+            <div id="section-account-settings" class="admin-panel-box" style="border-color: #7c2d12;">
+                <h3 style="margin-bottom: 12px; color: #7c2d12;"><i class="fa-solid fa-key"></i> تغيير كلمة المرور الخاصة بحسابك الحالي</h3>
+                <div class="checkout-form" style="max-width: 100%;">
+                    <input type="password" id="current-pass-input" placeholder="كلمة المرور الحالية">
+                    <input type="password" id="new-pass-input" placeholder="كلمة المرور الجديدة">
+                    <input type="password" id="confirm-pass-input" placeholder="تأكيد كلمة المرور الجديدة">
+                    <button onclick="changeMyPassword()" class="btn-primary" style="background-color: #7c2d12;">تحديث كلمة المرور 🔒</button>
+                </div>
+            </div>
+
+            <!-- 9. التحكم في شريط الإعلانات -->
             <div id="section-ticker" class="admin-panel-box" style="border-color: #991b1b;">
                 <h3 style="margin-bottom: 12px; color: #991b1b;"><i class="fa-solid fa-bullhorn"></i> التحكم في شريط الإعلانات المتحرك (RSS)</h3>
                 <div class="checkout-form" style="max-width: 100%;">
