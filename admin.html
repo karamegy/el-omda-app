@@ -81,7 +81,7 @@
         <!-- شاشة تسجيل دخول الأدمن / المحاسب / الموظف -->
         <div id="admin-login-box" class="admin-login-box" style="margin: 60px auto; max-width: 450px;">
             <h2 style="color: var(--secondary-color); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i> بوابة دخول الطاقم والإدارة</h2>
-            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">أدخل البريد الإلكتروني أو رقم الهاتف مع كلمة المرور الخاصة بك للوصول للنظام:</p>
+            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">أدخل البريد الإلكتروني (مثل haretg@gmail.com) مع كلمة المرور للوصول للنظام:</p>
             
             <div class="checkout-form" style="max-width: 100%;">
                 <input type="text" id="admin-login-id" placeholder="البريد الإلكتروني أو رقم الهاتف">
@@ -109,7 +109,7 @@
                 <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة وجبة</button>
                 <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> المنيو الحالي</button>
                 <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> أوردر يدوي</button>
-                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين</button>
+                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين والأدمن</button>
                 <button onclick="switchAdminSection('account-settings', this)" class="admin-section-btn"><i class="fa-solid fa-key"></i> كلمة المرور</button>
                 <button onclick="switchAdminSection('ticker', this)" class="admin-section-btn"><i class="fa-solid fa-bullhorn"></i> الإعلانات</button>
             </div>
@@ -198,12 +198,12 @@
                 </div>
             </div>
 
-            <!-- 7. إدارة حسابات الموظفين (للمدير الماستر فقط) -->
+            <!-- 7. إدارة حسابات الموظفين والأدمن (للمدير الماستر فقط) -->
             <div id="section-staff" class="admin-panel-box" style="border-color: #0284c7;">
-                <h3 style="margin-bottom: 12px; color: #0284c7;"><i class="fa-solid fa-users-gear"></i> إنشاء وإدارة حسابات المحاسبين والموظفين</h3>
+                <h3 style="margin-bottom: 12px; color: #0284c7;"><i class="fa-solid fa-users-gear"></i> إنشاء وإدارة حسابات الأدمن الإضافيين والمحاسبين والموظفين</h3>
                 <div class="checkout-form" style="max-width: 100%;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
-                        <input type="text" id="staff-name" placeholder="اسم الموظف أو المحاسب">
+                        <input type="text" id="staff-name" placeholder="اسم الموظف أو الأدمن الجديد">
                         <input type="email" id="staff-email" placeholder="البريد الإلكتروني">
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
@@ -211,11 +211,11 @@
                         <input type="password" id="staff-pass" placeholder="كلمة المرور">
                     </div>
                     <select id="staff-role" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 6px;">
+                        <option value="admin">مشرف / أدمن إضافي (صلاحيات كاملة)</option>
                         <option value="accountant">محاسب (إدارة الخزنة والطلبات)</option>
                         <option value="staff">موظف (متابعة الطلبات والحجوزات)</option>
-                        <option value="admin">مدير فرع / أدمن</option>
                     </select>
-                    <button onclick="createNewStaff()" class="btn-primary" style="background-color: #0284c7;">إضافة حساب الموظف الجديد ➕</button>
+                    <button onclick="createNewStaff()" class="btn-primary" style="background-color: #0284c7;">إضافة الحساب الجديد ➕</button>
                 </div>
                 <div id="staff-list-container" style="margin-top: 15px; max-height: 200px; overflow-y: auto;"></div>
             </div>
@@ -244,6 +244,30 @@
 
     </main>
 
+    <!-- إعداد وتهيئة Firebase السحابية -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
+            authDomain: "omda-a750f.firebaseapp.com",
+            projectId: "omda-a750f",
+            storageBucket: "omda-a750f.firebasestorage.app",
+            messagingSenderId: "1078714497381",
+            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
+            measurementId: "G-P763CFS7GG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.firebaseModules = { collection, getDocs, doc, setDoc };
+        
+        console.log("🔥 تم ربط لوحة التحكم الماستر بقاعدة بيانات Firebase بنجاح!");
+    </script>
+
     <!-- ربط ملف الـ JavaScript المشترك -->
     <script src="app.js"></script>
     <script>
@@ -257,7 +281,47 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
+        // دالة تسجيل الدخول المحدثة لدعم Master Admin (haretg@gmail.com)
+        window.adminLoginCustom = function() {
+            const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
+            const passInput = document.getElementById('admin-pass').value.trim();
+
+            if(!idInput || !passInput) {
+                alert('من فضلك أدخل البريد الإلكتروني (أو الهاتف) مع كلمة المرور!');
+                return;
+            }
+
+            let masterPass = localStorage.getItem('omda_master_password') || '1234';
+
+            // التحقق من حساب Master Admin الأساسي (haretg@gmail.com)
+            if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
+                const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', role: 'admin' };
+                localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
+                loadAdminDashboard();
+                alert('أهلاً بك يا أسطى كرم في لوحة تحكم الماستر العام 👑');
+                return;
+            }
+
+            // التحقق من الحسابات الإضافية (أدمن، محاسب، موظف) المسجلة محلياً أو سحابياً
+            let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+            let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
+
+            if(foundStaff) {
+                localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
+                loadAdminDashboard();
+                alert(`أهلاً بك يا ${foundStaff.name}! تم تسجيل دخولك بنجاح.`);
+            } else {
+                alert('بيانات الدخول غير صحيحة! تأكد من البريد/الهاتف وكلمة المرور.');
+            }
+        };
+
+        // ربط زر تسجيل الدخول بالدالة المحدثة
         window.addEventListener('DOMContentLoaded', () => {
+            const loginBtn = document.querySelector('.admin-login-box button');
+            if(loginBtn) {
+                loginBtn.setAttribute('onclick', 'adminLoginCustom()');
+            }
+
             if(localStorage.getItem('omda_logged_user')) {
                 loadAdminDashboard();
             }
