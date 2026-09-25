@@ -531,3 +531,31 @@ body {
     border: 1px solid #e7e5e4;
     color: #292524;
 }
+/* تنسيق إضافي لزر وحالة الـ GPS في السلة */
+button[onclick="fetchCustomerGpsLocation()"] {
+    background-color: #0284c7 !important;
+    color: white !important;
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button[onclick="fetchCustomerGpsLocation()"]:hover {
+    background-color: #0369a1 !important;
+}
+
+#customer-gps-status {
+    font-size: 0.85rem;
+    color: #16a34a;
+    margin-top: 6px;
+    text-align: center;
+    font-weight: bold;
+    padding: 6px;
+    background-color: #f0f9ff;
+    border-radius: 6px;
+    border: 1px solid #bae6fd;
+}
