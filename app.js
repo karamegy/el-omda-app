@@ -75,7 +75,7 @@ function switchTab(tabId) {
     }
 }
 
-// عرض المنيو مع دعم عرض الصور أو الفيديوهات المرفوعة
+// عرض المنيو مع توجيه الصورة والنص لصفحة المنتج المستقلة (product.html)
 function renderMenu(filter = 'all') {
     const grid = document.getElementById('menu-grid');
     if(!grid) return;
@@ -89,20 +89,22 @@ function renderMenu(filter = 'all') {
         const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
 
         let mediaHtml = isVid 
-            ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>`
+            ? `<video src="${mediaSrc}" class="menu-img" muted style="object-fit:cover; pointer-events: none;"></video>`
             : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
 
         grid.innerHTML += `
             <div class="menu-card">
-                ${mediaHtml}
+                <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
+                    ${mediaHtml}
+                </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3>${product.name}</h3>
+                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#b45309'" onmouseout="this.style.color='#292524'">${product.name}</h3>
                         <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: ${isFav ? '#dc2626' : '#a8a29e'};">
                             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                         </button>
                     </div>
-                    <p>${product.desc}</p>
+                    <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
                 <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف للسلة</button>
@@ -123,20 +125,22 @@ function renderOffers() {
         const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
 
         let mediaHtml = isVid 
-            ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>`
+            ? `<video src="${mediaSrc}" class="menu-img" muted style="object-fit:cover; pointer-events: none;"></video>`
             : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
 
         grid.innerHTML += `
             <div class="menu-card" style="border: 2px solid #d97706;">
-                ${mediaHtml}
+                <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
+                    ${mediaHtml}
+                </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 style="color: #991b1b;">👑 ${product.name}</h3>
+                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="color: #991b1b; cursor: pointer;">👑 ${product.name}</h3>
                         <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: ${isFav ? '#dc2626' : '#a8a29e'};">
                             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                         </button>
                     </div>
-                    <p>${product.desc}</p>
+                    <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
                 <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف الصينية للسلة 🔥</button>
@@ -295,19 +299,21 @@ function renderFavorites() {
     favProducts.forEach(product => {
         const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
         const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && mediaSrc.startsWith('data:video'));
-        let mediaHtml = isVid ? `<video src="${mediaSrc}" class="menu-img" controls muted autoplay loop style="object-fit:cover;"></video>` : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
+        let mediaHtml = isVid ? `<video src="${mediaSrc}" class="menu-img" muted style="object-fit:cover; pointer-events: none;"></video>` : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
 
         grid.innerHTML += `
             <div class="menu-card">
-                ${mediaHtml}
+                <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
+                    ${mediaHtml}
+                </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3>${product.name}</h3>
+                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.name}</h3>
                         <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: #dc2626;">
                             <i class="fa-solid fa-heart"></i>
                         </button>
                     </div>
-                    <p>${product.desc}</p>
+                    <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
                 <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف للسلة</button>
