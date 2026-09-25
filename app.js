@@ -62,7 +62,6 @@ function fetchCustomerGpsLocation() {
 
     if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقعك بدقة عبر الأقمار الصناعية والشبكة...";
 
-    // المحاولة الأولى: دقة عالية مع مهلة 15 ثانية
     navigator.geolocation.getCurrentPosition(
         (position) => {
             customerLat = position.coords.latitude;
@@ -72,8 +71,6 @@ function fetchCustomerGpsLocation() {
         },
         (error) => {
             console.warn("High accuracy GPS timeout, trying network location...", error);
-            
-            // المحاولة الثانية (احتيايطية): بدون إجبار الـ GPS الخالص لضمان السرعة وعدم حدوث Timeout
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     customerLat = position.coords.latitude;
@@ -490,7 +487,7 @@ function fetchGpsForDriver() {
     }
 }
 
-function addNewDriverWithLocation() {
+async function addNewDriverWithLocation() {
     if (!checkAdminPermission()) {
         alert("🚫 غير مسموح لك بإضافة طيارين.");
         return;
@@ -514,10 +511,21 @@ function addNewDriverWithLocation() {
         lng = restaurantCoords[1] + 0.002;
     }
 
+    const newDriverObj = { id: Date.now(), name, phone, lat, lng };
+
+    // الحفظ في Firebase Firestore إذا كان متاحاً، وإلا التخزين المحلي
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriverObj.id)), newDriverObj);
+        } catch (e) {
+            console.error("Firebase driver add error:", e);
+        }
+    }
+
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.push({ id: Date.now(), name, phone, lat, lng });
-    
+    drivers.push(newDriverObj);
     localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+    
     alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
     
     nameEl.value = '';
@@ -883,7 +891,7 @@ function applyPromoCode() {
     }
 }
 
-function submitOrder() {
+async function submitOrder() {
     const nameEl = document.getElementById('order-name');
     const phoneEl = document.getElementById('order-phone');
     const addressEl = document.getElementById('order-address');
@@ -903,7 +911,6 @@ function submitOrder() {
         return;
     }
 
-    // التحقق من تحديد موقع GPS للعميل
     if(customerLat === null || customerLng === null) {
         if(!confirm("⚠️ لم تقم بالضغط على زر (تحديد وتثبيت موقع الاستلام عبر GPS). هل تريد المتابعة؟")) {
             return;
@@ -913,7 +920,6 @@ function submitOrder() {
     let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     let total = subtotal - (subtotal * activeDiscount);
     
-    // استخدام إحداثيات العميل الفعلية أو إحداثيات قريبة للمطعم إن لم يتم تفعيل الـ GPS
     let finalLat = customerLat !== null ? customerLat : (restaurantCoords[0] + 0.01);
     let finalLng = customerLng !== null ? customerLng : (restaurantCoords[1] + 0.01);
 
@@ -929,6 +935,15 @@ function submitOrder() {
         lng: finalLng,
         date: new Date().toLocaleString('ar-EG')
     };
+
+    // حفظ الطلب في سحابة Firebase Firestore إذا كانت متاحة
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", newOrder.id), newOrder);
+        } catch (e) {
+            console.error("Firebase order save error:", e);
+        }
+    }
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     allOrders.unshift(newOrder);
@@ -1069,22 +1084,27 @@ function loadCustomerDashboard() {
     
     const displayName = document.getElementById('cust-display-name');
     const displayPhone = document.getElementById('cust-display-phone');
-    if(displayName) displayName.innerText = currentCustomer.name;
-    if(displayPhone) displayPhone.innerText = currentCustomer.phone;
+    if(displayName) displayName.innerText = currentCustomer ? currentCustomer.name : 'عميل العمدة';
+    if(displayPhone) displayPhone.innerText = currentCustomer ? currentCustomer.phone : '';
 
     let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
-    let userPoints = pointsDB[currentCustomer.phone] || 0;
+    let userPoints = currentCustomer && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 0;
     const pointsEl = document.getElementById('cust-points');
     if(pointsEl) pointsEl.innerText = userPoints;
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    const myOrders = allOrders.filter(o => o.phone === currentCustomer.phone);
+    const myOrders = currentCustomer ? allOrders.filter(o => o.phone === currentCustomer.phone) : allOrders;
 
     const list = document.getElementById('customer-orders-list');
     if(!list) return;
     list.innerHTML = '';
 
     let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
+
+    if(myOrders.length === 0) {
+        list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد طلبات سابقة مسجلة.</p>';
+        return;
+    }
 
     myOrders.forEach(order => {
         let orderReview = reviewsDB[order.id];
@@ -1165,15 +1185,6 @@ function showReceipt(order) {
     
     navigator.clipboard.writeText(receiptText);
     alert('📄 تم نسخ تفاصيل الفاتورة الرقمية إلى الحافظة بنجاح!\n\n' + receiptText);
-}
-
-function customerLogout() {
-    localStorage.removeItem('omda_current_cust');
-    currentCustomer = null;
-    const dashBox = document.getElementById('customer-dashboard');
-    const loginBox = document.getElementById('cust-login-box');
-    if(dashBox) dashBox.classList.add('hidden');
-    if(loginBox) loginBox.classList.remove('hidden');
 }
 
 // ==========================================
@@ -1557,7 +1568,7 @@ function adminLogout() {
 }
 
 // ==========================================
-// دوال الخريطة والأسطول وتتبع الطلبات الثابتة
+// دوال الخريطة والأسطول وتتبع الطلبات
 // ==========================================
 function switchLayer(type) {
     if(!map) return;
@@ -1950,7 +1961,7 @@ function toggleGpsTracking() {
         btn.style.background = "#dc2626";
         statusBox.innerText = "جاري بث الإحداثيات الحية...";
 
-        watchId = navigator.geolocation.watchPosition((position) => {
+        watchId = navigator.geolocation.watchPosition(async (position) => {
             let lat = position.coords.latitude;
             let lng = position.coords.longitude;
 
@@ -1959,6 +1970,15 @@ function toggleGpsTracking() {
             if(driver) {
                 driver.lat = lat; driver.lng = lng;
                 localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+
+                // تحديث موقع السائق سحابياً في Firestore إذا كان متصلاً
+                if (window.db && window.firebaseModules) {
+                    try {
+                        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(driver.id || driver.name)), driver, { merge: true });
+                    } catch (e) {
+                        console.error("Firebase driver update error:", e);
+                    }
+                }
             }
             statusBox.innerText = `تم بث الموقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
             loadDriversOnMap();
@@ -1988,16 +2008,6 @@ function autoDispatchOrders() {
     localStorage.setItem('omda_orders', JSON.stringify(orders));
     alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين المسجلين بدقة 🚀`);
     loadLiveTrackingMap();
-}
-
-function getStatusTest(status) {
-    switch(status) {
-        case 'pending': return 'قيد المراجعة ⏳';
-        case 'cooking': return 'ع الفحم 🔥';
-        case 'delivery': return 'مع الدليفري 🛵';
-        case 'done': return 'وصل ✅';
-        default: return 'جاري المعالجة';
-    }
 }
 
 function getStatusText(status) {
