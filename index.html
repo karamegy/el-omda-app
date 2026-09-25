@@ -4,10 +4,337 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>كبابجي ومشويات العمدة | عمدة المشويات في مصر</title>
-    <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#b45309">
+    <style>
+        :root {
+            --primary-color: #b45309;
+            --secondary-color: #78350f;
+            --dark-bg: #1c1917;
+            --light-bg: #f5f5f4;
+            --accent-red: #dc2626;
+            --success-green: #16a34a;
+            --white: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: #292524;
+            direction: rtl;
+        }
+
+        /* الهيدر وشريط التنقل */
+        .main-header {
+            background-color: var(--dark-bg);
+            color: var(--white);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--primary-color);
+            flex-wrap: wrap;
+            gap: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            color: var(--primary-color);
+            font-size: 2rem;
+        }
+
+        .main-header h1 {
+            font-size: 1.5rem;
+            color: #fde047;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: transparent;
+            border: 1px solid #44403c;
+            color: var(--white);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* البانر */
+        .banner {
+            background: linear-gradient(135deg, var(--secondary-color), var(--dark-bg));
+            color: var(--white);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 25px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .banner h2 {
+            color: #fde047;
+            margin-bottom: 8px;
+        }
+
+        /* الأقسام والفلاتر */
+        .categories-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .cat-btn {
+            background: var(--white);
+            border: 1px solid #d6d3d1;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: 0.2s;
+            font-weight: bold;
+        }
+
+        .cat-btn:hover, .cat-btn.active {
+            background: var(--primary-color);
+            color: var(--white);
+            border-color: var(--primary-color);
+        }
+
+        /* شبكة المنتجات (Cards) */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .menu-card {
+            background: var(--white);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border: 1px solid #e7e5e4;
+            transition: transform 0.2s;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+
+        .menu-card-body {
+            padding: 15px;
+        }
+
+        .menu-card h3 {
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+            font-size: 1.15rem;
+        }
+
+        .menu-card p {
+            color: #57534e;
+            font-size: 0.88rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .price {
+            font-weight: bold;
+            color: var(--accent-red);
+            font-size: 1.1rem;
+        }
+
+        .menu-card button {
+            background: var(--primary-color);
+            color: var(--white);
+            border: none;
+            padding: 10px;
+            width: 100%;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .menu-card button:hover {
+            background: var(--secondary-color);
+        }
+
+        /* السلة */
+        .cart-container {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .cart-items {
+            margin-bottom: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .cart-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f5f4;
+        }
+
+        .checkout-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 450px;
+        }
+
+        .checkout-form input, .checkout-form textarea, .customer-login-box input, .admin-login-box input, select {
+            padding: 10px;
+            border: 1px solid #d6d3d1;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: var(--success-green);
+            color: var(--white);
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: var(--white);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-secondary {
+            background: #57534e;
+            color: var(--white);
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* تتبع الطلبات واللوحات */
+        .customer-login-box, .admin-login-box {
+            background: var(--white);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 450px;
+            margin: 40px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .customer-dashboard, .admin-dashboard {
+            background: var(--white);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .cust-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fef3c7;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .order-card {
+            background: #fafaf9;
+            border: 1px solid #e7e5e4;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .status-pending { background: #fef08a; color: #854d0e; }
+        .status-cooking { background: #fed7aa; color: #9a3412; }
+        .status-delivery { background: #bae6fd; color: #0369a1; }
+        .status-done { background: #bbf7d0; color: #166534; }
+
+        .admin-orders-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 15px;
+        }
+    </style>
 </head>
 <body>
 
@@ -67,7 +394,7 @@
             <div class="cart-container">
                 <div id="cart-items-list" class="cart-items"></div>
                 <div class="cart-summary">
-                    <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                    <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
                         <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل OMDA2026)" style="flex: 1; padding: 8px; border: 1px solid #d6d3d1; border-radius: 6px;">
                         <button onclick="applyPromoCode()" class="btn-secondary" style="padding: 8px 15px;">تطبيق الكوبون</button>
                     </div>
@@ -151,7 +478,7 @@
                     <div class="checkout-form" style="max-width: 100%;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                             <input type="text" id="new-prod-name" placeholder="اسم الأكلة أو الوجبة">
-                            <select id="new-prod-cat" style="padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px;">
+                            <select id="new-prod-cat">
                                 <option value="trays">ركن الصواني 🔥</option>
                                 <option value="grills">ركن المشويات</option>
                                 <option value="meals">الوجبات السريعة</option>
