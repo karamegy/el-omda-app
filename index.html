@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#b45309">
     <style>
         :root {
-            --primary-color: #b45309;
+            --primary-color: #d97706;
             --secondary-color: #78350f;
             --dark-bg: #1c1917;
             --light-bg: #f5f5f4;
@@ -26,14 +26,44 @@
         }
 
         body {
-            background-color: var(--light-bg);
-            color: #292524;
+            background: linear-gradient(135deg, rgba(28, 25, 23, 0.95), rgba(41, 37, 36, 0.95)), 
+                        url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200') center/cover fixed;
+            background-blend-mode: overlay;
+            color: #f5f5f4;
             direction: rtl;
+            min-height: 100vh;
+        }
+
+        /* شريط الإعلانات المتحرك (RSS Ticker) */
+        .ticker-container {
+            background: #991b1b;
+            color: #fef08a;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #fde047;
+            font-weight: bold;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .ticker-label {
+            background: #7f1d1d;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin-left: 15px;
+            white-space: nowrap;
+            color: #fff;
+        }
+
+        .ticker-content {
+            overflow: hidden;
+            width: 100%;
         }
 
         /* الهيدر وشريط التنقل */
         .main-header {
-            background-color: var(--dark-bg);
+            background-color: rgba(28, 25, 23, 0.98);
             color: var(--white);
             padding: 15px 25px;
             display: flex;
@@ -42,23 +72,28 @@
             border-bottom: 4px solid var(--primary-color);
             flex-wrap: wrap;
             gap: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .logo-icon {
-            color: var(--primary-color);
-            font-size: 2rem;
+        .logo-img {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 2px solid #fde047;
+            object-fit: cover;
+            box-shadow: 0 0 10px rgba(217, 119, 6, 0.5);
         }
 
         .main-header h1 {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             color: #fde047;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
         }
 
         .nav-links {
@@ -68,7 +103,7 @@
         }
 
         .nav-btn {
-            background: transparent;
+            background: rgba(255,255,255,0.05);
             border: 1px solid #44403c;
             color: var(--white);
             padding: 8px 12px;
@@ -81,6 +116,7 @@
         .nav-btn:hover, .nav-btn.active {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
+            color: #fff;
         }
 
         .container {
@@ -101,17 +137,18 @@
         .banner {
             background: linear-gradient(135deg, var(--secondary-color), var(--dark-bg));
             color: var(--white);
-            padding: 25px;
+            padding: 30px;
             border-radius: 12px;
             text-align: center;
             margin-bottom: 25px;
             border: 2px solid var(--primary-color);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
         }
 
         .banner h2 {
             color: #fde047;
             margin-bottom: 8px;
+            font-size: 2rem;
         }
 
         /* الأقسام والفلاتر */
@@ -124,9 +161,10 @@
         }
 
         .cat-btn {
-            background: var(--white);
+            background: rgba(255, 255, 255, 0.9);
+            color: #292524;
             border: 1px solid #d6d3d1;
-            padding: 8px 16px;
+            padding: 8px 18px;
             border-radius: 20px;
             cursor: pointer;
             white-space: nowrap;
@@ -148,10 +186,11 @@
         }
 
         .menu-card {
-            background: var(--white);
+            background: rgba(255, 255, 255, 0.95);
+            color: #292524;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -160,8 +199,15 @@
         }
 
         .menu-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(217, 119, 6, 0.3);
+        }
+
+        .menu-img {
+            width: 100%;
+            height: 160px;
+            object-fit: cover;
+            border-bottom: 3px solid var(--primary-color);
         }
 
         .menu-card-body {
@@ -184,18 +230,19 @@
         .price {
             font-weight: bold;
             color: var(--accent-red);
-            font-size: 1.1rem;
+            font-size: 1.15rem;
         }
 
         .menu-card button {
             background: var(--primary-color);
             color: var(--white);
             border: none;
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             cursor: pointer;
             font-weight: bold;
             transition: 0.2s;
+            font-size: 1rem;
         }
 
         .menu-card button:hover {
@@ -204,24 +251,34 @@
 
         /* السلة */
         .cart-container {
-            background: var(--white);
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #292524;
+            padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
 
         .cart-items {
             margin-bottom: 20px;
-            max-height: 300px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
         .cart-item-row {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #f5f5f4;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #e7e5e4;
+            gap: 15px;
+        }
+
+        .cart-item-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid #d6d3d1;
         }
 
         .checkout-form {
@@ -232,11 +289,13 @@
         }
 
         .checkout-form input, .checkout-form textarea, .customer-login-box input, .admin-login-box input, select {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #d6d3d1;
             border-radius: 8px;
             font-size: 1rem;
             width: 100%;
+            background: #fff;
+            color: #000;
         }
 
         .btn-primary {
@@ -248,6 +307,11 @@
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
         }
 
         .btn-danger {
@@ -276,7 +340,8 @@
 
         /* تتبع الطلبات واللوحات */
         .customer-login-box, .admin-login-box {
-            background: var(--white);
+            background: rgba(255, 255, 255, 0.95);
+            color: #292524;
             padding: 30px;
             border-radius: 12px;
             max-width: 450px;
@@ -284,15 +349,16 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
             text-align: center;
         }
 
         .customer-dashboard, .admin-dashboard {
-            background: var(--white);
-            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            color: #292524;
+            padding: 25px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
 
         .cust-info {
@@ -305,6 +371,7 @@
             margin-bottom: 15px;
             flex-wrap: wrap;
             gap: 10px;
+            color: #78350f;
         }
 
         .order-card {
@@ -313,6 +380,7 @@
             padding: 15px;
             border-radius: 8px;
             margin-bottom: 12px;
+            color: #292524;
         }
 
         .status-badge {
@@ -338,14 +406,23 @@
 </head>
 <body>
 
+    <!-- شريط الإعلانات المتحرك (RSS Ticker) -->
+    <div class="ticker-container">
+        <div class="ticker-label"><i class="fa-solid fa-bullhorn"></i> إعلانات العمدة:</div>
+        <div class="ticker-content">
+            <marquee id="main-ticker-text" scrollamount="6">🔥 أهلاً بكم في كبابجي ومشويات العمدة - أقوى العروض والولائم على الفحم الحطب يومياً! استخدم برومو كود OMDA2026 لخصم 10% على طلبك الأول 🔥</marquee>
+        </div>
+    </div>
+
     <!-- الهيدر وشريط التنقل -->
     <header class="main-header">
         <div class="logo-container">
-            <i class="fa-solid fa-fire-flame-curved logo-icon"></i>
+            <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=150" alt="لوجو مشويات العمدة" class="logo-img">
             <h1>مشويات العمدة</h1>
         </div>
         <nav class="nav-links">
             <button onclick="switchTab('menu')" class="nav-btn active"><i class="fa-solid fa-utensils"></i> المنيو</button>
+            <button onclick="switchTab('custom-tray')" class="nav-btn"><i class="fa-solid fa-wand-magic-sparkles"></i> صمم صينيتك</button>
             <button onclick="switchTab('offers')" class="nav-btn"><i class="fa-solid fa-fire"></i> العروض 🔥</button>
             <button onclick="switchTab('cart')" class="nav-btn"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
             <button onclick="switchTab('reservation')" class="nav-btn"><i class="fa-solid fa-chair"></i> حجز طاولة</button>
@@ -362,7 +439,7 @@
         <section id="tab-menu" class="tab-content active">
             <div class="banner">
                 <h2>👑 عمدة المشويات في مصر 👑</h2>
-                <p>لو جعان.. شد مع العمدة وشبع بطنك بأجمل طرب وكباب وصواني على الفحم!</p>
+                <p>لو جعان.. شد مع العمدة وشبع بطنك بأجمل طرب وكباب وصواني على الفحم الحطب الأصلي!</p>
             </div>
             
             <div class="categories-bar">
@@ -374,8 +451,41 @@
                 <button onclick="filterCategory('appetizers')" class="cat-btn">المقبلات والسلطات</button>
             </div>
 
-            <div id="menu-grid" class="menu-grid">
-                <!-- يتم تعبئة المنتجات تلقائياً عبر JavaScript -->
+            <div id="menu-grid" class="menu-grid"></div>
+        </section>
+
+        <!-- 1.5 صمم صينيتك بنفسك (Custom Tray Builder) -->
+        <section id="tab-custom-tray" class="tab-content">
+            <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309);">
+                <h2>🎨 صمم صينيتك ووليمتك بنفسك</h2>
+                <p>اختر الحجم، اللحوم المفضلة، والإضافات الحصرية وسيقوم الشيف بتجهيزها خصيصاً لك!</p>
+            </div>
+            <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
+                <div class="checkout-form" style="max-width: 100%;">
+                    <label style="font-weight: bold; color: var(--secondary-color);">اختر الحجم الأساسي للصينية:</label>
+                    <select id="custom-size">
+                        <option value="500">صينية صغرى (تكفي 2-3 أفراد) - 500 جنيه</option>
+                        <option value="1000">صينية وسط (تكفي 4-5 أفراد) - 1000 جنيه</option>
+                        <option value="2000">صينية العمدة الكبرى (تكفي عائلة كاملة) - 2000 جنيه</option>
+                    </select>
+
+                    <label style="font-weight: bold; color: var(--secondary-color);">اختر الصنف الرئيسي المشوي:</label>
+                    <select id="custom-meat">
+                        <option value="مشويات مشكلة (كباب وكفتة وطرب)">مشويات مشكلة (كباب، كفتة، طرب بلدي)</option>
+                        <option value="فراخ شيش وفحم وطرب">فراخ شيش فحم + طرب ضاني</option>
+                        <option value="حمام محشي وريش ضاني">حمام محشي أرز بالخلطة + ريش ضاني</option>
+                    </select>
+
+                    <label style="font-weight: bold; color: var(--secondary-color);">إضافات جانبية فاخرة:</label>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fafaf9; padding: 10px; border-radius: 8px;">
+                        <label><input type="checkbox" id="ext-mombar" value="80"> طبق ممبار (+80 ج)</label>
+                        <label><input type="checkbox" id="ext-mahshi" value="60"> طاجن ورق عنب (+60 ج)</label>
+                        <label><input type="checkbox" id="ext-pepsi" value="50"> 2 لتر بيبيسي (+50 ج)</label>
+                    </div>
+
+                    <textarea id="custom-notes" placeholder="أي ملاحظات خاصة بالتسوية، البهارات، أو الطلب الإضافي..."></textarea>
+                    <button onclick="addCustomTrayToCart()" class="btn-primary" style="background-color: var(--primary-color);">إضافة الصينى المخصصة للسلة 👑</button>
+                </div>
             </div>
         </section>
 
@@ -390,16 +500,16 @@
 
         <!-- 3. قسم سلة المبيعات والبرومو كود والطلب -->
         <section id="tab-cart" class="tab-content">
-            <h2>🛒 سلة المبيعات والطلبات</h2>
+            <h2>🛒 سلة المبيعات والطلبات (مع صور الأطباق)</h2>
             <div class="cart-container">
                 <div id="cart-items-list" class="cart-items"></div>
                 <div class="cart-summary">
                     <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل OMDA2026)" style="flex: 1; padding: 8px; border: 1px solid #d6d3d1; border-radius: 6px;">
-                        <button onclick="applyPromoCode()" class="btn-secondary" style="padding: 8px 15px;">تطبيق الكوبون</button>
+                        <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل OMDA2026)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                        <button onclick="applyPromoCode()" class="btn-secondary" style="padding: 10px 15px;">تطبيق الكوبون</button>
                     </div>
                     <h3>إجمالي الطلب: <span id="cart-total">0</span> جنيه <span id="discount-note" style="font-size:0.9rem; color:#16a34a;"></span></h3>
-                    <div class="checkout-form">
+                    <div class="checkout-form" style="margin-top: 15px;">
                         <input type="text" id="order-name" placeholder="اسمك الكريم">
                         <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع)">
                         <textarea id="order-address" placeholder="عنوان التوصيل بالتفصيل"></textarea>
@@ -453,12 +563,12 @@
                 <div class="cust-info" style="background: #e0f2fe; margin-top: 10px; color: #0369a1;">
                     ⭐ رصيد نقاط الولاء: <span id="cust-points" style="font-weight: bold; font-size: 1.1rem;">0</span> نقطة (كل 100 جنيه = 10 نقاط هدية)
                 </div>
-                <h3 style="margin-top: 20px;">📦 سجل طلباتك ومؤشر التوصيل الحي:</h3>
+                <h3 style="margin-top: 20px; color: #292524;">📦 سجل طلباتك ومؤشر التوصيل الحي:</h3>
                 <div id="customer-orders-list" class="orders-list"></div>
             </div>
         </section>
 
-        <!-- 7. لوحة تحكم الأدمن الماستر -->
+        <!-- 7. لوحة تحكم الأدمن الماستر والخزنة -->
         <section id="tab-admin" class="tab-content">
             <h2>🛡️ لوحة التحكم الرئيسية (Master Admin)</h2>
             <div id="admin-login-box" class="admin-login-box">
@@ -468,13 +578,43 @@
             </div>
             <div id="admin-dashboard" class="admin-dashboard hidden">
                 <div class="admin-header-actions">
-                    <h3>إدارة المنيو، طلبات الزبائن، الدليفري، وحجوزات الصالة</h3>
+                    <h3 style="color: var(--secondary-color);">إدارة المنيو، الخزنة، الطلبات، والدليفري</h3>
                     <button onclick="adminLogout()" class="btn-secondary">خروج الأدمن</button>
                 </div>
+
+                <!-- دفتر الخزنة والمبيعات اليومية (Daily Vault) -->
+                <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-top: 20px; border: 2px dashed #16a34a;">
+                    <h3 style="margin-bottom: 12px; color: #16a34a;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات اليومية</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                        <div style="background: #bbf7d0; padding: 15px; border-radius: 8px; text-align: center; color: #166534;">
+                            <h4>إجمالي إيرادات المبيعات</h4>
+                            <span id="vault-total-sales" style="font-size: 1.5rem; font-weight: bold;">0 جنيه</span>
+                        </div>
+                        <div style="background: #fed7aa; padding: 15px; border-radius: 8px; text-align: center; color: #9a3412;">
+                            <h4>إجمالي المصروفات والنثريات</h4>
+                            <span id="vault-total-expenses" style="font-size: 1.5rem; font-weight: bold;">0 جنيه</span>
+                        </div>
+                    </div>
+                    <div class="checkout-form" style="max-width: 100%;">
+                        <input type="text" id="expense-reason" placeholder="سبب المصروف (مثل: شراء فحم حطب، صيانة، خضار)">
+                        <input type="number" id="expense-amount" placeholder="المبلغ بالجنيه">
+                        <button onclick="addExpense()" class="btn-secondary" style="background-color: #9a3412;">تسجيل مصروف جديد للخزنة 💸</button>
+                    </div>
+                    <div id="expenses-list" style="margin-top: 15px; font-size: 0.9rem; color: #292524;"></div>
+                </div>
                 
-                <!-- قسم إضافة منتج جديد للمنيو -->
+                <!-- قسم التحكم في شريط الإعلانات (RSS Ticker) -->
+                <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-top: 20px; border: 2px dashed #991b1b;">
+                    <h3 style="margin-bottom: 12px; color: #991b1b;"><i class="fa-solid fa-bullhorn"></i> التحكم في شريط الإعلانات المتحرك (RSS)</h3>
+                    <div class="checkout-form" style="max-width: 100%;">
+                        <input type="text" id="admin-ticker-input" placeholder="اكتب نص الإعلان المتحرك الجديد...">
+                        <button onclick="updateTickerText()" class="btn-primary" style="background-color: #991b1b;">تحديث الشريط المتحرك فوراً 🚀</button>
+                    </div>
+                </div>
+
+                <!-- قسم إضافة منتج جديد للمنيو مع الصورة -->
                 <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-top: 20px; border: 2px dashed var(--primary-color);">
-                    <h3 style="margin-bottom: 12px; color: var(--primary-color);"><i class="fa-solid fa-plus-circle"></i> إضافة وجبة أو صنف جديد للمنيو</h3>
+                    <h3 style="margin-bottom: 12px; color: var(--primary-color);"><i class="fa-solid fa-plus-circle"></i> إضافة وجبة أو صنف جديد مع الصورة</h3>
                     <div class="checkout-form" style="max-width: 100%;">
                         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
                             <input type="text" id="new-prod-name" placeholder="اسم الأكلة أو الوجبة">
@@ -486,9 +626,12 @@
                                 <option value="appetizers">المقبلات والسلطات</option>
                             </select>
                         </div>
-                        <input type="number" id="new-prod-price" placeholder="السعر بالجنيه">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                            <input type="number" id="new-prod-price" placeholder="السعر بالجنيه">
+                            <input type="text" id="new-prod-img" placeholder="رابط صورة الأكلة (URL)">
+                        </div>
                         <textarea id="new-prod-desc" placeholder="وصف الوجبة ومكوناتها بالتفصيل"></textarea>
-                        <button onclick="addNewProduct()" class="btn-primary" style="background-color: var(--primary-color);">إضافة المنتج إلى المنيو الرئيسي 🚀</button>
+                        <button onclick="addNewProduct()" class="btn-primary" style="background-color: var(--primary-color);">إضافة المنتج إلى المنيو والسلة 🚀</button>
                     </div>
                 </div>
 
