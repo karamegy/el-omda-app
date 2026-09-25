@@ -32,38 +32,41 @@ window.addEventListener('DOMContentLoaded', () => {
 function loadSavedTicker() {
     const savedTicker = localStorage.getItem('omda_ticker_text');
     if(savedTicker) {
-        document.getElementById('main-ticker-text').innerText = savedTicker;
+        const tickerEl = document.getElementById('main-ticker-text');
+        if(tickerEl) tickerEl.innerText = savedTicker;
     }
 }
 
 function updateTickerText() {
-    const newText = document.getElementById('admin-ticker-input').value.trim();
+    const inputEl = document.getElementById('admin-ticker-input');
+    if(!inputEl) return;
+    const newText = inputEl.value.trim();
     if(!newText) {
         alert('من فضلك اكتب نص الإعلان أولاً!');
         return;
     }
     localStorage.setItem('omda_ticker_text', newText);
-    document.getElementById('main-ticker-text').innerText = newText;
+    const tickerEl = document.getElementById('main-ticker-text');
+    if(tickerEl) tickerEl.innerText = newText;
     alert('تم تحديث شريط الإعلانات المتحرك بنجاح يا أسطى كرم! 🚀');
-    document.getElementById('admin-ticker-input').value = '';
+    inputEl.value = '';
 }
 
-// تبديل التبويبات
+// تبديل التبويبات (للصفحة الرئيسية)
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
     
-    document.getElementById('tab-' + tabId).classList.add('active');
+    const targetTab = document.getElementById('tab-' + tabId);
+    if(targetTab) targetTab.classList.add('active');
     
-    const btnMap = { 'menu': 0, 'custom-tray': 1, 'offers': 2, 'cart': 3, 'reservation': 4, 'favorites': 5, 'customer': 6, 'admin': 7 };
+    const btnMap = { 'menu': 0, 'custom-tray': 1, 'offers': 2, 'cart': 3, 'reservation': 4, 'favorites': 5, 'customer': 6 };
     const buttons = document.querySelectorAll('.nav-btn');
     if (buttons[btnMap[tabId]]) {
         buttons[btnMap[tabId]].classList.add('active');
     }
 
-    if(tabId === 'admin') {
-        checkAdminSession();
-    } else if(tabId === 'favorites') {
+    if(tabId === 'favorites') {
         renderFavorites();
     } else if(tabId === 'offers') {
         renderOffers();
@@ -75,6 +78,7 @@ function switchTab(tabId) {
 // عرض المنيو مع صور الأطباق
 function renderMenu(filter = 'all') {
     const grid = document.getElementById('menu-grid');
+    if(!grid) return;
     grid.innerHTML = '';
 
     const filtered = filter === 'all' ? menuProducts : menuProducts.filter(p => p.category === filter);
@@ -103,6 +107,7 @@ function renderMenu(filter = 'all') {
 
 function renderOffers() {
     const grid = document.getElementById('offers-grid');
+    if(!grid) return;
     grid.innerHTML = '';
     const offers = menuProducts.filter(p => p.category === 'trays');
 
@@ -130,32 +135,32 @@ function renderOffers() {
 
 function filterCategory(cat) {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    event.currentTarget.classList.add('active');
+    if(event && event.currentTarget) event.currentTarget.classList.add('active');
     renderMenu(cat);
 }
 
 // ميزة "صمم صينيتك بنفسك"
 function addCustomTrayToCart() {
-    const sizePrice = parseFloat(document.getElementById('custom-size').value);
-    const sizeText = document.getElementById('custom-size').options[document.getElementById('custom-size').selectedIndex].text;
-    const meatType = document.getElementById('custom-meat').value;
-    const notes = document.getElementById('custom-notes').value.trim();
+    const sizeSelect = document.getElementById('custom-size');
+    const meatSelect = document.getElementById('custom-meat');
+    const notesInput = document.getElementById('custom-notes');
+    if(!sizeSelect || !meatSelect) return;
+
+    const sizePrice = parseFloat(sizeSelect.value);
+    const sizeText = sizeSelect.options[sizeSelect.selectedIndex].text;
+    const meatType = meatSelect.value;
+    const notes = notesInput ? notesInput.value.trim() : '';
 
     let extrasTotal = 0;
     let extrasDesc = [];
 
-    if(document.getElementById('ext-mombar').checked) {
-        extrasTotal += 80;
-        extrasDesc.push('ممبار');
-    }
-    if(document.getElementById('ext-mahshi').checked) {
-        extrasTotal += 60;
-        extrasDesc.push('محشي');
-    }
-    if(document.getElementById('ext-pepsi').checked) {
-        extrasTotal += 50;
-        extrasDesc.push('بيبيسي');
-    }
+    const mombar = document.getElementById('ext-mombar');
+    const mahshi = document.getElementById('ext-mahshi');
+    const pepsi = document.getElementById('ext-pepsi');
+
+    if(mombar && mombar.checked) { extrasTotal += 80; extrasDesc.push('ممبار'); }
+    if(mahshi && mahshi.checked) { extrasTotal += 60; extrasDesc.push('محشي'); }
+    if(pepsi && pepsi.checked) { extrasTotal += 50; extrasDesc.push('بيبيسي'); }
 
     let totalPrice = sizePrice + extrasTotal;
     let customName = `👑 صينية مخصصة (${sizeText.split(' ')[0]})`;
@@ -188,26 +193,28 @@ function addNewProduct() {
         return;
     }
 
-    const newProd = {
-        id: Date.now(),
-        name,
-        category,
-        price,
-        image,
-        desc
-    };
+    const newProd = { id: Date.now(), name, category, price, image, desc };
 
     menuProducts.push(newProd);
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
 
-    alert(`تم إضافة المنتج (${name}) بنجاح إلى المنيو الرئيسي وسيظهر للعملاء بالصورة فوراً! 👑`);
+    alert(`تم إضافة المنتج (${name}) بنجاح إلى المنيو الرئيسي! 👑`);
     
     document.getElementById('new-prod-name').value = '';
     document.getElementById('new-prod-price').value = '';
     document.getElementById('new-prod-img').value = '';
     document.getElementById('new-prod-desc').value = '';
 
-    renderMenu();
+    loadAdminDashboard();
+}
+
+// حذف صنف من المنيو بواسطة الأدمن (ميزة جديدة)
+function adminDeleteProduct(id) {
+    if(!confirm('هل أنت متأكد من حذف هذا الصنف نهائياً من المنيو؟')) return;
+    menuProducts = menuProducts.filter(p => p.id !== id);
+    localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
+    loadAdminDashboard();
+    alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
 // إدارة المفضلة
@@ -222,12 +229,15 @@ function toggleFavorite(productId) {
     }
     localStorage.setItem('omda_favorites', JSON.stringify(favorites));
     renderMenu();
-    if(document.getElementById('tab-offers').classList.contains('active')) renderOffers();
-    if(document.getElementById('tab-favorites').classList.contains('active')) renderFavorites();
+    const offersTab = document.getElementById('tab-offers');
+    const favTab = document.getElementById('tab-favorites');
+    if(offersTab && offersTab.classList.contains('active')) renderOffers();
+    if(favTab && favTab.classList.contains('active')) renderFavorites();
 }
 
 function renderFavorites() {
     const grid = document.getElementById('favorites-grid');
+    if(!grid) return;
     grid.innerHTML = '';
     const favProducts = menuProducts.filter(p => favorites.includes(p.id));
 
@@ -260,6 +270,7 @@ function renderFavorites() {
 // إضافة للسلة
 function addToCart(productId) {
     const prod = menuProducts.find(p => p.id === productId);
+    if(!prod) return;
     const existing = cart.find(item => item.id === productId);
 
     if (existing) {
@@ -272,15 +283,19 @@ function addToCart(productId) {
     alert(`تم إضافة (${prod.name}) إلى السلة بنجاح! 🛒`);
 }
 
-// تحديث السلة مع عرض صورة المنتج بجانب الاسم
+// تحديث السلة
 function updateCartUI() {
-    document.getElementById('cart-count').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+    const countEl = document.getElementById('cart-count');
+    if(countEl) countEl.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+    
     const list = document.getElementById('cart-items-list');
+    if(!list) return;
     list.innerHTML = '';
 
     if(cart.length === 0) {
         list.innerHTML = '<p style="text-align: center; color: #78716c; padding: 20px;">سلة المبيعات فارغة حالياً.</p>';
-        document.getElementById('cart-total').innerText = '0';
+        const totalEl = document.getElementById('cart-total');
+        if(totalEl) totalEl.innerText = '0';
         return;
     }
 
@@ -306,7 +321,8 @@ function updateCartUI() {
     });
 
     let total = subtotal - (subtotal * activeDiscount);
-    document.getElementById('cart-total').innerText = total;
+    const totalEl = document.getElementById('cart-total');
+    if(totalEl) totalEl.innerText = total;
 }
 
 function removeFromCart(id) {
@@ -316,16 +332,18 @@ function removeFromCart(id) {
 
 // تطبيق البرومو كود
 function applyPromoCode() {
-    const code = document.getElementById('promo-input').value.trim().toUpperCase();
+    const inputEl = document.getElementById('promo-input');
+    if(!inputEl) return;
+    const code = inputEl.value.trim().toUpperCase();
     const note = document.getElementById('discount-note');
     if(code === 'OMDA2026') {
         activeDiscount = 0.10;
-        note.innerText = ' (تم تطبيق خصم البرومو كود 10% 🔥)';
+        if(note) note.innerText = ' (تم تطبيق خصم البرومو كود 10% 🔥)';
         alert('مبروك! تم تطبيق كود الخصم 10% بنجاح.');
         updateCartUI();
     } else {
         activeDiscount = 0;
-        note.innerText = '';
+        if(note) note.innerText = '';
         alert('عذراً، البرومو كود غير صحيح أو منتهي الصلاحية.');
         updateCartUI();
     }
@@ -333,9 +351,14 @@ function applyPromoCode() {
 
 // إرسال الطلب وحساب نقاط الولاء
 function submitOrder() {
-    const name = document.getElementById('order-name').value.trim();
-    const phone = document.getElementById('order-phone').value.trim();
-    const address = document.getElementById('order-address').value.trim();
+    const nameEl = document.getElementById('order-name');
+    const phoneEl = document.getElementById('order-phone');
+    const addressEl = document.getElementById('order-address');
+    if(!nameEl || !phoneEl || !addressEl) return;
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const address = addressEl.value.trim();
 
     if(!name || !phone || !address) {
         alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل كاملاً!');
@@ -383,9 +406,14 @@ function submitOrder() {
 
 // الطلب السريع عبر واتساب
 function sendWhatsAppOrder() {
-    const name = document.getElementById('order-name').value.trim();
-    const phone = document.getElementById('order-phone').value.trim();
-    const address = document.getElementById('order-address').value.trim();
+    const nameEl = document.getElementById('order-name');
+    const phoneEl = document.getElementById('order-phone');
+    const addressEl = document.getElementById('order-address');
+    if(!nameEl || !phoneEl || !addressEl) return;
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const address = addressEl.value.trim();
 
     if(!name || !phone || !address) {
         alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل قبل الطلب عبر واتساب!');
@@ -414,12 +442,20 @@ function sendWhatsAppOrder() {
 
 // حجز الطاولات والعزائم
 function submitReservation() {
-    const name = document.getElementById('res-name').value.trim();
-    const phone = document.getElementById('res-phone').value.trim();
-    const date = document.getElementById('res-date').value;
-    const time = document.getElementById('res-time').value;
-    const guests = document.getElementById('res-guests').value;
-    const notes = document.getElementById('res-notes').value.trim();
+    const nameEl = document.getElementById('res-name');
+    const phoneEl = document.getElementById('res-phone');
+    const dateEl = document.getElementById('res-date');
+    const timeEl = document.getElementById('res-time');
+    const guestsEl = document.getElementById('res-guests');
+    const notesEl = document.getElementById('res-notes');
+    if(!nameEl || !phoneEl || !dateEl || !timeEl || !guestsEl) return;
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    const date = dateEl.value;
+    const time = timeEl.value;
+    const guests = guestsEl.value;
+    const notes = notesEl ? notesEl.value.trim() : '';
 
     if(!name || !phone || !date || !time || !guests) {
         alert('من فضلك املأ كافة بيانات الحجز الأساسية!');
@@ -443,18 +479,20 @@ function submitReservation() {
     localStorage.setItem('omda_reservations', JSON.stringify(allRes));
 
     alert(`تم تسجيل حجز الطاولة بنجاح يا أسطى ${name}! سنتواصل معك قريباً.`);
-    document.getElementById('res-name').value = '';
-    document.getElementById('res-phone').value = '';
-    document.getElementById('res-date').value = '';
-    document.getElementById('res-time').value = '';
-    document.getElementById('res-guests').value = '';
-    document.getElementById('res-notes').value = '';
+    nameEl.value = '';
+    phoneEl.value = '';
+    dateEl.value = '';
+    timeEl.value = '';
+    guestsEl.value = '';
+    if(notesEl) notesEl.value = '';
     switchTab('menu');
 }
 
 // تسجيل دخول الزبون وتتبع الشحنة والتقييمات
 function customerLogin() {
-    const phone = document.getElementById('login-phone').value.trim();
+    const phoneInput = document.getElementById('login-phone');
+    if(!phoneInput) return;
+    const phone = phoneInput.value.trim();
     if(!phone) {
         alert('أدخل رقم الهاتف من فضلك');
         return;
@@ -474,19 +512,28 @@ function customerLogin() {
 }
 
 function loadCustomerDashboard() {
-    document.getElementById('cust-login-box').classList.add('hidden');
-    document.getElementById('customer-dashboard').classList.remove('hidden');
-    document.getElementById('cust-display-name').innerText = currentCustomer.name;
-    document.getElementById('cust-display-phone').innerText = currentCustomer.phone;
+    const loginBox = document.getElementById('cust-login-box');
+    const dashBox = document.getElementById('customer-dashboard');
+    if(!loginBox || !dashBox) return;
+
+    loginBox.classList.add('hidden');
+    dashBox.classList.remove('hidden');
+    
+    const displayName = document.getElementById('cust-display-name');
+    const displayPhone = document.getElementById('cust-display-phone');
+    if(displayName) displayName.innerText = currentCustomer.name;
+    if(displayPhone) displayPhone.innerText = currentCustomer.phone;
 
     let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
     let userPoints = pointsDB[currentCustomer.phone] || 0;
-    document.getElementById('cust-points').innerText = userPoints;
+    const pointsEl = document.getElementById('cust-points');
+    if(pointsEl) pointsEl.innerText = userPoints;
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     const myOrders = allOrders.filter(o => o.phone === currentCustomer.phone);
 
     const list = document.getElementById('customer-orders-list');
+    if(!list) return;
     list.innerHTML = '';
 
     let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
@@ -538,8 +585,12 @@ function loadCustomerDashboard() {
 }
 
 function submitReview(orderId) {
-    const rating = document.getElementById(`rating-${orderId}`).value;
-    const comment = document.getElementById(`review-${orderId}`).value.trim() || 'بدون تعليق';
+    const ratingEl = document.getElementById(`rating-${orderId}`);
+    const reviewEl = document.getElementById(`review-${orderId}`);
+    if(!ratingEl || !reviewEl) return;
+
+    const rating = ratingEl.value;
+    const comment = reviewEl.value.trim() || 'بدون تعليق';
 
     let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
     reviewsDB[orderId] = { rating, comment };
@@ -571,13 +622,17 @@ function showReceipt(order) {
 function customerLogout() {
     localStorage.removeItem('omda_current_cust');
     currentCustomer = null;
-    document.getElementById('customer-dashboard').classList.add('hidden');
-    document.getElementById('cust-login-box').classList.remove('hidden');
+    const dashBox = document.getElementById('customer-dashboard');
+    const loginBox = document.getElementById('cust-login-box');
+    if(dashBox) dashBox.classList.add('hidden');
+    if(loginBox) loginBox.classList.remove('hidden');
 }
 
 // لوحة تحكم الأدمن والخزنة والمبيعات اليومية
 function adminLogin() {
-    const pass = document.getElementById('admin-pass').value;
+    const passInput = document.getElementById('admin-pass');
+    if(!passInput) return;
+    const pass = passInput.value;
     if(pass === '1234') { 
         localStorage.setItem('omda_admin_logged', 'true');
         loadAdminDashboard();
@@ -593,81 +648,129 @@ function checkAdminSession() {
 }
 
 function loadAdminDashboard() {
-    document.getElementById('admin-login-box').classList.add('hidden');
-    document.getElementById('admin-dashboard').classList.remove('hidden');
+    const loginBox = document.getElementById('admin-login-box');
+    const dashBox = document.getElementById('admin-dashboard');
+    if(!loginBox || !dashBox) return;
 
-    // حساب الخزنة والمبيعات
+    loginBox.classList.add('hidden');
+    dashBox.classList.remove('hidden');
+
+    // حساب الخزنة، المبيعات، والمصروفات وصافي الأرباح
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let totalSales = allOrders.reduce((sum, o) => sum + o.total, 0);
 
     let expenses = JSON.parse(localStorage.getItem('omda_expenses') || '[]');
     let totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
 
-    document.getElementById('vault-total-sales').innerText = totalSales + ' جنيه';
-    document.getElementById('vault-total-expenses').innerText = totalExpenses + ' جنيه';
+    let netProfit = totalSales - totalExpenses;
+
+    const salesEl = document.getElementById('vault-total-sales');
+    const expEl = document.getElementById('vault-total-expenses');
+    const profitEl = document.getElementById('vault-net-profit');
+
+    if(salesEl) salesEl.innerText = totalSales + ' جنيه';
+    if(expEl) expEl.innerText = totalExpenses + ' جنيه';
+    if(profitEl) {
+        profitEl.innerText = netProfit + ' جنيه';
+        profitEl.style.color = netProfit >= 0 ? '#166534' : '#dc2626';
+    }
 
     const expList = document.getElementById('expenses-list');
-    expList.innerHTML = '<strong>سجل المصروفات والنثريات:</strong>';
-    if(expenses.length === 0) {
-        expList.innerHTML += '<p style="color:#78716c; font-size:0.85rem;">لا توجد مصروفات مسجلة اليوم.</p>';
-    } else {
-        expenses.forEach((ex, idx) => {
-            expList.innerHTML += `<div style="background:#fff; padding:6px; margin:4px 0; border-radius:4px; display:flex; justify-content:between;"><span>${ex.reason}</span> <strong>${ex.amount} ج</strong></div>`;
-        });
+    if(expList) {
+        expList.innerHTML = '<strong>سجل المصروفات والنثريات:</strong>';
+        if(expenses.length === 0) {
+            expList.innerHTML += '<p style="color:#78716c; font-size:0.85rem;">لا توجد مصروفات مسجلة اليوم.</p>';
+        } else {
+            expenses.forEach((ex) => {
+                expList.innerHTML += `<div style="background:#fff; padding:6px; margin:4px 0; border-radius:4px; display:flex; justify-content:space-between;"><span>${ex.reason}</span> <strong>${ex.amount} ج</strong></div>`;
+            });
+        }
+    }
+
+    // عرض وإدارة أصناف المنيو في لوحة الأدمن (ميزة جديدة)
+    const adminMenuList = document.getElementById('admin-menu-items-list');
+    if(adminMenuList) {
+        adminMenuList.innerHTML = '';
+        if(menuProducts.length === 0) {
+            adminMenuList.innerHTML = '<p style="color: #78716c;">لا توجد أصناف مسجلة في المنيو.</p>';
+        } else {
+            menuProducts.forEach(prod => {
+                adminMenuList.innerHTML += `
+                    <div style="background: #fff; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e7e5e4;">
+                        <div>
+                            <strong>${prod.name}</strong> (${prod.price} جنيه) - <span style="font-size:0.8rem; color:#78716c;">${prod.category}</span>
+                        </div>
+                        <button onclick="adminDeleteProduct(${prod.id})" class="btn-danger btn-sm" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </div>
+                `;
+            });
+        }
     }
 
     const ordersList = document.getElementById('admin-orders-list');
-    ordersList.innerHTML = '';
-
-    if(allOrders.length === 0) {
-        ordersList.innerHTML = '<p>لا توجد طلبات توصيل جديدة حتى الآن.</p>';
-    } else {
-        allOrders.forEach((order, index) => {
-            ordersList.innerHTML += `
-                <div class="order-card">
-                    <p><strong>العميل:</strong> ${order.name} (${order.phone})</p>
-                    <p><strong>العنوان:</strong> ${order.address}</p>
-                    <p><strong>الطلب:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
-                    <p><strong>الإجمالي:</strong> ${order.total} جنيه | <strong>التاريخ:</strong> ${order.date}</p>
-                    <div style="margin-top: 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                        <label>حالة الشحنة:</label>
-                        <select onchange="updateOrderStatus(${index}, this.value)">
-                            <option value="pending" ${order.status==='pending'?'selected':''}>قيد المراجعة</option>
-                            <option value="cooking" ${order.status==='cooking'?'selected':''}>جاري التجهيز والشوي 🔥</option>
-                            <option value="delivery" ${order.status==='delivery'?'selected':''}>خرج مع الدليفري 🛵</option>
-                            <option value="done" ${order.status==='done'?'selected':''}>تم التوصيل ✅</option>
-                        </select>
+    if(ordersList) {
+        ordersList.innerHTML = '';
+        if(allOrders.length === 0) {
+            ordersList.innerHTML = '<p>لا توجد طلبات توصيل جديدة حتى الآن.</p>';
+        } else {
+            allOrders.forEach((order, index) => {
+                ordersList.innerHTML += `
+                    <div class="order-card">
+                        <p><strong>رقم الطلب:</strong> ${order.id} | <strong>العميل:</strong> ${order.name} (${order.phone})</p>
+                        <p><strong>العنوان:</strong> ${order.address}</p>
+                        <p><strong>الطلب:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
+                        <p><strong>الإجمالي:</strong> ${order.total} جنيه | <strong>التاريخ:</strong> ${order.date}</p>
+                        <div style="margin-top: 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content: space-between;">
+                            <div>
+                                <label style="font-size:0.9rem; font-weight:bold;">حالة الشحنة:</label>
+                                <select onchange="updateOrderStatus(${index}, this.value)" style="padding:6px; border-radius:6px;">
+                                    <option value="pending" ${order.status==='pending'?'selected':''}>قيد المراجعة</option>
+                                    <option value="cooking" ${order.status==='cooking'?'selected':''}>جاري التجهيز والشوي 🔥</option>
+                                    <option value="delivery" ${order.status==='delivery'?'selected':''}>خرج مع الدليفري 🛵</option>
+                                    <option value="done" ${order.status==='done'?'selected':''}>تم التوصيل ✅</option>
+                                </select>
+                            </div>
+                            <button onclick="adminDeleteOrder(${index})" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
+                        </div>
                     </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
     }
 
     let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
     const resList = document.getElementById('admin-reservations-list');
-    resList.innerHTML = '';
-
-    if(allRes.length === 0) {
-        resList.innerHTML = '<p>لا توجد حجوزات طاولات أو عزائم مسجلة حالياً.</p>';
-    } else {
-        allRes.forEach((res, index) => {
-            resList.innerHTML += `
-                <div class="order-card" style="border-right: 4px solid var(--secondary-color);">
-                    <p><strong>حاجز الطاولة:</strong> ${res.name} (${res.phone})</p>
-                    <p><strong>التاريخ والوقت:</strong> ${res.date} الساعة ${res.time} | <strong>الأفراد:</strong> ${res.guests}</p>
-                    <p><strong>الملاحظات:</strong> ${res.notes || 'بدون ملاحظات'}</p>
-                    <p><strong>حالة الحجز:</strong> <span class="status-badge ${res.status==='confirmed'?'status-done':'status-pending'}">${res.status==='confirmed'?'مؤكد ✅':'قيد المتابعة ⏳'}</span></p>
-                    <button onclick="confirmReservation(${index})" class="btn-secondary btn-sm" style="margin-top: 8px;">تأكيد الحجز</button>
-                </div>
-            `;
-        });
+    if(resList) {
+        resList.innerHTML = '';
+        if(allRes.length === 0) {
+            resList.innerHTML = '<p>لا توجد حجوزات طاولات أو عزائم مسجلة حالياً.</p>';
+        } else {
+            allRes.forEach((res, index) => {
+                resList.innerHTML += `
+                    <div class="order-card" style="border-right: 4px solid var(--secondary-color);">
+                        <p><strong>رقم الحجز:</strong> ${res.id} | <strong>حاجز الطاولة:</strong> ${res.name} (${res.phone})</p>
+                        <p><strong>التاريخ والوقت:</strong> ${res.date} الساعة ${res.time} | <strong>الأفراد:</strong> ${res.guests}</p>
+                        <p><strong>الملاحظات:</strong> ${res.notes || 'بدون ملاحظات'}</p>
+                        <p><strong>حالة الحجز:</strong> <span class="status-badge ${res.status==='confirmed'?'status-done':'status-pending'}">${res.status==='confirmed'?'مؤكد ✅':'قيد المتابعة ⏳'}</span></p>
+                        <div style="margin-top: 10px; display: flex; gap: 10px;">
+                            <button onclick="confirmReservation(${index})" class="btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.85rem;">تأكيد الحجز</button>
+                            <button onclick="adminDeleteReservation(${index})" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الحجز</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
     }
 }
 
 // إضافة مصروف للخزنة
 function addExpense() {
-    const reason = document.getElementById('expense-reason').value.trim();
-    const amount = parseFloat(document.getElementById('expense-amount').value);
+    const reasonEl = document.getElementById('expense-reason');
+    const amountEl = document.getElementById('expense-amount');
+    if(!reasonEl || !amountEl) return;
+
+    const reason = reasonEl.value.trim();
+    const amount = parseFloat(amountEl.value);
 
     if(!reason || isNaN(amount)) {
         alert('أدخل سبب المصروف والمبلغ بشكل صحيح!');
@@ -679,8 +782,8 @@ function addExpense() {
     localStorage.setItem('omda_expenses', JSON.stringify(expenses));
 
     alert('تم تسجيل المصروف في الخزنة بنجاح 💸');
-    document.getElementById('expense-reason').value = '';
-    document.getElementById('expense-amount').value = '';
+    reasonEl.value = '';
+    amountEl.value = '';
     loadAdminDashboard();
 }
 
@@ -735,6 +838,16 @@ function updateOrderStatus(index, newStatus) {
     loadAdminDashboard();
 }
 
+// حذف أوردر من لوحة الأدمن (ميزة جديدة)
+function adminDeleteOrder(index) {
+    if(!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    allOrders.splice(index, 1);
+    localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+    loadAdminDashboard();
+    alert('تم حذف الطلب بنجاح.');
+}
+
 function confirmReservation(index) {
     let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
     allRes[index].status = 'confirmed';
@@ -742,10 +855,19 @@ function confirmReservation(index) {
     loadAdminDashboard();
 }
 
+// حذف حجز من لوحة الأدمن (ميزة جديدة)
+function adminDeleteReservation(index) {
+    if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
+    let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
+    allRes.splice(index, 1);
+    localStorage.setItem('omda_reservations', JSON.stringify(allRes));
+    loadAdminDashboard();
+    alert('تم حذف الحجز بنجاح.');
+}
+
 function adminLogout() {
     localStorage.removeItem('omda_admin_logged');
-    document.getElementById('admin-dashboard').classList.add('hidden');
-    document.getElementById('admin-login-box').classList.remove('hidden');
+    window.location.href = 'index.html';
 }
 
 // تهيئة أولية عند فتح الصفحة
