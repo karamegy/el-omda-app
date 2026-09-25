@@ -26,6 +26,10 @@ let currentCustomer = null;
 let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
 let activeDiscount = 0;
 
+// إحداثيات موقع العميل المختارة عبر GPS
+let customerLat = null;
+let customerLng = null;
+
 // إحداثيات مطعم مشويات العمدة الرئيسي (افتراضياً شبرا منت)
 let restaurantCoords = JSON.parse(localStorage.getItem('omda_restaurant_coords') || '[30.005, 31.185]');
 
@@ -44,6 +48,34 @@ let peerConnection = null;
 let localStream = null;
 let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+// ==========================================
+// نظام جلب موقع العميل عبر GPS
+// ==========================================
+function fetchCustomerGpsLocation() {
+    const statusEl = document.getElementById('customer-gps-status');
+    if(!navigator.geolocation) {
+        if(statusEl) statusEl.innerText = "❌ متصفحك لا يدعم تحديد الموقع الجغرافي.";
+        alert("متصفحك لا يدعم تحديد الموقع الجغرافي GPS.");
+        return;
+    }
+
+    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقعك بدقة عبر الأقمار الصناعية...";
+
+    navigator.geolocation.getCurrentPosition(
+        (position) => {
+            customerLat = position.coords.latitude;
+            customerLng = position.coords.longitude;
+            if(statusEl) statusEl.innerText = `✓ تم تحديد موقعك بدقة بنجاح! (${customerLat.toFixed(4)}, ${customerLng.toFixed(4)})`;
+            alert("✓ تم تحديد موقع الاستلام بدقة بنجاح!");
+        },
+        (error) => {
+            if(statusEl) statusEl.innerText = "❌ تعذر تحديد الموقع. تأكد من تفعيل صلاحية الـ GPS.";
+            alert("تعذر تحديد موقعك: " + error.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+}
 
 // ==========================================
 // نظام نغمة الرنين عبر Web Audio API
@@ -856,12 +888,19 @@ function submitOrder() {
         return;
     }
 
+    // التحقق من تحديد موقع GPS للعميل
+    if(customerLat === null || customerLng === null) {
+        if(!confirm("⚠️ لم تقم بالضغط على زر (تحديد وتثبيت موقع الاستلام عبر GPS). هل تريد المتابعة؟")) {
+            return;
+        }
+    }
+
     let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     let total = subtotal - (subtotal * activeDiscount);
     
-    // إحداثيات ثابتة ومستقرة للطلب لمنع أي تحرك أو اهتزاز عشوائي على الخريطة
-    const latOffset = (address.length % 7 - 3) * 0.003;
-    const lngOffset = (address.length % 5 - 2) * 0.003;
+    // استخدام إحداثيات العميل الفعلية أو إحداثيات قريبة للمطعم إن لم يتم تفعيل الـ GPS
+    let finalLat = customerLat !== null ? customerLat : (restaurantCoords[0] + 0.01);
+    let finalLng = customerLng !== null ? customerLng : (restaurantCoords[1] + 0.01);
 
     const newOrder = {
         id: 'OMDA-' + Math.floor(100000 + Math.random() * 900000),
@@ -871,8 +910,8 @@ function submitOrder() {
         items: [...cart],
         total,
         status: 'pending',
-        lat: restaurantCoords[0] + 0.01 + latOffset,
-        lng: restaurantCoords[1] + 0.01 + lngOffset,
+        lat: finalLat,
+        lng: finalLng,
         date: new Date().toLocaleString('ar-EG')
     };
 
@@ -886,8 +925,13 @@ function submitOrder() {
     localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
+    
     cart = [];
     activeDiscount = 0;
+    customerLat = null;
+    customerLng = null;
+    const gpsStatusEl = document.getElementById('customer-gps-status');
+    if(gpsStatusEl) gpsStatusEl.innerText = '';
     updateCartUI();
     
     currentCustomer = { name, phone };
@@ -1682,7 +1726,6 @@ function loadLiveTrackingMap() {
     });
 
     filteredOrders.forEach((order) => {
-        // إحداثيات الطلب الثابتة والمستقرة (تمنع التحرك والاهتزاز العشوائي)
         let orderLat = order.lat || (restaurantCoords[0] + 0.01);
         let orderLng = order.lng || (restaurantCoords[1] + 0.01);
 
@@ -1930,6 +1973,16 @@ function autoDispatchOrders() {
     localStorage.setItem('omda_orders', JSON.stringify(orders));
     alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين المسجلين بدقة 🚀`);
     loadLiveTrackingMap();
+}
+
+function getStatusTest(status) {
+    switch(status) {
+        case 'pending': return 'قيد المراجعة ⏳';
+        case 'cooking': return 'ع الفحم 🔥';
+        case 'delivery': return 'مع الدليفري 🛵';
+        case 'done': return 'وصل ✅';
+        default: return 'جاري المعالجة';
+    }
 }
 
 function getStatusText(status) {
