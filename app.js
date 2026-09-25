@@ -18,7 +18,6 @@ const defaultProducts = [
     { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش" }
 ];
 
-// دمج المنتجات المخزنة مع الافتراضية
 let menuProducts = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
 
 let cart = [];
@@ -490,7 +489,7 @@ function loadAdminDashboard() {
                     <p><strong>العنوان:</strong> ${order.address}</p>
                     <p><strong>الطلب:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
                     <p><strong>الإجمالي:</strong> ${order.total} جنيه | <strong>التاريخ:</strong> ${order.date}</p>
-                    <div style="margin-top: 10px; display:flex; gap:10px; align-items:center;">
+                    <div style="margin-top: 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                         <label>حالة الشحنة:</label>
                         <select onchange="updateOrderStatus(${index}, this.value)">
                             <option value="pending" ${order.status==='pending'?'selected':''}>قيد المراجعة</option>
