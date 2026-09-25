@@ -21,16 +21,13 @@ const defaultProducts = [
 ];
 
 let menuProducts = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
-let cart = [];
-let currentCustomer = null;
+let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
+let currentCustomer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
 let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
 let activeDiscount = 0;
 
-// إحداثيات موقع العميل المختارة عبر GPS
 let customerLat = null;
 let customerLng = null;
-
-// إحداثيات مطعم مشويات العمدة الرئيسي (افتراضياً شبرا منت)
 let restaurantCoords = JSON.parse(localStorage.getItem('omda_restaurant_coords') || '[30.005, 31.185]');
 
 let map;
@@ -43,14 +40,13 @@ let watchId = null;
 let pickingBranchMode = false;
 let pickingDriverMode = false;
 
-// متغيرات نظام الاتصال WebRTC
 let peerConnection = null;
 let localStream = null;
 let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام جلب موقع العميل عبر GPS مع دعم البدائل (Fallback)
+// نظام جلب موقع العميل عبر GPS
 // ==========================================
 function fetchCustomerGpsLocation() {
     const statusEl = document.getElementById('customer-gps-status');
@@ -90,7 +86,7 @@ function fetchCustomerGpsLocation() {
 }
 
 // ==========================================
-// نظام نغمة الرنين عبر Web Audio API
+// نظام نغمة الرنين والاتصال (WebRTC)
 // ==========================================
 function startRingingTone() {
     if (ringingInterval) return;
@@ -132,9 +128,6 @@ function playAlertSound() {
     } catch(e) {}
 }
 
-// ==========================================
-// نظام الاتصال الصوتي والمرئي (WebRTC)
-// ==========================================
 async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
     const modal = document.getElementById('callModal');
     const title = document.getElementById('callStatusTitle');
@@ -246,9 +239,14 @@ async function answerIncomingCall() {
 }
 
 // ==========================================
-// التحقق من صلاحيات الإدارة والأمان
+// التحقق من صلاحيات الأدمن والماستر (haretg@gmail.com)
 // ==========================================
 function checkAdminPermission() {
+    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+    if (loggedUser.email === 'haretg@gmail.com' || loggedUser.role === 'admin') {
+        return true;
+    }
+
     const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
     let userEmail = '';
     
@@ -260,24 +258,14 @@ function checkAdminPermission() {
         }
     }
 
-    let hasAdminEmail = (userEmail === 'admin@omda.com');
-    if (!hasAdminEmail) {
-        for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            const v = (localStorage.getItem(k) || '').toLowerCase();
-            if (v.includes('admin@omda.com') || v === 'admin' || v === 'master admin') {
-                hasAdminEmail = true;
-                break;
-            }
-        }
-    }
+    if (userEmail === 'haretg@gmail.com' || userEmail === 'admin@omda.com') return true;
 
     const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || 
                         localStorage.getItem('role') === 'admin' || 
                         localStorage.getItem('userRole') === 'admin' ||
                         localStorage.getItem('isAdminLoggedIn') === 'true';
 
-    return (hasAdminEmail || isAdminFlag);
+    return isAdminFlag;
 }
 
 function enforceAdminSecurity() {
@@ -286,7 +274,7 @@ function enforceAdminSecurity() {
     const adminPanelLink = document.getElementById('adminPanelLink');
     
     if (isAdmin) {
-        if (badge) badge.innerText = "صلاحيات الإدارة الكاملة (Admin Mode) 👑";
+        if (badge) badge.innerText = "صلاحيات الماستر والأدمن الكاملة (Master Admin) 👑";
         if (adminPanelLink) adminPanelLink.style.display = 'flex';
         const tabD = document.getElementById('tabDrivers');
         const tabB = document.getElementById('tabBranches');
@@ -311,7 +299,7 @@ function enforceAdminSecurity() {
 }
 
 // ==========================================
-// تهيئة الصفحة العامة والخريطة التفاعلية
+// تهيئة التطبيق والخريطة عند التحميل
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     enforceAdminSecurity();
@@ -319,10 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if(typeof renderMenu === 'function') renderMenu();
     if(typeof updateCartUI === 'function') updateCartUI();
-    const savedCust = localStorage.getItem('omda_current_cust');
-    if(savedCust) {
-        currentCustomer = JSON.parse(savedCust);
-    }
 
     if (document.getElementById('leafletMap')) {
         map = L.map('leafletMap', { 
@@ -513,7 +497,6 @@ async function addNewDriverWithLocation() {
 
     const newDriverObj = { id: Date.now(), name, phone, lat, lng };
 
-    // الحفظ في Firebase Firestore إذا كان متاحاً، وإلا التخزين المحلي
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriverObj.id)), newDriverObj);
@@ -539,7 +522,7 @@ async function addNewDriverWithLocation() {
 }
 
 // ==========================================
-// دوال المنيو، السلة، والتسوق
+// دوال المنيو، السلة المستمرة، والتسوق
 // ==========================================
 function loadSavedTicker() {
     const savedTicker = localStorage.getItem('omda_ticker_text');
@@ -829,7 +812,10 @@ function addToCart(productId) {
     alert(`تم إضافة (${prod.name}) إلى السلة بنجاح! 🛒`);
 }
 
+// دالة تحديث السلة وحفظها تلقائياً في التخزين المحلي لضمان استمراريتها بين الصفحات
 function updateCartUI() {
+    localStorage.setItem('omda_cart', JSON.stringify(cart));
+
     const countEl = document.getElementById('cart-count');
     if(countEl) countEl.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
     
@@ -936,7 +922,6 @@ async function submitOrder() {
         date: new Date().toLocaleString('ar-EG')
     };
 
-    // حفظ الطلب في سحابة Firebase Firestore إذا كانت متاحة
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", newOrder.id), newOrder);
@@ -957,6 +942,7 @@ async function submitOrder() {
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
     
     cart = [];
+    localStorage.removeItem('omda_cart');
     activeDiscount = 0;
     customerLat = null;
     customerLng = null;
@@ -1188,10 +1174,10 @@ function showReceipt(order) {
 }
 
 // ==========================================
-// إدارة تسجيل دخول وطاقم الإدارة
+// إدارة تسجيل دخول وطاقم الإدارة (haretg@gmail.com)
 // ==========================================
 function adminLogin() {
-    const idInput = document.getElementById('admin-login-id').value.trim();
+    const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
     const passInput = document.getElementById('admin-pass').value.trim();
 
     if(!idInput || !passInput) {
@@ -1201,15 +1187,16 @@ function adminLogin() {
 
     let masterPass = localStorage.getItem('omda_master_password') || '1234';
 
-    if((idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
-        const masterUser = { name: 'المدير العام', email: 'admin@omda.com', role: 'admin' };
+    if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
+        const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', role: 'admin' };
         localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
         loadAdminDashboard();
+        alert('أهلاً بك يا أسطى كرم في لوحة تحكم الماستر العام 👑');
         return;
     }
 
     let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
-    let foundStaff = staffList.find(s => (s.email === idInput || s.phone === idInput) && s.password === passInput);
+    let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
 
     if(foundStaff) {
         localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
@@ -1228,7 +1215,7 @@ function createNewStaff() {
     const role = document.getElementById('staff-role').value;
 
     if(!name || !email || !phone || !password) {
-        alert('من فضلك املأ كافة بيانات الموظف أو المحاسب بدقة!');
+        alert('من فضلك املأ كافة بيانات الموظف أو الأدمن بدقة!');
         return;
     }
 
@@ -1263,7 +1250,7 @@ function loadStaffList() {
     }
 
     staffList.forEach((staff, index) => {
-        let roleName = staff.role === 'accountant' ? 'محاسب' : (staff.role === 'staff' ? 'موظف' : 'مدير فرع');
+        let roleName = staff.role === 'admin' ? 'أدمن إضافي' : (staff.role === 'accountant' ? 'محاسب' : 'موظف');
         container.innerHTML += `
             <div style="background:#fff; padding:8px; margin:5px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid #d6d3d1;">
                 <div>
@@ -1302,7 +1289,7 @@ function changeMyPassword() {
 
     let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
 
-    if(loggedUser.role === 'admin' || loggedUser.email === 'admin@omda.com') {
+    if(loggedUser.role === 'admin' || loggedUser.email === 'haretg@gmail.com') {
         let masterPass = localStorage.getItem('omda_master_password') || '1234';
         if(currentPass !== masterPass) {
             alert('كلمة المرور الحالية غير صحيحة!');
@@ -1344,15 +1331,19 @@ function loadAdminDashboard() {
     let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
     const nameEl = document.getElementById('logged-user-name');
     const roleEl = document.getElementById('logged-user-role');
-    const staffSection = document.getElementById('staff-management-section');
+    const staffSection = document.getElementById('section-staff');
 
     if(nameEl) nameEl.innerText = loggedUser.name || 'مدير النظام';
-    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.role === 'admin' ? 'مدير ماستر (Master Admin)' : (loggedUser.role === 'accountant' ? 'محاسب' : 'موظف'));
+    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.email === 'haretg@gmail.com' ? 'المدير العام الماستر (Master Admin)' : (loggedUser.role === 'admin' ? 'مشرف / أدمن' : (loggedUser.role === 'accountant' ? 'محاسب' : 'موظف')));
 
-    if(loggedUser.email !== 'admin@omda.com' && loggedUser.role !== 'admin') {
+    if(loggedUser.email !== 'haretg@gmail.com' && loggedUser.role !== 'admin') {
         if(staffSection) staffSection.style.display = 'none';
+        const staffNavBtn = document.getElementById('btn-staff-tab');
+        if(staffNavBtn) staffNavBtn.style.display = 'none';
     } else {
         if(staffSection) staffSection.style.display = 'block';
+        const staffNavBtn = document.getElementById('btn-staff-tab');
+        if(staffNavBtn) staffNavBtn.style.display = 'flex';
         loadStaffList();
     }
 
@@ -1971,7 +1962,6 @@ function toggleGpsTracking() {
                 driver.lat = lat; driver.lng = lng;
                 localStorage.setItem('omda_drivers', JSON.stringify(drivers));
 
-                // تحديث موقع السائق سحابياً في Firestore إذا كان متصلاً
                 if (window.db && window.firebaseModules) {
                     try {
                         await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(driver.id || driver.name)), driver, { merge: true });
