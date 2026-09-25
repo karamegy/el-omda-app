@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>خريطة التتبع الحي واللجستي الشاملة | مشويات العمدة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#b45309">
+    <style>
+        body { background-color: #f5f5f4; margin: 0; font-family: 'Cairo', Tahoma, sans-serif; }
+        .map-layout { display: grid; grid-template-columns: 380px 1fr; height: calc(100vh - 70px); }
+        @media (max-width: 768px) { .map-layout { grid-template-columns: 1fr; grid-template-rows: 320px 1fr; height: auto; } }
+        .orders-sidebar { background: #fff; border-left: 2px solid #e7e5e4; padding: 15px; overflow-y: auto; max-height: 100%; }
+        .map-container { width: 100%; height: 100%; min-height: 450px; }
+        .sidebar-tabs { display: flex; gap: 5px; margin-bottom: 12px; }
+        .sidebar-tab { flex: 1; padding: 8px; background: #f5f5f4; border: 1px solid #d6d3d1; border-radius: 6px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: center; color: #57534e; }
+        .sidebar-tab.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .filter-bar { display: flex; gap: 4px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 4px; }
+        .filter-btn { background: #f5f5f4; border: 1px solid #d6d3d1; border-radius: 6px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; white-space: nowrap; font-weight: bold; color: #57534e; }
+        .filter-btn.active { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+        .track-card { background: #fafaf9; border: 1px solid #d6d3d1; border-radius: 8px; padding: 10px; margin-bottom: 10px; cursor: pointer; transition: all 0.2s; border-right: 4px solid var(--primary-color); }
+        .track-card:hover { border-color: var(--secondary-color); background: #fffbeb; }
+        .status-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
+        .status-pending { background: #fef08a; color: #854d0e; }
+        .status-cooking { background: #fed7aa; color: #9a3412; }
+        .status-delivery { background: #bae6fd; color: #0369a1; }
+        .status-done { background: #bbf7d0; color: #166534; }
+        .action-btns { display: flex; gap: 6px; margin-top: 6px; }
+        .action-btn { flex: 1; padding: 4px; border-radius: 6px; border: none; font-size: 0.75rem; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 4px; text-decoration: none; }
+        .btn-call { background: #dcfce7; color: #166534; }
+        .btn-wa { background: #e0f2fe; color: #0369a1; }
+        .driver-card { background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px; border-radius: 8px; margin-bottom: 8px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+    <header class="main-header" style="height: 70px;">
+        <div class="logo-container">
+            <img src="icon1-512.png" alt="لوجو مشويات العمدة" class="logo-img" style="width: 40px; height: 40px;">
+            <h1 style="font-size: 1.1rem;">إدارة التتبع والأسطول اللجستي 🗺️</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="admin.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background: #0369a1;"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
+            <a href="index.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-store"></i> المنيو</a>
+        </nav>
+    </header>
+
+    <div class="map-layout">
+        
+        <!-- القائمة الجانبية -->
+        <div class="orders-sidebar">
+            <div class="sidebar-tabs">
+                <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الطلبات</button>
+                <button onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول والطيارين</button>
+                <button onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-mobile-screen"></i> وضع السائق</button>
+            </div>
+
+            <!-- تبويب الطلبات -->
+            <div id="tab-content-orders">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h3 style="color: var(--primary-color); font-size: 0.95rem; margin:0;"><i class="fa-solid fa-route"></i> الشحنات الحية</h3>
+                    <button onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.7rem; background: #16a34a;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي</button>
+                </div>
+                
+                <div class="filter-bar">
+                    <button onclick="filterOrders('all', this)" class="filter-btn active">الكل</button>
+                    <button onclick="filterOrders('pending', this)" class="filter-btn">قيد المراجعة</button>
+                    <button onclick="filterOrders('cooking', this)" class="filter-btn">ع الفحم</button>
+                    <button onclick="filterOrders('delivery', this)" class="filter-btn">مع الدليفري</button>
+                    <button onclick="filterOrders('done', this)" class="filter-btn">وصل</button>
+                </div>
+                <div id="live-orders-list"></div>
+            </div>
+
+            <!-- تبويب السائقين والأدمن -->
+            <div id="tab-content-drivers" style="display: none;">
+                <h3 style="color: #0369a1; font-size: 0.95rem; margin-bottom: 8px;"><i class="fa-solid fa-users-gear"></i> إضافة طيار دليفري جديد</h3>
+                <div class="checkout-form" style="max-width: 100%; margin-bottom: 15px;">
+                    <input type="text" id="driver-name" placeholder="اسم السائق (مثل: كابتن أحمد)">
+                    <input type="text" id="driver-phone" placeholder="رقم الهاتف">
+                    <button onclick="addNewDriver()" class="btn-primary" style="background-color: #0369a1; padding: 6px; font-size: 0.8rem;">إضافة السائق للأسطول ➕</button>
+                </div>
+                <div id="drivers-list-container"></div>
+            </div>
+
+            <!-- تبويب بوابة السائق (للتتبع الحي من هاتف الطيار) -->
+            <div id="tab-content-portal" style="display: none;">
+                <h3 style="color: #9333ea; font-size: 0.95rem; margin-bottom: 8px;"><i class="fa-solid fa-satellite-dish"></i> بث الموقع الحي (GPS Tracker)</h3>
+                <p style="font-size: 0.75rem; color: #57534e;">اختر اسمك كساائق وابدأ بث موقعك الجغرافي الحي للسيستم:</p>
+                <select id="portal-driver-select" style="width: 100%; padding: 8px; margin-bottom: 8px; border-radius: 6px; border:1px solid #d6d3d1;"></select>
+                <button onclick="toggleGpsTracking()" id="gps-toggle-btn" class="btn-primary" style="width: 100%; background: #16a34a; padding: 8px; font-size: 0.85rem;">بدء بث الموقع الحي 🛰️</button>
+                <div id="gps-status-box" style="margin-top: 10px; font-size: 0.8rem; background: #e0f2fe; padding: 8px; border-radius: 6px; color: #0369a1; text-align: center;">الوضع: متوقف</div>
+            </div>
+        </div>
+
+        <div id="map" class="map-container"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        const restaurantCoords = [30.005, 31.185];
+        const map = L.map('map').setView(restaurantCoords, 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© مشويات العمدة (GIS Logistics)'
+        }).addTo(map);
+
+        const omdaIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3076/3076135.png',
+            iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -35]
+        });
+
+        const deliveryIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/2972/2972185.png',
+            iconSize: [36, 36], iconAnchor: [18, 36], popupAnchor: [0, -30]
+        });
+
+        const driverIcon = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/3448/3448609.png',
+            iconSize: [35, 35], iconAnchor: [17, 35], popupAnchor: [0, -30]
+        });
+
+        L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
+            .bindPopup("<b>👑 مطعم ومشويات العمدة</b><br>شبرا منت / الجيزة").openPopup();
+
+        let markersLayer = L.layerGroup().addTo(map);
+        let polylinesLayer = L.layerGroup().addTo(map);
+        let driversLayer = L.layerGroup().addTo(map);
+
+        let currentFilter = 'all';
+        let previousOrdersCount = 0;
+        let watchId = null;
+
+        function switchSidebarTab(tabName, btn) {
+            document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+
+            document.getElementById('tab-content-orders').style.display = tabName === 'orders' ? 'block' : 'none';
+            document.getElementById('tab-content-drivers').style.display = tabName === 'drivers' ? 'block' : 'none';
+            document.getElementById('tab-content-portal').style.display = tabName === 'portal' ? 'block' : 'none';
+
+            if(tabName === 'drivers') loadDriversAdminList();
+            if(tabName === 'portal') populateDriverPortalSelect();
+        }
+
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371;
+            const dLat = (lat2 - lat1) * (Math.PI / 180);
+            const dLon = (lon2 - lon1) * (Math.PI / 180);
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+        }
+
+        function playAlertSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + 0.3);
+            } catch(e) {}
+        }
+
+        function filterOrders(status, btn) {
+            currentFilter = status;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            loadLiveTrackingMap();
+        }
+
+        function loadLiveTrackingMap() {
+            const listContainer = document.getElementById('live-orders-list');
+            if(!listContainer) return;
+            listContainer.innerHTML = '';
+
+            markersLayer.clearLayers();
+            polylinesLayer.clearLayers();
+            driversLayer.clearLayers();
+
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            if(allOrders.length > previousOrdersCount && previousOrdersCount > 0) playAlertSound();
+            previousOrdersCount = allOrders.length;
+
+            if(allOrders.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:20px;">لا توجد طلبات مسجلة حالياً.</p>';
+                loadDriversOnMap();
+                return;
+            }
+
+            let filteredOrders = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+
+            filteredOrders.forEach((order) => {
+                if(!order.lat || !order.lng) {
+                    order.lat = restaurantCoords[0] + (Math.random() - 0.5) * 0.05;
+                    order.lng = restaurantCoords[1] + (Math.random() - 0.5) * 0.05;
+                }
+
+                let distKm = calculateDistance(restaurantCoords[0], restaurantCoords[1], order.lat, order.lng);
+                let etaMinutes = Math.round((distKm / 25) * 60) + 10;
+
+                L.polyline([restaurantCoords, [order.lat, order.lng]], {
+                    color: order.status === 'done' ? '#16a34a' : '#dc2626', weight: 3, dashArray: '5, 5'
+                }).addTo(polylinesLayer);
+
+                let marker = L.marker([order.lat, order.lng], { icon: deliveryIcon }).addTo(markersLayer);
+                marker.bindPopup(`<b>طلب رقم: ${order.id}</b><br>👤 ${order.name} (${order.phone})<br>📍 ${order.address}<br>📏 المسافة: ${distKm.toFixed(1)} كم | ETA: ${etaMinutes} دقيقة<br><b>السائق المسند:</b> ${order.assignedDriver || 'لم يُسند بعد'}`);
+
+                let statusClass = 'status-' + (order.status || 'pending');
+                listContainer.innerHTML += `
+                    <div class="track-card" onclick="map.flyTo([${order.lat}, ${order.lng}], 15)">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                            <strong>${order.id}</strong>
+                            <span class="status-badge ${statusClass}">${getStatusText(order.status)}</span>
+                        </div>
+                        <p style="font-size: 0.8rem; color: #57534e; margin: 2px 0;">👤 ${order.name} | 🏍️ السائق: <strong>${order.assignedDriver || 'بدون'}</strong></p>
+                        <p style="font-size: 0.75rem; color: #0284c7; font-weight: bold; margin: 2px 0;">📏 ${distKm.toFixed(1)} كم | ⏱️ ${etaMinutes} دقيقة</p>
+                        <div class="action-btns" onclick="event.stopPropagation()">
+                            <a href="tel:${order.phone}" class="action-btn btn-call"><i class="fa-solid fa-phone"></i> اتصال</a>
+                            <a href="https://wa.me/2${order.phone}" target="_blank" class="action-btn btn-wa"><i class="fa-brands fa-whatsapp"></i> واتساب</a>
+                        </div>
+                    </div>
+                `;
+            });
+
+            loadDriversOnMap();
+        }
+
+        function loadDriversOnMap() {
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            drivers.forEach(driver => {
+                if(driver.lat && driver.lng) {
+                    L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(driversLayer)
+                        .bindPopup(`<b>🏍️ السائق: ${driver.name}</b><br>الهاتف: ${driver.phone}<br>آخر تحديث حي للموقع.`);
+                }
+            });
+        }
+
+        function addNewDriver() {
+            const name = document.getElementById('driver-name').value.trim();
+            const phone = document.getElementById('driver-phone').value.trim();
+            if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
+
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0], lng: restaurantCoords[1] });
+            localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+            alert('تم إضافة السائق بنجاح 🏍️');
+            document.getElementById('driver-name').value = '';
+            document.getElementById('driver-phone').value = '';
+            loadDriversAdminList();
+        }
+
+        function loadDriversAdminList() {
+            const container = document.getElementById('drivers-list-container');
+            if(!container) return;
+            container.innerHTML = '';
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            if(drivers.length === 0) { container.innerHTML = '<p style="color:#78716c; font-size:0.8rem;">لا توجد مناديب مسجلة حالياً.</p>'; return; }
+
+            drivers.forEach((d, idx) => {
+                container.innerHTML += `
+                    <div class="driver-card">
+                        <strong>${d.name}</strong> (${d.phone})<br>
+                        <button onclick="deleteDriver(${idx})" class="btn-danger btn-sm" style="margin-top:5px; padding:3px 6px; font-size:0.7rem;">حذف</button>
+                    </div>
+                `;
+            });
+        }
+
+        function deleteDriver(idx) {
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            drivers.splice(idx, 1);
+            localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+            loadDriversAdminList();
+        }
+
+        function populateDriverPortalSelect() {
+            const select = document.getElementById('portal-driver-select');
+            if(!select) return;
+            select.innerHTML = '';
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            drivers.forEach(d => {
+                select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone})</option>`;
+            });
+        }
+
+        function toggleGpsTracking() {
+            const driverName = document.getElementById('portal-driver-select').value;
+            const statusBox = document.getElementById('gps-status-box');
+            const btn = document.getElementById('gps-toggle-btn');
+
+            if(!driverName) { alert('اختر اسم السائق أولاً!'); return; }
+
+            if(watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                btn.innerText = "بدء بث الموقع الحي 🛰️";
+                btn.style.background = "#16a34a";
+                statusBox.innerText = "الوضع: متوقف";
+                return;
+            }
+
+            if(navigator.geolocation) {
+                btn.innerText = "إيقاف البث الحي 🛑";
+                btn.style.background = "#dc2626";
+                statusBox.innerText = "جاري بث إحداثيات GPS الحية...";
+
+                watchId = navigator.geolocation.watchPosition((position) => {
+                    let lat = position.coords.latitude;
+                    let lng = position.coords.longitude;
+
+                    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+                    let driver = drivers.find(d => d.name === driverName);
+                    if(driver) {
+                        driver.lat = lat; driver.lng = lng;
+                        localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+                    }
+                    statusBox.innerText = `تم بث الموقع بنجاح (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                }, (error) => {
+                    alert('تعذر الوصول لخدمة GPS في هاتفك: ' + error.message);
+                }, { enableHighAccuracy: true });
+            } else {
+                alert('متصفحك لا يدعم تتبع الـ GPS.');
+            }
+        }
+
+        function autoDispatchOrders() {
+            let orders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            if(drivers.length === 0) { alert('أضف مناديب دليفري أولاً لتنفيذ التوزيع الآلي!'); return; }
+
+            let assignedCount = 0;
+            orders.forEach(order => {
+                if(!order.assignedDriver && order.status !== 'done') {
+                    let randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
+                    order.assignedDriver = randomDriver.name;
+                    order.status = 'delivery';
+                    assignedCount++;
+                }
+            });
+
+            localStorage.setItem('omda_orders', JSON.stringify(orders));
+            alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين تلقائياً بنجاح! 🚀`);
+            loadLiveTrackingMap();
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'قيد المراجعة ⏳';
+                case 'cooking': return 'ع الفحم 🔥';
+                case 'delivery': return 'مع الدليفري 🛵';
+                case 'done': return 'وصل ✅';
+                default: return 'جاري المعالجة';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLiveTrackingMap();
+            setInterval(loadLiveTrackingMap, 8000);
+        });
+    </script>
+</body>
+</html>
