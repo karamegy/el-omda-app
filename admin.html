@@ -81,12 +81,19 @@
         <!-- شاشة تسجيل دخول الأدمن / المحاسب / الموظف -->
         <div id="admin-login-box" class="admin-login-box" style="margin: 60px auto; max-width: 450px;">
             <h2 style="color: var(--secondary-color); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i> بوابة دخول الطاقم والإدارة</h2>
-            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">أدخل البريد الإلكتروني (مثل haretg@gmail.com) مع كلمة المرور للوصول للنظام:</p>
+            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">سجل الدخول باستخدام حساب جوجل المعتمد (مثل haretg@gmail.com) أو البريد:</p>
             
+            <!-- زر تسجيل دخول الأدمن عبر جوجل -->
+            <button type="button" onclick="window.adminLoginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.1rem;"></i> تسجيل دخول الأدمن باستخدام جوجل 🚀
+            </button>
+
+            <div style="text-align: center; color: #78716c; margin-bottom: 15px; font-size: 0.85rem; border-bottom: 1px solid #e7e5e4; line-height: 0.1em;"><span style="background: #fff; padding: 0 10px;">أو بالطريقة التقليدية</span></div>
+
             <div class="checkout-form" style="max-width: 100%;">
                 <input type="text" id="admin-login-id" placeholder="البريد الإلكتروني أو رقم الهاتف">
                 <input type="password" id="admin-pass" placeholder="كلمة المرور السرية">
-                <button onclick="adminLogin()" class="btn-danger" style="margin-top: 10px; width: 100%;">تسجيل الدخول للنظام 🛡️</button>
+                <button onclick="adminLoginCustom()" class="btn-danger" style="margin-top: 10px; width: 100%;">تسجيل الدخول للنظام 🛡️</button>
             </div>
         </div>
 
@@ -244,10 +251,11 @@
 
     </main>
 
-    <!-- إعداد وتهيئة Firebase السحابية -->
+    <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
@@ -261,11 +269,39 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
 
         window.db = db;
+        window.auth = auth;
         window.firebaseModules = { collection, getDocs, doc, setDoc };
+
+        // دالة تسجيل دخول الأدمن عبر حساب جوجل المعتمد
+        window.adminLoginWithGoogle = async function() {
+            try {
+                const result = await signInWithPopup(auth, googleProvider);
+                const user = result.user;
+                const email = user.email.toLowerCase();
+
+                // التحقق من البريد الإلكتروني للمدير العام
+                if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
+                    const masterUser = { 
+                        name: user.displayName || 'المدير العام (كرم حمدي)', 
+                        email: email, 
+                        role: 'admin' 
+                    };
+                    localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
+                    loadAdminDashboard();
+                    alert(`👑 أهلاً بك يا أسطى كرم عبر جوجل في لوحة تحكم الماستر العام (${email})!`);
+                } else {
+                    alert(`⚠️ عذراً يا ${user.displayName || 'مستخدم'}، البريد الإلكتروني (${email}) ليس لديه صلاحيات مدير ماستر.`);
+                }
+            } catch (error) {
+                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+            }
+        };
         
-        console.log("🔥 تم ربط لوحة التحكم الماستر بقاعدة بيانات Firebase بنجاح!");
+        console.log("🔥 تم ربط لوحة التحكم الماستر بقاعدة بيانات Firebase ومصادقة جوجل بنجاح!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
@@ -281,7 +317,7 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
-        // دالة تسجيل الدخول المحدثة لدعم Master Admin (haretg@gmail.com)
+        // دالة تسجيل الدخول التقليدية
         window.adminLoginCustom = function() {
             const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
             const passInput = document.getElementById('admin-pass').value.trim();
@@ -293,7 +329,6 @@
 
             let masterPass = localStorage.getItem('omda_master_password') || '1234';
 
-            // التحقق من حساب Master Admin الأساسي (haretg@gmail.com)
             if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
                 const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', role: 'admin' };
                 localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
@@ -302,7 +337,6 @@
                 return;
             }
 
-            // التحقق من الحسابات الإضافية (أدمن، محاسب، موظف) المسجلة محلياً أو سحابياً
             let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
             let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
 
@@ -315,13 +349,7 @@
             }
         };
 
-        // ربط زر تسجيل الدخول بالدالة المحدثة
         window.addEventListener('DOMContentLoaded', () => {
-            const loginBtn = document.querySelector('.admin-login-box button');
-            if(loginBtn) {
-                loginBtn.setAttribute('onclick', 'adminLoginCustom()');
-            }
-
             if(localStorage.getItem('omda_logged_user')) {
                 loadAdminDashboard();
             }
