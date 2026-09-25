@@ -19,16 +19,168 @@ const defaultProducts = [
 ];
 
 let menuProducts = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
-
 let cart = [];
 let currentCustomer = null;
 let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
 let activeDiscount = 0;
 
-window.addEventListener('DOMContentLoaded', () => {
+// إحداثيات مطعم مشويات العمدة الرئيسي (شبرا منت / الجيزة)
+const restaurantCoords = [30.005, 31.185];
+
+let map;
+let streetLayer, topoLayer, satelliteLayer;
+let markersLayer, polylinesLayer, driversLayer, branchesLayer;
+let activeRoutingControl = null;
+let currentFilter = 'all';
+let previousOrdersCount = 0;
+let watchId = null;
+let pickingBranchMode = false;
+
+// ----------------- التحقق من الصلاحيات -----------------
+function checkAdminPermission() {
+    const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
+    let userEmail = '';
+    
+    for (let key of possibleKeys) {
+        const val = localStorage.getItem(key);
+        if (val) {
+            userEmail = val.trim().toLowerCase();
+            break;
+        }
+    }
+
+    let hasAdminEmail = (userEmail === 'admin@omda.com');
+
+    if (!hasAdminEmail) {
+        for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            const v = (localStorage.getItem(k) || '').toLowerCase();
+            if (v.includes('admin@omda.com') || v === 'admin' || v === 'master admin') {
+                hasAdminEmail = true;
+                break;
+            }
+        }
+    }
+
+    const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || 
+                        localStorage.getItem('role') === 'admin' || 
+                        localStorage.getItem('userRole') === 'admin' ||
+                        localStorage.getItem('isAdminLoggedIn') === 'true';
+
+    return (hasAdminEmail || isAdminFlag);
+}
+
+function enforceAdminSecurity() {
+    const isAdmin = checkAdminPermission();
+    const badge = document.getElementById('userRoleBadge');
+    const adminPanelLink = document.getElementById('adminPanelLink');
+    
+    if (isAdmin) {
+        if (badge) badge.innerText = "صلاحيات الإدارة الكاملة (Admin Mode) 👑";
+        if (adminPanelLink) adminPanelLink.style.display = 'flex';
+        const tabD = document.getElementById('tabDrivers');
+        const tabB = document.getElementById('tabBranches');
+        const tabP = document.getElementById('tabPortal');
+        const autoBtn = document.getElementById('autoDispatchBtn');
+        if(tabD) tabD.style.display = 'block';
+        if(tabB) tabB.style.display = 'block';
+        if(tabP) tabP.style.display = 'block';
+        if(autoBtn) autoBtn.style.display = 'inline-flex';
+    } else {
+        if (badge) badge.innerText = "وضع تتبع الشحنة والطلبات للعملاء والزوار 📦";
+        if (adminPanelLink) adminPanelLink.style.display = 'none';
+        const tabD = document.getElementById('tabDrivers');
+        const tabB = document.getElementById('tabBranches');
+        const tabP = document.getElementById('tabPortal');
+        const autoBtn = document.getElementById('autoDispatchBtn');
+        if(tabD) tabD.style.display = 'none';
+        if(tabB) tabB.style.display = 'none';
+        if(tabP) tabP.style.display = 'none';
+        if(autoBtn) autoBtn.style.display = 'none';
+    }
+}
+
+// ----------------- تهيئة الصفحة العامة والخريطة -----------------
+document.addEventListener('DOMContentLoaded', () => {
+    enforceAdminSecurity();
     loadSavedTicker();
+
+    if(typeof renderMenu === 'function') renderMenu();
+    if(typeof updateCartUI === 'function') updateCartUI();
+    const savedCust = localStorage.getItem('omda_current_cust');
+    if(savedCust) {
+        currentCustomer = JSON.parse(savedCust);
+    }
+
+    if (document.getElementById('leafletMap')) {
+        map = L.map('leafletMap', { 
+            zoomControl: true,
+            rotate: true,
+            touchRotate: true,
+            rotateControl: false,
+            bearing: 0
+        }).setView(restaurantCoords, 13);
+
+        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
+        topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenTopoMap' });
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' });
+
+        streetLayer.addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+        polylinesLayer = L.layerGroup().addTo(map);
+        driversLayer = L.layerGroup().addTo(map);
+        branchesLayer = L.layerGroup().addTo(map);
+
+        const omdaIcon = L.divIcon({
+            className: 'custom-map-icon',
+            html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.5); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
+            iconSize: [44, 44], iconAnchor: [22, 22]
+        });
+
+        L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
+            .bindPopup("<b>👑 كبابجي ومشويات العمدة (الرئيسي)</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            if (pickingBranchMode && checkAdminPermission()) {
+                document.getElementById('branch-lat').value = lat;
+                document.getElementById('branch-lng').value = lng;
+                pickingBranchMode = false;
+                map.getContainer().style.cursor = '';
+                alert(`✓ تم التقاط إحداثيات الفرع بنجاح: (${lat}, ${lng})`);
+                switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+                return;
+            }
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`
+                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
+                        <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
+                        ${checkAdminPermission() ? `<button onclick="openBranchAtCoords(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-store"></i> إضافة فرع هنا</button>` : ''}
+                    </div>
+                `)
+                .openOn(map);
+        });
+
+        map.on('rotate', function() {
+            const bearing = map.getBearing ? map.getBearing() : 0;
+            const compass = document.getElementById('compassNeedle');
+            if (compass) {
+                compass.style.transform = `rotate(${-bearing}deg)`;
+            }
+        });
+
+        loadLiveTrackingMap();
+        loadBranchesOnMap();
+        setInterval(loadLiveTrackingMap, 8000);
+    }
 });
 
+// ----------------- دوال المنيو، السلة، والتسوق -----------------
 function loadSavedTicker() {
     const savedTicker = localStorage.getItem('omda_ticker_text');
     if(savedTicker) {
@@ -52,7 +204,6 @@ function updateTickerText() {
     inputEl.value = '';
 }
 
-// تبديل التبويبات (للصفحة الرئيسية)
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -75,7 +226,6 @@ function switchTab(tabId) {
     }
 }
 
-// عرض المنيو مع توجيه الصورة والنص لصفحة المنتج المستقلة (product.html)
 function renderMenu(filter = 'all') {
     const grid = document.getElementById('menu-grid');
     if(!grid) return;
@@ -155,7 +305,6 @@ function filterCategory(cat) {
     renderMenu(cat);
 }
 
-// ميزة "صمم صينيتك بنفسك"
 function addCustomTrayToCart() {
     const sizeSelect = document.getElementById('custom-size');
     const meatSelect = document.getElementById('custom-meat');
@@ -197,7 +346,6 @@ function addCustomTrayToCart() {
     switchTab('cart');
 }
 
-// إضافة منتج جديد مع دعم رفع صورة أو فيديو من الجهاز
 function addNewProductWithMedia() {
     const name = document.getElementById('new-prod-name').value.trim();
     const category = document.getElementById('new-prod-cat').value;
@@ -258,7 +406,6 @@ function saveAndAddNewProduct(prod) {
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
 }
 
-// حذف صنف من المنيو بواسطة الأدمن
 function adminDeleteProduct(id) {
     if(!confirm('هل أنت متأكد من حذف هذا الصنف نهائياً من المنيو؟')) return;
     menuProducts = menuProducts.filter(p => p.id !== id);
@@ -267,7 +414,6 @@ function adminDeleteProduct(id) {
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
-// إدارة المفضلة
 function toggleFavorite(productId) {
     const index = favorites.indexOf(productId);
     if(index > -1) {
@@ -322,7 +468,6 @@ function renderFavorites() {
     });
 }
 
-// إضافة للسلة
 function addToCart(productId) {
     const prod = menuProducts.find(p => p.id === productId);
     if(!prod) return;
@@ -338,7 +483,6 @@ function addToCart(productId) {
     alert(`تم إضافة (${prod.name}) إلى السلة بنجاح! 🛒`);
 }
 
-// تحديث السلة
 function updateCartUI() {
     const countEl = document.getElementById('cart-count');
     if(countEl) countEl.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
@@ -385,7 +529,6 @@ function removeFromCart(id) {
     updateCartUI();
 }
 
-// تطبيق البرومو كود
 function applyPromoCode() {
     const inputEl = document.getElementById('promo-input');
     if(!inputEl) return;
@@ -404,7 +547,6 @@ function applyPromoCode() {
     }
 }
 
-// إرسال الطلب وحساب نقاط الولاء
 function submitOrder() {
     const nameEl = document.getElementById('order-name');
     const phoneEl = document.getElementById('order-phone');
@@ -459,7 +601,6 @@ function submitOrder() {
     loadCustomerDashboard();
 }
 
-// الطلب السريع عبر واتساب
 function sendWhatsAppOrder() {
     const nameEl = document.getElementById('order-name');
     const phoneEl = document.getElementById('order-phone');
@@ -495,7 +636,6 @@ function sendWhatsAppOrder() {
     window.open(waUrl, '_blank');
 }
 
-// حجز الطاولات والعزائم
 function submitReservation() {
     const nameEl = document.getElementById('res-name');
     const phoneEl = document.getElementById('res-phone');
@@ -543,7 +683,6 @@ function submitReservation() {
     switchTab('menu');
 }
 
-// تسجيل دخول الزبون وتتبع الشحنة والتقييمات
 function customerLogin() {
     const phoneInput = document.getElementById('login-phone');
     if(!phoneInput) return;
@@ -684,7 +823,6 @@ function customerLogout() {
 }
 
 // ----------------- إدارة تسجيل دخول وطاقم الإدارة -----------------
-
 function adminLogin() {
     const idInput = document.getElementById('admin-login-id').value.trim();
     const passInput = document.getElementById('admin-pass').value.trim();
@@ -696,7 +834,6 @@ function adminLogin() {
 
     let masterPass = localStorage.getItem('omda_master_password') || '1234';
 
-    // حساب المدير الافتراضي
     if((idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
         const masterUser = { name: 'المدير العام', email: 'admin@omda.com', role: 'admin' };
         localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
@@ -704,7 +841,6 @@ function adminLogin() {
         return;
     }
 
-    // البحث في الحسابات المضافة للموظفين والمحاسبين
     let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     let foundStaff = staffList.find(s => (s.email === idInput || s.phone === idInput) && s.password === passInput);
 
@@ -730,8 +866,6 @@ function createNewStaff() {
     }
 
     let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
-    
-    // التحقق من عدم تكرار الإيميل أو الهاتف
     if(staffList.some(s => s.email === email || s.phone === phone)) {
         alert('هذا البريد أو الهاتف مسجل مسبقاً لموظف آخر!');
         return;
@@ -961,7 +1095,6 @@ function loadAdminDashboard() {
     }
 }
 
-// إضافة مصروف للخزنة
 function addExpense() {
     const reasonEl = document.getElementById('expense-reason');
     const amountEl = document.getElementById('expense-amount');
@@ -985,7 +1118,6 @@ function addExpense() {
     loadAdminDashboard();
 }
 
-// إنشاء أوردر جديد من لوحة الأدمن والمحاسب
 function adminCreateOrder() {
     const name = document.getElementById('admin-ord-name').value.trim();
     const phone = document.getElementById('admin-ord-phone').value.trim();
@@ -1066,14 +1198,639 @@ function adminLogout() {
     window.location.href = 'admin.html';
 }
 
-window.onload = function() {
-    renderMenu();
-    updateCartUI();
-    const savedCust = localStorage.getItem('omda_current_cust');
-    if(savedCust) {
-        currentCustomer = JSON.parse(savedCust);
+// ----------------- دوال الخريطة والأسطول والفروع -----------------
+function switchLayer(type) {
+    if(!map) return;
+    if(streetLayer) map.removeLayer(streetLayer);
+    if(topoLayer) map.removeLayer(topoLayer);
+    if(satelliteLayer) map.removeLayer(satelliteLayer);
+    if(type === 'street') streetLayer.addTo(map);
+    if(type === 'topo') topoLayer.addTo(map);
+    if(type === 'satellite') satelliteLayer.addTo(map);
+}
+
+function toggleTouchPanel() {
+    const panel = document.getElementById('touchControlPanel');
+    const icon = document.getElementById('panelToggleIcon');
+    if(panel && icon) {
+        panel.classList.toggle('collapsed');
+        icon.classList.toggle('fa-chevron-up');
+        icon.classList.toggle('fa-chevron-down');
     }
-};
+}
+
+function rotateMap(degDelta) {
+    if (!map) return;
+    let currentBearing = map.getBearing ? map.getBearing() : 0;
+    let newBearing = (currentBearing + degDelta) % 360;
+    if (map.setBearing) map.setBearing(newBearing);
+}
+
+function resetMapRotation() {
+    if (map && map.setBearing) map.setBearing(0);
+}
+
+function panToRestaurant() {
+    if(map) map.setView(restaurantCoords, 15);
+}
+
+function panToUser() {
+    if("geolocation" in navigator && map) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        }, () => alert("تعذر تحديد موقعك الحالي. تأكد من إذن GPS في المتصفح."));
+    }
+}
+
+function resetMapView() {
+    if(map) map.setView(restaurantCoords, 13);
+}
+
+function switchSidebarTab(tabName, btn) {
+    if (tabName !== 'orders' && !checkAdminPermission()) {
+        alert("⚠️ عذراً، هذه الصلاحية مخصصة لحساب الإدارة فقط.");
+        return;
+    }
+
+    document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+
+    const orderTab = document.getElementById('tab-content-orders');
+    const driverTab = document.getElementById('tab-content-drivers');
+    const branchTab = document.getElementById('tab-content-branches');
+    const portalTab = document.getElementById('tab-content-portal');
+
+    if(orderTab) orderTab.style.display = tabName === 'orders' ? 'block' : 'none';
+    if(driverTab) driverTab.style.display = tabName === 'drivers' ? 'block' : 'none';
+    if(branchTab) branchTab.style.display = tabName === 'branches' ? 'block' : 'none';
+    if(portalTab) portalTab.style.display = tabName === 'portal' ? 'block' : 'none';
+
+    if(tabName === 'drivers') loadDriversAdminList();
+    if(tabName === 'branches') loadBranchesAdminList();
+    if(tabName === 'portal') populateDriverPortalSelect();
+}
+
+function trackCustomerOrder() {
+    const queryInput = document.getElementById('customerTrackInput');
+    const resultBox = document.getElementById('customerTrackResult');
+    if(!queryInput || !resultBox) return;
+
+    const query = queryInput.value.trim().toUpperCase();
+    if(!query) {
+        alert("يرجى إدخال رقم الهاتف أو رقم الفاتورة أولاً!");
+        return;
+    }
+
+    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+
+    let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
+
+    if(!foundOrder) {
+        resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على طلب بهذا الرقم أو الهاتف. تأكد من إدخال البيانات بشكل صحيح.</span>`;
+        return;
+    }
+
+    let assignedDriverObj = drivers.find(d => d.name === foundOrder.assignedDriver) || (drivers.length > 0 ? drivers[0] : null);
+    let driverName = foundOrder.assignedDriver || (assignedDriverObj ? assignedDriverObj.name : 'لم يُسند بعد');
+    let driverPhone = assignedDriverObj ? assignedDriverObj.phone : 'غير متوفر';
+
+    if(foundOrder.lat && foundOrder.lng && map) {
+        map.setView([foundOrder.lat, foundOrder.lng], 16);
+    }
+
+    resultBox.innerHTML = `
+        <div class="bg-white p-2.5 rounded-lg border border-amber-300 space-y-1.5 shadow-sm">
+            <div class="flex justify-between items-center">
+                <strong class="text-amber-900">طلب رقم: ${foundOrder.id}</strong>
+                <span class="status-badge status-${foundOrder.status}">${getStatusText(foundOrder.status)}</span>
+            </div>
+            <div>👤 العميل: ${foundOrder.name} (${foundOrder.phone})</div>
+            <div>📍 العنوان: ${foundOrder.address}</div>
+            <div class="border-t border-slate-100 pt-1 mt-1 text-emerald-800 font-bold">
+                🏍️ السائق المسؤول: ${driverName}
+                ${driverPhone !== 'غير متوفر' ? `<br>📞 هاتف السائق: <span class="mono-font">${driverPhone}</span>` : ''}
+            </div>
+            <div class="flex gap-2 mt-2">
+                ${driverPhone !== 'غير متوفر' ? `<a href="tel:${driverPhone}" class="flex-1 bg-emerald-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-solid fa-phone"></i> اتصال بالسائق</a>` : ''}
+                <a href="https://wa.me/2${foundOrder.phone}" target="_blank" class="flex-1 bg-sky-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-brands fa-whatsapp"></i> مراسلة</a>
+            </div>
+        </div>
+    `;
+
+    if(foundOrder.lat && foundOrder.lng) {
+        let dLat = assignedDriverObj && assignedDriverObj.lat ? assignedDriverObj.lat : restaurantCoords[0];
+        let dLng = assignedDriverObj && assignedDriverObj.lng ? assignedDriverObj.lng : restaurantCoords[1];
+        calculateRoute(dLat, dLng, foundOrder.lat, foundOrder.lng, foundOrder.name);
+    }
+}
+
+function enableBranchPickMode() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    pickingBranchMode = true;
+    if(map) {
+        map.getContainer().style.cursor = 'crosshair';
+        alert("💡 انقر الآن على المكان المطلوب داخل الخريطة لتحديد موقع الفرع الجديد!");
+    }
+}
+
+function fetchGpsForBranch() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('branch-lat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('branch-lng').value = pos.coords.longitude.toFixed(6);
+            alert("✓ تم جلب إحداثيات موقعك الحالي بنجاح للفرع.");
+        }, () => alert("تعذر جلب موقع GPS."));
+    }
+}
+
+function openBranchAtCoords(lat, lng) {
+    if (!checkAdminPermission()) return;
+    switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+    document.getElementById('branch-lat').value = lat;
+    document.getElementById('branch-lng').value = lng;
+    document.getElementById('branch-name').focus();
+}
+
+function addNewBranch() {
+    if (!checkAdminPermission()) {
+        alert("🚫 غير مسموح لك بإضافة فروع.");
+        return;
+    }
+
+    const name = document.getElementById('branch-name').value.trim();
+    const phone = document.getElementById('branch-phone').value.trim();
+    const address = document.getElementById('branch-address').value.trim();
+    const lat = parseFloat(document.getElementById('branch-lat').value);
+    const lng = parseFloat(document.getElementById('branch-lng').value);
+
+    if(!name || isNaN(lat) || isNaN(lng)) {
+        alert('يرجى إدخال اسم الفرع والإحداثيات بشكل صحيح!');
+        return;
+    }
+
+    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+    branches.push({ id: Date.now(), name, phone, address, lat, lng });
+    localStorage.setItem('omda_branches', JSON.stringify(branches));
+
+    alert('تم إضافة الفرع بنجاح وحفظه على الخريطة 👑');
+    document.getElementById('branch-name').value = '';
+    document.getElementById('branch-phone').value = '';
+    document.getElementById('branch-address').value = '';
+    document.getElementById('branch-lat').value = '';
+    document.getElementById('branch-lng').value = '';
+
+    loadBranchesAdminList();
+    loadBranchesOnMap();
+}
+
+function loadBranchesAdminList() {
+    const container = document.getElementById('branches-list-container');
+    if(!container) return;
+    container.innerHTML = '';
+    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+    
+    const statBranches = document.getElementById('statBranchesCount');
+    if(statBranches) statBranches.innerText = (branches.length + 1) + ' فرع';
+
+    if(branches.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد فروع مضافة حديثاً (المطعم الرئيسي مفعل).</p>';
+        return;
+    }
+
+    branches.forEach((b, idx) => {
+        container.innerHTML += `
+            <div class="bg-amber-50/60 p-2 rounded-lg border border-amber-200 flex justify-between items-center text-xs">
+                <div>
+                    <strong>${b.name}</strong><br>
+                    <span class="text-[10px] text-slate-500">${b.address || b.phone || ''}</span>
+                </div>
+                <button onclick="deleteBranch(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
+            </div>
+        `;
+    });
+}
+
+function deleteBranch(idx) {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
+    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+    branches.splice(idx, 1);
+    localStorage.setItem('omda_branches', JSON.stringify(branches));
+    loadBranchesAdminList();
+    loadBranchesOnMap();
+}
+
+function loadBranchesOnMap() {
+    if(!branchesLayer) return;
+    branchesLayer.clearLayers();
+
+    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+    const statBranches = document.getElementById('statBranchesCount');
+    if(statBranches) statBranches.innerText = (branches.length + 1) + ' فرع';
+
+    const branchIcon = L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="background: linear-gradient(135deg, #d97706, #b45309); color:white; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(217,119,6,0.4); border:2.5px solid white;"><i class="fa-solid fa-store text-xs"></i></div>`,
+        iconSize: [38, 38], iconAnchor: [19, 19]
+    });
+
+    branches.forEach(b => {
+        if(!isNaN(b.lat) && !isNaN(b.lng)) {
+            L.marker([b.lat, b.lng], { icon: branchIcon }).addTo(branchesLayer)
+                .bindPopup(`
+                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
+                        <b>🏪 ${b.name}</b><br>
+                        هاتف: ${b.phone || 'غير مسجل'}<br>
+                        العنوان: ${b.address || 'العنوان غير محدد'}<br>
+                        <button onclick="navigateRouteTo(${b.lat}, ${b.lng}, '${b.name}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; margin-top:5px; cursor:pointer; font-weight:bold;">رسم مسار للفرع</button>
+                    </div>
+                `);
+        }
+    });
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function playAlertSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
+}
+
+function filterOrders(status, btn) {
+    currentFilter = status;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    loadLiveTrackingMap();
+}
+
+function loadLiveTrackingMap() {
+    const listContainer = document.getElementById('live-orders-list');
+    if(!listContainer || !markersLayer) return;
+    listContainer.innerHTML = '';
+
+    markersLayer.clearLayers();
+    polylinesLayer.clearLayers();
+    driversLayer.clearLayers();
+
+    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    
+    if(allOrders.length > previousOrdersCount && previousOrdersCount > 0) playAlertSound();
+    previousOrdersCount = allOrders.length;
+
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    const statDrivers = document.getElementById('statDriversCount');
+    if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
+
+    if(allOrders.length === 0) {
+        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً للتتبع.</p>';
+        loadDriversOnMap();
+        return;
+    }
+
+    let filteredOrders = currentFilter === 'all' ? allOrders : allOrders.filter(o => o.status === currentFilter);
+
+    const deliveryIcon = L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="background: #0284c7; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(2,132,199,0.4); border:2.5px solid white;"><i class="fa-solid fa-motorcycle text-xs"></i></div>`,
+        iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+
+    filteredOrders.forEach((order) => {
+        if(!order.lat || !order.lng) {
+            order.lat = restaurantCoords[0] + (Math.random() - 0.5) * 0.04;
+            order.lng = restaurantCoords[1] + (Math.random() - 0.5) * 0.04;
+        }
+
+        let distKm = calculateDistance(restaurantCoords[0], restaurantCoords[1], order.lat, order.lng);
+        let etaMinutes = Math.round((distKm / 25) * 60) + 8;
+
+        L.polyline([restaurantCoords, [order.lat, order.lng]], {
+            color: order.status === 'done' ? '#16a34a' : '#b45309', weight: 3, dashArray: '5, 5'
+        }).addTo(polylinesLayer);
+
+        let marker = L.marker([order.lat, order.lng], { icon: deliveryIcon }).addTo(markersLayer);
+        marker.bindPopup(`
+            <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
+                <b>طلب رقم: ${order.id}</b><br>
+                👤 ${order.name} (${order.phone})<br>
+                📍 ${order.address}<br>
+                📏 المسافة: ${distKm.toFixed(1)} كم | ETA: ${etaMinutes} دقيقة<br>
+                <b>السائق:</b> ${order.assignedDriver || 'لم يُسند بعد'}<br>
+                <button onclick="navigateRouteTo(${order.lat}, ${order.lng}, '${order.name}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; margin-top:5px; cursor:pointer; font-weight:bold;">رسم مسار التوصيل</button>
+            </div>
+        `);
+
+        let statusClass = 'status-' + (order.status || 'pending');
+        listContainer.innerHTML += `
+            <div class="track-card" onclick="map.flyTo([${order.lat}, ${order.lng}], 15)">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                    <strong class="text-xs">${order.id}</strong>
+                    <span class="status-badge ${statusClass}">${getStatusText(order.status)}</span>
+                </div>
+                <p style="font-size: 0.75rem; color: #57534e; margin: 2px 0;">👤 ${order.name} | 🏍️ ${order.assignedDriver || 'بدون'}</p>
+                <p style="font-size: 0.7rem; color: #b45309; font-weight: bold; margin: 2px 0;">📏 ${distKm.toFixed(1)} كم | ⏱️ ${etaMinutes} د.</p>
+                <div style="display: flex; gap: 4px; margin-top: 4px;" onclick="event.stopPropagation()">
+                    <a href="tel:${order.phone}" style="flex:1; background:#dcfce7; color:#166534; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; text-decoration:none;"><i class="fa-solid fa-phone"></i> اتصال</a>
+                    <a href="https://wa.me/2${order.phone}" target="_blank" style="flex:1; background:#e0f2fe; color:#0369a1; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> واتساب</a>
+                </div>
+            </div>
+        `;
+    });
+
+    loadDriversOnMap();
+}
+
+function loadDriversOnMap() {
+    if(!driversLayer) return;
+    driversLayer.clearLayers();
+
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    const statDrivers = document.getElementById('statDriversCount');
+    if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
+
+    const driverIcon = L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="background: #16a34a; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(22,163,74,0.4); border:2px solid white;"><i class="fa-solid fa-motorcycle text-xs"></i></div>`,
+        iconSize: [34, 34], iconAnchor: [17, 17]
+    });
+
+    drivers.forEach(driver => {
+        if(driver.lat && driver.lng) {
+            L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(driversLayer)
+                .bindPopup(`
+                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
+                        <b>🏍️ السائق: ${driver.name}</b><br>
+                        الهاتف: <a href="tel:${driver.phone}" class="mono-font text-amber-800 font-bold">${driver.phone}</a><br>
+                        حالة البث: متصل وجاهز للتوصيل 🔥
+                    </div>
+                `);
+        }
+    });
+}
+
+function calculateRoute(startLat, startLng, destLat, destLng, destName = 'الوجهة') {
+    if (!map) return;
+    if (activeRoutingControl) {
+        map.removeControl(activeRoutingControl);
+        activeRoutingControl = null;
+    }
+
+    activeRoutingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(startLat, startLng),
+            L.latLng(destLat, destLng)
+        ],
+        lineOptions: {
+            styles: [{ color: '#b45309', opacity: 0.85, weight: 6 }]
+        },
+        createMarker: function(i, wp) {
+            return L.marker(wp.latLng, {
+                icon: L.divIcon({
+                    className: 'custom-map-icon',
+                    html: `<div style="background:${i === 0 ? '#16a34a' : '#b45309'}; color:white; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white;"><i class="fa-solid ${i === 0 ? 'fa-play' : 'fa-flag-checkered'} text-[10px]"></i></div>`,
+                    iconSize: [28, 28], iconAnchor: [14, 14]
+                })
+            });
+        },
+        show: false,
+        addWaypoints: false,
+        routeWhileDragging: false
+    }).addTo(map);
+
+    activeRoutingControl.on('routesfound', function(e) {
+        const summary = e.routes[0].summary;
+        const distanceKm = (summary.totalDistance / 1000).toFixed(1);
+        const timeMin = Math.round(summary.totalTime / 60);
+
+        const etaEl = document.getElementById('liveEtaDisplay');
+        if(etaEl) etaEl.innerText = `${timeMin} دقيقة (${distanceKm} كم)`;
+
+        const clearBtn = document.getElementById('clearRouteBtn');
+        if(clearBtn) clearBtn.classList.remove('hidden');
+    });
+}
+
+function navigateRouteTo(destLat, destLng, destName) {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            calculateRoute(pos.coords.latitude, pos.coords.longitude, destLat, destLng, destName);
+        }, () => {
+            calculateRoute(restaurantCoords[0], restaurantCoords[1], destLat, destLng, destName);
+        }, { enableHighAccuracy: true });
+    } else {
+        calculateRoute(restaurantCoords[0], restaurantCoords[1], destLat, destLng, destName);
+    }
+}
+
+async function searchAndCalculateRoute() {
+    const endInput = document.getElementById('routeEndInput');
+    if(!endInput) return;
+    const endQuery = endInput.value.trim();
+    if (!endQuery) { alert("أدخل وجهة التوصيل أولاً."); return; }
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endQuery)}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            calculateRoute(restaurantCoords[0], restaurantCoords[1], parseFloat(data[0].lat), parseFloat(data[0].lon), endQuery);
+        } else {
+            alert("تعذر العثور على العنوان المدخل.");
+        }
+    } catch(e) {
+        alert("حدث خطأ أثناء حساب المسار.");
+    }
+}
+
+function clearActiveRoute() {
+    if (activeRoutingControl && map) {
+        map.removeControl(activeRoutingControl);
+        activeRoutingControl = null;
+        const etaDisplay = document.getElementById('liveEtaDisplay');
+        const clearBtn = document.getElementById('clearRouteBtn');
+        if(etaDisplay) etaDisplay.innerText = '-- دقيقة';
+        if(clearBtn) clearBtn.classList.add('hidden');
+    }
+}
+
+async function searchCustomLocation() {
+    const searchInput = document.getElementById('customSearchInput');
+    if(!searchInput || !map) return;
+    const queryText = searchInput.value.trim();
+    if(!queryText) return;
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryText)}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            map.setView([lat, lon], 15);
+            L.popup().setLatLng([lat, lon]).setContent(`<b>📍 ${data[0].display_name}</b>`).openOn(map);
+        } else {
+            alert("لم يتم العثور على نتائج.");
+        }
+    } catch(e) {}
+}
+
+function addNewDriver() {
+    if (!checkAdminPermission()) {
+        alert("🚫 غير مسموح لك بإضافة طيارين.");
+        return;
+    }
+
+    const nameEl = document.getElementById('driver-name');
+    const phoneEl = document.getElementById('driver-phone');
+    if(!nameEl || !phoneEl) return;
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
+
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    drivers.push({ 
+        id: Date.now(), 
+        name, 
+        phone, 
+        lat: restaurantCoords[0] + (Math.random() - 0.5) * 0.01, 
+        lng: restaurantCoords[1] + (Math.random() - 0.5) * 0.01 
+    });
+    
+    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+    alert('تم إضافة السائق بنجاح ووضعه على الخريطة 🏍️');
+    
+    nameEl.value = '';
+    phoneEl.value = '';
+    
+    loadDriversAdminList();
+    loadDriversOnMap();
+    loadLiveTrackingMap();
+}
+
+function loadDriversAdminList() {
+    const container = document.getElementById('drivers-list-container');
+    if(!container) return;
+    container.innerHTML = '';
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    if(drivers.length === 0) { container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب مسجلة.</p>'; return; }
+
+    drivers.forEach((d, idx) => {
+        container.innerHTML += `
+            <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+                <div><strong>${d.name}</strong> (${d.phone})</div>
+                <button onclick="deleteDriver(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
+            </div>
+        `;
+    });
+}
+
+function deleteDriver(idx) {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    drivers.splice(idx, 1);
+    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+    loadDriversAdminList();
+    loadDriversOnMap();
+    loadLiveTrackingMap();
+}
+
+function populateDriverPortalSelect() {
+    const select = document.getElementById('portal-driver-select');
+    if(!select) return;
+    select.innerHTML = '';
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    drivers.forEach(d => {
+        select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone})</option>`;
+    });
+}
+
+function toggleGpsTracking() {
+    const select = document.getElementById('portal-driver-select');
+    const statusBox = document.getElementById('gps-status-box');
+    const btn = document.getElementById('gps-toggle-btn');
+    if(!select || !statusBox || !btn) return;
+
+    const driverName = select.value;
+    if(!driverName) { alert('اختر اسم السائق أولاً!'); return; }
+
+    if(watchId) {
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+        btn.innerText = "بدء بث الموقع الحي 🛰️";
+        btn.style.background = "#16a34a";
+        statusBox.innerText = "الوضع: متوقف";
+        return;
+    }
+
+    if(navigator.geolocation) {
+        btn.innerText = "إيقاف البث الحي 🛑";
+        btn.style.background = "#dc2626";
+        statusBox.innerText = "جاري بث الإحداثيات الحية...";
+
+        watchId = navigator.geolocation.watchPosition((position) => {
+            let lat = position.coords.latitude;
+            let lng = position.coords.longitude;
+
+            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+            let driver = drivers.find(d => d.name === driverName);
+            if(driver) {
+                driver.lat = lat; driver.lng = lng;
+                localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+            }
+            statusBox.innerText = `تم بث الموقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+            loadDriversOnMap();
+        }, (error) => {
+            alert('تعذر الوصول لـ GPS: ' + error.message);
+        }, { enableHighAccuracy: true });
+    } else {
+        alert('متصفحك لا يدعم تتبع الـ GPS.');
+    }
+}
+
+function autoDispatchOrders() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بتنفيذ التوزيع الآلي!"); return; }
+
+    let orders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    if(drivers.length === 0) { alert('أضف مناديب دليفري أولاً!'); return; }
+
+    let assignedCount = 0;
+    orders.forEach(order => {
+        if(!order.assignedDriver && order.status !== 'done') {
+            let randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
+            order.assignedDriver = randomDriver.name;
+            order.status = 'delivery';
+            assignedCount++;
+        }
+    });
+
+    localStorage.setItem('omda_orders', JSON.stringify(orders));
+    alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين تلقائياً 🚀`);
+    loadLiveTrackingMap();
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'pending': return 'قيد المراجعة ⏳';
+        case 'cooking': return 'ع الفحم 🔥';
+        case 'delivery': return 'مع الدليفري 🛵';
+        case 'done': return 'وصل ✅';
+        default: return 'جاري المعالجة';
+    }
+}
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
