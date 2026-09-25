@@ -39,14 +39,18 @@
             <!-- دفتر الخزنة والمبيعات اليومية (Daily Vault) -->
             <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #16a34a;">
                 <h3 style="margin-bottom: 12px; color: #16a34a;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات اليومية</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
                     <div style="background: #bbf7d0; padding: 15px; border-radius: 8px; text-align: center; color: #166534;">
-                        <h4>إجمالي إيرادات المبيعات</h4>
-                        <span id="vault-total-sales" style="font-size: 1.5rem; font-weight: bold;">0 جنيه</span>
+                        <h4>إجمالي الإيرادات</h4>
+                        <span id="vault-total-sales" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
                     </div>
                     <div style="background: #fed7aa; padding: 15px; border-radius: 8px; text-align: center; color: #9a3412;">
-                        <h4>إجمالي المصروفات والنثريات</h4>
-                        <span id="vault-total-expenses" style="font-size: 1.5rem; font-weight: bold;">0 جنيه</span>
+                        <h4>إجمالي المصروفات</h4>
+                        <span id="vault-total-expenses" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
+                    </div>
+                    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; text-align: center; color: #0369a1;">
+                        <h4>صافي الأرباح</h4>
+                        <span id="vault-net-profit" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
                     </div>
                 </div>
                 <div class="checkout-form" style="max-width: 100%;">
@@ -87,6 +91,12 @@
                     <textarea id="new-prod-desc" placeholder="وصف الوجبة ومكوناتها بالتفصيل"></textarea>
                     <button onclick="addNewProduct()" class="btn-primary" style="background-color: var(--primary-color);">إضافة المنتج إلى المنيو والسلة 🚀</button>
                 </div>
+            </div>
+
+            <!-- قسم إدارة وحذف أصناف المنيو الحالي (ميزة جديدة) -->
+            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #b45309;">
+                <h3 style="margin-bottom: 12px; color: var(--secondary-color);"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي</h3>
+                <div id="admin-menu-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto;"></div>
             </div>
 
             <!-- قسم إضافة أوردر جديد يدوي -->
