@@ -688,8 +688,10 @@ function adminLogin() {
         return;
     }
 
+    let masterPass = localStorage.getItem('omda_master_password') || '1234';
+
     // حساب المدير الافتراضي
-    if((idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === '1234') {
+    if((idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
         const masterUser = { name: 'المدير العام', email: 'admin@omda.com', role: 'admin' };
         localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
         loadAdminDashboard();
@@ -776,6 +778,54 @@ function deleteStaff(index) {
     alert('تم حذف الحساب بنجاح.');
 }
 
+function changeMyPassword() {
+    const currentPass = document.getElementById('current-pass-input').value.trim();
+    const newPass = document.getElementById('new-pass-input').value.trim();
+    const confirmPass = document.getElementById('confirm-pass-input').value.trim();
+
+    if(!currentPass || !newPass || !confirmPass) {
+        alert('من فضلك املأ كافة حقول كلمة المرور!');
+        return;
+    }
+
+    if(newPass !== confirmPass) {
+        alert('كلمة المرور الجديدة غير مطابقة لتأكيد كلمة المرور!');
+        return;
+    }
+
+    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+
+    if(loggedUser.role === 'admin' || loggedUser.email === 'admin@omda.com') {
+        let masterPass = localStorage.getItem('omda_master_password') || '1234';
+        if(currentPass !== masterPass) {
+            alert('كلمة المرور الحالية غير صحيحة!');
+            return;
+        }
+        localStorage.setItem('omda_master_password', newPass);
+        alert('تم تغيير كلمة المرور الخاصة بالمدير الماستر بنجاح 🔒');
+    } else {
+        let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+        let staffIndex = staffList.findIndex(s => s.email === loggedUser.email);
+        
+        if(staffIndex > -1) {
+            if(staffList[staffIndex].password !== currentPass) {
+                alert('كلمة المرور الحالية غير صحيحة!');
+                return;
+            }
+            staffList[staffIndex].password = newPass;
+            localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
+            alert('تم تغيير كلمة المرور الخاصة بحسابك بنجاح 🔒');
+        } else {
+            alert('حدث خطأ أثناء تحديد المستخدم!');
+            return;
+        }
+    }
+
+    document.getElementById('current-pass-input').value = '';
+    document.getElementById('new-pass-input').value = '';
+    document.getElementById('confirm-pass-input').value = '';
+}
+
 function loadAdminDashboard() {
     const loginBox = document.getElementById('admin-login-box');
     const dashBox = document.getElementById('admin-dashboard');
@@ -792,7 +842,6 @@ function loadAdminDashboard() {
     if(nameEl) nameEl.innerText = loggedUser.name || 'مدير النظام';
     if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.role === 'admin' ? 'مدير ماستر (Master Admin)' : (loggedUser.role === 'accountant' ? 'محاسب' : 'موظف'));
 
-    // إذا لم يكن المدير الماستر، نخفي قسم إدارة الموظفين
     if(loggedUser.email !== 'admin@omda.com' && loggedUser.role !== 'admin') {
         if(staffSection) staffSection.style.display = 'none';
     } else {
