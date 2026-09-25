@@ -1,4 +1,6 @@
+// ==========================================
 // بيانات المنيو الأساسية مع صور تفصيلية للمشويات
+// ==========================================
 const defaultProducts = [
     { id: 1, name: "صينية العمدة الكبرى", category: "trays", price: 2750, desc: "فرخة شيش + نص طرب + كيلو كفتة + نص كباب + نص سجق + 4 حمام + أرز + نص ممبار + 2 لتر بيبيسي", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
     { id: 2, name: "صينية الصحاب", category: "trays", price: 830, desc: "نص فرخة شيش + نص طرب + ربع سجق + طبق محشي مشكل + ربع ممبار + ورق عنب + 2 سمبوسة + أرز", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
@@ -24,7 +26,7 @@ let currentCustomer = null;
 let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
 let activeDiscount = 0;
 
-// إحداثيات مطعم مشويات العمدة الرئيسي (يتم جلبها من التخزين أو القيمة الافتراضية لشبرا منت)
+// إحداثيات مطعم مشويات العمدة الرئيسي (افتراضياً شبرا منت)
 let restaurantCoords = JSON.parse(localStorage.getItem('omda_restaurant_coords') || '[30.005, 31.185]');
 
 let map;
@@ -37,7 +39,171 @@ let watchId = null;
 let pickingBranchMode = false;
 let pickingDriverMode = false;
 
-// ----------------- التحقق من الصلاحيات -----------------
+// متغيرات نظام الاتصال WebRTC
+let peerConnection = null;
+let localStream = null;
+let ringingInterval = null;
+const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+// ==========================================
+// نظام نغمة الرنين عبر Web Audio API
+// ==========================================
+function startRingingTone() {
+    if (ringingInterval) return;
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        ringingInterval = setInterval(() => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+            osc.frequency.setValueAtTime(480, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.8);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.8);
+        }, 1200);
+    } catch(e) { console.log('Audio error:', e); }
+}
+
+function stopRingingTone() {
+    if (ringingInterval) {
+        clearInterval(ringingInterval);
+        ringingInterval = null;
+    }
+}
+
+function playAlertSound() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(); osc.stop(ctx.currentTime + 0.3);
+    } catch(e) {}
+}
+
+// ==========================================
+// نظام الاتصال الصوتي والمرئي (WebRTC)
+// ==========================================
+async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
+    const modal = document.getElementById('callModal');
+    const title = document.getElementById('callStatusTitle');
+    const info = document.getElementById('callOrderInfo');
+    if(!modal) return;
+
+    modal.classList.remove('hidden');
+    title.innerText = isVideo ? "🎥 مكالمة فيديو مباشرة مع العميل" : "📞 مكالمة صوتية مباشرة مع العميل";
+    info.innerText = `رقم الطلب: ${orderId} | هاتف العميل: ${customerPhone}`;
+
+    startRingingTone();
+
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        const localVid = document.getElementById('localVideo');
+        if(localVid) localVid.srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+            stopRingingTone();
+            const remoteVid = document.getElementById('remoteVideo');
+            if(remoteVid) remoteVid.srcObject = event.streams[0];
+        };
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        localStorage.setItem('omda_webrtc_signal', JSON.stringify({
+            type: 'offer',
+            orderId,
+            sdp: offer,
+            isVideo,
+            timestamp: Date.now()
+        }));
+
+    } catch(err) {
+        alert("تعذر الوصول للكاميرا أو الميكروفون: " + err.message);
+        endWebRtcCall();
+    }
+}
+
+function endWebRtcCall() {
+    stopRingingTone();
+    if(localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+    }
+    if(peerConnection) {
+        peerConnection.close();
+        peerConnection = null;
+    }
+    const modal = document.getElementById('callModal');
+    if(modal) modal.classList.add('hidden');
+    localStorage.removeItem('omda_webrtc_signal');
+}
+
+window.addEventListener('storage', async (e) => {
+    if(e.key === 'omda_webrtc_signal' && e.newValue) {
+        const signal = JSON.parse(e.newValue);
+        if(signal.type === 'offer') {
+            const modal = document.getElementById('callModal');
+            const info = document.getElementById('callOrderInfo');
+            const answerBtn = document.getElementById('answerCallBtn');
+            if(modal && info) {
+                modal.classList.remove('hidden');
+                info.innerText = `اتصال وارد للطلب: ${signal.orderId}`;
+                if(answerBtn) answerBtn.classList.remove('hidden');
+                startRingingTone();
+                window.incomingOfferSignal = signal;
+            }
+        }
+    }
+});
+
+async function answerIncomingCall() {
+    stopRingingTone();
+    const answerBtn = document.getElementById('answerCallBtn');
+    if(answerBtn) answerBtn.classList.add('hidden');
+
+    const signal = window.incomingOfferSignal;
+    if(!signal) return;
+
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: signal.isVideo, audio: true });
+        document.getElementById('localVideo').srcObject = localStream;
+
+        peerConnection = new RTCPeerConnection(rtcConfig);
+        localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
+
+        peerConnection.ontrack = event => {
+            document.getElementById('remoteVideo').srcObject = event.streams[0];
+        };
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        localStorage.setItem('omda_webrtc_signal', JSON.stringify({
+            type: 'answer',
+            orderId: signal.orderId,
+            sdp: answer,
+            timestamp: Date.now()
+        }));
+    } catch(err) {
+        alert("خطأ أثناء الرد على المكالمة: " + err.message);
+    }
+}
+
+// ==========================================
+// التحقق من صلاحيات الإدارة والأمان
+// ==========================================
 function checkAdminPermission() {
     const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
     let userEmail = '';
@@ -51,7 +217,6 @@ function checkAdminPermission() {
     }
 
     let hasAdminEmail = (userEmail === 'admin@omda.com');
-
     if (!hasAdminEmail) {
         for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
@@ -101,7 +266,9 @@ function enforceAdminSecurity() {
     }
 }
 
-// ----------------- تهيئة الصفحة العامة والخريطة -----------------
+// ==========================================
+// تهيئة الصفحة العامة والخريطة التفاعلية
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     enforceAdminSecurity();
     loadSavedTicker();
@@ -296,18 +463,12 @@ function addNewDriverWithLocation() {
     if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
 
     if(isNaN(lat) || isNaN(lng)) {
-        lat = restaurantCoords[0] + (Math.random() - 0.5) * 0.005;
-        lng = restaurantCoords[1] + (Math.random() - 0.5) * 0.005;
+        lat = restaurantCoords[0] + 0.002;
+        lng = restaurantCoords[1] + 0.002;
     }
 
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.push({ 
-        id: Date.now(), 
-        name, 
-        phone, 
-        lat, 
-        lng 
-    });
+    drivers.push({ id: Date.now(), name, phone, lat, lng });
     
     localStorage.setItem('omda_drivers', JSON.stringify(drivers));
     alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
@@ -322,7 +483,9 @@ function addNewDriverWithLocation() {
     loadLiveTrackingMap();
 }
 
-// ----------------- دوال المنيو، السلة، والتسوق -----------------
+// ==========================================
+// دوال المنيو، السلة، والتسوق
+// ==========================================
 function loadSavedTicker() {
     const savedTicker = localStorage.getItem('omda_ticker_text');
     if(savedTicker) {
@@ -391,7 +554,7 @@ function renderMenu(filter = 'all') {
                 </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer; transition: color 0.2s;" onmouseover="this.style.color='#b45309'" onmouseout="this.style.color='#292524'">${product.name}</h3>
+                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.name}</h3>
                         <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: ${isFav ? '#dc2626' : '#a8a29e'};">
                             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                         </button>
@@ -414,16 +577,11 @@ function renderOffers() {
     offers.forEach(product => {
         const isFav = favorites.includes(product.id);
         const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500';
-        const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
-
-        let mediaHtml = isVid 
-            ? `<video src="${mediaSrc}" class="menu-img" muted style="object-fit:cover; pointer-events: none;"></video>`
-            : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
 
         grid.innerHTML += `
             <div class="menu-card" style="border: 2px solid #d97706;">
                 <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
-                    ${mediaHtml}
+                    <img src="${mediaSrc}" alt="${product.name}" class="menu-img">
                 </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
@@ -567,10 +725,6 @@ function toggleFavorite(productId) {
     }
     localStorage.setItem('omda_favorites', JSON.stringify(favorites));
     renderMenu();
-    const offersTab = document.getElementById('tab-offers');
-    const favTab = document.getElementById('tab-favorites');
-    if(offersTab && offersTab.classList.contains('active')) renderOffers();
-    if(favTab && favTab.classList.contains('active')) renderFavorites();
 }
 
 function renderFavorites() {
@@ -586,22 +740,17 @@ function renderFavorites() {
 
     favProducts.forEach(product => {
         const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
-        const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && mediaSrc.startsWith('data:video'));
-        let mediaHtml = isVid ? `<video src="${mediaSrc}" class="menu-img" muted style="object-fit:cover; pointer-events: none;"></video>` : `<img src="${mediaSrc}" alt="${product.name}" class="menu-img">`;
-
         grid.innerHTML += `
             <div class="menu-card">
                 <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
-                    ${mediaHtml}
+                    <img src="${mediaSrc}" alt="${product.name}" class="menu-img">
                 </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.name}</h3>
-                        <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: #dc2626;">
-                            <i class="fa-solid fa-heart"></i>
-                        </button>
+                        <h3>${product.name}</h3>
+                        <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: #dc2626;"><i class="fa-solid fa-heart"></i></button>
                     </div>
-                    <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
+                    <p>${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
                 <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف للسلة</button>
@@ -643,18 +792,16 @@ function updateCartUI() {
     let subtotal = 0;
     cart.forEach(item => {
         subtotal += item.price * item.qty;
-        const itemImg = item.media || item.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=100';
         list.innerHTML += `
             <div class="cart-item-row">
                 <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
-                    <img src="${itemImg}" alt="${item.name}" class="cart-item-img" style="object-fit:cover;">
                     <div>
                         <strong style="color: #292524; font-size: 1.05rem;">${item.name}</strong><br>
                         <span style="color: #78716c; font-size: 0.85rem;">السعر: ${item.price} ج | العدد: ${item.qty}</span>
                     </div>
                 </div>
                 <div style="text-align: left;">
-                    <strong style="color: var(--accent-red); font-size: 1.1rem; display: block; margin-bottom: 5px;">${item.price * item.qty} ج</strong>
+                    <strong style="color: #991b1b; font-size: 1.1rem; display: block; margin-bottom: 5px;">${item.price * item.qty} ج</strong>
                     <button onclick="removeFromCart(${item.id})" class="btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.8rem;"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
@@ -712,6 +859,10 @@ function submitOrder() {
     let subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     let total = subtotal - (subtotal * activeDiscount);
     
+    // إحداثيات ثابتة ومستقرة للطلب لمنع أي تحرك أو اهتزاز عشوائي على الخريطة
+    const latOffset = (address.length % 7 - 3) * 0.003;
+    const lngOffset = (address.length % 5 - 2) * 0.003;
+
     const newOrder = {
         id: 'OMDA-' + Math.floor(100000 + Math.random() * 900000),
         name,
@@ -720,6 +871,8 @@ function submitOrder() {
         items: [...cart],
         total,
         status: 'pending',
+        lat: restaurantCoords[0] + 0.01 + latOffset,
+        lng: restaurantCoords[1] + 0.01 + lngOffset,
         date: new Date().toLocaleString('ar-EG')
     };
 
@@ -964,7 +1117,9 @@ function customerLogout() {
     if(loginBox) loginBox.classList.remove('hidden');
 }
 
-// ----------------- إدارة تسجيل دخول وطاقم الإدارة -----------------
+// ==========================================
+// إدارة تسجيل دخول وطاقم الإدارة
+// ==========================================
 function adminLogin() {
     const idInput = document.getElementById('admin-login-id').value.trim();
     const passInput = document.getElementById('admin-pass').value.trim();
@@ -1280,6 +1435,8 @@ function adminCreateOrder() {
         items: [{ name: itemsText, price: total, qty: 1 }],
         total,
         status: 'pending',
+        lat: restaurantCoords[0] + 0.015,
+        lng: restaurantCoords[1] + 0.015,
         date: new Date().toLocaleString('ar-EG')
     };
 
@@ -1340,7 +1497,9 @@ function adminLogout() {
     window.location.href = 'admin.html';
 }
 
-// ----------------- دوال الخريطة والأسطول والفروع -----------------
+// ==========================================
+// دوال الخريطة والأسطول وتتبع الطلبات الثابتة
+// ==========================================
 function switchLayer(type) {
     if(!map) return;
     if(streetLayer) map.removeLayer(streetLayer);
@@ -1425,11 +1584,10 @@ function trackCustomerOrder() {
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-
     let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
 
     if(!foundOrder) {
-        resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على طلب بهذا الرقم أو الهاتف. تأكد من إدخال البيانات بشكل صحيح.</span>`;
+        resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على طلب بهذا الرقم أو الهاتف.</span>`;
         return;
     }
 
@@ -1454,17 +1612,11 @@ function trackCustomerOrder() {
                 ${driverPhone !== 'غير متوفر' ? `<br>📞 هاتف السائق: <span class="mono-font">${driverPhone}</span>` : ''}
             </div>
             <div class="flex gap-2 mt-2">
-                ${driverPhone !== 'غير متوفر' ? `<a href="tel:${driverPhone}" class="flex-1 bg-emerald-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-solid fa-phone"></i> اتصال بالسائق</a>` : ''}
-                <a href="https://wa.me/2${foundOrder.phone}" target="_blank" class="flex-1 bg-sky-600 text-white text-center py-1 rounded font-bold text-[11px]"><i class="fa-brands fa-whatsapp"></i> مراسلة</a>
+                <button onclick="initiateWebRtcCall('${foundOrder.id}', '${foundOrder.phone}', true)" class="flex-1 bg-amber-700 text-white text-center py-1 rounded font-bold text-[11px] cursor-pointer"><i class="fa-solid fa-video"></i> فيديو</button>
+                <button onclick="initiateWebRtcCall('${foundOrder.id}', '${foundOrder.phone}', false)" class="flex-1 bg-emerald-600 text-white text-center py-1 rounded font-bold text-[11px] cursor-pointer"><i class="fa-solid fa-phone"></i> صوت</button>
             </div>
         </div>
     `;
-
-    if(foundOrder.lat && foundOrder.lng) {
-        let dLat = assignedDriverObj && assignedDriverObj.lat ? assignedDriverObj.lat : restaurantCoords[0];
-        let dLng = assignedDriverObj && assignedDriverObj.lng ? assignedDriverObj.lng : restaurantCoords[1];
-        calculateRoute(dLat, dLng, foundOrder.lat, foundOrder.lng, foundOrder.name);
-    }
 }
 
 function loadBranchesAdminList() {
@@ -1473,19 +1625,14 @@ function loadBranchesAdminList() {
     container.innerHTML = `
         <div class="bg-amber-50/80 p-2.5 rounded-lg border border-amber-300 text-xs">
             <strong>👑 المركز الرئيسي الحالي:</strong><br>
-            <span class="mono-font text-amber-900">Lat: ${restaurantCoords[0]}, Lng: ${restaurantCoords[1]}</span><br>
-            <span class="text-[10px] text-slate-500">تم اعتماده كمركز انطلاق لكافة مسارات التوصيل والـ ETA.</span>
+            <span class="mono-font text-amber-900">Lat: ${restaurantCoords[0]}, Lng: ${restaurantCoords[1]}</span>
         </div>
     `;
     const statBranches = document.getElementById('statBranchesCount');
-    if(statBranches) statBranches.innerText = '1 مطعم رئيسي';
+    if(statBranches) statBranches.innerText = 'شبرا منت';
 }
 
-function loadBranchesOnMap() {
-    // يمكن تركها فارغة أو لتحديث العدادات
-    const statBranches = document.getElementById('statBranchesCount');
-    if(statBranches) statBranches.innerText = '1 مطعم رئيسي';
-}
+function loadBranchesOnMap() {}
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
@@ -1493,18 +1640,6 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const dLon = (lon2 - lon1) * (Math.PI / 180);
     const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
     return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-function playAlertSound() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(); osc.stop(ctx.currentTime + 0.3);
-    } catch(e) {}
 }
 
 function filterOrders(status, btn) {
@@ -1533,7 +1668,7 @@ function loadLiveTrackingMap() {
     if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
 
     if(allOrders.length === 0) {
-        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً للتتبع.</p>';
+        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً.</p>';
         loadDriversOnMap();
         return;
     }
@@ -1547,19 +1682,18 @@ function loadLiveTrackingMap() {
     });
 
     filteredOrders.forEach((order) => {
-        if(!order.lat || !order.lng) {
-            order.lat = restaurantCoords[0] + (Math.random() - 0.5) * 0.04;
-            order.lng = restaurantCoords[1] + (Math.random() - 0.5) * 0.04;
-        }
+        // إحداثيات الطلب الثابتة والمستقرة (تمنع التحرك والاهتزاز العشوائي)
+        let orderLat = order.lat || (restaurantCoords[0] + 0.01);
+        let orderLng = order.lng || (restaurantCoords[1] + 0.01);
 
-        let distKm = calculateDistance(restaurantCoords[0], restaurantCoords[1], order.lat, order.lng);
+        let distKm = calculateDistance(restaurantCoords[0], restaurantCoords[1], orderLat, orderLng);
         let etaMinutes = Math.round((distKm / 25) * 60) + 8;
 
-        L.polyline([restaurantCoords, [order.lat, order.lng]], {
+        L.polyline([restaurantCoords, [orderLat, orderLng]], {
             color: order.status === 'done' ? '#16a34a' : '#b45309', weight: 3, dashArray: '5, 5'
         }).addTo(polylinesLayer);
 
-        let marker = L.marker([order.lat, order.lng], { icon: deliveryIcon }).addTo(markersLayer);
+        let marker = L.marker([orderLat, orderLng], { icon: deliveryIcon }).addTo(markersLayer);
         marker.bindPopup(`
             <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
                 <b>طلب رقم: ${order.id}</b><br>
@@ -1567,13 +1701,16 @@ function loadLiveTrackingMap() {
                 📍 ${order.address}<br>
                 📏 المسافة: ${distKm.toFixed(1)} كم | ETA: ${etaMinutes} دقيقة<br>
                 <b>السائق:</b> ${order.assignedDriver || 'لم يُسند بعد'}<br>
-                <button onclick="navigateRouteTo(${order.lat}, ${order.lng}, '${order.name}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; margin-top:5px; cursor:pointer; font-weight:bold;">رسم مسار التوصيل</button>
+                <div class="flex gap-2 mt-2">
+                    <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', true)" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:bold;">فيديو</button>
+                    <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', false)" style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:bold;">صوت</button>
+                </div>
             </div>
         `);
 
         let statusClass = 'status-' + (order.status || 'pending');
         listContainer.innerHTML += `
-            <div class="track-card" onclick="map.flyTo([${order.lat}, ${order.lng}], 15)">
+            <div class="track-card" onclick="map.flyTo([${orderLat}, ${orderLng}], 15)">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
                     <strong class="text-xs">${order.id}</strong>
                     <span class="status-badge ${statusClass}">${getStatusText(order.status)}</span>
@@ -1581,8 +1718,8 @@ function loadLiveTrackingMap() {
                 <p style="font-size: 0.75rem; color: #57534e; margin: 2px 0;">👤 ${order.name} | 🏍️ ${order.assignedDriver || 'بدون'}</p>
                 <p style="font-size: 0.7rem; color: #b45309; font-weight: bold; margin: 2px 0;">📏 ${distKm.toFixed(1)} كم | ⏱️ ${etaMinutes} د.</p>
                 <div style="display: flex; gap: 4px; margin-top: 4px;" onclick="event.stopPropagation()">
-                    <a href="tel:${order.phone}" style="flex:1; background:#dcfce7; color:#166534; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; text-decoration:none;"><i class="fa-solid fa-phone"></i> اتصال</a>
-                    <a href="https://wa.me/2${order.phone}" target="_blank" style="flex:1; background:#e0f2fe; color:#0369a1; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; text-decoration:none;"><i class="fa-brands fa-whatsapp"></i> واتساب</a>
+                    <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', true)" style="flex:1; background:#b45309; color:white; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; border:none; cursor:pointer;"><i class="fa-solid fa-video"></i> فيديو</button>
+                    <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', false)" style="flex:1; background:#16a34a; color:white; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; border:none; cursor:pointer;"><i class="fa-solid fa-phone"></i> صوت</button>
                 </div>
             </div>
         `;
@@ -1596,9 +1733,6 @@ function loadDriversOnMap() {
     driversLayer.clearLayers();
 
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    const statDrivers = document.getElementById('statDriversCount');
-    if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
-
     const driverIcon = L.divIcon({
         className: 'custom-map-icon',
         html: `<div style="background: #16a34a; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(22,163,74,0.4); border:2px solid white;"><i class="fa-solid fa-motorcycle text-xs"></i></div>`,
@@ -1611,7 +1745,7 @@ function loadDriversOnMap() {
                 .bindPopup(`
                     <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
                         <b>🏍️ السائق: ${driver.name}</b><br>
-                        الهاتف: <a href="tel:${driver.phone}" class="mono-font text-amber-800 font-bold">${driver.phone}</a><br>
+                        الهاتف: <span class="mono-font text-amber-800 font-bold">${driver.phone}</span><br>
                         حالة البث: متصل وجاهز للتوصيل 🔥
                     </div>
                 `);
@@ -1619,7 +1753,7 @@ function loadDriversOnMap() {
     });
 }
 
-function calculateRoute(startLat, startLng, destLat, destLng, destName = 'الوجهة') {
+function calculateRoute(startLat, startLng, destLat, destLng) {
     if (!map) return;
     if (activeRoutingControl) {
         map.removeControl(activeRoutingControl);
@@ -1627,13 +1761,8 @@ function calculateRoute(startLat, startLng, destLat, destLng, destName = 'الو
     }
 
     activeRoutingControl = L.Routing.control({
-        waypoints: [
-            L.latLng(startLat, startLng),
-            L.latLng(destLat, destLng)
-        ],
-        lineOptions: {
-            styles: [{ color: '#b45309', opacity: 0.85, weight: 6 }]
-        },
+        waypoints: [L.latLng(startLat, startLng), L.latLng(destLat, destLng)],
+        lineOptions: { styles: [{ color: '#b45309', opacity: 0.85, weight: 6 }] },
         createMarker: function(i, wp) {
             return L.marker(wp.latLng, {
                 icon: L.divIcon({
@@ -1643,34 +1772,18 @@ function calculateRoute(startLat, startLng, destLat, destLng, destName = 'الو
                 })
             });
         },
-        show: false,
-        addWaypoints: false,
-        routeWhileDragging: false
+        show: false, addWaypoints: false, routeWhileDragging: false
     }).addTo(map);
 
     activeRoutingControl.on('routesfound', function(e) {
         const summary = e.routes[0].summary;
         const distanceKm = (summary.totalDistance / 1000).toFixed(1);
         const timeMin = Math.round(summary.totalTime / 60);
-
         const etaEl = document.getElementById('liveEtaDisplay');
         if(etaEl) etaEl.innerText = `${timeMin} دقيقة (${distanceKm} كم)`;
-
         const clearBtn = document.getElementById('clearRouteBtn');
         if(clearBtn) clearBtn.classList.remove('hidden');
     });
-}
-
-function navigateRouteTo(destLat, destLng, destName) {
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            calculateRoute(pos.coords.latitude, pos.coords.longitude, destLat, destLng, destName);
-        }, () => {
-            calculateRoute(restaurantCoords[0], restaurantCoords[1], destLat, destLng, destName);
-        }, { enableHighAccuracy: true });
-    } else {
-        calculateRoute(restaurantCoords[0], restaurantCoords[1], destLat, destLng, destName);
-    }
 }
 
 async function searchAndCalculateRoute() {
@@ -1683,13 +1796,11 @@ async function searchAndCalculateRoute() {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(endQuery)}`);
         const data = await res.json();
         if (data && data.length > 0) {
-            calculateRoute(restaurantCoords[0], restaurantCoords[1], parseFloat(data[0].lat), parseFloat(data[0].lon), endQuery);
+            calculateRoute(restaurantCoords[0], restaurantCoords[1], parseFloat(data[0].lat), parseFloat(data[0].lon));
         } else {
             alert("تعذر العثور على العنوان المدخل.");
         }
-    } catch(e) {
-        alert("حدث خطأ أثناء حساب المسار.");
-    }
+    } catch(e) { alert("حدث خطأ أثناء حساب المسار."); }
 }
 
 function clearActiveRoute() {
@@ -1717,8 +1828,6 @@ async function searchCustomLocation() {
             const lon = parseFloat(data[0].lon);
             map.setView([lat, lon], 15);
             L.popup().setLatLng([lat, lon]).setContent(`<b>📍 ${data[0].display_name}</b>`).openOn(map);
-        } else {
-            alert("لم يتم العثور على نتائج.");
         }
     } catch(e) {}
 }
@@ -1798,8 +1907,6 @@ function toggleGpsTracking() {
         }, (error) => {
             alert('تعذر الوصول لـ GPS: ' + error.message);
         }, { enableHighAccuracy: true });
-    } else {
-        alert('متصفحك لا يدعم تتبع الـ GPS.');
     }
 }
 
@@ -1821,7 +1928,7 @@ function autoDispatchOrders() {
     });
 
     localStorage.setItem('omda_orders', JSON.stringify(orders));
-    alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين تلقائياً 🚀`);
+    alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين المسجلين بدقة 🚀`);
     loadLiveTrackingMap();
 }
 
@@ -1837,8 +1944,6 @@ function getStatusText(status) {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
-            .catch(err => console.log('Service Worker registration failed:', err));
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
     });
 }
