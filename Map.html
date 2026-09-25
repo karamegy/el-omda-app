@@ -252,11 +252,38 @@
         let watchId = null;
         let pickingBranchMode = false;
 
-        // التحقق من صلاحيات المدير (Admin)
+        // التحقق من صلاحيات المدير (Admin) - محدثة وشاملة
         function checkAdminPermission() {
-            const userEmail = (localStorage.getItem('userEmail') || localStorage.getItem('currentUser') || localStorage.getItem('email') || '').trim().toLowerCase();
-            const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('role') === 'admin';
-            return (userEmail === 'admin@omda.com' || isAdminFlag);
+            const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
+            let userEmail = '';
+            
+            for (let key of possibleKeys) {
+                const val = localStorage.getItem(key);
+                if (val) {
+                    userEmail = val.trim().toLowerCase();
+                    break;
+                }
+            }
+
+            let hasAdminEmail = (userEmail === 'admin@omda.com');
+
+            if (!hasAdminEmail) {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    const v = (localStorage.getItem(k) || '').toLowerCase();
+                    if (v.includes('admin@omda.com') || v === 'admin' || v === 'master admin') {
+                        hasAdminEmail = true;
+                        break;
+                    }
+                }
+            }
+
+            const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || 
+                                localStorage.getItem('role') === 'admin' || 
+                                localStorage.getItem('userRole') === 'admin' ||
+                                localStorage.getItem('isAdminLoggedIn') === 'true';
+
+            return (hasAdminEmail || isAdminFlag);
         }
 
         function enforceAdminSecurity() {
