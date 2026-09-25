@@ -7,6 +7,59 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
+    <style>
+        .admin-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+        .admin-section-btn {
+            background: #fff;
+            border: 2px solid #d6d3d1;
+            border-radius: 8px;
+            padding: 10px 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: #292524;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            text-align: center;
+        }
+        .admin-section-btn i {
+            font-size: 1.1rem;
+            color: var(--primary-color);
+        }
+        .admin-section-btn.active {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+        }
+        .admin-section-btn.active i {
+            color: #fff;
+        }
+        .admin-panel-box {
+            display: none;
+            background: #fafaf9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 2px dashed #d6d3d1;
+            animation: fadeIn 0.3s ease;
+        }
+        .admin-panel-box.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
 
@@ -26,9 +79,9 @@
     <main class="container">
 
         <!-- شاشة تسجيل دخول الأدمن / المحاسب / الموظف -->
-        <div id="admin-login-box" class="admin-login-box" style="margin: 40px auto; max-width: 450px;">
+        <div id="admin-login-box" class="admin-login-box" style="margin: 60px auto; max-width: 450px;">
             <h2 style="color: var(--secondary-color); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i> بوابة دخول الطاقم والإدارة</h2>
-            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">أدخل البريد الإلكتروني أو رقم الهاتف مع كلمة المرور (أو استخدم الافتراضي: البريد `` وباسورد ``):</p>
+            <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">أدخل البريد الإلكتروني أو رقم الهاتف مع كلمة المرور الخاصة بك للوصول للنظام:</p>
             
             <div class="checkout-form" style="max-width: 100%;">
                 <input type="text" id="admin-login-id" placeholder="البريد الإلكتروني أو رقم الهاتف">
@@ -48,15 +101,111 @@
                 </div>
             </div>
 
-            <!-- قسم إدارة حسابات الموظفين والمحاسبين (يظهر للمدير الماستر فقط) -->
-            <div id="staff-management-section" style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #0284c7;">
+            <!-- أزرار التنقل السريع بين الأقسام -->
+            <div class="admin-nav-grid">
+                <button onclick="switchAdminSection('vault', this)" class="admin-section-btn active"><i class="fa-solid fa-vault"></i> الخزنة والأرباح</button>
+                <button onclick="switchAdminSection('orders', this)" class="admin-section-btn"><i class="fa-solid fa-box-open"></i> الطلبات</button>
+                <button onclick="switchAdminSection('reservations', this)" class="admin-section-btn"><i class="fa-solid fa-chair"></i> الحجوزات</button>
+                <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة وجبة</button>
+                <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> المنيو الحالي</button>
+                <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> أوردر يدوي</button>
+                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين</button>
+                <button onclick="switchAdminSection('ticker', this)" class="admin-section-btn"><i class="fa-solid fa-bullhorn"></i> الإعلانات</button>
+            </div>
+
+            <!-- 1. دفتر الخزنة والمبيعات اليومية -->
+            <div id="section-vault" class="admin-panel-box active" style="border-color: #16a34a;">
+                <h3 style="margin-bottom: 12px; color: #16a34a;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات اليومية</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px;">
+                    <div style="background: #bbf7d0; padding: 12px; border-radius: 8px; text-align: center; color: #166534;">
+                        <h4 style="font-size: 0.9rem;">إجمالي الإيرادات</h4>
+                        <span id="vault-total-sales" style="font-size: 1.2rem; font-weight: bold;">0 جنيه</span>
+                    </div>
+                    <div style="background: #fed7aa; padding: 12px; border-radius: 8px; text-align: center; color: #9a3412;">
+                        <h4 style="font-size: 0.9rem;">إجمالي المصروفات</h4>
+                        <span id="vault-total-expenses" style="font-size: 1.2rem; font-weight: bold;">0 جنيه</span>
+                    </div>
+                    <div style="background: #e0f2fe; padding: 12px; border-radius: 8px; text-align: center; color: #0369a1;">
+                        <h4 style="font-size: 0.9rem;">صافي الأرباح</h4>
+                        <span id="vault-net-profit" style="font-size: 1.2rem; font-weight: bold;">0 جنيه</span>
+                    </div>
+                </div>
+                <div class="checkout-form" style="max-width: 100%;">
+                    <input type="text" id="expense-reason" placeholder="سبب المصروف (مثل: فحم حطب، صيانة)">
+                    <input type="number" id="expense-amount" placeholder="المبلغ بالجنيه">
+                    <button onclick="addExpense()" class="btn-secondary" style="background-color: #9a3412;">تسجيل مصروف جديد للخزنة 💸</button>
+                </div>
+                <div id="expenses-list" style="margin-top: 15px; font-size: 0.9rem; color: #292524;"></div>
+            </div>
+
+            <!-- 2. طلبات الدليفري والتوصيل -->
+            <div id="section-orders" class="admin-panel-box" style="border-color: var(--primary-color);">
+                <h3 style="color: var(--primary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 15px;"><i class="fa-solid fa-box-open"></i> طلبات الدليفري والتوصيل</h3>
+                <div id="admin-orders-list" class="admin-orders-list"></div>
+            </div>
+
+            <!-- 3. حجوزات الطاولات والعزائم -->
+            <div id="section-reservations" class="admin-panel-box" style="border-color: var(--secondary-color);">
+                <h3 style="color: var(--secondary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 15px;"><i class="fa-solid fa-chair"></i> حجوزات الطاولات والعزائم</h3>
+                <div id="admin-reservations-list" class="admin-orders-list"></div>
+            </div>
+
+            <!-- 4. إضافة وجبة جديدة -->
+            <div id="section-products" class="admin-panel-box" style="border-color: var(--primary-color);">
+                <h3 style="margin-bottom: 12px; color: var(--primary-color);"><i class="fa-solid fa-photo-film"></i> إضافة وجبة جديدة (صورة أو فيديو)</h3>
+                <div class="checkout-form" style="max-width: 100%;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <input type="text" id="new-prod-name" placeholder="اسم الأكلة أو الوجبة">
+                        <select id="new-prod-cat">
+                            <option value="trays">ركن الصواني 🔥</option>
+                            <option value="grills">ركن المشويات</option>
+                            <option value="meals">الوجبات السريعة</option>
+                            <option value="tagines">الطواجن</option>
+                            <option value="appetizers">المقبلات والسلطات</option>
+                        </select>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <input type="number" id="new-prod-price" placeholder="السعر بالجنيه">
+                        <div>
+                            <label style="font-size: 0.8rem; color: #78716c; display: block; margin-bottom: 3px;">صورة أو فيديو الاستوديو:</label>
+                            <input type="file" id="new-prod-file" accept="image/*,video/*" style="padding: 6px; background: #fff; border: 1px solid #d6d3d1; border-radius: 8px; width: 100%;">
+                        </div>
+                    </div>
+                    <textarea id="new-prod-desc" placeholder="وصف الوجبة ومكوناتها بالتفصيل"></textarea>
+                    <button onclick="addNewProductWithMedia()" class="btn-primary" style="background-color: var(--primary-color);">إضافة المنتج للمنيو والسلة 🚀</button>
+                </div>
+            </div>
+
+            <!-- 5. إدارة وحذف أصناف المنيو الحالي -->
+            <div id="section-menu-manage" class="admin-panel-box" style="border-color: #b45309;">
+                <h3 style="margin-bottom: 12px; color: var(--secondary-color);"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي</h3>
+                <div id="admin-menu-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- 6. تسجيل أوردر جديد يدوي -->
+            <div id="section-manual-order" class="admin-panel-box" style="border-color: #0369a1;">
+                <h3 style="margin-bottom: 12px; color: #0369a1;"><i class="fa-solid fa-cart-plus"></i> تسجيل أوردر جديد (للمدير/المحاسب)</h3>
+                <div class="checkout-form" style="max-width: 100%;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                        <input type="text" id="admin-ord-name" placeholder="اسم العميل الكريم">
+                        <input type="text" id="admin-ord-phone" placeholder="رقم هاتف العميل">
+                    </div>
+                    <input type="text" id="admin-ord-address" placeholder="عنوان التوصيل أو رقم الطاولة">
+                    <input type="text" id="admin-ord-items" placeholder="وصف الطلب والأصناف">
+                    <input type="number" id="admin-ord-total" placeholder="الإجمالي بالجنيه">
+                    <button onclick="adminCreateOrder()" class="btn-secondary" style="background-color: #0369a1;">إنشاء الطلب وإرساله لحساب العميل 🚀</button>
+                </div>
+            </div>
+
+            <!-- 7. إدارة حسابات الموظفين (للمدير الماستر فقط) -->
+            <div id="section-staff" class="admin-panel-box" style="border-color: #0284c7;">
                 <h3 style="margin-bottom: 12px; color: #0284c7;"><i class="fa-solid fa-users-gear"></i> إنشاء وإدارة حسابات المحاسبين والموظفين</h3>
                 <div class="checkout-form" style="max-width: 100%;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                         <input type="text" id="staff-name" placeholder="اسم الموظف أو المحاسب">
                         <input type="email" id="staff-email" placeholder="البريد الإلكتروني">
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
                         <input type="text" id="staff-phone" placeholder="رقم الهاتف">
                         <input type="password" id="staff-pass" placeholder="كلمة المرور">
                     </div>
@@ -69,95 +218,14 @@
                 </div>
                 <div id="staff-list-container" style="margin-top: 15px; max-height: 200px; overflow-y: auto;"></div>
             </div>
-            
-            <!-- دفتر الخزنة والمبيعات اليومية (Daily Vault) -->
-            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #16a34a;">
-                <h3 style="margin-bottom: 12px; color: #16a34a;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات اليومية</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                    <div style="background: #bbf7d0; padding: 15px; border-radius: 8px; text-align: center; color: #166534;">
-                        <h4>إجمالي الإيرادات</h4>
-                        <span id="vault-total-sales" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
-                    </div>
-                    <div style="background: #fed7aa; padding: 15px; border-radius: 8px; text-align: center; color: #9a3412;">
-                        <h4>إجمالي المصروفات</h4>
-                        <span id="vault-total-expenses" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
-                    </div>
-                    <div style="background: #e0f2fe; padding: 15px; border-radius: 8px; text-align: center; color: #0369a1;">
-                        <h4>صافي الأرباح</h4>
-                        <span id="vault-net-profit" style="font-size: 1.3rem; font-weight: bold;">0 جنيه</span>
-                    </div>
-                </div>
-                <div class="checkout-form" style="max-width: 100%;">
-                    <input type="text" id="expense-reason" placeholder="سبب المصروف (مثل: شراء فحم حطب، صيانة، خضار)">
-                    <input type="number" id="expense-amount" placeholder="المبلغ بالجنيه">
-                    <button onclick="addExpense()" class="btn-secondary" style="background-color: #9a3412;">تسجيل مصروف جديد للخزنة 💸</button>
-                </div>
-                <div id="expenses-list" style="margin-top: 15px; font-size: 0.9rem; color: #292524;"></div>
-            </div>
-            
-            <!-- قسم التحكم في شريط الإعلانات (RSS Ticker) -->
-            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #991b1b;">
+
+            <!-- 8. التحكم في شريط الإعلانات -->
+            <div id="section-ticker" class="admin-panel-box" style="border-color: #991b1b;">
                 <h3 style="margin-bottom: 12px; color: #991b1b;"><i class="fa-solid fa-bullhorn"></i> التحكم في شريط الإعلانات المتحرك (RSS)</h3>
                 <div class="checkout-form" style="max-width: 100%;">
                     <input type="text" id="admin-ticker-input" placeholder="اكتب نص الإعلان المتحرك الجديد...">
                     <button onclick="updateTickerText()" class="btn-primary" style="background-color: #991b1b;">تحديث الشريط المتحرك فوراً 🚀</button>
                 </div>
-            </div>
-
-            <!-- قسم إضافة وجبة جديدة مع إمكانية رفع صورة أو فيديو -->
-            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed var(--primary-color);">
-                <h3 style="margin-bottom: 12px; color: var(--primary-color);"><i class="fa-solid fa-photo-film"></i> إضافة وجبة جديدة (مع رفع صورة أو فيديو من جهازك)</h3>
-                <div class="checkout-form" style="max-width: 100%;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <input type="text" id="new-prod-name" placeholder="اسم الأكلة أو الوجبة">
-                        <select id="new-prod-cat">
-                            <option value="trays">ركن الصواني 🔥</option>
-                            <option value="grills">ركن المشويات</option>
-                            <option value="meals">الوجبات السريعة</option>
-                            <option value="tagines">الطواجن</option>
-                            <option value="appetizers">المقبلات والسلطات</option>
-                        </select>
-                    </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <input type="number" id="new-prod-price" placeholder="السعر بالجنيه">
-                        <div>
-                            <label style="font-size: 0.85rem; color: #78716c; display: block; margin-bottom: 3px;">اختر صورة أو فيديو من الاستوديو:</label>
-                            <input type="file" id="new-prod-file" accept="image/*,video/*" style="padding: 7px; background: #fff; border: 1px solid #d6d3d1; border-radius: 8px; width: 100%;">
-                        </div>
-                    </div>
-                    <textarea id="new-prod-desc" placeholder="وصف الوجبة ومكوناتها بالتفصيل"></textarea>
-                    <button onclick="addNewProductWithMedia()" class="btn-primary" style="background-color: var(--primary-color);">إضافة المنتج للمنيو والسلة 🚀</button>
-                </div>
-            </div>
-
-            <!-- قسم إدارة وحذف أصناف المنيو الحالي -->
-            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #b45309;">
-                <h3 style="margin-bottom: 12px; color: var(--secondary-color);"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي</h3>
-                <div id="admin-menu-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 280px; overflow-y: auto;"></div>
-            </div>
-
-            <!-- قسم إضافة أوردر جديد يدوي -->
-            <div style="background: #fafaf9; padding: 20px; border-radius: 8px; margin-bottom: 25px; border: 2px dashed #0369a1;">
-                <h3 style="margin-bottom: 12px; color: #0369a1;"><i class="fa-solid fa-cart-plus"></i> تسجيل أوردر جديد (للمدير/المحاسب)</h3>
-                <div class="checkout-form" style="max-width: 100%;">
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
-                        <input type="text" id="admin-ord-name" placeholder="اسم العميل الكريم">
-                        <input type="text" id="admin-ord-phone" placeholder="رقم هاتف العميل">
-                    </div>
-                    <input type="text" id="admin-ord-address" placeholder="عنوان التوصيل أو رقم الطاولة">
-                    <input type="text" id="admin-ord-items" placeholder="وصف الطلب والأصناف">
-                    <input type="number" id="admin-ord-total" placeholder="الإجمالي بالجنيه">
-                    <button onclick="adminCreateOrder()" class="btn-secondary" style="background-color: #0369a1;">إنشاء الطلب وإرساله لحساب العميل 🚀</button>
-                </div>
-            </div>
-
-            <div style="margin-top: 25px;">
-                <h3 style="color: var(--primary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px;">📦 طلبات الدليفري والتوصيل</h3>
-                <div id="admin-orders-list" class="admin-orders-list"></div>
-            </div>
-            <div style="margin-top: 30px;">
-                <h3 style="color: var(--secondary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px;">🪑 حجوزات الطاولات والعزائم</h3>
-                <div id="admin-reservations-list" class="admin-orders-list" style="margin-top: 15px;"></div>
             </div>
 
         </div>
@@ -167,6 +235,16 @@
     <!-- ربط ملف الـ JavaScript المشترك -->
     <script src="app.js"></script>
     <script>
+        // دالة تبديل الأقسام عبر الأزرار العلوية بدون تداخل
+        function switchAdminSection(sectionName, btnElement) {
+            document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
+            document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
+
+            const targetEl = document.getElementById('section-' + sectionName);
+            if(targetEl) targetEl.classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('omda_logged_user')) {
                 loadAdminDashboard();
