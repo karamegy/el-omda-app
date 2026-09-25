@@ -43,7 +43,7 @@
     <!-- إحصائيات سريعة للأداء -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600">
-            <div><span class="text-slate-500">إجمالي الفروع</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">0 فرع</h4></div>
+            <div><span class="text-slate-500">إجمالي الفروع والمطعم</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">0 فرع</h4></div>
             <i class="fa-solid fa-store text-amber-600 text-xl"></i>
         </div>
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600">
@@ -78,7 +78,7 @@
 
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
             <span class="font-bold text-amber-800 whitespace-nowrap"><i class="fa-solid fa-route ml-1"></i> ملاحة مسار الدليفري:</span>
-            <input type="text" id="routeStartInput" placeholder="نقطة البداية (المطعم أو موقعك GPS)" class="corporate-input flex-1 min-w-[180px]">
+            <input type="text" id="routeStartInput" placeholder="نقطة البداية (المطعم الرئيسي)" class="corporate-input flex-1 min-w-[180px]" value="مطعم مشويات العمدة (الرئيسي)" readonly>
             <input type="text" id="routeEndInput" placeholder="وجهة العميل (مثال: فيصل، الهرم، شبرا منت)" class="corporate-input flex-1 min-w-[180px]">
             <button onclick="searchAndCalculateRoute()" class="btn-primary py-2 px-4 text-xs cursor-pointer bg-amber-700 hover:bg-amber-800">
                 <i class="fa-solid fa-location-arrow ml-1"></i> رسم المسار و حساب ETA
@@ -97,7 +97,7 @@
             <div class="sidebar-tabs" id="sidebarTabsContainer">
                 <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الطلبات</button>
                 <button id="tabDrivers" onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
-                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> الفروع</button>
+                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> المطعم</button>
                 <button id="tabPortal" onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
@@ -130,22 +130,34 @@
 
             <!-- تبويب إدارة الطيارين والأسطول (للإدارة فقط) -->
             <div id="tab-content-drivers" style="display: none;" class="space-y-3">
-                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار دليفري جديد</h3>
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار دليفري جديد بالموقع</h3>
                 <div class="space-y-2">
                     <input type="text" id="driver-name" placeholder="اسم الكابتن/السيارة" class="corporate-input">
                     <input type="text" id="driver-phone" placeholder="رقم الهاتف" class="corporate-input">
-                    <button onclick="addNewDriver()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800">إضافة الطيار للأسطول ➕</button>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" step="any" id="driver-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
+                        <input type="number" step="any" id="driver-lng" placeholder="خط الطول Lng" class="corporate-input mono-font">
+                    </div>
+                    <div class="flex gap-1">
+                        <button type="button" onclick="fetchGpsForDriver()" class="flex-1 bg-amber-50 text-amber-800 py-1.5 rounded-lg text-[11px] font-bold border border-amber-200 cursor-pointer">
+                            <i class="fa-solid fa-location-crosshairs"></i> موقعي GPS الحالي
+                        </button>
+                        <button type="button" onclick="enableDriverPickMode()" class="flex-1 bg-slate-100 text-slate-700 py-1.5 rounded-lg text-[11px] font-bold border border-slate-200 cursor-pointer">
+                            <i class="fa-solid fa-map-pin"></i> حدد من الخريطة
+                        </button>
+                    </div>
+                    <button onclick="addNewDriverWithLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800">إضافة الطيار للأسطول ➕</button>
                 </div>
                 <div id="drivers-list-container" class="space-y-2 mt-3"></div>
             </div>
 
-            <!-- تبويب إدارة وإضافة الفروع (للإدارة فقط) -->
+            <!-- تبويب إدارة وإضافة المطعم الرئيسي (للإدارة فقط) -->
             <div id="tab-content-branches" style="display: none;" class="space-y-3">
-                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-store"></i> إضافة فرع جديد للمطعم</h3>
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-shop"></i> ضبط موقع المطعم الرئيسي بدقة</h3>
                 <div class="space-y-2">
-                    <input type="text" id="branch-name" placeholder="اسم الفرع (مثال: فرع الهرم)" class="corporate-input">
-                    <input type="text" id="branch-phone" placeholder="هاتف الفرع" class="corporate-input">
-                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input">
+                    <input type="text" id="branch-name" placeholder="اسم المطعم الرئيسي" class="corporate-input" value="مطعم مشويات العمدة (الرئيسي)">
+                    <input type="text" id="branch-phone" placeholder="هاتف المطعم" class="corporate-input" value="01144730305">
+                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input" value="شبرا منت، الجيزة">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" step="any" id="branch-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
                         <input type="number" step="any" id="branch-lng" placeholder="خط الطول Lng" class="corporate-input mono-font">
@@ -158,7 +170,7 @@
                             <i class="fa-solid fa-map-pin"></i> حدد من الخريطة
                         </button>
                     </div>
-                    <button onclick="addNewBranch()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وإضافة الفرع ➕</button>
+                    <button onclick="saveMainRestaurantLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وتثبيت موقع المطعم الرئيسي 👑</button>
                 </div>
                 <div id="branches-list-container" class="space-y-2 mt-3"></div>
             </div>
