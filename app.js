@@ -24,8 +24,8 @@ let currentCustomer = null;
 let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
 let activeDiscount = 0;
 
-// إحداثيات مطعم مشويات العمدة الرئيسي (شبرا منت / الجيزة)
-const restaurantCoords = [30.005, 31.185];
+// إحداثيات مطعم مشويات العمدة الرئيسي (يتم جلبها من التخزين أو القيمة الافتراضية لشبرا منت)
+let restaurantCoords = JSON.parse(localStorage.getItem('omda_restaurant_coords') || '[30.005, 31.185]');
 
 let map;
 let streetLayer, topoLayer, satelliteLayer;
@@ -35,6 +35,7 @@ let currentFilter = 'all';
 let previousOrdersCount = 0;
 let watchId = null;
 let pickingBranchMode = false;
+let pickingDriverMode = false;
 
 // ----------------- التحقق من الصلاحيات -----------------
 function checkAdminPermission() {
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             touchRotate: true,
             rotateControl: false,
             bearing: 0
-        }).setView(restaurantCoords, 13);
+        }).setView(restaurantCoords, 14);
 
         streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
         topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenTopoMap' });
@@ -132,14 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         driversLayer = L.layerGroup().addTo(map);
         branchesLayer = L.layerGroup().addTo(map);
 
-        const omdaIcon = L.divIcon({
-            className: 'custom-map-icon',
-            html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.5); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
-            iconSize: [44, 44], iconAnchor: [22, 22]
-        });
-
-        L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
-            .bindPopup("<b>👑 كبابجي ومشويات العمدة (الرئيسي)</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
+        updateRestaurantMarkerOnMap();
 
         map.on('click', function(e) {
             const lat = e.latlng.lat.toFixed(6);
@@ -150,8 +144,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('branch-lng').value = lng;
                 pickingBranchMode = false;
                 map.getContainer().style.cursor = '';
-                alert(`✓ تم التقاط إحداثيات الفرع بنجاح: (${lat}, ${lng})`);
+                alert(`✓ تم التقاط إحداثيات المطعم بدقة: (${lat}, ${lng})`);
                 switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+                return;
+            }
+
+            if (pickingDriverMode && checkAdminPermission()) {
+                document.getElementById('driver-lat').value = lat;
+                document.getElementById('driver-lng').value = lng;
+                pickingDriverMode = false;
+                map.getContainer().style.cursor = '';
+                alert(`✓ تم التقاط إحداثيات موقع السائق بدقة: (${lat}, ${lng})`);
+                switchSidebarTab('drivers', document.querySelectorAll('.sidebar-tab')[1]);
                 return;
             }
 
@@ -160,7 +164,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 .setContent(`
                     <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
                         <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
-                        ${checkAdminPermission() ? `<button onclick="openBranchAtCoords(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-store"></i> إضافة فرع هنا</button>` : ''}
+                        ${checkAdminPermission() ? `
+                            <button onclick="setRestaurantCoordsFromMap(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold; display:block; width:100%;">👑 تعيين كمطعم العمدة الرئيسي</button>
+                            <button onclick="setDriverCoordsFromMap(${lat},${lng})" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:4px; cursor:pointer; font-weight:bold; display:block; width:100%;">🏍️ استخدام كموقع للسائق</button>
+                        ` : ''}
                     </div>
                 `)
                 .openOn(map);
@@ -179,6 +186,141 @@ document.addEventListener('DOMContentLoaded', () => {
         setInterval(loadLiveTrackingMap, 8000);
     }
 });
+
+function updateRestaurantMarkerOnMap() {
+    if(!map) return;
+    if(window.restaurantMarkerObj) {
+        map.removeLayer(window.restaurantMarkerObj);
+    }
+
+    const omdaIcon = L.divIcon({
+        className: 'custom-map-icon',
+        html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.6); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
+        iconSize: [46, 46], iconAnchor: [23, 23]
+    });
+
+    window.restaurantMarkerObj = L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
+        .bindPopup("<b>👑 كبابجي ومشويات العمدة (المركز الرئيسي)</b><br>الفحم الحطب الأصلي - تم ضبط الموقع بنجاح").openPopup();
+}
+
+function saveMainRestaurantLocation() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    const lat = parseFloat(document.getElementById('branch-lat').value);
+    const lng = parseFloat(document.getElementById('branch-lng').value);
+    const name = document.getElementById('branch-name').value.trim();
+
+    if(isNaN(lat) || isNaN(lng)) {
+        alert("يرجى إدخال خطوط الطول والعرض أو تحديدها من الخريطة أولاً!");
+        return;
+    }
+
+    restaurantCoords = [lat, lng];
+    localStorage.setItem('omda_restaurant_coords', JSON.stringify(restaurantCoords));
+    updateRestaurantMarkerOnMap();
+    map.setView(restaurantCoords, 15);
+    alert(`👑 تم حفظ وتحديث موقع "${name || 'مطعم العمدة'}" الرئيسي بنجاح على الخريطة!`);
+}
+
+function setRestaurantCoordsFromMap(lat, lng) {
+    document.getElementById('branch-lat').value = lat;
+    document.getElementById('branch-lng').value = lng;
+    saveMainRestaurantLocation();
+}
+
+function setDriverCoordsFromMap(lat, lng) {
+    switchSidebarTab('drivers', document.querySelectorAll('.sidebar-tab')[1]);
+    document.getElementById('driver-lat').value = lat;
+    document.getElementById('driver-lng').value = lng;
+    alert(`✓ تم تعيين الإحداثيات (${lat}, ${lng}) للسائق الجديد.`);
+}
+
+function enableBranchPickMode() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    pickingBranchMode = true;
+    if(map) {
+        map.getContainer().style.cursor = 'crosshair';
+        alert("💡 انقر الآن على مكان المطعم على الخريطة لتحديد إحداثياته الدقيقة!");
+    }
+}
+
+function enableDriverPickMode() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    pickingDriverMode = true;
+    if(map) {
+        map.getContainer().style.cursor = 'crosshair';
+        alert("💡 انقر الآن على موقع السائق المطلوب على الخريطة!");
+    }
+}
+
+function fetchGpsForBranch() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('branch-lat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('branch-lng').value = pos.coords.longitude.toFixed(6);
+            alert("✓ تم جلب إحداثيات موقعك الحالي GPS بنجاح.");
+        }, () => alert("تعذر جلب موقع GPS."));
+    }
+}
+
+function fetchGpsForDriver() {
+    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(pos => {
+            document.getElementById('driver-lat').value = pos.coords.latitude.toFixed(6);
+            document.getElementById('driver-lng').value = pos.coords.longitude.toFixed(6);
+            alert("✓ تم جلب موقع GPS الحالي للسائق بنجاح.");
+        }, () => alert("تعذر جلب موقع GPS."));
+    } else {
+        alert("متصفحك لا يدعم تحديد الموقع الجغرافي GPS.");
+    }
+}
+
+function addNewDriverWithLocation() {
+    if (!checkAdminPermission()) {
+        alert("🚫 غير مسموح لك بإضافة طيارين.");
+        return;
+    }
+
+    const nameEl = document.getElementById('driver-name');
+    const phoneEl = document.getElementById('driver-phone');
+    const latEl = document.getElementById('driver-lat');
+    const lngEl = document.getElementById('driver-lng');
+    if(!nameEl || !phoneEl) return;
+
+    const name = nameEl.value.trim();
+    const phone = phoneEl.value.trim();
+    let lat = parseFloat(latEl.value);
+    let lng = parseFloat(lngEl.value);
+
+    if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
+
+    if(isNaN(lat) || isNaN(lng)) {
+        lat = restaurantCoords[0] + (Math.random() - 0.5) * 0.005;
+        lng = restaurantCoords[1] + (Math.random() - 0.5) * 0.005;
+    }
+
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    drivers.push({ 
+        id: Date.now(), 
+        name, 
+        phone, 
+        lat, 
+        lng 
+    });
+    
+    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+    alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
+    
+    nameEl.value = '';
+    phoneEl.value = '';
+    latEl.value = '';
+    lngEl.value = '';
+    
+    loadDriversAdminList();
+    loadDriversOnMap();
+    loadLiveTrackingMap();
+}
 
 // ----------------- دوال المنيو، السلة، والتسوق -----------------
 function loadSavedTicker() {
@@ -1243,7 +1385,7 @@ function panToUser() {
 }
 
 function resetMapView() {
-    if(map) map.setView(restaurantCoords, 13);
+    if(map) map.setView(restaurantCoords, 14);
 }
 
 function switchSidebarTab(tabName, btn) {
@@ -1325,129 +1467,24 @@ function trackCustomerOrder() {
     }
 }
 
-function enableBranchPickMode() {
-    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
-    pickingBranchMode = true;
-    if(map) {
-        map.getContainer().style.cursor = 'crosshair';
-        alert("💡 انقر الآن على المكان المطلوب داخل الخريطة لتحديد موقع الفرع الجديد!");
-    }
-}
-
-function fetchGpsForBranch() {
-    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
-    if ("geolocation" in navigator) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            document.getElementById('branch-lat').value = pos.coords.latitude.toFixed(6);
-            document.getElementById('branch-lng').value = pos.coords.longitude.toFixed(6);
-            alert("✓ تم جلب إحداثيات موقعك الحالي بنجاح للفرع.");
-        }, () => alert("تعذر جلب موقع GPS."));
-    }
-}
-
-function openBranchAtCoords(lat, lng) {
-    if (!checkAdminPermission()) return;
-    switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
-    document.getElementById('branch-lat').value = lat;
-    document.getElementById('branch-lng').value = lng;
-    document.getElementById('branch-name').focus();
-}
-
-function addNewBranch() {
-    if (!checkAdminPermission()) {
-        alert("🚫 غير مسموح لك بإضافة فروع.");
-        return;
-    }
-
-    const name = document.getElementById('branch-name').value.trim();
-    const phone = document.getElementById('branch-phone').value.trim();
-    const address = document.getElementById('branch-address').value.trim();
-    const lat = parseFloat(document.getElementById('branch-lat').value);
-    const lng = parseFloat(document.getElementById('branch-lng').value);
-
-    if(!name || isNaN(lat) || isNaN(lng)) {
-        alert('يرجى إدخال اسم الفرع والإحداثيات بشكل صحيح!');
-        return;
-    }
-
-    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
-    branches.push({ id: Date.now(), name, phone, address, lat, lng });
-    localStorage.setItem('omda_branches', JSON.stringify(branches));
-
-    alert('تم إضافة الفرع بنجاح وحفظه على الخريطة 👑');
-    document.getElementById('branch-name').value = '';
-    document.getElementById('branch-phone').value = '';
-    document.getElementById('branch-address').value = '';
-    document.getElementById('branch-lat').value = '';
-    document.getElementById('branch-lng').value = '';
-
-    loadBranchesAdminList();
-    loadBranchesOnMap();
-}
-
 function loadBranchesAdminList() {
     const container = document.getElementById('branches-list-container');
     if(!container) return;
-    container.innerHTML = '';
-    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
-    
+    container.innerHTML = `
+        <div class="bg-amber-50/80 p-2.5 rounded-lg border border-amber-300 text-xs">
+            <strong>👑 المركز الرئيسي الحالي:</strong><br>
+            <span class="mono-font text-amber-900">Lat: ${restaurantCoords[0]}, Lng: ${restaurantCoords[1]}</span><br>
+            <span class="text-[10px] text-slate-500">تم اعتماده كمركز انطلاق لكافة مسارات التوصيل والـ ETA.</span>
+        </div>
+    `;
     const statBranches = document.getElementById('statBranchesCount');
-    if(statBranches) statBranches.innerText = (branches.length + 1) + ' فرع';
-
-    if(branches.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد فروع مضافة حديثاً (المطعم الرئيسي مفعل).</p>';
-        return;
-    }
-
-    branches.forEach((b, idx) => {
-        container.innerHTML += `
-            <div class="bg-amber-50/60 p-2 rounded-lg border border-amber-200 flex justify-between items-center text-xs">
-                <div>
-                    <strong>${b.name}</strong><br>
-                    <span class="text-[10px] text-slate-500">${b.address || b.phone || ''}</span>
-                </div>
-                <button onclick="deleteBranch(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
-            </div>
-        `;
-    });
-}
-
-function deleteBranch(idx) {
-    if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
-    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
-    branches.splice(idx, 1);
-    localStorage.setItem('omda_branches', JSON.stringify(branches));
-    loadBranchesAdminList();
-    loadBranchesOnMap();
+    if(statBranches) statBranches.innerText = '1 مطعم رئيسي';
 }
 
 function loadBranchesOnMap() {
-    if(!branchesLayer) return;
-    branchesLayer.clearLayers();
-
-    let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
+    // يمكن تركها فارغة أو لتحديث العدادات
     const statBranches = document.getElementById('statBranchesCount');
-    if(statBranches) statBranches.innerText = (branches.length + 1) + ' فرع';
-
-    const branchIcon = L.divIcon({
-        className: 'custom-map-icon',
-        html: `<div style="background: linear-gradient(135deg, #d97706, #b45309); color:white; width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(217,119,6,0.4); border:2.5px solid white;"><i class="fa-solid fa-store text-xs"></i></div>`,
-        iconSize: [38, 38], iconAnchor: [19, 19]
-    });
-
-    branches.forEach(b => {
-        if(!isNaN(b.lat) && !isNaN(b.lng)) {
-            L.marker([b.lat, b.lng], { icon: branchIcon }).addTo(branchesLayer)
-                .bindPopup(`
-                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
-                        <b>🏪 ${b.name}</b><br>
-                        هاتف: ${b.phone || 'غير مسجل'}<br>
-                        العنوان: ${b.address || 'العنوان غير محدد'}<br>
-                        <button onclick="navigateRouteTo(${b.lat}, ${b.lng}, '${b.name}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; margin-top:5px; cursor:pointer; font-weight:bold;">رسم مسار للفرع</button>
-                    </div>
-                `);
-        }
-    });
+    if(statBranches) statBranches.innerText = '1 مطعم رئيسي';
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -1686,40 +1723,6 @@ async function searchCustomLocation() {
     } catch(e) {}
 }
 
-function addNewDriver() {
-    if (!checkAdminPermission()) {
-        alert("🚫 غير مسموح لك بإضافة طيارين.");
-        return;
-    }
-
-    const nameEl = document.getElementById('driver-name');
-    const phoneEl = document.getElementById('driver-phone');
-    if(!nameEl || !phoneEl) return;
-
-    const name = nameEl.value.trim();
-    const phone = phoneEl.value.trim();
-    if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
-
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.push({ 
-        id: Date.now(), 
-        name, 
-        phone, 
-        lat: restaurantCoords[0] + (Math.random() - 0.5) * 0.01, 
-        lng: restaurantCoords[1] + (Math.random() - 0.5) * 0.01 
-    });
-    
-    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
-    alert('تم إضافة السائق بنجاح ووضعه على الخريطة 🏍️');
-    
-    nameEl.value = '';
-    phoneEl.value = '';
-    
-    loadDriversAdminList();
-    loadDriversOnMap();
-    loadLiveTrackingMap();
-}
-
 function loadDriversAdminList() {
     const container = document.getElementById('drivers-list-container');
     if(!container) return;
@@ -1730,7 +1733,7 @@ function loadDriversAdminList() {
     drivers.forEach((d, idx) => {
         container.innerHTML += `
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
-                <div><strong>${d.name}</strong> (${d.phone})</div>
+                <div><strong>${d.name}</strong> (${d.phone})<br><span class="text-[10px] text-slate-500 mono-font">(${d.lat ? d.lat.toFixed(4) : 0}, ${d.lng ? d.lng.toFixed(4) : 0})</span></div>
                 <button onclick="deleteDriver(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
             </div>
         `;
