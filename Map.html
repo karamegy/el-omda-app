@@ -74,12 +74,12 @@
         <div class="flex items-center gap-3">
             <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md"><i class="fa-solid fa-fire-burner"></i></div>
             <div>
-                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // خريطة الفروع والأسطول 👑</h1>
-                <span class="text-xs text-amber-700 font-bold">إدارة الفروع، الشحنات، والمناديب، وملاحة التوصيل الذكية (GPS)</span>
+                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // خريطة التتبع الحي والشحنات 👑</h1>
+                <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <a href="admin.html" class="nav-link bg-slate-100 hover:bg-slate-200"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-link bg-slate-100 hover:bg-slate-200"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
             <a href="index.html" class="nav-link bg-amber-50 text-amber-800 hover:bg-amber-100"><i class="fa-solid fa-store"></i> المنيو الرئيسي</a>
         </div>
     </header>
@@ -138,18 +138,18 @@
         
         <!-- القائمة الجانبية لإدارة الطلبات والطيارين والفروع -->
         <div class="corporate-card p-4 lg:col-span-1 space-y-3 max-h-[72vh] overflow-y-auto">
-            <div class="sidebar-tabs">
+            <div class="sidebar-tabs" id="sidebarTabsContainer">
                 <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الطلبات</button>
-                <button onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
-                <button onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> الفروع</button>
-                <button onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
+                <button id="tabDrivers" onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
+                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> الفروع</button>
+                <button id="tabPortal" onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
             <!-- تبويب الطلبات والشحنات الحية -->
             <div id="tab-content-orders">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 style="color: var(--primary);" class="font-bold text-xs"><i class="fa-solid fa-truck-fast"></i> الشحنات والطلبات</h3>
-                    <button onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.65rem; background: #16a34a;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي للطيارين</button>
+                    <h3 style="color: var(--primary);" class="font-bold text-xs"><i class="fa-solid fa-truck-fast"></i> تتبع الشحنات والطلبات</h3>
+                    <button id="autoDispatchBtn" onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.65rem; background: #16a34a; display:none;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي</button>
                 </div>
                 
                 <div class="filter-bar">
@@ -162,7 +162,7 @@
                 <div id="live-orders-list"></div>
             </div>
 
-            <!-- تبويب إدارة الطيارين والأسطول -->
+            <!-- تبويب إدارة الطيارين والأسطول (للإدارة فقط) -->
             <div id="tab-content-drivers" style="display: none;" class="space-y-3">
                 <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار دليفري جديد</h3>
                 <div class="space-y-2">
@@ -173,7 +173,7 @@
                 <div id="drivers-list-container" class="space-y-2 mt-3"></div>
             </div>
 
-            <!-- تبويب إدارة وإضافة الفروع -->
+            <!-- تبويب إدارة وإضافة الفروع (للإدارة فقط) -->
             <div id="tab-content-branches" style="display: none;" class="space-y-3">
                 <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-store"></i> إضافة فرع جديد للمطعم</h3>
                 <div class="space-y-2">
@@ -252,7 +252,48 @@
         let watchId = null;
         let pickingBranchMode = false;
 
+        // التحقق من صلاحيات المدير (Admin)
+        function checkAdminPermission() {
+            const userEmail = (localStorage.getItem('userEmail') || localStorage.getItem('currentUser') || localStorage.getItem('email') || '').trim().toLowerCase();
+            const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || localStorage.getItem('role') === 'admin';
+            return (userEmail === 'admin@omda.com' || isAdminFlag);
+        }
+
+        function enforceAdminSecurity() {
+            const isAdmin = checkAdminPermission();
+            const badge = document.getElementById('userRoleBadge');
+            const adminPanelLink = document.getElementById('adminPanelLink');
+            
+            if (isAdmin) {
+                if (badge) badge.innerText = "صلاحيات الإدارة الكاملة (Admin Mode) 👑";
+                if (adminPanelLink) adminPanelLink.style.display = 'flex';
+                // إظهار تبويبات الإدارة وأزرار التعديل
+                const tabD = document.getElementById('tabDrivers');
+                const tabB = document.getElementById('tabBranches');
+                const tabP = document.getElementById('tabPortal');
+                const autoBtn = document.getElementById('autoDispatchBtn');
+                if(tabD) tabD.style.display = 'block';
+                if(tabB) tabB.style.display = 'block';
+                if(tabP) tabP.style.display = 'block';
+                if(autoBtn) autoBtn.style.display = 'inline-flex';
+            } else {
+                if (badge) badge.innerText = "وضع تتبع الشحنة والطلبات للعملاء والزوار 📦";
+                if (adminPanelLink) adminPanelLink.style.display = 'none';
+                // إخفاء تبويبات الإدارة وتأمينها تماماً
+                const tabD = document.getElementById('tabDrivers');
+                const tabB = document.getElementById('tabBranches');
+                const tabP = document.getElementById('tabPortal');
+                const autoBtn = document.getElementById('autoDispatchBtn');
+                if(tabD) tabD.style.display = 'none';
+                if(tabB) tabB.style.display = 'none';
+                if(tabP) tabP.style.display = 'none';
+                if(autoBtn) autoBtn.style.display = 'none';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            enforceAdminSecurity();
+
             // تهيئة الخريطة بمحرك التدوير الحر الأصلي
             map = L.map('leafletMap', { 
                 zoomControl: true,
@@ -283,18 +324,17 @@
             L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
                 .bindPopup("<b>👑 كبابجي ومشويات العمدة (الرئيسي)</b><br>شبرا منت / الجيزة - الفحم الحطب الأصلي").openPopup();
 
-            // الاستماع للنقر على الخريطة (لتحديد مواقع الفروع عند تفعيل وضع الالتقاط)
+            // الاستماع للنقر على الخريطة (للإدارة فقط عند إضافة الفروع)
             map.on('click', function(e) {
                 const lat = e.latlng.lat.toFixed(6);
                 const lng = e.latlng.lng.toFixed(6);
 
-                if (pickingBranchMode) {
+                if (pickingBranchMode && checkAdminPermission()) {
                     document.getElementById('branch-lat').value = lat;
                     document.getElementById('branch-lng').value = lng;
                     pickingBranchMode = false;
                     map.getContainer().style.cursor = '';
                     alert(`✓ تم التقاط إحداثيات الفرع بنجاح: (${lat}, ${lng})`);
-                    // فتح تبويب الفروع تلقائياً
                     switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
                     return;
                 }
@@ -304,15 +344,12 @@
                     .setContent(`
                         <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
                             <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
-                            <button onclick="openBranchAtCoords(${lat}, ${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold;">
-                                <i class="fa-solid fa-store"></i> إضافة فرع هنا
-                            </button>
+                            ${checkAdminPermission() ? `<button onclick="openBranchAtCoords(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-store"></i> إضافة فرع هنا</button>` : ''}
                         </div>
                     `)
                     .openOn(map);
             });
 
-            // الاستماع لحركة تدوير الخريطة لتحديث بوصلة اللمس
             map.on('rotate', function() {
                 const bearing = map.getBearing ? map.getBearing() : 0;
                 const compass = document.getElementById('compassNeedle');
@@ -326,7 +363,6 @@
             setInterval(loadLiveTrackingMap, 8000);
         });
 
-        // التبديل بين طبقات الخريطة
         function switchLayer(type) {
             if(streetLayer) map.removeLayer(streetLayer);
             if(topoLayer) map.removeLayer(topoLayer);
@@ -336,7 +372,6 @@
             if(type === 'satellite') satelliteLayer.addTo(map);
         }
 
-        // لوحة التحكم اللمسية المنبثقة
         function toggleTouchPanel() {
             const panel = document.getElementById('touchControlPanel');
             const icon = document.getElementById('panelToggleIcon');
@@ -374,8 +409,12 @@
             if(map) map.setView(restaurantCoords, 13);
         }
 
-        // إدارة التبويبات الجانبية
         function switchSidebarTab(tabName, btn) {
+            if (tabName !== 'orders' && !checkAdminPermission()) {
+                alert("⚠️ عذراً، هذه الصلاحية مخصصة لحساب الإدارة (admin@omda.com) فقط.");
+                return;
+            }
+
             document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.remove('active'));
             if(btn) btn.classList.add('active');
 
@@ -390,9 +429,10 @@
         }
 
         // ==========================================
-        // 🏪 إدارة الفروع وإضافتها على الخريطة
+        // 🏪 إدارة الفروع (محمية للإدارة فقط)
         // ==========================================
         function enableBranchPickMode() {
+            if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
             pickingBranchMode = true;
             if(map) {
                 map.getContainer().style.cursor = 'crosshair';
@@ -401,18 +441,18 @@
         }
 
         function fetchGpsForBranch() {
+            if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالتعديل!"); return; }
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(pos => {
                     document.getElementById('branch-lat').value = pos.coords.latitude.toFixed(6);
                     document.getElementById('branch-lng').value = pos.coords.longitude.toFixed(6);
                     alert("✓ تم جلب إحداثيات موقعك الحالي بنجاح للفرع.");
                 }, () => alert("تعذر جلب موقع GPS."));
-            } else {
-                alert("الخدمة غير متوفرة في المتصفح.");
             }
         }
 
         function openBranchAtCoords(lat, lng) {
+            if (!checkAdminPermission()) return;
             switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
             document.getElementById('branch-lat').value = lat;
             document.getElementById('branch-lng').value = lng;
@@ -420,6 +460,11 @@
         }
 
         function addNewBranch() {
+            if (!checkAdminPermission()) {
+                alert("🚫 غير مسموح لك بإضافة فروع. هذه الصلاحية لمسؤول الإدارة (admin@omda.com) فقط.");
+                return;
+            }
+
             const name = document.getElementById('branch-name').value.trim();
             const phone = document.getElementById('branch-phone').value.trim();
             const address = document.getElementById('branch-address').value.trim();
@@ -473,6 +518,7 @@
         }
 
         function deleteBranch(idx) {
+            if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
             let branches = JSON.parse(localStorage.getItem('omda_branches') || '[]');
             branches.splice(idx, 1);
             localStorage.setItem('omda_branches', JSON.stringify(branches));
@@ -557,7 +603,7 @@
             document.getElementById('statDriversCount').innerText = drivers.length + ' طيار';
 
             if(allOrders.length === 0) {
-                listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً.</p>';
+                listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً للتتبع.</p>';
                 loadDriversOnMap();
                 return;
             }
@@ -731,7 +777,15 @@
             } catch(e) {}
         }
 
+        // ==========================================
+        // إدارة السائقين (محمية للإدارة فقط)
+        // ==========================================
         function addNewDriver() {
+            if (!checkAdminPermission()) {
+                alert("🚫 غير مسموح لك بإضافة طيارين. هذه الصلاحية لمسؤول الإدارة (admin@omda.com) فقط.");
+                return;
+            }
+
             const name = document.getElementById('driver-name').value.trim();
             const phone = document.getElementById('driver-phone').value.trim();
             if(!name || !phone) { alert('أدخل اسم ورقم هاتف السائق!'); return; }
@@ -764,6 +818,7 @@
         }
 
         function deleteDriver(idx) {
+            if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
             let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
             drivers.splice(idx, 1);
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
@@ -822,6 +877,8 @@
         }
 
         function autoDispatchOrders() {
+            if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بتنفيذ التوزيع الآلي!"); return; }
+
             let orders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
             let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
             if(drivers.length === 0) { alert('أضف مناديب دليفري أولاً!'); return; }
