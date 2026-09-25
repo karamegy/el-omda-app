@@ -281,3 +281,12 @@ window.onload = function() {
         currentCustomer = JSON.parse(savedCust);
     }
 };
+
+// تسجيل Service Worker ليعمل التطبيق كـ PWA
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+            .catch(err => console.log('Service Worker registration failed:', err));
+    });
+}
