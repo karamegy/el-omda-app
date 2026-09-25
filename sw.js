@@ -1,8 +1,9 @@
-const CACHE_NAME = 'omda-grills-v2';
+const CACHE_NAME = 'omda-grills-v3';
 const assetsToCache = [
   './index.html',
   './admin.html',
   './Map.html',
+  './product.html',
   './style.css',
   './app.js',
   './manifest.json',
