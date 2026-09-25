@@ -1,23 +1,26 @@
-const CACHE_NAME = 'omda-grills-v1';
+const CACHE_NAME = 'omda-grills-v2';
 const assetsToCache = [
   './index.html',
-  './css/style.css',
+  './admin.html',
+  './Map.html',
+  './style.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './icon1-512.png'
 ];
 
-// تثبيت السيرفر ووركر وتخزين الملفات
+// تثبيت السيرفر ووركر وتخزين الملفات الجديدة
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('جاري تخزين ملفات تطبيق العمدة...');
+      console.log('جاري تحديث وتخزين ملفات تطبيق مشويات العمدة...');
       return cache.addAll(assetsToCache);
     })
   );
   self.skipWaiting();
 });
 
-// تفعيل السيرفر ووركر وتنظيف التخزين القديم
+// تفعيل السيرفر ووركر وتنظيف التخزين القديم بالكامل
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
