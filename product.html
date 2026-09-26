@@ -27,7 +27,7 @@
 
     <main class="container" style="max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e7e5e4;">
         <div id="product-detail-container">
-            <p style="text-align: center; padding: 40px; color: #78716c; font-size: 1.1rem;">⏳ جاري تحميل تفاصيل الوجبة من السحابة...</p>
+            <p style="text-align: center; padding: 40px; color: #78716c; font-size: 1.1rem;">⏳ جاري تحميل تفاصيل الوجبة...</p>
         </div>
     </main>
 
@@ -73,10 +73,16 @@
             const productIdParam = urlParams.get('id');
             const productId = isNaN(productIdParam) ? productIdParam : parseInt(productIdParam);
             
-            let products = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
-            let product = products.find(p => p.id == productId);
+            // 1. البحث أولاً في قائمة menuProducts المعرفة في app.js (تتضمن المنتجات الأساسية والمضافة)
+            let product = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => p.id == productId);
 
-            // إذا لم يتم العثور عليه محلياً، نبحث عنه في سحابة Firebase
+            // 2. إذا لم يتم العثور عليه، نبحث في التخزين المحلي
+            if (!product) {
+                let localProducts = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
+                product = localProducts.find(p => p.id == productId);
+            }
+
+            // 3. إذا لم يتم العثور عليه محلياً، نبحث عنه في سحابة Firebase
             if (!product && window.db && window.firebaseModules) {
                 try {
                     const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(productId)));
@@ -121,8 +127,11 @@
             const qtyInput = document.getElementById('detail-qty');
             const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
             
-            let products = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
-            let prod = products.find(p => p.id == id);
+            let prod = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => p.id == id);
+            if(!prod) {
+                let localProducts = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
+                prod = localProducts.find(p => p.id == id);
+            }
 
             if (!prod && window.db && window.firebaseModules) {
                 try {
