@@ -154,7 +154,7 @@ function fetchCustomerGpsLocation() {
 }
 
 // ==========================================
-// نظام نغمة الرنين والاتصال (WebRTC)
+// نظام نغمة الرنين والاتصال (WebRTC عبر سحابة Firestore)
 // ==========================================
 function startRingingTone() {
     if (ringingInterval) return;
@@ -225,13 +225,37 @@ async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
 
-        localStorage.setItem('omda_webrtc_signal', JSON.stringify({
-            type: 'offer',
-            orderId,
-            sdp: offer,
-            isVideo,
-            timestamp: Date.now()
-        }));
+        // حفظ الـ Offer في مستند الطلب على Firestore ليعمل بين الأجهزة عبر الإنترنت
+        if (window.db && window.firebaseModules) {
+            await window.firebaseModules.updateDoc(
+                window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                {
+                    webrtcSignal: {
+                        type: 'offer',
+                        sdp: offer,
+                        isVideo: isVideo,
+                        sender: 'admin',
+                        timestamp: Date.now()
+                    }
+                }
+            );
+
+            // الاستماع للإجابة (Answer) من الطرف الآخر لحظياً
+            window.firebaseModules.onSnapshot(
+                window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                async (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        if (data.webrtcSignal && data.webrtcSignal.type === 'answer' && data.webrtcSignal.sender === 'customer') {
+                            if (peerConnection && !peerConnection.currentRemoteDescription) {
+                                stopRingingTone();
+                                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.webrtcSignal.sdp));
+                            }
+                        }
+                    }
+                }
+            );
+        }
 
     } catch(err) {
         alert("تعذر الوصول للكاميرا أو الميكروفون: " + err.message);
@@ -251,28 +275,9 @@ function endWebRtcCall() {
     }
     const modal = document.getElementById('callModal');
     if(modal) modal.classList.add('hidden');
-    localStorage.removeItem('omda_webrtc_signal');
 }
 
-window.addEventListener('storage', async (e) => {
-    if(e.key === 'omda_webrtc_signal' && e.newValue) {
-        const signal = JSON.parse(e.newValue);
-        if(signal.type === 'offer') {
-            const modal = document.getElementById('callModal');
-            const info = document.getElementById('callOrderInfo');
-            const answerBtn = document.getElementById('answerCallBtn');
-            if(modal && info) {
-                modal.classList.remove('hidden');
-                info.innerText = `اتصال وارد للطلب: ${signal.orderId}`;
-                if(answerBtn) answerBtn.classList.remove('hidden');
-                startRingingTone();
-                window.incomingOfferSignal = signal;
-            }
-        }
-    }
-});
-
-async function answerIncomingCall() {
+async function answerIncomingCall(orderId) {
     stopRingingTone();
     const answerBtn = document.getElementById('answerCallBtn');
     if(answerBtn) answerBtn.classList.add('hidden');
@@ -282,25 +287,34 @@ async function answerIncomingCall() {
 
     try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: signal.isVideo, audio: true });
-        document.getElementById('localVideo').srcObject = localStream;
+        const localVid = document.getElementById('localVideo');
+        if(localVid) localVid.srcObject = localStream;
 
         peerConnection = new RTCPeerConnection(rtcConfig);
         localStream.getTracks().forEach(track => peerConnection.addTrack(track, localStream));
 
         peerConnection.ontrack = event => {
-            document.getElementById('remoteVideo').srcObject = event.streams[0];
+            const remoteVid = document.getElementById('remoteVideo');
+            if(remoteVid) remoteVid.srcObject = event.streams[0];
         };
 
         await peerConnection.setRemoteDescription(new RTCSessionDescription(signal.sdp));
         const answer = await peerConnection.createAnswer();
         await peerConnection.setLocalDescription(answer);
 
-        localStorage.setItem('omda_webrtc_signal', JSON.stringify({
-            type: 'answer',
-            orderId: signal.orderId,
-            sdp: answer,
-            timestamp: Date.now()
-        }));
+        if (window.db && window.firebaseModules) {
+            await window.firebaseModules.updateDoc(
+                window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                {
+                    webrtcSignal: {
+                        type: 'answer',
+                        sdp: answer,
+                        sender: 'customer',
+                        timestamp: Date.now()
+                    }
+                }
+            );
+        }
     } catch(err) {
         alert("خطأ أثناء الرد على المكالمة: " + err.message);
     }
