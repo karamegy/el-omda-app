@@ -46,7 +46,36 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار
+// نظام التسجيل والدخول السريع برقم الهاتف للعملاء
+// ==========================================
+function loginByPhoneQuick() {
+    const phoneInput = document.getElementById('quick-phone-input');
+    if(!phoneInput) return;
+    const phone = phoneInput.value.trim();
+    
+    if(!phone || phone.length < 10) {
+        alert('من فضلك أدخل رقم هاتف صحيح (10 أرقام على الأقل)!');
+        return;
+    }
+
+    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    let foundOrder = allOrders.find(o => o.phone === phone);
+    let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
+
+    currentCustomer = { name: custName, phone: phone, email: phone + '@omda.com' };
+    localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
+    localStorage.setItem('omda_user_phone', phone);
+
+    alert(`أهلاً بك يا ${custName}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
+    
+    const phoneBox = document.getElementById('cust-phone-login-box');
+    if(phoneBox) phoneBox.style.display = 'none';
+
+    loadCustomerDashboard();
+}
+
+// ==========================================
+// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل
 // ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
@@ -225,7 +254,6 @@ async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
 
-        // حفظ الـ Offer في مستند الطلب على Firestore ليعمل بين الأجهزة عبر الإنترنت
         if (window.db && window.firebaseModules) {
             await window.firebaseModules.updateDoc(
                 window.firebaseModules.doc(window.db, "orders", String(orderId)), 
@@ -240,7 +268,6 @@ async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
                 }
             );
 
-            // الاستماع للإجابة (Answer) من الطرف الآخر لحظياً
             window.firebaseModules.onSnapshot(
                 window.firebaseModules.doc(window.db, "orders", String(orderId)), 
                 async (docSnap) => {
