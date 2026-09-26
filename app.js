@@ -46,7 +46,7 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام سليدر العروض والمنتجات المتحرك (كل 3 ثواني)
+// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار
 // ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
@@ -59,7 +59,7 @@ function initHeroSlider() {
     sliderInterval = setInterval(() => {
         currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
         updateSliderContent();
-    }, 3000);
+    }, 4000);
 }
 
 function updateSliderContent() {
@@ -71,11 +71,35 @@ function updateSliderContent() {
     const descEl = document.getElementById('slider-prod-desc');
     const priceEl = document.getElementById('slider-prod-price');
     const imgEl = document.getElementById('slider-prod-img');
+    const counterEl = document.getElementById('slider-counter');
 
     if (nameEl) nameEl.innerText = `👑 ${prod.name}`;
     if (descEl) descEl.innerText = prod.desc;
     if (priceEl) priceEl.innerText = `${prod.price} جنيه`;
+    if (counterEl) counterEl.innerText = `${currentSliderIndex + 1} / ${menuProducts.length}`;
     if (imgEl) imgEl.src = prod.media || prod.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+}
+
+function nextSliderItem() {
+    if (!window.menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
+    updateSliderContent();
+    resetSliderTimer();
+}
+
+function prevSliderItem() {
+    if (!window.menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
+    updateSliderContent();
+    resetSliderTimer();
+}
+
+function resetSliderTimer() {
+    if (sliderInterval) clearInterval(sliderInterval);
+    sliderInterval = setInterval(() => {
+        currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
+        updateSliderContent();
+    }, 4000);
 }
 
 function sliderClickAction() {
@@ -1187,13 +1211,12 @@ function showReceipt(order) {
     alert('📄 تم نسخ تفاصيل الفاتورة الرقمية إلى الحافظة بنجاح!\n\n' + receiptText);
 }
 
-// دالة تعيين السائق المسجل للطلب من لوحة التحكم أو الخريطة
 function assignDriverToOrder(orderId, driverName) {
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let order = allOrders.find(o => o.id === orderId);
     if(order) {
         order.assignedDriver = driverName;
-        order.status = 'delivery'; // تحديث الحالة إلى مع الدليفري عند إسناد سائق
+        order.status = 'delivery';
         localStorage.setItem('omda_orders', JSON.stringify(allOrders));
         alert(`✓ تم تعيين السائق (${driverName || 'بدون'}) للطلب ${orderId} بنجاح 🏍️`);
         if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
@@ -1345,7 +1368,6 @@ function changeMyPassword() {
     document.getElementById('confirm-pass-input').value = '';
 }
 
-// دالة تحميل لوحة التحكم وعرض حسابات جوجل المسجلة
 function loadAdminDashboard() {
     const loginBox = document.getElementById('admin-login-box');
     const dashBox = document.getElementById('admin-dashboard');
@@ -1373,7 +1395,6 @@ function loadAdminDashboard() {
         loadStaffList();
     }
 
-    // عرض حسابات جوجل المسجلة في القسم الجديد
     loadGoogleAccountsList();
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
@@ -1426,7 +1447,6 @@ function loadAdminDashboard() {
         }
     }
 
-    // عرض الطلبات مع قائمة اختيار وتعيين السائق المسجل
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
@@ -1498,7 +1518,6 @@ function loadAdminDashboard() {
     }
 }
 
-// دالة عرض قائمة الحسابات المسجلة عبر جوجل في لوحة التحكم
 function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
     if(!container) return;
@@ -1639,9 +1658,6 @@ function adminLogout() {
     window.location.href = 'admin.html';
 }
 
-// ==========================================
-// دوال الخريطة والأسطول وتتبع الطلبات
-// ==========================================
 function switchLayer(type) {
     if(!map) return;
     if(streetLayer) map.removeLayer(streetLayer);
