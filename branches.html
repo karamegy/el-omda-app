@@ -10,18 +10,23 @@
 </head>
 <body class="p-3 sm:p-6 space-y-4">
 
-    <!-- الهيدر العلوي الموحد -->
+    <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم المستخدم -->
     <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f);">
         <div class="logo-container">
-            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img">
+            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md overflow-hidden border-2 border-amber-500" style="width: 48px; height: 48px; border-radius: 10px;">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
             <div>
-                <h1>فروع مشويات العمدة 👑</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #fde047; font-weight: bold; display: block;">الفروع ومواقع الخدمة 📍</span>
+                <h1 style="font-size: 1.1rem;">فروع مشويات العمدة 👑</h1>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">الفروع ومواقع الخدمة 📍</span>
+                    <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
+                </div>
             </div>
         </div>
         <nav class="nav-links">
             <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> الرئيسية</a>
-            <a href="Map.html" class="nav-btn" style="background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التتبع 🗺️</a>
+            <a href="Map.html" class="nav-btn" style="background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التوصيل 🗺️</a>
             <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-lock"></i> الأدمن</a>
         </nav>
     </header>
@@ -77,7 +82,7 @@
         </div>
     </main>
 
-    <!-- إعداد وتهيئة Firebase السحابية لصفحة الفروع -->
+    <!-- إعداد وتهيئة Firebase السحابية ومزامنة البروفايل -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -108,8 +113,23 @@
             where,
             getDoc
         };
+
+        // مزامنة وعرض بيانات البروفايل والحساب الحالي عند تحميل صفحة الفروع
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
+            
+            const avatarEl = document.getElementById('nav-user-avatar');
+            const nameEl = document.getElementById('nav-username-display');
+
+            if (sessionUser && (sessionUser.name || sessionUser.email)) {
+                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
+                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+            } else {
+                if (nameEl) nameEl.innerText = 'زائر';
+            }
+        });
         
-        console.log("🏢🔥 تم ربط صفحة الفروع بقاعدة بيانات Firebase سحابياً بنجاح تام!");
+        console.log("🏢🔥 تم ربط صفحة الفروع بقاعدة بيانات Firebase ومزامنة الحساب بنجاح تام!");
     </script>
 
     <!-- ربط السكربت العام للتحقق من الصلاحيات -->
