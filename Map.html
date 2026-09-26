@@ -124,7 +124,7 @@
                     <button onclick="filterOrders('delivery', this)" class="filter-btn">مع الدليفري</button>
                     <button onclick="filterOrders('done', this)" class="filter-btn">وصل</button>
                 </div>
-                <div id="live-orders-list"></div>
+                <div id="live-orders-list" class="space-y-2 mt-2"></div>
             </div>
 
             <!-- تبويب إدارة الطيارين والأسطول (للإدارة فقط) -->
@@ -206,7 +206,7 @@
                 </div>
             </div>
 
-            <div id="leafletMap"></div>
+            <div id="leafletMap" style="height: 650px; width: 100%; border-radius: 12px;"></div>
         </div>
     </div>
 
@@ -252,7 +252,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // ربط جميع دوال وسائط وكالة قاعدة البيانات بـ window لضمان عمل app.js بكفاءة تامة سحابياً
         window.db = db;
         window.firebaseModules = { 
             collection, 
