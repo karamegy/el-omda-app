@@ -6,66 +6,78 @@
     <title>فروعنا ومواقعنا | كبابجي ومشويات العمدة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#b45309">
 </head>
-<body>
+<body class="p-3 sm:p-6 space-y-4">
 
-    <header class="main-header">
+    <!-- الهيدر العلوي الموحد -->
+    <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f);">
         <div class="logo-container">
             <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img">
-            <h1>فروع مشويات العمدة</h1>
+            <div>
+                <h1>فروع مشويات العمدة 👑</h1>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #fde047; font-weight: bold; display: block;">الفروع ومواقع الخدمة 📍</span>
+            </div>
         </div>
         <nav class="nav-links">
             <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> الرئيسية</a>
-            <a href="Map.html" class="nav-btn" style="background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التتبع</a>
+            <a href="Map.html" class="nav-btn" style="background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التتبع 🗺️</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-lock"></i> الأدمن</a>
         </nav>
     </header>
 
-    <main class="container">
-        <div class="banner">
-            <h2>📍 فروعنا ومواقع الخدمة</h2>
-            <p>نحن بقربك دائماً لنقدم أشهى المشويات على الفحم الحطب طازجة وساخنة!</p>
+    <main class="container" style="max-width: 1000px; margin: 20px auto;">
+        <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px;">
+            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">📍 فروعنا ومواقع الخدمة والولائم</h2>
+            <p style="font-size: 0.95rem; color: #fef3c7;">نحن بقربك دائماً لنقدم أشهى المشويات على الفحم الحطب طازجة وساخنة!</p>
         </div>
 
-        <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+        <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
             <!-- الفرع الرئيسي -->
-            <div class="menu-card" style="padding: 20px;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                    <div style="background: #b45309; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            <div class="corporate-card" style="padding: 25px; background: #fff; border-radius: 14px; border: 2px solid #b45309; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <div style="background: #b45309; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
                         <i class="fa-solid fa-crown"></i>
                     </div>
                     <div>
-                        <h3 style="color: #78350f; margin: 0;">المركز الرئيسي (شبرا منت)</h3>
+                        <h3 style="color: #78350f; margin: 0; font-size: 1.15rem;">المركز الرئيسي (شبرا منت)</h3>
                         <span style="font-size: 0.8rem; color: #16a34a; font-weight: bold;">الفرع الأساسي المفتوح</span>
                     </div>
                 </div>
-                <p>📍 <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</p>
-                <p>📞 <strong>الهاتف:</strong> 01144730305</p>
-                <p>⏰ <strong>مواعيد العمل:</strong> يومياً من 11 صباحاً حتى 3 صباحاً</p>
-                <a href="https://maps.google.com/?q=Shabramant,Giza" target="_blank" class="btn-primary" style="text-align: center; display: block; margin-top: 15px; text-decoration: none;">
+                <div style="display: flex; flex-direction: column; gap: 8px; color: #57534e; font-size: 0.9rem; margin-bottom: 20px;">
+                    <p>📍 <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</p>
+                    <p>📞 <strong>الهاتف:</strong> <span class="mono-font font-bold text-amber-800">01144730305</span></p>
+                    <p>⏰ <strong>مواعيد العمل:</strong> يومياً من 11 صباحاً حتى 3 صباحاً</p>
+                </div>
+                <a href="https://maps.google.com/?q=Shabramant,Giza" target="_blank" class="btn-primary" style="text-align: center; display: block; text-decoration: none; padding: 12px; border-radius: 8px; background-color: #b45309; font-weight: bold; color: white;">
                     <i class="fa-solid fa-directions"></i> توجيه عبر خرائط جوجل 🚗
                 </a>
             </div>
 
-            <!-- فرع قادم / خدمة التوصيل -->
-            <div class="menu-card" style="padding: 20px; opacity: 0.9;">
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
-                    <div style="background: #0284c7; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+            <!-- خدمة أسطول التوصيل -->
+            <div class="corporate-card" style="padding: 25px; background: #fff; border-radius: 14px; border: 2px solid #0284c7; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <div style="background: #0284c7; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
                         <i class="fa-solid fa-motorcycle"></i>
                     </div>
                     <div>
-                        <h3 style="color: #0369a1; margin: 0;">خدمة أسطول التوصيل السريع</h3>
+                        <h3 style="color: #0369a1; margin: 0; font-size: 1.15rem;">خدمة أسطول التوصيل السريع</h3>
                         <span style="font-size: 0.8rem; color: #0284c7; font-weight: bold;">يغطي كافة أنحاء الجيزة ومحيطها</span>
                     </div>
                 </div>
-                <p>📍 <strong>نطاق التوصيل:</strong> جميع مناطق شبرا منت، الهرم، والمنطقة المحيطة.</p>
-                <p>🛵 <strong>الأسطول:</strong> مناديب مزودين بتتبع GPS حي لحظي.</p>
-                <p>⚡ <strong>سرعة التوصيل:</strong> ساخن وفريش في أسرع وقت.</p>
-                <a href="index.html" class="btn-secondary" style="text-align: center; display: block; margin-top: 15px; text-decoration: none;">
-                    اطلب الآن من المنيو 🛒
+                <div style="display: flex; flex-direction: column; gap: 8px; color: #57534e; font-size: 0.9rem; margin-bottom: 20px;">
+                    <p>📍 <strong>نطاق التوصيل:</strong> جميع مناطق شبرا منت، الهرم، والمنطقة المحيطة.</p>
+                    <p>🛵 <strong>الأسطول:</strong> مناديب مزودين بتتبع GPS حي لحظي.</p>
+                    <p>⚡ <strong>سرعة التوصيل:</strong> ساخن وفريش في أسرع وقت.</p>
+                </div>
+                <a href="index.html" class="btn-secondary" style="text-align: center; display: block; text-decoration: none; padding: 12px; border-radius: 8px; background-color: #0284c7; color: white; font-weight: bold;">
+                    <i class="fa-solid fa-cart-shopping"></i> اطلب الآن من المنيو 🛒
                 </a>
             </div>
         </div>
     </main>
 
+    <!-- ربط السكربت العام للتحقق من الصلاحيات وتفعيل الزر -->
+    <script src="app.js"></script>
 </body>
 </html>
