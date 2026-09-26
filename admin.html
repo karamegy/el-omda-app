@@ -84,7 +84,7 @@
             <p style="color: #57534e; margin-bottom: 15px; font-size: 0.95rem;">سجل الدخول باستخدام حساب جوجل المعتمد (مثل haretg@gmail.com) أو البريد:</p>
             
             <!-- زر تسجيل دخول الأدمن عبر جوجل -->
-            <button type="button" onclick="window.adminLoginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <button type="button" onclick="adminLoginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
                 <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.1rem;"></i> تسجيل دخول الأدمن باستخدام جوجل 🚀
             </button>
 
@@ -301,7 +301,7 @@
     <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -321,7 +321,7 @@
 
         window.db = db;
         window.auth = auth;
-        window.firebaseModules = { collection, getDocs, doc, setDoc };
+        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, onSnapshot };
 
         // تسجيل حساب جوجل وحفظه في قائمة الحسابات المسجلة
         window.adminLoginWithGoogle = async function() {
@@ -330,7 +330,6 @@
                 const user = result.user;
                 const email = user.email.toLowerCase();
 
-                // حفظ الحساب في قائمة الحسابات المسجلة عبر جوجل في localStorage
                 let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
                 if (!regUsers.some(u => u.email === email)) {
                     regUsers.push({
@@ -343,7 +342,6 @@
                     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
                 }
 
-                // التحقق من البريد الإلكتروني للمدير العام
                 if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
                     const masterUser = { 
                         name: user.displayName || 'المدير العام (كرم حمدي)', 
