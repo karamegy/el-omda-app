@@ -194,6 +194,16 @@
         <section id="tab-customer" class="tab-content">
             <h2>👤 بوابة متابعة طلبات العميل ونقاط الولاء</h2>
             
+            <!-- تسجيل الدخول السريع برقم الهاتف -->
+            <div class="customer-login-box" id="cust-phone-login-box" style="max-width: 450px; margin: 0 auto 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                <h3 style="font-size: 1rem; color: #b45309; margin-bottom: 8px; font-weight: bold;">⚡ تسجيل دخول سريع برقم الهاتف</h3>
+                <p style="font-size: 0.8rem; color: #78716c; margin-bottom: 10px;">أدخل رقم هاتفك لاسترجاع ملفك وطلباتك ونقاط ولائك فوراً:</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="quick-phone-input" placeholder="رقم الهاتف (مثل 01144730305)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px; font-size: 0.9rem;">
+                    <button type="button" onclick="loginByPhoneQuick()" class="btn-primary" style="padding: 10px 15px; font-size: 0.85rem;">دخول سريع</button>
+                </div>
+            </div>
+
             <div class="customer-login-box" id="cust-login-box" style="max-width: 450px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <button type="button" onclick="window.switchAuthMode('login')" id="mode-login-btn" class="btn-primary" style="flex: 1; padding: 8px;">تسجيل الدخول</button>
@@ -369,6 +379,8 @@
                 localStorage.removeItem('omda_current_cust');
                 document.getElementById('customer-dashboard').classList.add('hidden');
                 document.getElementById('cust-login-box').classList.remove('hidden');
+                const phoneBox = document.getElementById('cust-phone-login-box');
+                if(phoneBox) phoneBox.style.display = 'block';
                 alert('تم تسجيل الخروج بنجاح.');
             } catch (e) {
                 console.error(e);
@@ -383,6 +395,9 @@
                 localStorage.setItem('omda_current_cust', JSON.stringify(window.currentCustomer));
                 
                 document.getElementById('cust-login-box').classList.add('hidden');
+                const phoneBox = document.getElementById('cust-phone-login-box');
+                if(phoneBox) phoneBox.style.display = 'none';
+
                 document.getElementById('customer-dashboard').classList.remove('hidden');
                 document.getElementById('cust-display-name').innerText = custName;
                 document.getElementById('cust-display-phone').innerText = custPhone;
