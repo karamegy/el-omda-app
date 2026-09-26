@@ -237,7 +237,7 @@
     <!-- إعداد وتهيئة Firebase السحابية لصفحة الخريطة -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
@@ -253,9 +253,9 @@
         const db = getFirestore(app);
 
         window.db = db;
-        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, onSnapshot };
+        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot };
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي مرتبطة بقاعدة بيانات Firebase بنجاح!");
+        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي مرتبطة بقاعدة بيانات Firebase سحابياً بنجاح!");
     </script>
 
     <script src="app.js"></script>
