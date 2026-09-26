@@ -153,10 +153,10 @@
                 <div id="admin-orders-list" class="admin-orders-list"></div>
             </div>
 
-            <!-- 2.5 قسم إدارة وتعيين أدوار كافة الحسابات والعملاء -->
+            <!-- 2.5 قسم إدارة وتعيين أدوار كافة الحسابات والعملاء (متصل سحابياً بالكامل) -->
             <div id="section-google-accounts" class="admin-panel-box" style="border-color: #2563eb;">
-                <h3 style="margin-bottom: 12px; color: #2563eb;"><i class="fa-solid fa-users"></i> إدارة الحسابات والعملاء وتعيين الأدوار (Accounts & Roles Control) 👑</h3>
-                <p style="font-size: 0.85rem; color: #57534e; margin-bottom: 15px;">قائمة بجميع العملاء والمستخدمين المسجلين. يمكنك ترقية وتعيين أدوارهم فوراً (عميل، مدير، محاسب، عامل، طيار):</p>
+                <h3 style="margin-bottom: 12px; color: #2563eb;"><i class="fa-solid fa-users"></i> إدارة الحسابات والعملاء سحابياً (Cloud Firebase Firestore) 👑</h3>
+                <p style="font-size: 0.85rem; color: #57534e; margin-bottom: 15px;">قائمة بجميع العملاء والمستخدمين المسجلين في السحابة. يمكنك ترقية وتعيين أدوارهم فوراً:</p>
                 <div id="admin-google-accounts-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;"></div>
             </div>
 
@@ -299,10 +299,10 @@
         </div>
     </div>
 
-    <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل -->
+    <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل (مع التصدير الكامل لـ window) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -322,27 +322,27 @@
 
         window.db = db;
         window.auth = auth;
-        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, onSnapshot };
+        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where };
 
-        // تسجيل حساب جوجل وحفظه في قائمة الحسابات المسجلة
+        // تسجيل حساب الأدمن عبر جوجل وحفظه سحابياً في Firestore
         window.adminLoginWithGoogle = async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 const email = user.email.toLowerCase();
 
-                let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-                if (!regUsers.some(u => u.email === email)) {
-                    regUsers.push({
-                        name: user.displayName || 'مدير / عميل جوجل',
-                        email: email,
-                        phone: user.phoneNumber || 'غير متوفر',
-                        role: (email === 'haretg@gmail.com' || email === 'admin@omda.com') ? 'admin' : 'customer',
-                        provider: 'Google Auth',
-                        date: new Date().toLocaleString('ar-EG')
-                    });
-                    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-                }
+                const userObj = {
+                    name: user.displayName || 'مدير النظام',
+                    email: email,
+                    phone: user.phoneNumber || 'غير متوفر',
+                    role: (email === 'haretg@gmail.com' || email === 'admin@omda.com') ? 'admin' : 'customer',
+                    provider: 'Google Auth',
+                    date: new Date().toLocaleString('ar-EG')
+                };
+
+                // حفظ بيانات الأدمن في مجموعة users سحابياً
+                const docId = String(user.phoneNumber || email.replace(/[^a-zA-Z0-9]/g, '_'));
+                await setDoc(doc(db, "users", docId), userObj, { merge: true });
 
                 if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
                     const masterUser = { 
@@ -361,7 +361,7 @@
             }
         };
         
-        console.log("🔥 تم ربط لوحة التحكم الماستر بقاعدة بيانات Firebase ومصادقة جوجل بنجاح!");
+        console.log("🔥 تم ربط لوحة التحكم الماستر بقاعدة بيانات Firebase سحابياً بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
@@ -374,6 +374,10 @@
             const targetEl = document.getElementById('section-' + sectionName);
             if(targetEl) targetEl.classList.add('active');
             if(btnElement) btnElement.classList.add('active');
+
+            if(sectionName === 'google-accounts' && typeof loadGoogleAccountsList === 'function') {
+                loadGoogleAccountsList();
+            }
         }
 
         window.adminLoginCustom = function() {
