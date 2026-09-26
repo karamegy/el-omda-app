@@ -46,7 +46,7 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار (مصحح)
+// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار
 // ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
@@ -805,7 +805,7 @@ function saveAndAddNewProduct(prod) {
 
 function adminDeleteProduct(id) {
     if(!confirm('هل أنت متأكد من حذف هذا الصنف نهائياً من المنيو؟')) return;
-    menuProducts = menuProducts.filter(p => p.id !== id);
+    menuProducts = menuProducts.filter(p => p.id != id);
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
     loadAdminDashboard();
     initHeroSlider();
@@ -813,11 +813,14 @@ function adminDeleteProduct(id) {
 }
 
 // ==========================================
-// دوال تعديل وإدارة أصناف المنيو من لوحة الأدمن
+// دوال تعديل وإدارة أصناف المنيو من لوحة الأدمن (مصححة لضمان الفتح الفوري)
 // ==========================================
 function openEditProductModal(id) {
-    const prod = menuProducts.find(p => p.id === id);
-    if (!prod) return;
+    const prod = menuProducts.find(p => p.id == id);
+    if (!prod) {
+        alert("⚠️ عذراً، لم يتم العثور على بيانات هذا الصنف!");
+        return;
+    }
 
     document.getElementById('edit-prod-id').value = prod.id;
     document.getElementById('edit-prod-name').value = prod.name;
@@ -826,12 +829,18 @@ function openEditProductModal(id) {
     document.getElementById('edit-prod-desc').value = prod.desc;
     
     const modal = document.getElementById('editProductModal');
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
 }
 
 function closeEditProductModal() {
     const modal = document.getElementById('editProductModal');
-    if (modal) modal.classList.add('hidden');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
 }
 
 function saveEditedProduct() {
@@ -855,7 +864,7 @@ function saveEditedProduct() {
         return;
     }
 
-    const prodIndex = menuProducts.findIndex(p => p.id === id);
+    const prodIndex = menuProducts.findIndex(p => p.id == id);
     if (prodIndex === -1) return;
 
     if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -941,9 +950,9 @@ function renderFavorites() {
 }
 
 function addToCart(productId) {
-    const prod = menuProducts.find(p => p.id === productId);
+    const prod = menuProducts.find(p => p.id == productId);
     if(!prod) return;
-    const existing = cart.find(item => item.id === productId);
+    const existing = cart.find(item => item.id == productId);
 
     if (existing) {
         existing.qty++;
@@ -997,7 +1006,7 @@ function updateCartUI() {
 }
 
 function removeFromCart(id) {
-    cart = cart.filter(item => item.id !== id);
+    cart = cart.filter(item => item.id != id);
     updateCartUI();
 }
 
