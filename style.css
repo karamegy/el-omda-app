@@ -1,7 +1,7 @@
 :root {
     --primary-color: #d97706;
     --secondary-color: #78350f;
-    --dark-bg: rgba(28, 25, 23, 0.7);
+    --dark-bg: rgba(28, 25, 23, 0.65);
     --light-bg: #f5f5f4;
     --accent-red: #dc2626;
     --success-green: #16a34a;
@@ -15,12 +15,12 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* خلفية سينمائية متحركة لواجهة محل مشويات العمدة الحقيقية بدون تعتيم مبالغ فيه */
+/* خلفية سينمائية متحركة لواجهة محل مشويات العمدة الحقيقية من ملفك 1000323877.jpg بدون تعتيم مبالغ فيه */
 body {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4)), 
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.35)), 
                 url('1000323877.jpg') no-repeat center center fixed;
     background-size: cover;
-    animation: cinematicZoomStore 18s ease-in-out infinite alternate;
+    animation: cinematicZoomStore 15s ease-in-out infinite alternate;
     color: #f5f5f4;
     direction: rtl;
     min-height: 100vh;
@@ -29,28 +29,28 @@ body {
 }
 
 @keyframes cinematicZoomStore {
-    0% { background-size: 100% 100%; background-position: center center; }
-    100% { background-size: 110% 110%; background-position: center bottom; }
+    0% { background-size: 100% 100%; transform: scale(1); }
+    100% { background-size: 110% 110%; transform: scale(1.02); }
 }
 
-/* طبقة إضاءة ثري دي جمرية ونار مشتعلة متوهجة متحركة أسفل الشاشة */
+/* طبقة إضاءة ثري دي جمرية ونار مشتعلة متحركة وقوية أسفل الشاشة */
 body::before {
     content: '';
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 300px;
-    background: linear-gradient(to top, rgba(220, 38, 38, 0.7) 0%, rgba(217, 119, 6, 0.45) 50%, transparent 100%);
+    height: 320px;
+    background: linear-gradient(to top, rgba(220, 38, 38, 0.75) 0%, rgba(217, 119, 6, 0.5) 50%, transparent 100%);
     z-index: 0;
-    animation: fireGlow3DLive 3s ease-in-out infinite alternate;
+    animation: fireGlow3DLive 2.8s ease-in-out infinite alternate;
     pointer-events: none;
-    filter: blur(12px);
+    filter: blur(10px);
 }
 
 @keyframes fireGlow3DLive {
-    0% { opacity: 0.55; transform: scaleY(0.92); }
-    100% { opacity: 0.95; transform: scaleY(1.08); }
+    0% { opacity: 0.6; transform: scaleY(0.9); }
+    100% { opacity: 1; transform: scaleY(1.12); }
 }
 
 /* تأثير دخان الشوي المتصاعد بهدوء واحترافية فوق الخلفية السينمائية */
@@ -62,18 +62,18 @@ body::after {
     width: 100%;
     height: 100%;
     background-image: 
-        radial-gradient(circle, rgba(255, 255, 255, 0.12) 10%, transparent 20%),
-        radial-gradient(circle, rgba(217, 119, 6, 0.08) 15%, transparent 25%);
-    background-size: 200px 200px, 280px 280px;
+        radial-gradient(circle, rgba(255, 255, 255, 0.15) 12%, transparent 22%),
+        radial-gradient(circle, rgba(217, 119, 6, 0.1) 18%, transparent 28%);
+    background-size: 180px 180px, 250px 250px;
     z-index: 0;
-    opacity: 0.5;
+    opacity: 0.55;
     pointer-events: none;
-    animation: smokeRisingCinematic 12s linear infinite;
+    animation: smokeRisingCinematic 10s linear infinite;
 }
 
 @keyframes smokeRisingCinematic {
-    0% { background-position: 0 100vh, 50px 100vh; }
-    100% { background-position: 0 -100vh, 50px -100vh; }
+    0% { background-position: 0 100vh, 40px 100vh; }
+    100% { background-position: 0 -100vh, 40px -100vh; }
 }
 
 /* شريط الإعلانات المتحرك (RSS Ticker) */
@@ -108,7 +108,7 @@ body::after {
 
 /* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد بارز */
 .main-header {
-    background-color: rgba(28, 25, 23, 0.78);
+    background-color: rgba(28, 25, 23, 0.75);
     backdrop-filter: blur(15px);
     color: var(--white);
     padding: 15px 25px;
@@ -187,7 +187,7 @@ body::after {
 
 /* البانر بتأثير زجاجي ثلاثي الأبعاد بارز */
 .banner {
-    background: linear-gradient(135deg, rgba(120, 53, 15, 0.88), rgba(28, 25, 23, 0.9));
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.85), rgba(28, 25, 23, 0.88));
     backdrop-filter: blur(12px);
     color: var(--white);
     padding: 30px;
