@@ -192,9 +192,9 @@
                 </div>
             </div>
 
-            <!-- 5. إدارة وحذف أصناف المنيو الحالي -->
+            <!-- 5. إدارة وحذف وتعديل أصناف المنيو الحالي -->
             <div id="section-menu-manage" class="admin-panel-box" style="border-color: #b45309;">
-                <h3 style="margin-bottom: 12px; color: var(--secondary-color);"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي</h3>
+                <h3 style="margin-bottom: 12px; color: var(--secondary-color);"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي (انقر على الصنف للتعديل)</h3>
                 <div id="admin-menu-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
             </div>
 
@@ -258,6 +258,45 @@
         </div>
 
     </main>
+
+    <!-- نافذة تعديل الصنف المنبثقة (Modal) -->
+    <div id="editProductModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
+        <div style="background: #fff; padding: 25px; border-radius: 12px; width: 100%; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+            <h3 style="color: var(--secondary-color); margin-bottom: 15px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الصنف 👑</h3>
+            <input type="hidden" id="edit-prod-id">
+            
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">اسم الأكلة أو الوجبة:</label>
+            <input type="text" id="edit-prod-name" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">القسم:</label>
+                    <select id="edit-prod-cat" style="width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                        <option value="trays">ركن الصواني 🔥</option>
+                        <option value="grills">ركن المشويات</option>
+                        <option value="meals">الوجبات السريعة</option>
+                        <option value="tagines">الطواجن</option>
+                        <option value="appetizers">المقبلات والسلطات</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">السعر (جنيه):</label>
+                    <input type="number" id="edit-prod-price" style="width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                </div>
+            </div>
+
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">تحديث الصورة أو الفيديو (اختياري):</label>
+            <input type="file" id="edit-prod-file" accept="image/*,video/*" style="width: 100%; padding: 6px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px; background: #f9f9f9;">
+
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">وصف الوجبة:</label>
+            <textarea id="edit-prod-desc" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #d6d3d1; border-radius: 6px; height: 80px;"></textarea>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveEditedProduct()" class="btn-primary" style="flex: 1; padding: 10px; background-color: #16a34a;">حفظ التعديلات ✅</button>
+                <button onclick="closeEditProductModal()" class="btn-secondary" style="flex: 1; padding: 10px; background-color: #dc2626; color: white;">إلغاء ❌</button>
+            </div>
+        </div>
+    </div>
 
     <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل -->
     <script type="module">
