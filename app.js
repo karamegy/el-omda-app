@@ -54,31 +54,34 @@ function findProductById(id) {
 }
 
 // ==========================================
-// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب
+// نظام التوجيه الذكي الموحد ومزامنة البروفايل
 // ==========================================
 function routeUserByRole(user) {
     localStorage.setItem('omda_session_user', JSON.stringify(user));
+    localStorage.setItem('omda_logged_user', JSON.stringify(user));
 
     const role = (user.role || 'customer').toLowerCase();
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
 
+    // مزامنة صورة البروفايل الافتراضية إن لم تكن موجودة
+    if (!user.photoURL) {
+        user.photoURL = 'icon1-512.png';
+    }
+
     if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
-        localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
         window.location.href = 'admin.html';
         return;
     }
 
     if (role === 'driver') {
-        localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
         window.location.href = 'Map.html';
         return;
     }
 
     if (role === 'worker' || role === 'staff') {
-        localStorage.removeItem('omda_logged_user');
         alert(`👷 عذراً يا ${user.name || 'موظفنا العزيز'}، حسابك بصلاحية "موظف" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
         window.location.href = 'index.html';
         return;
@@ -94,6 +97,23 @@ function routeUserByRole(user) {
         if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
     }
 }
+
+// ==========================================
+// مزامنة عناصر الهيدر (الصورة والاسم) تلقائياً في كل صفحة
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
+    
+    const avatarEl = document.getElementById('nav-user-avatar');
+    const nameEl = document.getElementById('nav-username-display');
+
+    if (sessionUser && (sessionUser.name || sessionUser.email)) {
+        if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
+        if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+    } else {
+        if (nameEl) nameEl.innerText = 'زائر';
+    }
+});
 
 // ==========================================
 // تسجيل الدخول الموحد بالبريد / الهاتف / كلمة المرور
@@ -114,7 +134,8 @@ async function unifiedLoginCustom() {
             name: 'المدير العام (كرم حمدي)', 
             email: 'haretg@gmail.com', 
             phone: '01144730305',
-            role: 'admin' 
+            role: 'admin',
+            photoURL: 'icon1-512.png'
         };
         routeUserByRole(masterUser);
         return;
@@ -140,7 +161,8 @@ async function unifiedLoginCustom() {
         name: 'عميل العمدة',
         email: identifier.includes('@') ? identifier : `${identifier}@omda.com`,
         phone: identifier,
-        role: 'customer'
+        role: 'customer',
+        photoURL: 'icon1-512.png'
     };
     routeUserByRole(defaultCustomer);
 }
@@ -217,6 +239,7 @@ async function loginByPhoneQuick() {
             phone: phone,
             role: 'customer',
             provider: 'Phone Quick',
+            photoURL: 'icon1-512.png',
             date: new Date().toLocaleString('ar-EG')
         };
     }
@@ -224,6 +247,7 @@ async function loginByPhoneQuick() {
     currentCustomer = userObj;
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     localStorage.setItem('omda_user_phone', phone);
+    localStorage.setItem('omda_logged_user', JSON.stringify(userObj));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -249,6 +273,7 @@ async function loginByPhoneQuick() {
     if(phoneBox) phoneBox.style.display = 'none';
 
     loadCustomerDashboard();
+    location.reload();
 }
 
 // ==========================================
@@ -793,7 +818,7 @@ async function addNewDriverWithLocation() {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriverObj.id)), newDriverObj);
-            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", String(phone)), { name, phone, role: 'driver', provider: 'Admin Added' }, { merge: true });
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", String(phone)), { name, phone, role: 'driver', provider: 'Admin Added', photoURL: 'icon1-512.png' }, { merge: true });
         } catch (e) {
             console.error("Firebase driver add error:", e);
         }
@@ -805,7 +830,7 @@ async function addNewDriverWithLocation() {
 
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers.some(u => u.phone === phone)) {
-        regUsers.push({ name, phone, role: 'driver', provider: 'Admin Added' });
+        regUsers.push({ name, phone, role: 'driver', provider: 'Admin Added', photoURL: 'icon1-512.png' });
         localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
     }
     
@@ -1352,6 +1377,7 @@ async function submitOrder() {
         phone,
         role: 'customer',
         provider: 'Order Submission',
+        photoURL: 'icon1-512.png',
         date: new Date().toLocaleString('ar-EG')
     };
 
@@ -1383,7 +1409,7 @@ async function submitOrder() {
     if(gpsStatusEl) gpsStatusEl.innerText = '';
     updateCartUI();
     
-    currentCustomer = { name, phone, role: 'customer' };
+    currentCustomer = { name, phone, role: 'customer', photoURL: 'icon1-512.png' };
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     switchTab('customer');
     loadCustomerDashboard();
@@ -1400,7 +1426,7 @@ function sendWhatsAppOrder() {
     const address = addressEl.value.trim();
 
     if(!name || !phone || !address) {
-        alert(' من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل قبل الطلب عبر واتساب!');
+        alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل قبل الطلب عبر واتساب!');
         return;
     }
 
@@ -1628,7 +1654,7 @@ async function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات والسائقين (المحدثة حصرياً للمسجلين)
+// وظائف إدارة الحسابات والسائقين سحابياً
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1637,9 +1663,10 @@ async function loadGoogleAccountsList() {
 
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
 
-    if(regUsers.length === 0 && window.db && window.firebaseModules && window.firebaseModules.getDocs) {
+    if(window.db && window.firebaseModules && window.firebaseModules.getDocs) {
         try {
             const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
+            regUsers = [];
             querySnapshot.forEach((docSnap) => {
                 regUsers.push(docSnap.data());
             });
@@ -1663,10 +1690,13 @@ async function loadGoogleAccountsList() {
         container.innerHTML += `
             <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                    <div>
-                        <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
-                        <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
-                        <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="${usr.photoURL || 'icon1-512.png'}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1px solid #3b82f6;">
+                        <div>
+                            <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
+                            <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
+                            <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'}</span>
+                        </div>
                     </div>
                     <button onclick="deleteGoogleAccount('${docKey}')" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>
@@ -1722,8 +1752,12 @@ async function updateUserRole(docKey, newRole) {
     if(newRole === 'driver') {
         let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
         if(!drivers.some(d => String(d.phone) === String(phone) || d.name === name)) {
-            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002, role: 'driver' });
+            let newDriver = { id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002, role: 'driver' };
+            drivers.push(newDriver);
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+            if (window.db && window.firebaseModules) {
+                await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriver.id)), newDriver);
+            }
         }
     } else if(newRole === 'admin' || newRole === 'accountant' || newRole === 'worker') {
         let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
@@ -1739,7 +1773,7 @@ async function updateUserRole(docKey, newRole) {
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين الموثقين! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين والموظفين! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
@@ -1788,13 +1822,13 @@ function createNewStaff() {
         return;
     }
 
-    const newStaff = { id: Date.now(), name, email, phone, password, role };
+    const newStaff = { id: Date.now(), name, email, phone, password, role, photoURL: 'icon1-512.png' };
     staffList.push(newStaff);
     localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
 
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers.some(u => u.email === email)) {
-        regUsers.push({ name, email, phone, role, provider: 'Admin Created', date: new Date().toLocaleString('ar-EG') });
+        regUsers.push({ name, email, phone, role, provider: 'Admin Created', photoURL: 'icon1-512.png', date: new Date().toLocaleString('ar-EG') });
         localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
     }
 
@@ -2358,7 +2392,6 @@ function filterOrders(status, btn) {
     loadLiveTrackingMap();
 }
 
-// ⭐ دالة تحميل الخريطة الحية والطلبات (محدثة بحيث تحمي الخريطة للزوار والعملاء العاديين)
 function loadLiveTrackingMap() {
     const listContainer = document.getElementById('live-orders-list');
     if(!listContainer || !markersLayer) return;
@@ -2381,7 +2414,6 @@ function loadLiveTrackingMap() {
     const statDrivers = document.getElementById('statDriversCount');
     if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
 
-    // حماية الخريطة: منع الزوار والعملاء العاديين من استعراض الشحنات العامة على الخريطة
     if (!isAdminOrDriver) {
         listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">🔒 الخريطة العامة ومتابعة الأسطول مخصصة للإدارة والمناديب فقط. استخدم خانة البحث بالأعلى لتتبع طلبك برقم الهاتف أو الفاتورة.</p>';
         loadDriversOnMap();
@@ -2563,7 +2595,6 @@ async function searchCustomLocation() {
     } catch(e) {}
 }
 
-// ⭐ دالة تحميل قائمة السائقين (محدثة بحيث تعتمد حصرياً على الحسابات المسجلة ذات دور طيار)
 function loadDriversAdminList() {
     const container = document.getElementById('drivers-list-container');
     if(!container) return;
@@ -2581,7 +2612,10 @@ function loadDriversAdminList() {
         let docKey = d.phone || d.email;
         container.innerHTML += `
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
-                <div><strong>${d.name}</strong> (${d.phone || d.email})<br><span class="text-[10px] text-emerald-600 font-bold">✓ حساب مسجل وموثق كطبار</span></div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <img src="${d.photoURL || 'icon1-512.png'}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
+                    <div><strong>${d.name}</strong> (${d.phone || d.email})<br><span class="text-[10px] text-emerald-600 font-bold">✓ طيار موثق سحابياً</span></div>
+                </div>
                 <button onclick="updateUserRole('${docKey}', 'customer')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">إلغاء الطيار</button>
             </div>
         `;
@@ -2711,7 +2745,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // ==========================================
-// نظام المزامنة اللحظية السحابية الشاملة (الطلبات + الطيارين)
+// نظام المزامنة اللحظية السحابية الشاملة (الطلبات + الطيارين + المستخدمين)
 // ==========================================
 function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
@@ -2746,6 +2780,18 @@ function initRealtimeCloudSync() {
             if (typeof loadDriversAdminList === 'function') loadDriversAdminList();
         }, (error) => {
             console.error("خطأ في مزامنة الطيارين:", error);
+        });
+
+        onSnapshot(collection(window.db, "users"), (snapshot) => {
+            let cloudUsers = [];
+            snapshot.forEach((doc) => {
+                cloudUsers.push(doc.data());
+            });
+            if(cloudUsers.length > 0) {
+                localStorage.setItem('omda_registered_users', JSON.stringify(cloudUsers));
+            }
+        }, (error) => {
+            console.error("خطأ في مزامنة المستخدمين:", error);
         });
 
     } else {
