@@ -16,7 +16,7 @@
             <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img" style="width: 42px; height: 42px; border-radius: 50%;">
             <div>
                 <h1 style="font-size: 1.2rem; margin: 0; color: #fde047;">🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً (توفير القراءات عبر getDoc)</span>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً (محمي بصلاحيات الموظفين)</span>
             </div>
         </div>
         <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
@@ -30,11 +30,11 @@
     <main class="container" style="max-width: 1300px; margin: 20px auto; padding: 0 15px;">
         <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(153,27,27,0.3);">
             <h2 style="font-size: 1.5rem; margin-bottom: 8px;">👨‍🍳 شاشة تجهيز المشويات والطلبات الواردة سحابياً</h2>
-            <p style="font-size: 0.95rem; color: #fecaca;">الطلبات تظهر هنا فوراً لتجهيزها على الفحم الحطب وإرسالها للطيارين!</p>
+            <p style="font-size: 0.95rem; color: #fecaca;">الطلبات تظهر هنا حصرياً لفريق العمل لتجهيزها على الفحم الحطب وإرسالها للطيارين!</p>
         </div>
 
         <div id="kitchen-orders-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
-            <!-- يتم تعبئة الطلبات تلقائياً عبر الجافاسكريبت والسحابة -->
+            <!-- يتم تعبئة الطلبات تلقائياً للموظفين المصرح لهم فقط -->
         </div>
     </main>
 
@@ -70,24 +70,46 @@
             getDoc
         };
         
-        console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase سحابياً مع تفعيل getDoc لتوفير القراءات!");
+        console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase وتفعيل الحماية الأمنية!");
 
-        // 1. العرض الفوري من التخزين المحلي لمنع أي تأخير أو رعشة (0 قراءات سحابية عند الفتح)
+        // حماية الصفحة وفحص الجلسة فور التحميل
         document.addEventListener('DOMContentLoaded', () => {
+            if (!checkKitchenAccessSecurity()) return;
             loadKitchenOrdersFromLocal();
-            // مزامنة خفيفة للطلبات النشطة فقط باستخدام getDoc أو الاستماع اللحظي الذكي
             syncActiveOrdersSmart();
         });
     </script>
 
-    <!-- سكربت إدارة عرض وتحديث طلبات المطبخ -->
+    <!-- سكربت حماية وإدارة عرض وتحديث طلبات المطبخ -->
     <script>
+        // دالة حماية أمنية صارمة تمنع الزوار والعملاء العاديين من دخول شاشة المطبخ
+        function checkKitchenAccessSecurity() {
+            let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || '{}');
+            const role = (loggedUser.role || '').toLowerCase();
+            const email = (loggedUser.email || '').toLowerCase();
+            const phone = loggedUser.phone || '';
+
+            const isMaster = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305');
+            const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'chef';
+
+            if (!isAuthorizedStaff) {
+                alert("🚫 عذراً! هذه الشاشة (KDS) مخصصة لفريق المطبخ والمشرفين فقط. ممنوع دخول الزوار أو العملاء.");
+                window.location.href = 'index.html';
+                return false;
+            }
+
+            const badge = document.getElementById('userRoleBadge');
+            if(badge) {
+                badge.innerText = `مرحباً بك يا ${loggedUser.name || 'موظف العمدة'} (${role || 'مشرف'}) 👑`;
+            }
+            return true;
+        }
+
         function loadKitchenOrdersFromLocal() {
             let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
             renderKitchenGrid(allOrders);
         }
 
-        // استخدام getDoc لجلب مستندات محددة فقط (توفير هائل في استهلاك القراءات)
         async function syncActiveOrdersSmart() {
             const grid = document.getElementById('kitchen-orders-grid');
             let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
@@ -98,7 +120,6 @@
 
             if (window.db && window.firebaseModules) {
                 try {
-                    // إذا كان لدينا طلبات محلية نشطة، نقوم بالتحقق من كل طلب على حدة باستخدام getDoc (قراءة مستند واحد لكل طلب بدلاً من تحميل كل المجموعة)
                     let activeOrders = allOrders.filter(o => o.status !== 'done');
                     
                     if (activeOrders.length > 0) {
@@ -107,7 +128,6 @@
                             const docSnap = await window.firebaseModules.getDoc(docRef);
                             if (docSnap.exists()) {
                                 const cloudData = docSnap.data();
-                                // تحديث البيانات المحلية إذا حدث تغيير
                                 const index = allOrders.findIndex(o => o.id === cloudData.id);
                                 if (index > -1) {
                                     allOrders[index] = cloudData;
@@ -117,7 +137,6 @@
                         localStorage.setItem('omda_orders', JSON.stringify(allOrders));
                         renderKitchenGrid(allOrders);
                     } else {
-                        // إذا لم تكن هناك طلبات محلية، نقوم بجلب المجموعة مرة واحدة كبداية
                         const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "orders"));
                         allOrders = [];
                         querySnapshot.forEach((docSnap) => {
@@ -135,7 +154,6 @@
             }
         }
 
-        // زر التحديث اليدوي الذكي باستخدام getDoc
         async function syncAllActiveOrdersWithGetDoc() {
             alert("🔄 جاري التحديث الذكي للطلبات عبر getDoc...");
             await syncActiveOrdersSmart();
