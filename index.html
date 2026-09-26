@@ -180,40 +180,27 @@
             <div id="favorites-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 6. بوابة تسجيل الدخول الموحدة للجميع (مدير، محاسب، طيار، عميل) -->
+        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وعزل الحسابات -->
         <section id="tab-customer" class="tab-content">
-            <h2>🔐 بوابة تسجيل الدخول الموحدة (لكافة الصلاحيات والعملاء)</h2>
+            <h2>🔐 بوابة تسجيل الدخول الموحدة بحساب جوجل الحقيقي</h2>
             
             <div class="customer-login-box" id="unified-login-box" style="max-width: 480px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #b45309;">
                 <p style="text-align: center; color: #57534e; margin-bottom: 20px; font-weight: bold;">
-                    سجل دخولك هنا سواء كنت (مدير، محاسب، طيار دليفري، أو عميل):
+                    يرجى تسجيل الدخول حصرياً باستخدام حساب جوجل لضمان عزل الحسابات ومزامنة بروفايلك الحقيقي وطلبك بدقة:
                 </p>
 
-                <!-- زر تسجيل الدخول الموحد عبر جوجل -->
-                <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
-                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.2rem;"></i> تسجيل الدخول الموحد باستخدام جوجل 🚀
+                <!-- زر تسجيل الدخول الحصري عبر جوجل -->
+                <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.05rem;">
+                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.3rem;"></i> تسجيل الدخول المعتمد باستخدام جوجل 🚀
                 </button>
-
-                <div style="text-align: center; color: #78716c; margin-bottom: 20px; font-size: 0.85rem; border-bottom: 1px solid #e7e5e4; line-height: 0.1em;">
-                    <span style="background: #fff; padding: 0 10px;">أو بالطريقة التقليدية</span>
-                </div>
-
-                <!-- حقول الدخول الموحد بالبريد/الهاتف وكلمة المرور -->
-                <div class="checkout-form" style="max-width: 100%;">
-                    <input type="text" id="unified-login-id" placeholder="البريد الإلكتروني أو رقم الهاتف">
-                    <input type="password" id="unified-pass" placeholder="كلمة المرور السرية">
-                    
-                    <button onclick="unifiedLoginCustom()" class="btn-primary" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 1rem; background-color: #b45309;">
-                        تسجيل الدخول للنظام 🔓
-                    </button>
-                </div>
             </div>
 
-            <!-- لوحة العميل (تظهر للعملاء بعد تسجيل الدخول) -->
+            <!-- لوحة العميل (تظهر للعملاء بعد تسجيل الدخول الحقيقي) -->
             <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 <div class="cust-info" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                         مرحباً بك يا <span id="cust-display-name" style="font-weight: bold; color: #b45309;"></span>
+                        <div style="font-size: 0.8rem; color: #64748b;" id="cust-display-email"></div>
                     </div>
                     <button onclick="customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white;">تسجيل خروج</button>
                 </div>
@@ -281,7 +268,7 @@
         </div>
     </div>
 
-    <!-- إعداد وتهيئة Firebase السحابية وتوجيه الحسابات الموحد -->
+    <!-- إعداد وتهيئة Firebase السحابية وتوجيه الحسابات الموحد بحساب جوجل فقط -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -309,7 +296,7 @@
                 const email = user.email.toLowerCase();
 
                 let userRole = 'customer';
-                const docId = String(user.phoneNumber || email.replace(/[^a-zA-Z0-9]/g, '_'));
+                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
                 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
@@ -321,7 +308,7 @@
                 } catch(e) {}
 
                 const userObj = {
-                    name: user.displayName || 'مستخدم جوجل',
+                    name: user.displayName || 'مستخدم جوجل الحقيقي',
                     email: email,
                     phone: user.phoneNumber || 'غير متوفر',
                     role: userRole,
@@ -358,8 +345,15 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const custName = user.displayName || user.email.split('@')[0];
-                const custPhone = 'غير متوفرة';
-                window.currentCustomer = { name: custName, phone: custPhone, email: user.email };
+                const userObj = { 
+                    name: custName, 
+                    email: user.email.toLowerCase(), 
+                    phone: user.phoneNumber || 'غير متوفر',
+                    provider: 'Google Auth'
+                };
+                window.currentCustomer = userObj;
+                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
+                localStorage.setItem('omda_current_cust', JSON.stringify(userObj));
                 
                 const loginBox = document.getElementById('unified-login-box');
                 const dashBox = document.getElementById('customer-dashboard');
@@ -367,7 +361,9 @@
                 if(dashBox) dashBox.classList.remove('hidden');
 
                 const nameEl = document.getElementById('cust-display-name');
+                const emailEl = document.getElementById('cust-display-email');
                 if(nameEl) nameEl.innerText = custName;
+                if(emailEl) emailEl.innerText = user.email;
                 
                 if (typeof loadCustomerDashboard === 'function') {
                     loadCustomerDashboard();
@@ -378,7 +374,7 @@
         window.db = db;
         window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
         
-        console.log("🔥 تم ربط صفحة العميل بنظام الدخول الموحد وسحابة Firebase بنجاح!");
+        console.log("🔥 تم ربط صفحة العميل بنظام حسابات جوجل وسحابة Firebase بنجاح ومعزل تماماً!");
     </script>
 
     <script src="app.js"></script>
