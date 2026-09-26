@@ -1,10 +1,14 @@
-const CACHE_NAME = 'omda-grills-v4'; // تم تغيير الإصدار لضمان تحديث الملفات عند العملاء
+const CACHE_NAME = 'omda-grills-v5'; // تم رفع الإصدار ليشمل الصفحات والتحديثات الأخيرة
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
   '/el-omda-app/admin.html',
   '/el-omda-app/Map.html',
   '/el-omda-app/product.html',
+  '/el-omda-app/branches.html',
+  '/el-omda-app/kitchen-display.html',
+  '/el-omda-app/privacy.html',
+  '/el-omda-app/rewards.html',
   '/el-omda-app/style.css',
   '/el-omda-app/app.js',
   '/el-omda-app/manifest.json',
