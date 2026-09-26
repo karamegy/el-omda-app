@@ -1,7 +1,7 @@
 :root {
     --primary-color: #d97706;
     --secondary-color: #78350f;
-    --dark-bg: rgba(28, 25, 23, 0.75);
+    --dark-bg: rgba(28, 25, 23, 0.7);
     --light-bg: #f5f5f4;
     --accent-red: #dc2626;
     --success-green: #16a34a;
@@ -15,12 +15,12 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* خلفية سينمائية حقيقية للمشويات مع حركة زوم وتأثير بَصري جذاب ودون تعتيم داكن */
+/* خلفية سينمائية متحركة لواجهة محل مشويات العمدة الحقيقية بدون تعتيم مبالغ فيه */
 body {
-    background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.45)), 
-                url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600') no-repeat center center fixed;
+    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.4)), 
+                url('1000323877.jpg') no-repeat center center fixed;
     background-size: cover;
-    animation: cinematicZoom 20s ease-in-out infinite alternate;
+    animation: cinematicZoomStore 18s ease-in-out infinite alternate;
     color: #f5f5f4;
     direction: rtl;
     min-height: 100vh;
@@ -28,32 +28,32 @@ body {
     overflow-x: hidden;
 }
 
-@keyframes cinematicZoom {
-    0% { background-size: 100% 100%; }
-    100% { background-size: 112% 112%; }
+@keyframes cinematicZoomStore {
+    0% { background-size: 100% 100%; background-position: center center; }
+    100% { background-size: 110% 110%; background-position: center bottom; }
 }
 
-/* إضاءة ثري دي جمرية ونار مشتعلة متحركة أسفل الشاشة بتأثير حقيقي */
+/* طبقة إضاءة ثري دي جمرية ونار مشتعلة متوهجة متحركة أسفل الشاشة */
 body::before {
     content: '';
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 280px;
-    background: linear-gradient(to top, rgba(220, 38, 38, 0.65) 0%, rgba(217, 119, 6, 0.4) 50%, transparent 100%);
+    height: 300px;
+    background: linear-gradient(to top, rgba(220, 38, 38, 0.7) 0%, rgba(217, 119, 6, 0.45) 50%, transparent 100%);
     z-index: 0;
-    animation: fireGlow3D 3.5s ease-in-out infinite alternate;
+    animation: fireGlow3DLive 3s ease-in-out infinite alternate;
     pointer-events: none;
-    filter: blur(15px);
+    filter: blur(12px);
 }
 
-@keyframes fireGlow3D {
-    0% { opacity: 0.5; transform: scaleY(0.95); }
-    100% { opacity: 0.95; transform: scaleY(1.1); }
+@keyframes fireGlow3DLive {
+    0% { opacity: 0.55; transform: scaleY(0.92); }
+    100% { opacity: 0.95; transform: scaleY(1.08); }
 }
 
-/* تأثير دخان الشوي المتصاعد بلطف في الخلفية السينمائية */
+/* تأثير دخان الشوي المتصاعد بهدوء واحترافية فوق الخلفية السينمائية */
 body::after {
     content: '';
     position: fixed;
@@ -61,23 +61,25 @@ body::after {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 12%, transparent 22%);
-    background-size: 220px 220px;
+    background-image: 
+        radial-gradient(circle, rgba(255, 255, 255, 0.12) 10%, transparent 20%),
+        radial-gradient(circle, rgba(217, 119, 6, 0.08) 15%, transparent 25%);
+    background-size: 200px 200px, 280px 280px;
     z-index: 0;
-    opacity: 0.45;
+    opacity: 0.5;
     pointer-events: none;
-    animation: smokeFloat 14s linear infinite;
+    animation: smokeRisingCinematic 12s linear infinite;
 }
 
-@keyframes smokeFloat {
-    0% { background-position: 0 100vh; }
-    100% { background-position: 0 -100vh; }
+@keyframes smokeRisingCinematic {
+    0% { background-position: 0 100vh, 50px 100vh; }
+    100% { background-position: 0 -100vh, 50px -100vh; }
 }
 
 /* شريط الإعلانات المتحرك (RSS Ticker) */
 .ticker-container {
-    background: rgba(153, 27, 27, 0.9);
-    backdrop-filter: blur(10px);
+    background: rgba(153, 27, 27, 0.92);
+    backdrop-filter: blur(12px);
     color: #fef08a;
     padding: 10px 20px;
     display: flex;
@@ -106,8 +108,8 @@ body::after {
 
 /* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد بارز */
 .main-header {
-    background-color: rgba(28, 25, 23, 0.75);
-    backdrop-filter: blur(14px);
+    background-color: rgba(28, 25, 23, 0.78);
+    backdrop-filter: blur(15px);
     color: var(--white);
     padding: 15px 25px;
     display: flex;
@@ -183,9 +185,9 @@ body::after {
     display: block;
 }
 
-/* البانر بتأثير زجاجي ثلاثي الأبعاد شفاف قليلاً لإظهار الخلفية الحية */
+/* البانر بتأثير زجاجي ثلاثي الأبعاد بارز */
 .banner {
-    background: linear-gradient(135deg, rgba(120, 53, 15, 0.85), rgba(28, 25, 23, 0.85));
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.88), rgba(28, 25, 23, 0.9));
     backdrop-filter: blur(12px);
     color: var(--white);
     padding: 30px;
@@ -232,7 +234,7 @@ body::after {
     box-shadow: 0 0 15px rgba(217, 119, 6, 0.8);
 }
 
-/* شبكة المنتجات (Cards) بزجاج شبه شفاف يبرز جمال الخلفية */
+/* شبكة المنتجات (Cards) بزجاج شبه شفاف يبرز جمال خلفية المحل */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -240,7 +242,7 @@ body::after {
 }
 
 .menu-card {
-    background: rgba(255, 255, 255, 0.92);
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(12px);
     color: #292524;
     border-radius: 12px;
@@ -306,7 +308,7 @@ body::after {
 
 /* السلة والحاويات */
 .cart-container {
-    background: rgba(255, 255, 255, 0.93);
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(15px);
     color: #292524;
     padding: 25px;
@@ -398,7 +400,7 @@ body::after {
 
 /* تتبع الطلبات واللوحات */
 .customer-login-box, .admin-login-box {
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     color: #292524;
     padding: 30px;
@@ -413,7 +415,7 @@ body::after {
 }
 
 .customer-dashboard, .admin-dashboard {
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     color: #292524;
     padding: 25px;
@@ -627,7 +629,7 @@ button[onclick="fetchCustomerGpsLocation()"]:hover {
     text-align: center;
     font-weight: bold;
     padding: 6px;
-    background-buttons: #f0f9ff;
+    background-color: #f0f9ff;
     border-radius: 6px;
     border: 1px solid #bae6fd;
 }
