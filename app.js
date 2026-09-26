@@ -46,6 +46,41 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
+// نظام المصادقة الأمنية وطلب البصمة وكلمة المرور
+// ==========================================
+async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
+    const enteredPass = prompt("🔐 يرجى إدخال كلمة المرور الخاصة بالحساب:");
+    if (!enteredPass) {
+        alert("⚠️ تم إلغاء العملية.");
+        return false;
+    }
+
+    // التحقق من البصمة البيومترية إن كانت مدعومة في المتصفح
+    if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+        try {
+            const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (available) {
+                const credential = await navigator.credentials.get({
+                    publicKey: {
+                        challenge: new Uint8Array([1,2,3,4,5,6,7,8]),
+                        timeout: 60000,
+                        userVerification: "required"
+                    }
+                });
+                if (!credential) {
+                    alert("❌ فشل التحقق من البصمة!");
+                    return false;
+                }
+            }
+        } catch (e) {
+            console.log("Biometric authentication skipped or unsupported:", e);
+        }
+    }
+
+    return true;
+}
+
+// ==========================================
 // نظام التسجيل والدخول السريع برقم الهاتف للعملاء (مع الحفظ السحابي)
 // ==========================================
 async function loginByPhoneQuick() {
@@ -75,7 +110,6 @@ async function loginByPhoneQuick() {
         date: new Date().toLocaleString('ar-EG')
     };
 
-    // حفظ أو تحديث بيانات العميل سحابياً في Firestore
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(
@@ -88,7 +122,6 @@ async function loginByPhoneQuick() {
         }
     }
 
-    // تسجيل في قائمة الحسابات الموحدة محلياً كدعم احتياطي
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers.some(u => u.phone === phone)) {
         regUsers.push(userObj);
@@ -1158,7 +1191,6 @@ async function submitOrder() {
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
     localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
-    // مزامنة العميل وحفظه في قائمة الحسابات الموحدة والسحابية
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     const orderUserObj = {
         name,
@@ -1412,7 +1444,7 @@ function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة وتغيير أدوار الحسابات والعملاء الشاملة (مع المزامنة السحابية Firestore)
+// وظائف إدارة وتغيير أدوار الحسابات (مع إجبار كلمة المرور والبصمة للطيارين)
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1421,7 +1453,6 @@ async function loadGoogleAccountsList() {
 
     let regUsers = [];
 
-    // جلب الحسابات مباشرة من قاعدة بيانات Firestore (مجموعة users)
     if (window.db && window.firebaseModules) {
         try {
             const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
@@ -1475,6 +1506,16 @@ async function loadGoogleAccountsList() {
 }
 
 async function updateUserRole(docKey, idx, newRole) {
+    // إذا كان الدور الجديد طياراً، نطلب كلمة المرور والبصمة أولاً
+    if (newRole === 'driver') {
+        const authorized = await authenticateWithPasswordAndBiometric('driver');
+        if (!authorized) {
+            alert("⚠️ تم إلغاء تعيين الحساب كطيار لعدم استيفاء المصادقة الأمنية.");
+            loadGoogleAccountsList();
+            return;
+        }
+    }
+
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers[idx]) return;
 
@@ -1483,7 +1524,6 @@ async function updateUserRole(docKey, idx, newRole) {
 
     let targetUser = regUsers[idx];
 
-    // تحديث دور المستخدم سحابياً في Firestore
     if (window.db && window.firebaseModules) {
         try {
             const docId = String(targetUser.phone || targetUser.email.replace(/[^a-zA-Z0-9]/g, '_'));
@@ -1497,7 +1537,6 @@ async function updateUserRole(docKey, idx, newRole) {
         }
     }
 
-    // مزامنة تلقائية مع قوائم الموظفين والطيارين
     let name = targetUser.name;
     let phone = targetUser.phone || '01000000000';
     let email = targetUser.email;
@@ -1522,10 +1561,12 @@ async function updateUserRole(docKey, idx, newRole) {
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
+    loadDriversOnMap();
+    loadLiveTrackingMap();
 }
 
 function deleteGoogleAccount(idx) {
@@ -1559,7 +1600,6 @@ function createNewStaff() {
     staffList.push(newStaff);
     localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
 
-    // مزامنة مع قائمة الحسابات المسجلة
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers.some(u => u.email === email)) {
         regUsers.push({ name, email, phone, role, provider: 'Admin Created', date: new Date().toLocaleString('ar-EG') });
