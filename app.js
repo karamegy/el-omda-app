@@ -46,6 +46,21 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
+// دالة موحدة لتوليد معرف المستند (Doc ID) بدقة مطابقة لـ Firestore
+// ==========================================
+function getStandardUserDocId(userOrKey) {
+    if (typeof userOrKey === 'object' && userOrKey !== null) {
+        if (userOrKey.phone) return String(userOrKey.phone);
+        if (userOrKey.email) return String(userOrKey.email).toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+    }
+    const str = String(userOrKey);
+    if (str.includes('@')) {
+        return str.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
+    }
+    return str;
+}
+
+// ==========================================
 // دالة موحدة وبحتة آمنة للـ ID
 // ==========================================
 function findProductById(id) {
@@ -64,7 +79,6 @@ function routeUserByRole(user) {
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
 
-    // مزامنة صورة البروفايل الافتراضية إن لم تكن موجودة
     if (!user.photoURL) {
         user.photoURL = 'icon1-512.png';
     }
@@ -98,9 +112,6 @@ function routeUserByRole(user) {
     }
 }
 
-// ==========================================
-// مزامنة عناصر الهيدر (الصورة والاسم) تلقائياً في كل صفحة
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
     
@@ -115,9 +126,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// ==========================================
-// تسجيل الدخول الموحد بالبريد / الهاتف / كلمة المرور
-// ==========================================
 async function unifiedLoginCustom() {
     const identifier = document.getElementById('unified-login-id').value.trim().toLowerCase();
     const password = document.getElementById('unified-pass').value.trim();
@@ -167,43 +175,6 @@ async function unifiedLoginCustom() {
     routeUserByRole(defaultCustomer);
 }
 
-// ==========================================
-// نظام المصادقة الأمنية وطلب البصمة وكلمة المرور
-// ==========================================
-async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
-    const enteredPass = prompt("🔐 يرجى إدخال كلمة المرور الخاصة بالحساب:");
-    if (!enteredPass) {
-        alert("⚠️ تم إلغاء العملية.");
-        return false;
-    }
-
-    if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        try {
-            const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-            if (available) {
-                const credential = await window.PublicKeyCredential.get({
-                    publicKey: {
-                        challenge: new Uint8Array([1,2,3,4,5,6,7,8]),
-                        timeout: 60000,
-                        userVerification: "required"
-                    }
-                });
-                if (!credential) {
-                    alert("❌ فشل التحقق من البصمة!");
-                    return false;
-                }
-            }
-        } catch (e) {
-            console.log("Biometric authentication skipped or unsupported:", e);
-        }
-    }
-
-    return true;
-}
-
-// ==========================================
-// نظام التسجيل والدخول السريع برقم الهاتف
-// ==========================================
 async function loginByPhoneQuick() {
     const phoneInput = document.getElementById('quick-phone-input');
     if(!phoneInput) return;
@@ -276,9 +247,6 @@ async function loginByPhoneQuick() {
     location.reload();
 }
 
-// ==========================================
-// نظام سليدر عرض جميع المنتجات
-// ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
 let currentSliderProduct = null;
@@ -345,9 +313,6 @@ function sliderAddToCart() {
     }
 }
 
-// ==========================================
-// نظام جلب موقع العميل عبر GPS
-// ==========================================
 function fetchCustomerGpsLocation() {
     const statusEl = document.getElementById('customer-gps-status');
     if(!navigator.geolocation) {
@@ -384,9 +349,6 @@ function fetchCustomerGpsLocation() {
     );
 }
 
-// ==========================================
-// نظام نغمة الرنين والاتصال (WebRTC)
-// ==========================================
 function startRingingTone() {
     if (ringingInterval) return;
     try {
@@ -1654,7 +1616,7 @@ async function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات والسائقين سحابياً
+// وظائف إدارة الحسابات والسائقين سحابياً (التحكم الشامل المتكامل)
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1684,23 +1646,23 @@ async function loadGoogleAccountsList() {
     }
 
     container.innerHTML = '';
-    regUsers.forEach((usr, idx) => {
+    regUsers.forEach((usr) => {
         let currentRole = usr.role || 'customer';
-        let docKey = usr.phone || usr.email;
+        let docKey = getStandardUserDocId(usr);
         container.innerHTML += `
-            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px;">
+            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px; cursor:pointer;" onclick="openEditUserModal('${docKey}')">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${usr.photoURL || 'icon1-512.png'}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1px solid #3b82f6;">
                         <div>
                             <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
                             <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
-                            <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'}</span>
+                            <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'} | <b style="color:#0284c7;">انقر للتعديل ✍️</b></span>
                         </div>
                     </div>
-                    <button onclick="deleteGoogleAccount('${docKey}')" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    <button onclick="event.stopPropagation(); deleteGoogleAccount('${docKey}')" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+                <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;" onclick="event.stopPropagation()">
                     <label style="font-size:0.8rem; font-weight:bold; color:#334155; white-space:nowrap;">ترقية وتعيين الدور:</label>
                     <select onchange="updateUserRole('${docKey}', this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
                         <option value="customer" ${currentRole==='customer'?'selected':''}>👤 عميل (Customer)</option>
@@ -1716,27 +1678,23 @@ async function loadGoogleAccountsList() {
 }
 
 async function updateUserRole(docKey, newRole) {
-    if (newRole === 'driver') {
-        const authorized = await authenticateWithPasswordAndBiometric('driver');
-        if (!authorized) {
-            alert("⚠️ تم إلغاء تعيين الحساب كطيار لعدم استيفاء المصادقة الأمنية.");
-            loadGoogleAccountsList();
-            return;
-        }
-    }
-
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey));
-    if(!targetUser) return;
+    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
+    
+    if(!targetUser) {
+        alert("⚠️ عذراً، لم يتم العثور على المستخدم!");
+        return;
+    }
 
     targetUser.role = newRole;
     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
 
+    const cloudDocId = getStandardUserDocId(targetUser);
+
     if (window.db && window.firebaseModules) {
         try {
-            const docId = String(targetUser.phone || targetUser.email.replace(/[^a-zA-Z0-9]/g, '_'));
             await window.firebaseModules.setDoc(
-                window.firebaseModules.doc(window.db, "users", docId), 
+                window.firebaseModules.doc(window.db, "users", cloudDocId), 
                 targetUser, 
                 { merge: true }
             );
@@ -1773,7 +1731,7 @@ async function updateUserRole(docKey, newRole) {
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين والموظفين! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح سحابياً ومحلياً! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
@@ -1786,22 +1744,105 @@ async function deleteGoogleAccount(docKey) {
         alert("🚫 غير مسموح لك بحذف الحسابات!");
         return;
     }
-    if(!confirm('هل أنت متأكد من حذف هذا الحساب من النظام؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذا الحساب نهائياً من النظام والسحابة؟')) return;
     
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    regUsers = regUsers.filter(u => String(u.phone) !== String(docKey) && String(u.email) !== String(docKey));
+    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
+    
+    regUsers = regUsers.filter(u => String(u.phone) !== String(docKey) && String(u.email) !== String(docKey) && getStandardUserDocId(u) !== String(docKey));
     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+
+    const cloudDocId = targetUser ? getStandardUserDocId(targetUser) : getStandardUserDocId(docKey);
 
     if (window.db && window.firebaseModules) {
         try {
-            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "users", String(docKey)));
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "users", cloudDocId));
         } catch(e) {
             console.error("Cloud user delete error:", e);
         }
     }
 
     loadGoogleAccountsList();
-    alert('تم حذف الحساب بنجاح.');
+    alert('✓ تم حذف الحساب بنجاح.');
+}
+
+function openEditUserModal(docKey) {
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
+
+    if (!targetUser) {
+        alert("⚠️ لم يتم العثور على بيانات هذا المستخدم!");
+        return;
+    }
+
+    document.getElementById('edit-user-original-id').value = getStandardUserDocId(targetUser);
+    document.getElementById('edit-user-name').value = targetUser.name || '';
+    document.getElementById('edit-user-email').value = targetUser.email || '';
+    document.getElementById('edit-user-phone').value = targetUser.phone || '';
+    document.getElementById('edit-user-role').value = targetUser.role || 'customer';
+
+    const modal = document.getElementById('editUserModal');
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+    }
+}
+
+function closeEditUserModal() {
+    const modal = document.getElementById('editUserModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+    }
+}
+
+async function saveEditedUserAccount() {
+    const originalId = document.getElementById('edit-user-original-id').value;
+    const name = document.getElementById('edit-user-name').value.trim();
+    const email = document.getElementById('edit-user-email').value.trim();
+    const phone = document.getElementById('edit-user-phone').value.trim();
+    const role = document.getElementById('edit-user-role').value;
+
+    if (!name || !email) {
+        alert("من فضلك أدخل الاسم والبريد الإلكتروني على الأقل!");
+        return;
+    }
+
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let targetUser = regUsers.find(u => getStandardUserDocId(u) === originalId || u.email === email);
+
+    if (targetUser) {
+        targetUser.name = name;
+        targetUser.email = email;
+        targetUser.phone = phone;
+        targetUser.role = role;
+    } else {
+        targetUser = { name, email, phone, role, photoURL: 'icon1-512.png', date: new Date().toLocaleString('ar-EG') };
+        regUsers.push(targetUser);
+    }
+
+    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+
+    const newCloudId = getStandardUserDocId(targetUser);
+
+    if (window.db && window.firebaseModules) {
+        try {
+            if (originalId !== newCloudId) {
+                await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "users", originalId));
+            }
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", newCloudId),
+                targetUser,
+                { merge: true }
+            );
+        } catch (e) {
+            console.error("Cloud user edit save error:", e);
+        }
+    }
+
+    closeEditUserModal();
+    loadGoogleAccountsList();
+    alert("✓ تم تحديث بيانات وحساب المستخدم بنجاح 👑");
 }
 
 function createNewStaff() {
@@ -2744,9 +2785,6 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ==========================================
-// نظام المزامنة اللحظية السحابية الشاملة (الطلبات + الطيارين + المستخدمين)
-// ==========================================
 function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
         const { collection, onSnapshot } = window.firebaseModules;
