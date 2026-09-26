@@ -46,9 +46,9 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام التسجيل والدخول السريع برقم الهاتف للعملاء
+// نظام التسجيل والدخول السريع برقم الهاتف للعملاء (مع الحفظ السحابي)
 // ==========================================
-function loginByPhoneQuick() {
+async function loginByPhoneQuick() {
     const phoneInput = document.getElementById('quick-phone-input');
     if(!phoneInput) return;
     const phone = phoneInput.value.trim();
@@ -66,17 +66,32 @@ function loginByPhoneQuick() {
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     localStorage.setItem('omda_user_phone', phone);
 
-    // تسجيل في قائمة الحسابات الموحدة
+    const userObj = {
+        name: custName,
+        email: phone + '@omda.com',
+        phone: phone,
+        role: 'customer',
+        provider: 'Phone Quick',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    // حفظ أو تحديث بيانات العميل سحابياً في Firestore
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", String(phone)), 
+                userObj, 
+                { merge: true }
+            );
+        } catch (e) {
+            console.error("Firebase cloud user save error:", e);
+        }
+    }
+
+    // تسجيل في قائمة الحسابات الموحدة محلياً كدعم احتياطي
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers.some(u => u.phone === phone)) {
-        regUsers.push({
-            name: custName,
-            email: phone + '@omda.com',
-            phone: phone,
-            role: 'customer',
-            provider: 'Phone Quick',
-            date: new Date().toLocaleString('ar-EG')
-        });
+        regUsers.push(userObj);
         localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
     }
 
@@ -1143,18 +1158,32 @@ async function submitOrder() {
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
     localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
-    // مزامنة العميل في قائمة الحسابات الموحدة
+    // مزامنة العميل وحفظه في قائمة الحسابات الموحدة والسحابية
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    const orderUserObj = {
+        name,
+        email: phone + '@omda.com',
+        phone,
+        role: 'customer',
+        provider: 'Order Submission',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
     if(!regUsers.some(u => u.phone === phone || u.email === phone + '@omda.com')) {
-        regUsers.push({
-            name,
-            email: phone + '@omda.com',
-            phone,
-            role: 'customer',
-            provider: 'Order Submission',
-            date: new Date().toLocaleString('ar-EG')
-        });
+        regUsers.push(orderUserObj);
         localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    }
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", String(phone)), 
+                orderUserObj, 
+                { merge: true }
+            );
+        } catch (e) {
+            console.error("Firebase order user sync error:", e);
+        }
     }
 
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
@@ -1383,34 +1412,56 @@ function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة وتغيير أدوار الحسابات والعملاء الشاملة
+// وظائف إدارة وتغيير أدوار الحسابات والعملاء الشاملة (مع المزامنة السحابية Firestore)
 // ==========================================
-function loadGoogleAccountsList() {
+async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
     if(!container) return;
-    container.innerHTML = '';
+    container.innerHTML = '<p style="text-align:center; color:#78716c; padding:10px;">⏳ جاري مزامنة الحسابات من السحابة...</p>';
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let regUsers = [];
+
+    // جلب الحسابات مباشرة من قاعدة بيانات Firestore (مجموعة users)
+    if (window.db && window.firebaseModules) {
+        try {
+            const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
+            querySnapshot.forEach((docSnap) => {
+                regUsers.push(docSnap.data());
+            });
+            if(regUsers.length > 0) {
+                localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+            }
+        } catch (e) {
+            console.error("Error fetching cloud users:", e);
+        }
+    }
+
+    if(regUsers.length === 0) {
+        regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    }
+
     if(regUsers.length === 0) {
         container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات أو عملاء مسجلون حالياً.</p>';
         return;
     }
 
+    container.innerHTML = '';
     regUsers.forEach((usr, idx) => {
         let currentRole = usr.role || 'customer';
+        let docKey = usr.phone || usr.email;
         container.innerHTML += `
             <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div>
                         <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
                         <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
-                        <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date}</span>
+                        <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'}</span>
                     </div>
-                    <button onclick="deleteGoogleAccount(${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    <button onclick="deleteGoogleAccount('${docKey}', ${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
                     <label style="font-size:0.8rem; font-weight:bold; color:#334155; white-space:nowrap;">ترقية وتعيين الدور:</label>
-                    <select onchange="updateUserRole(${idx}, this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
+                    <select onchange="updateUserRole('${docKey}', ${idx}, this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
                         <option value="customer" ${currentRole==='customer'?'selected':''}>👤 عميل (Customer)</option>
                         <option value="admin" ${currentRole==='admin'?'selected':''}>👑 مدير / أدمن (Admin)</option>
                         <option value="accountant" ${currentRole==='accountant'?'selected':''}>💰 محاسب (Accountant)</option>
@@ -1423,17 +1474,33 @@ function loadGoogleAccountsList() {
     });
 }
 
-function updateUserRole(idx, newRole) {
+async function updateUserRole(docKey, idx, newRole) {
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     if(!regUsers[idx]) return;
 
     regUsers[idx].role = newRole;
     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
 
+    let targetUser = regUsers[idx];
+
+    // تحديث دور المستخدم سحابياً في Firestore
+    if (window.db && window.firebaseModules) {
+        try {
+            const docId = String(targetUser.phone || targetUser.email.replace(/[^a-zA-Z0-9]/g, '_'));
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", docId), 
+                targetUser, 
+                { merge: true }
+            );
+        } catch (e) {
+            console.error("Error updating user role in cloud:", e);
+        }
+    }
+
     // مزامنة تلقائية مع قوائم الموظفين والطيارين
-    let name = regUsers[idx].name;
-    let phone = regUsers[idx].phone || '01000000000';
-    let email = regUsers[idx].email;
+    let name = targetUser.name;
+    let phone = targetUser.phone || '01000000000';
+    let email = targetUser.email;
 
     if(newRole === 'driver') {
         let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
@@ -1455,7 +1522,7 @@ function updateUserRole(idx, newRole) {
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
