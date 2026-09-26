@@ -1,7 +1,7 @@
 :root {
     --primary-color: #d97706;
     --secondary-color: #78350f;
-    --dark-bg: rgba(28, 25, 23, 0.65);
+    --dark-bg: rgba(28, 25, 23, 0.5);
     --light-bg: #f5f5f4;
     --accent-red: #dc2626;
     --success-green: #16a34a;
@@ -15,12 +15,11 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* خلفية سينمائية متحركة لواجهة محل مشويات العمدة الحقيقية من ملفك 1000323877.jpg بدون تعتيم مبالغ فيه */
+/* خلفية مشويات حية وعالية الجودة متحركة بشكل سينمائي بدون تعتيم */
 body {
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.35)), 
-                url('1000323877.jpg') no-repeat center center fixed;
+    background: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&auto=format&fit=crop&q=80') no-repeat center center fixed;
     background-size: cover;
-    animation: cinematicZoomStore 15s ease-in-out infinite alternate;
+    animation: cinematicGrillZoom 16s ease-in-out infinite alternate;
     color: #f5f5f4;
     direction: rtl;
     min-height: 100vh;
@@ -28,32 +27,32 @@ body {
     overflow-x: hidden;
 }
 
-@keyframes cinematicZoomStore {
-    0% { background-size: 100% 100%; transform: scale(1); }
-    100% { background-size: 110% 110%; transform: scale(1.02); }
+@keyframes cinematicGrillZoom {
+    0% { transform: scale(1); filter: brightness(1); }
+    100% { transform: scale(1.04); filter: brightness(1.08); }
 }
 
-/* طبقة إضاءة ثري دي جمرية ونار مشتعلة متحركة وقوية أسفل الشاشة */
+/* طبقة إضاءة ثري دي جمرية ونار مشتعلة حية وساطعة أسفل الشاشة */
 body::before {
     content: '';
     position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 320px;
-    background: linear-gradient(to top, rgba(220, 38, 38, 0.75) 0%, rgba(217, 119, 6, 0.5) 50%, transparent 100%);
+    height: 300px;
+    background: linear-gradient(to top, rgba(239, 68, 68, 0.8) 0%, rgba(245, 158, 11, 0.5) 50%, transparent 100%);
     z-index: 0;
-    animation: fireGlow3DLive 2.8s ease-in-out infinite alternate;
+    animation: realFirePulse 2.5s ease-in-out infinite alternate;
     pointer-events: none;
-    filter: blur(10px);
+    filter: blur(8px);
 }
 
-@keyframes fireGlow3DLive {
-    0% { opacity: 0.6; transform: scaleY(0.9); }
-    100% { opacity: 1; transform: scaleY(1.12); }
+@keyframes realFirePulse {
+    0% { opacity: 0.65; transform: scaleY(0.95); }
+    100% { opacity: 1; transform: scaleY(1.15); }
 }
 
-/* تأثير دخان الشوي المتصاعد بهدوء واحترافية فوق الخلفية السينمائية */
+/* تأثير دخان الشوي المتصاعد بوضوح فوق الخلفية الساطعة */
 body::after {
     content: '';
     position: fixed;
@@ -62,24 +61,24 @@ body::after {
     width: 100%;
     height: 100%;
     background-image: 
-        radial-gradient(circle, rgba(255, 255, 255, 0.15) 12%, transparent 22%),
-        radial-gradient(circle, rgba(217, 119, 6, 0.1) 18%, transparent 28%);
-    background-size: 180px 180px, 250px 250px;
+        radial-gradient(circle, rgba(255, 255, 255, 0.22) 12%, transparent 22%),
+        radial-gradient(circle, rgba(217, 119, 6, 0.15) 18%, transparent 28%);
+    background-size: 160px 160px, 220px 220px;
     z-index: 0;
-    opacity: 0.55;
+    opacity: 0.65;
     pointer-events: none;
-    animation: smokeRisingCinematic 10s linear infinite;
+    animation: activeSmokeRise 9s linear infinite;
 }
 
-@keyframes smokeRisingCinematic {
-    0% { background-position: 0 100vh, 40px 100vh; }
-    100% { background-position: 0 -100vh, 40px -100vh; }
+@keyframes activeSmokeRise {
+    0% { background-position: 0 100vh, 50px 100vh; }
+    100% { background-position: 0 -100vh, 50px -100vh; }
 }
 
 /* شريط الإعلانات المتحرك (RSS Ticker) */
 .ticker-container {
     background: rgba(153, 27, 27, 0.92);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
     color: #fef08a;
     padding: 10px 20px;
     display: flex;
@@ -108,8 +107,8 @@ body::after {
 
 /* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد بارز */
 .main-header {
-    background-color: rgba(28, 25, 23, 0.75);
-    backdrop-filter: blur(15px);
+    background-color: rgba(28, 25, 23, 0.65);
+    backdrop-filter: blur(12px);
     color: var(--white);
     padding: 15px 25px;
     display: flex;
@@ -118,7 +117,7 @@ body::after {
     border-bottom: 4px solid var(--primary-color);
     flex-wrap: wrap;
     gap: 15px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     position: relative;
     z-index: 10;
 }
@@ -141,7 +140,7 @@ body::after {
 .main-header h1 {
     font-size: 1.6rem;
     color: #fde047;
-    text-shadow: 0 2px 8px rgba(217, 119, 6, 0.8);
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8);
 }
 
 .nav-links {
@@ -151,15 +150,15 @@ body::after {
 }
 
 .nav-btn {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
     color: var(--white);
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: 0.3s;
     font-size: 0.9rem;
-    backdrop-filter: blur(8px);
+    backdrop-filter: blur(6px);
 }
 
 .nav-btn:hover, .nav-btn.active {
@@ -187,15 +186,15 @@ body::after {
 
 /* البانر بتأثير زجاجي ثلاثي الأبعاد بارز */
 .banner {
-    background: linear-gradient(135deg, rgba(120, 53, 15, 0.85), rgba(28, 25, 23, 0.88));
-    backdrop-filter: blur(12px);
+    background: linear-gradient(135deg, rgba(120, 53, 15, 0.8), rgba(28, 25, 23, 0.8));
+    backdrop-filter: blur(10px);
     color: var(--white);
     padding: 30px;
     border-radius: 12px;
     text-align: center;
     margin-bottom: 25px;
     border: 2px solid rgba(217, 119, 6, 0.7);
-    box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 
 .banner h2 {
@@ -215,10 +214,10 @@ body::after {
 }
 
 .cat-btn {
-    background: rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(8px);
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     padding: 8px 18px;
     border-radius: 20px;
     cursor: pointer;
@@ -234,7 +233,7 @@ body::after {
     box-shadow: 0 0 15px rgba(217, 119, 6, 0.8);
 }
 
-/* شبكة المنتجات (Cards) بزجاج شبه شفاف يبرز جمال خلفية المحل */
+/* شبكة المنتجات (Cards) بزجاج شبه شفاف يبرز خلفية المشويات الواضحة */
 .menu-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -243,7 +242,7 @@ body::after {
 
 .menu-card {
     background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
     color: #292524;
     border-radius: 12px;
     overflow: hidden;
@@ -309,11 +308,11 @@ body::after {
 /* السلة والحاويات */
 .cart-container {
     background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
     color: #292524;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
     border: 1px solid rgba(255, 255, 255, 0.7);
 }
 
@@ -401,7 +400,7 @@ body::after {
 /* تتبع الطلبات واللوحات */
 .customer-login-box, .admin-login-box {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
     color: #292524;
     padding: 30px;
     border-radius: 12px;
@@ -410,17 +409,17 @@ body::after {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
     text-align: center;
 }
 
 .customer-dashboard, .admin-dashboard {
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
+    backdrop-filter: blur(12px);
     color: #292524;
     padding: 25px;
     border-radius: 12px;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.4);
 }
 
 .cust-info {
