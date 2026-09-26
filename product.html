@@ -8,76 +8,149 @@
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
 </head>
-<body style="background-color: #f5f5f4; font-family: 'Cairo', sans-serif; padding: 20px;">
+<body style="background-color: #f5f5f4; font-family: 'Cairo', sans-serif; margin: 0; padding: 0;">
     
-    <header class="main-header" style="margin-bottom: 25px;">
-        <div class="logo-container">
-            <a href="index.html" style="color: white; text-decoration: none; display: flex; align-items: center; gap: 10px;">
-                <i class="fa-solid fa-arrow-right"></i>
-                <h1>العودة للمنيو الرئيسي</h1>
-            </a>
+    <!-- الهيدر العلوي الموحد -->
+    <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <div class="logo-container" style="display: flex; align-items: center; gap: 12px;">
+            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img" style="width: 42px; height: 42px; border-radius: 50%;">
+            <div>
+                <h1 style="font-size: 1.2rem; margin: 0; color: #fde047;">كبابجي ومشويات العمدة 👑</h1>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">تفاصيل الأكلة والوليمة 🍽️</span>
+            </div>
         </div>
+        <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-house"></i> الرئيسية</a>
+            <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة</a>
+        </nav>
     </header>
 
-    <main style="max-width: 800px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    <main class="container" style="max-width: 800px; margin: 30px auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 1px solid #e7e5e4;">
         <div id="product-detail-container">
-            <!-- سيتم تحميل تفاصيل المنتج ديناميكياً هنا -->
+            <p style="text-align: center; padding: 40px; color: #78716c; font-size: 1.1rem;">⏳ جاري تحميل تفاصيل الوجبة من السحابة...</p>
         </div>
     </main>
 
+    <!-- إعداد وتهيئة Firebase السحابية لصفحة تفاصيل المنتج -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
+            authDomain: "omda-a750f.firebaseapp.com",
+            projectId: "omda-a750f",
+            storageBucket: "omda-a750f.firebasestorage.app",
+            messagingSenderId: "1078714497381",
+            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
+            measurementId: "G-P763CFS7GG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.firebaseModules = { 
+            collection, 
+            getDocs, 
+            doc, 
+            getDoc,
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            where 
+        };
+        
+        console.log("🍖🔥 تم ربط صفحة تفاصيل المنتج بقاعدة بيانات Firebase سحابياً بنجاح تام!");
+    </script>
+
     <script src="app.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const productId = parseInt(urlParams.get('id'));
+            const productIdParam = urlParams.get('id');
+            const productId = isNaN(productIdParam) ? productIdParam : parseInt(productIdParam);
             
-            const products = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
-            const product = products.find(p => p.id === productId);
+            let products = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
+            let product = products.find(p => p.id == productId);
+
+            // إذا لم يتم العثور عليه محلياً، نبحث عنه في سحابة Firebase
+            if (!product && window.db && window.firebaseModules) {
+                try {
+                    const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(productId)));
+                    if (docSnap.exists()) {
+                        product = docSnap.data();
+                    }
+                } catch (e) {
+                    console.error("Error fetching product from cloud:", e);
+                }
+            }
 
             const container = document.getElementById('product-detail-container');
             if(!product) {
-                container.innerHTML = '<p style="text-align:center; padding:40px; color:#78716c; font-size:1.1rem;">عذراً، المنتج المطلوب غير موجود أو تم حذفه.</p>';
+                container.innerHTML = '<p style="text-align:center; padding:40px; color:#78716c; font-size:1.1rem;">عذراً، المنتج المطلوب غير موجود أو تم حذفه من القائمة.</p>';
                 return;
             }
 
-            const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+            const mediaSrc = product.media || product.image || 'icon1-512.png';
             const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && mediaSrc.startsWith('data:video'));
             
             let mediaHtml = isVid 
-                ? `<video src="${mediaSrc}" controls autoplay loop style="width:100%; max-height:450px; object-fit:cover; border-radius:12px; margin-bottom:20px;"></video>`
-                : `<img src="${mediaSrc}" alt="${product.name}" style="width:100%; max-height:450px; object-fit:cover; border-radius:12px; margin-bottom:20px;">`;
+                ? `<video src="${mediaSrc}" controls autoplay loop style="width:100%; max-height:450px; object-fit:cover; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></video>`
+                : `<img src="${mediaSrc}" alt="${product.name}" style="width:100%; max-height:450px; object-fit:contain; background:#000; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">`;
 
             container.innerHTML = `
                 ${mediaHtml}
                 <h1 style="color: #292524; font-size: 2rem; margin-bottom: 10px;">${product.name}</h1>
-                <div style="font-size: 1.5rem; color: #b45309; font-weight: bold; margin-bottom: 15px;">${product.price} جنيه</div>
-                <p style="color: #57534e; font-size: 1.1rem; line-height: 1.7; margin-bottom: 25px; background: #fafaf9; padding: 15px; border-radius: 10px;">${product.desc}</p>
+                <div style="font-size: 1.5rem; color: #b45309; font-weight: bold; margin-bottom: 15px;" class="mono-font">${product.price} جنيه</div>
+                <p style="color: #57534e; font-size: 1.1rem; line-height: 1.7; margin-bottom: 25px; background: #fafaf9; padding: 15px; border-radius: 10px; border: 1px solid #f5f5f4;">${product.desc || product.description || 'وجبة طازجة ومجهزة على الفحم الحطب يومياً خصيصاً لأجلك.'}</p>
                 
-                <div style="display: flex; gap: 15px; align-items: center; border-top: 1px solid #e7e5e4; padding-top: 20px;">
+                <div style="display: flex; gap: 15px; align-items: center; border-top: 1px solid #e7e5e4; padding-top: 20px; flex-wrap: wrap;">
                     <label style="font-weight: bold; color: #292524;">الكمية:</label>
                     <input type="number" id="detail-qty" value="1" min="1" style="width: 80px; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px; text-align: center; font-size: 1rem; font-weight: bold;">
-                    <button onclick="addSpecificProductToCart(${product.id})" class="btn-primary" style="flex: 1; background-color: #b45309; padding: 12px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; border: none; font-size: 1.05rem;">
+                    <button onclick="addSpecificProductToCart('${product.id}')" class="btn-primary" style="flex: 1; min-width: 220px; background-color: #b45309; padding: 12px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; border: none; font-size: 1.05rem;">
                         <i class="fa-solid fa-cart-plus"></i> أضف للسلة وانتقل لإتمام الطلب 🛒
                     </button>
                 </div>
             `;
         });
 
-        function addSpecificProductToCart(id) {
+        async function addSpecificProductToCart(id) {
             const qtyInput = document.getElementById('detail-qty');
             const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
             
-            const products = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
-            const prod = products.find(p => p.id === id);
+            let products = JSON.parse(localStorage.getItem('omda_custom_products') || '[]');
+            let prod = products.find(p => p.id == id);
+
+            if (!prod && window.db && window.firebaseModules) {
+                try {
+                    const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(id)));
+                    if (docSnap.exists()) {
+                        prod = docSnap.data();
+                    }
+                } catch (e) {}
+            }
+
             if(!prod) return;
 
-            let existing = cart.find(item => item.id === id);
+            if (typeof cart === 'undefined') {
+                window.cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
+            }
+
+            let existing = cart.find(item => item.id == id);
             if(existing) {
                 existing.qty += qty;
             } else {
                 cart.push({ ...prod, qty: qty });
             }
-            updateCartUI();
+
+            localStorage.setItem('omda_cart', JSON.stringify(cart));
+            if (typeof updateCartUI === 'function') {
+                updateCartUI();
+            }
+
             alert(`تمت إضافة (${prod.name}) بالكمية (${qty}) إلى السلة بنجاح يا أسطى! 🚀`);
             window.location.href = 'index.html';
         }
