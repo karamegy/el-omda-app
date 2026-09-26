@@ -2582,3 +2582,70 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
     });
 }
+// ==========================================
+// نظام المزامنة اللحظية السحابية الشاملة (الطلبات + الطيارين)
+// ==========================================
+function initRealtimeCloudSync() {
+    if (window.db && window.firebaseModules) {
+        const { collection, onSnapshot } = window.firebaseModules;
+        
+        // 1. الاستماع اللحظي لتغيرات الطلبات في السحابة
+        onSnapshot(collection(window.db, "orders"), (snapshot) => {
+            let cloudOrders = [];
+            snapshot.forEach((doc) => {
+                cloudOrders.push(doc.data());
+            });
+
+            // تحديث الذاكرة المحلية كنسخة احتياطية
+            localStorage.setItem('omda_orders', JSON.stringify(cloudOrders));
+
+            // تحديث الواجهات والخريطة فوراً
+            if (typeof loadLiveTrackingMap === 'function') {
+                loadLiveTrackingMap();
+            }
+            if (typeof loadAdminDashboard === 'function') {
+                loadAdminDashboard();
+            }
+            if (typeof loadCustomerDashboard === 'function') {
+                loadCustomerDashboard();
+            }
+            console.log("📦 تمت مزامنة الطلبات سحابياً بشكل لحظي!");
+        }, (error) => {
+            console.error("خطأ في مزامنة الطلبات:", error);
+        });
+
+        // 2. الاستماع اللحظي لتغيرات وأماكن الطيارين على الخريطة
+        onSnapshot(collection(window.db, "drivers"), (snapshot) => {
+            let cloudDrivers = [];
+            snapshot.forEach((doc) => {
+                cloudDrivers.push(doc.data());
+            });
+
+            // تحديث الذاكرة المحلية للطيارين
+            localStorage.setItem('omda_drivers', JSON.stringify(cloudDrivers));
+
+            // تحديث ماركرات الطيارين على الخريطة وجدول اللوحة فوراً
+            if (typeof loadDriversOnMap === 'function') {
+                loadDriversOnMap();
+            }
+            if (typeof loadLiveTrackingMap === 'function') {
+                loadLiveTrackingMap();
+            }
+            if (typeof loadDriversAdminList === 'function') {
+                loadDriversAdminList();
+            }
+            console.log("🏍️ تمت مزامنة أسطول الطيارين سحابياً بشكل لحظي!");
+        }, (error) => {
+            console.error("خطأ في مزامنة الطيارين:", error);
+        });
+
+    } else {
+        // إعادة المحاولة إذا لم تكن فايربيس قد حملت بالكامل بعد
+        setTimeout(initRealtimeCloudSync, 1000);
+    }
+}
+
+// تفعيل المزامنة الشاملة فور تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    initRealtimeCloudSync();
+});
