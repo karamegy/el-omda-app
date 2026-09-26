@@ -112,11 +112,12 @@
             <div class="admin-nav-grid">
                 <button onclick="switchAdminSection('vault', this)" class="admin-section-btn active"><i class="fa-solid fa-vault"></i> الخزنة والأرباح</button>
                 <button onclick="switchAdminSection('orders', this)" class="admin-section-btn"><i class="fa-solid fa-box-open"></i> الطلبات</button>
+                <button onclick="switchAdminSection('google-accounts', this)" class="admin-section-btn"><i class="fa-solid fa-users"></i> حسابات جوجل</button>
                 <button onclick="switchAdminSection('reservations', this)" class="admin-section-btn"><i class="fa-solid fa-chair"></i> الحجوزات</button>
                 <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة وجبة</button>
                 <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> المنيو الحالي</button>
                 <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> أوردر يدوي</button>
-                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين والأدمن</button>
+                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> الموظفين</button>
                 <button onclick="switchAdminSection('account-settings', this)" class="admin-section-btn"><i class="fa-solid fa-key"></i> كلمة المرور</button>
                 <button onclick="switchAdminSection('ticker', this)" class="admin-section-btn"><i class="fa-solid fa-bullhorn"></i> الإعلانات</button>
             </div>
@@ -146,10 +147,17 @@
                 <div id="expenses-list" style="margin-top: 15px; font-size: 0.9rem; color: #292524;"></div>
             </div>
 
-            <!-- 2. طلبات الدليفري والتوصيل -->
+            <!-- 2. طلبات الدليفري وتوصيل وتعيين السائقين -->
             <div id="section-orders" class="admin-panel-box" style="border-color: var(--primary-color);">
-                <h3 style="color: var(--primary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 15px;"><i class="fa-solid fa-box-open"></i> طلبات الدليفري والتوصيل</h3>
+                <h3 style="color: var(--primary-color); border-bottom: 2px solid #ddd; padding-bottom: 5px; margin-bottom: 15px;"><i class="fa-solid fa-box-open"></i> طلبات الدليفري وتعيين السائقين المسجلين</h3>
                 <div id="admin-orders-list" class="admin-orders-list"></div>
+            </div>
+
+            <!-- 2.5 قسم عرض كافة حسابات جوجل المسجلة -->
+            <div id="section-google-accounts" class="admin-panel-box" style="border-color: #2563eb;">
+                <h3 style="margin-bottom: 12px; color: #2563eb;"><i class="fa-solid fa-users"></i> كافة الحسابات والعملاء المسجلين عبر جوجل (Google Auth Accounts)</h3>
+                <p style="font-size: 0.85rem; color: #57534e; margin-bottom: 15px;">قائمة بجميع المستخدمين الذين سجلوا دخولهم أو أنشأوا حسابات عبر مصادقة جوجل في التطبيق:</p>
+                <div id="admin-google-accounts-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
             </div>
 
             <!-- 3. حجوزات الطاولات والعزائم -->
@@ -276,12 +284,25 @@
         window.auth = auth;
         window.firebaseModules = { collection, getDocs, doc, setDoc };
 
-        // دالة تسجيل دخول الأدمن عبر حساب جوجل المعتمد
+        // تسجيل حساب جوجل وحفظه في قائمة الحسابات المسجلة
         window.adminLoginWithGoogle = async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 const email = user.email.toLowerCase();
+
+                // حفظ الحساب في قائمة الحسابات المسجلة عبر جوجل في localStorage
+                let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+                if (!regUsers.some(u => u.email === email)) {
+                    regUsers.push({
+                        name: user.displayName || 'مدير / عميل جوجل',
+                        email: email,
+                        phone: user.phoneNumber || 'غير متوفر',
+                        provider: 'Google Auth',
+                        date: new Date().toLocaleString('ar-EG')
+                    });
+                    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+                }
 
                 // التحقق من البريد الإلكتروني للمدير العام
                 if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
@@ -307,7 +328,6 @@
     <!-- ربط ملف الـ JavaScript المشترك -->
     <script src="app.js"></script>
     <script>
-        // دالة تبديل الأقسام عبر الأزرار العلوية بدون تداخل
         function switchAdminSection(sectionName, btnElement) {
             document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
             document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
@@ -317,7 +337,6 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
-        // دالة تسجيل الدخول التقليدية
         window.adminLoginCustom = function() {
             const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
             const passInput = document.getElementById('admin-pass').value.trim();
