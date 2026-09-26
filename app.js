@@ -62,9 +62,23 @@ function loginByPhoneQuick() {
     let foundOrder = allOrders.find(o => o.phone === phone);
     let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
 
-    currentCustomer = { name: custName, phone: phone, email: phone + '@omda.com' };
+    currentCustomer = { name: custName, phone: phone, email: phone + '@omda.com', role: 'customer' };
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     localStorage.setItem('omda_user_phone', phone);
+
+    // تسجيل في قائمة الحسابات الموحدة
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(!regUsers.some(u => u.phone === phone)) {
+        regUsers.push({
+            name: custName,
+            email: phone + '@omda.com',
+            phone: phone,
+            role: 'customer',
+            provider: 'Phone Quick',
+            date: new Date().toLocaleString('ar-EG')
+        });
+        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    }
 
     alert(`أهلاً بك يا ${custName}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
     
@@ -853,9 +867,6 @@ function adminDeleteProduct(id) {
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
-// ==========================================
-// دوال تعديل وإدارة أصناف المنيو من لوحة الأدمن (مصححة لضمان الفتح الفوري)
-// ==========================================
 function openEditProductModal(id) {
     const prod = menuProducts.find(p => p.id == id);
     if (!prod) {
@@ -1132,6 +1143,20 @@ async function submitOrder() {
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
     localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
+    // مزامنة العميل في قائمة الحسابات الموحدة
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(!regUsers.some(u => u.phone === phone || u.email === phone + '@omda.com')) {
+        regUsers.push({
+            name,
+            email: phone + '@omda.com',
+            phone,
+            role: 'customer',
+            provider: 'Order Submission',
+            date: new Date().toLocaleString('ar-EG')
+        });
+        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    }
+
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
     
     cart = [];
@@ -1143,7 +1168,7 @@ async function submitOrder() {
     if(gpsStatusEl) gpsStatusEl.innerText = '';
     updateCartUI();
     
-    currentCustomer = { name, phone };
+    currentCustomer = { name, phone, role: 'customer' };
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     switchTab('customer');
     loadCustomerDashboard();
@@ -1357,35 +1382,92 @@ function assignDriverToOrder(orderId, driverName) {
     }
 }
 
-function adminLogin() {
-    const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
-    const passInput = document.getElementById('admin-pass').value.trim();
+// ==========================================
+// وظائف إدارة وتغيير أدوار الحسابات والعملاء الشاملة
+// ==========================================
+function loadGoogleAccountsList() {
+    const container = document.getElementById('admin-google-accounts-list');
+    if(!container) return;
+    container.innerHTML = '';
 
-    if(!idInput || !passInput) {
-        alert('من فضلك أدخل البريد الإلكتروني (أو الهاتف) مع كلمة المرور!');
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(regUsers.length === 0) {
+        container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات أو عملاء مسجلون حالياً.</p>';
         return;
     }
 
-    let masterPass = localStorage.getItem('omda_master_password') || '1234';
+    regUsers.forEach((usr, idx) => {
+        let currentRole = usr.role || 'customer';
+        container.innerHTML += `
+            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                        <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
+                        <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
+                        <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date}</span>
+                    </div>
+                    <button onclick="deleteGoogleAccount(${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
+                    <label style="font-size:0.8rem; font-weight:bold; color:#334155; white-space:nowrap;">ترقية وتعيين الدور:</label>
+                    <select onchange="updateUserRole(${idx}, this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
+                        <option value="customer" ${currentRole==='customer'?'selected':''}>👤 عميل (Customer)</option>
+                        <option value="admin" ${currentRole==='admin'?'selected':''}>👑 مدير / أدمن (Admin)</option>
+                        <option value="accountant" ${currentRole==='accountant'?'selected':''}>💰 محاسب (Accountant)</option>
+                        <option value="worker" ${currentRole==='worker'?'selected':''}>👷 عامل (Worker)</option>
+                        <option value="driver" ${currentRole==='driver'?'selected':''}>🏍️ طيار / دليفري (Driver)</option>
+                    </select>
+                </div>
+            </div>
+        `;
+    });
+}
 
-    if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
-        const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', role: 'admin' };
-        localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
-        loadAdminDashboard();
-        alert('أهلاً بك يا أسطى كرم في لوحة تحكم الماستر العام 👑');
-        return;
+function updateUserRole(idx, newRole) {
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(!regUsers[idx]) return;
+
+    regUsers[idx].role = newRole;
+    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+
+    // مزامنة تلقائية مع قوائم الموظفين والطيارين
+    let name = regUsers[idx].name;
+    let phone = regUsers[idx].phone || '01000000000';
+    let email = regUsers[idx].email;
+
+    if(newRole === 'driver') {
+        let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+        if(!drivers.some(d => d.phone === phone || d.name === name)) {
+            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002 });
+            localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+        }
+    } else if(newRole === 'admin' || newRole === 'accountant' || newRole === 'worker') {
+        let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+        if(!staffList.some(s => s.email === email)) {
+            staffList.push({ id: Date.now(), name, email, phone, password: '123', role: newRole });
+            localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
+        } else {
+            let staffMember = staffList.find(s => s.email === email);
+            if(staffMember) {
+                staffMember.role = newRole;
+                localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
+            }
+        }
     }
 
-    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
-    let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة! 👑`);
+    loadGoogleAccountsList();
+    if(typeof loadStaffList === 'function') loadStaffList();
+    if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
+}
 
-    if(foundStaff) {
-        localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
-        loadAdminDashboard();
-        alert(`أهلاً بك يا ${foundStaff.name}! تم تسجيل دخولك بنجاح.`);
-    } else {
-        alert('بيانات الدخول غير صحيحة! تأكد من البريد/الهاتف وكلمة المرور.');
-    }
+function deleteGoogleAccount(idx) {
+    if(!confirm('هل أنت متأكد من حذف هذا الحساب من النظام؟')) return;
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    regUsers.splice(idx, 1);
+    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    loadGoogleAccountsList();
+    alert('تم حذف الحساب بنجاح.');
 }
 
 function createNewStaff() {
@@ -1410,6 +1492,13 @@ function createNewStaff() {
     staffList.push(newStaff);
     localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
 
+    // مزامنة مع قائمة الحسابات المسجلة
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(!regUsers.some(u => u.email === email)) {
+        regUsers.push({ name, email, phone, role, provider: 'Admin Created', date: new Date().toLocaleString('ar-EG') });
+        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    }
+
     alert(`تم إنشاء حساب (${name}) بنجاح! يمكنه الآن تسجيل الدخول.`);
     document.getElementById('staff-name').value = '';
     document.getElementById('staff-email').value = '';
@@ -1417,6 +1506,7 @@ function createNewStaff() {
     document.getElementById('staff-pass').value = '';
 
     loadStaffList();
+    loadGoogleAccountsList();
 }
 
 function loadStaffList() {
@@ -1431,7 +1521,7 @@ function loadStaffList() {
     }
 
     staffList.forEach((staff, index) => {
-        let roleName = staff.role === 'admin' ? 'أدمن إضافي' : (staff.role === 'accountant' ? 'محاسب' : 'موظف');
+        let roleName = staff.role === 'admin' ? 'أدمن إضافي' : (staff.role === 'accountant' ? 'محاسب' : (staff.role === 'worker' ? 'عامل' : 'موظف'));
         container.innerHTML += `
             <div style="background:#fff; padding:8px; margin:5px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid #d6d3d1;">
                 <div>
@@ -1515,7 +1605,7 @@ function loadAdminDashboard() {
     const staffSection = document.getElementById('section-staff');
 
     if(nameEl) nameEl.innerText = loggedUser.name || 'مدير النظام';
-    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.email === 'haretg@gmail.com' ? 'المدير العام الماستر (Master Admin)' : (loggedUser.role === 'admin' ? 'مشرف / أدمن' : (loggedUser.role === 'accountant' ? 'محاسب' : 'موظف')));
+    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.email === 'haretg@gmail.com' ? 'المدير العام الماستر (Master Admin)' : (loggedUser.role === 'admin' ? 'مشرف / أدمن' : (loggedUser.role === 'accountant' ? 'محاسب' : (loggedUser.role === 'worker' ? 'عامل' : 'موظف'))));
 
     if(loggedUser.email !== 'haretg@gmail.com' && loggedUser.role !== 'admin') {
         if(staffSection) staffSection.style.display = 'none';
@@ -1650,40 +1740,6 @@ function loadAdminDashboard() {
             });
         }
     }
-}
-
-function loadGoogleAccountsList() {
-    const container = document.getElementById('admin-google-accounts-list');
-    if(!container) return;
-    container.innerHTML = '';
-
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    if(regUsers.length === 0) {
-        container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات مسجلة عبر جوجل حالياً.</p>';
-        return;
-    }
-
-    regUsers.forEach((usr, idx) => {
-        container.innerHTML += `
-            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider}</span><br>
-                    <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email}</span><br>
-                    <span style="font-size:0.8rem; color:#64748b;">📅 تاريخ التسجيل: ${usr.date}</span>
-                </div>
-                <button onclick="deleteGoogleAccount(${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
-            </div>
-        `;
-    });
-}
-
-function deleteGoogleAccount(idx) {
-    if(!confirm('هل أنت متأكد من حذف هذا الحساب من القائمة؟')) return;
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    regUsers.splice(idx, 1);
-    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-    loadGoogleAccountsList();
-    alert('تم حذف الحساب بنجاح.');
 }
 
 function addExpense() {
