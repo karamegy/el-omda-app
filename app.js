@@ -1407,26 +1407,41 @@ function submitReservation() {
     switchTab('menu');
 }
 
+// ==========================================
+// لوحة العميل (مؤمنة بالكامل: تعرض طلبات العميل الحالي فقط)
+// ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('cust-login-box');
     const dashBox = document.getElementById('customer-dashboard');
-    if(!loginBox || !dashBox) return;
+    if(!dashBox) return;
 
-    loginBox.classList.add('hidden');
+    // حماية أمنية صارمة: التحقق من تسجيل دخول العميل برقم الهاتف أو الايميل
+    if (!currentCustomer || (!currentCustomer.phone && !currentCustomer.email)) {
+        dashBox.classList.add('hidden');
+        if (loginBox) loginBox.style.display = 'block';
+        return;
+    }
+
+    if(loginBox) loginBox.classList.add('hidden');
     dashBox.classList.remove('hidden');
     
     const displayName = document.getElementById('cust-display-name');
     const displayPhone = document.getElementById('cust-display-phone');
-    if(displayName) displayName.innerText = currentCustomer ? currentCustomer.name : 'عميل العمدة';
-    if(displayPhone) displayPhone.innerText = currentCustomer ? currentCustomer.phone : '';
+    if(displayName) displayName.innerText = currentCustomer.name || 'عميل العمدة';
+    if(displayPhone) displayPhone.innerText = currentCustomer.phone || '';
 
     let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
-    let userPoints = currentCustomer && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 0;
+    let userPoints = currentCustomer.phone && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 0;
     const pointsEl = document.getElementById('cust-points');
     if(pointsEl) pointsEl.innerText = userPoints;
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    const myOrders = currentCustomer ? allOrders.filter(o => o.phone === currentCustomer.phone) : allOrders;
+    
+    // التصفية الآمنة: مطابقة الطلبات حصرياً برقم هاتف أو اسم العميل الحالي لمنع رؤية طلبات الآخرين
+    const myOrders = allOrders.filter(o => 
+        (currentCustomer.phone && o.phone === currentCustomer.phone) || 
+        (currentCustomer.name && o.name === currentCustomer.name)
+    );
 
     const list = document.getElementById('customer-orders-list');
     if(!list) return;
@@ -1435,7 +1450,7 @@ function loadCustomerDashboard() {
     let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
 
     if(myOrders.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد طلبات سابقة مسجلة.</p>';
+        list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد طلبات سابقة مسجلة برقم هاتفك.</p>';
         return;
     }
 
