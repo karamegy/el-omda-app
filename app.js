@@ -46,6 +46,97 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
+// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب
+// ==========================================
+function routeUserByRole(user) {
+    localStorage.setItem('omda_session_user', JSON.stringify(user));
+
+    const role = (user.role || 'customer').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const phone = user.phone || '';
+
+    // 1. حسابات الإدارة والماستر والموظفين والمحاسبين والعمال
+    if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant' || role === 'worker') {
+        localStorage.setItem('omda_logged_user', JSON.stringify(user));
+        alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك للوحة التحكم...`);
+        window.location.href = 'admin.html';
+        return;
+    }
+
+    // 2. حسابات الطيارين والدليفري
+    if (role === 'driver') {
+        alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
+        window.location.href = 'Map.html';
+        return;
+    }
+
+    // 3. حسابات العملاء
+    localStorage.setItem('omda_current_cust', JSON.stringify(user));
+    alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
+    
+    if (window.location.pathname.includes('admin.html')) {
+        window.location.href = 'index.html';
+    } else {
+        if (typeof switchTab === 'function') switchTab('customer');
+        if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
+    }
+}
+
+// ==========================================
+// تسجيل الدخول الموحد بالبريد / الهاتف / كلمة المرور
+// ==========================================
+async function unifiedLoginCustom() {
+    const identifier = document.getElementById('unified-login-id').value.trim().toLowerCase();
+    const password = document.getElementById('unified-pass').value.trim();
+
+    if (!identifier || !password) {
+        alert('من فضلك أدخل البريد/الهاتف وكلمة المرور!');
+        return;
+    }
+
+    let masterPass = localStorage.getItem('omda_master_password') || '1234';
+
+    // أ) التحقق من حساب المدير الماستر
+    if ((identifier === 'haretg@gmail.com' || identifier === 'admin@omda.com' || identifier === '01144730305' || identifier === 'مدير') && password === masterPass) {
+        const masterUser = { 
+            name: 'المدير العام (كرم حمدي)', 
+            email: 'haretg@gmail.com', 
+            phone: '01144730305',
+            role: 'admin' 
+        };
+        routeUserByRole(masterUser);
+        return;
+    }
+
+    // ب) البحث في قائمة الموظفين والمحاسبين المسجلين
+    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+    let foundStaff = staffList.find(s => (s.email.toLowerCase() === identifier || s.phone === identifier) && s.password === password);
+
+    if (foundStaff) {
+        routeUserByRole(foundStaff);
+        return;
+    }
+
+    // ج) البحث في الحسابات السحابية / المسجلة
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let foundUser = regUsers.find(u => (u.email.toLowerCase() === identifier || u.phone === identifier));
+
+    if (foundUser) {
+        routeUserByRole(foundUser);
+        return;
+    }
+
+    // د) تسجيل دخول سريع كعميل جديد إذا لم يوجد
+    const defaultCustomer = {
+        name: 'عميل العمدة',
+        email: identifier.includes('@') ? identifier : `${identifier}@omda.com`,
+        phone: identifier,
+        role: 'customer'
+    };
+    routeUserByRole(defaultCustomer);
+}
+
+// ==========================================
 // نظام المصادقة الأمنية وطلب البصمة وكلمة المرور
 // ==========================================
 async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
@@ -438,7 +529,6 @@ function enforceAdminSecurity() {
     const badge = document.getElementById('userRoleBadge');
     const adminPanelLink = document.getElementById('adminPanelLink');
     
-    // جعل زر الأدمن ظاهراً دائماً لضمان وصولك إليه بضغطة زر
     if (adminPanelLink) adminPanelLink.style.display = 'inline-flex';
 
     if (isAdmin) {
