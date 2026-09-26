@@ -55,7 +55,6 @@ async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
         return false;
     }
 
-    // التحقق من البصمة البيومترية إن كانت مدعومة في المتصفح
     if (window.PublicKeyCredential && window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
         try {
             const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -1444,7 +1443,7 @@ function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة وتغيير أدوار الحسابات (مع إجبار كلمة المرور والبصمة للطيارين)
+// وظائف إدارة وتغيير أدوار الحسابات والتحكم الكامل للأدمن
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1506,7 +1505,6 @@ async function loadGoogleAccountsList() {
 }
 
 async function updateUserRole(docKey, idx, newRole) {
-    // إذا كان الدور الجديد طياراً، نطلب كلمة المرور والبصمة أولاً
     if (newRole === 'driver') {
         const authorized = await authenticateWithPasswordAndBiometric('driver');
         if (!authorized) {
@@ -2177,7 +2175,7 @@ function loadLiveTrackingMap() {
                 </div>
                 <p style="font-size: 0.75rem; color: #57534e; margin: 2px 0;">👤 ${order.name}</p>
                 <div style="margin: 4px 0;" onclick="event.stopPropagation()">
-                    <select onchange="assignDriverToOrder('${order.id}', this.value)" style="font-size:0.7rem; padding:2px; width:100%; border-radius:4px; border:1px solid #d6d3d1;">
+                    <select onchange="assignDriverToOrder('${order.id}', this.value)" style="font-size:0.7rem; padding:2px; width:100%; border-radius:4px; border:1px solid #d6d3d1; background:#fff; position:relative; z-index:10;">
                         ${driverSelectOpts}
                     </select>
                 </div>
