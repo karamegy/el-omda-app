@@ -15,11 +15,9 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* خلفية متحركة حيوية وساطعة مع إضاءات 3D متوهجة وقوية */
+/* خلفية مشويات العمدة الحية مع أجواء الفحم والنار المتحركة ودخان الشوي */
 body {
-    background: linear-gradient(120deg, #1c1917, #451a03, #1e1b4b, #292524, #111827);
-    background-size: 500% 500%;
-    animation: gradientBG 10s ease infinite;
+    background: radial-gradient(circle at bottom, #2b1104 0%, #17100c 50%, #0c0a09 100%);
     color: #f5f5f4;
     direction: rtl;
     min-height: 100vh;
@@ -27,45 +25,56 @@ body {
     overflow-x: hidden;
 }
 
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* دوائر الإضاءة الثري دي المضيئة المتحركة (3D Glowing Neon Orbs) بواقعية ووضوح عالي */
-body::before, body::after {
+/* تأثير جمر الفحم والنار المشتعلة متحركة أسفل الشاشة */
+body::before {
     content: '';
     position: fixed;
-    width: 500px;
-    height: 500px;
-    border-radius: 50%;
-    filter: blur(70px);
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 300px;
+    background: linear-gradient(to top, rgba(220, 38, 38, 0.45) 0%, rgba(217, 119, 6, 0.25) 40%, transparent 100%);
+    z-index: -2;
+    animation: grillFirePulse 3.5s ease-in-out infinite alternate;
+    pointer-events: none;
+}
+
+@keyframes grillFirePulse {
+    0% { 
+        opacity: 0.5; 
+        transform: scaleY(0.95) translateY(0); 
+    }
+    100% { 
+        opacity: 0.9; 
+        transform: scaleY(1.1) translateY(-10px); 
+    }
+}
+
+/* تأثير دخان الشوي المتصاعد بهدوء للأعلى في الخلفية */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(circle, rgba(255, 255, 255, 0.07) 15%, transparent 25%),
+        radial-gradient(circle, rgba(217, 119, 6, 0.05) 20%, transparent 30%);
+    background-size: 180px 180px, 240px 240px;
+    background-position: 0 100vh, 100px 100vh;
     z-index: -1;
     opacity: 0.6;
     pointer-events: none;
-    animation: floatLights 8s ease-in-out infinite alternate;
+    animation: smokeRising 15s linear infinite;
 }
 
-body::before {
-    background: radial-gradient(circle, rgba(245, 158, 11, 0.85) 0%, rgba(180, 83, 9, 0.2) 60%, transparent 100%);
-    top: -80px;
-    right: -80px;
-}
-
-body::after {
-    background: radial-gradient(circle, rgba(239, 68, 68, 0.8) 0%, rgba(153, 27, 27, 0.2) 60%, transparent 100%);
-    bottom: -80px;
-    left: -80px;
-    animation-delay: -4s;
-}
-
-@keyframes floatLights {
-    0% {
-        transform: translate(0, 0) scale(1);
+@keyframes smokeRising {
+    0% { 
+        background-position: 0 100vh, 100px 100vh; 
     }
-    100% {
-        transform: translate(80px, 100px) scale(1.3);
+    100% { 
+        background-position: 0 -100vh, 100px -100vh; 
     }
 }
 
@@ -99,7 +108,7 @@ body::after {
 
 /* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد */
 .main-header {
-    background-color: rgba(28, 25, 23, 0.8);
+    background-color: rgba(28, 25, 23, 0.82);
     backdrop-filter: blur(15px);
     color: var(--white);
     padding: 15px 25px;
