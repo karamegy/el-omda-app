@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>متجر مكافآت ونقاط الولاء | مشويات العمدة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-container">
+            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img">
+            <h1>مكافآت الولاء 👑</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> الرئيسية</a>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="banner" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
+            <h2>⭐ استبدل نقاط ولائك بوجبات مجانية</h2>
+            <p>كلما طلبت أكثر من مشويات العمدة، كلما جمعت نقاطاً أكثر واستمتعت بمكافآت حصرية!</p>
+        </div>
+
+        <div class="cart-container" style="max-width: 600px; margin: 0 auto; text-align: center; margin-bottom: 25px;">
+            <h3 style="color: #78350f; margin-bottom: 10px;">رصيد نقاطك الحالي</h3>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #16a34a;" id="user-reward-points">0 نقطة</div>
+            <p style="font-size: 0.85rem; color: #57534e; margin-top: 5px;">(كل 100 جنيه مشتريات = 10 نقاط هدية مجانية)</p>
+        </div>
+
+        <h3 style="color: #fde047; margin-bottom: 15px; text-align: center;">🎁 قائمة الهدايا المتاحة للاستبدال:</h3>
+        
+        <div class="menu-grid">
+            <div class="menu-card" style="padding: 15px; text-align: center;">
+                <h3 style="color: #991b1b;">طبق ممبار فاخر مقرمش</h3>
+                <p>استبدل نقاطك واحصل على طبق ممبار ذهبي هدية.</p>
+                <div class="price" style="margin: 10px 0;">50 نقطة</div>
+                <button onclick="redeemReward(50, 'طبق ممبار فاخر')" class="btn-primary">استبدال الهدية 🎁</button>
+            </div>
+
+            <div class="menu-card" style="padding: 15px; text-align: center;">
+                <h3 style="color: #991b1b;">وجبة النعنشة المشوية</h3>
+                <p>ربع فرخة + سيخ كفتة + أرز وسلطة.</p>
+                <div class="price" style="margin: 10px 0;">120 نقطة</div>
+                <button onclick="redeemReward(120, 'وجبة النعنشة')" class="btn-primary">استبدال الهدية 🎁</button>
+            </div>
+
+            <div class="menu-card" style="padding: 15px; text-align: center;">
+                <h3 style="color: #991b1b;">خصم 20% على أي صينية</h3>
+                <p>قسيمة خصم جبارة على ركن الصواني والولائم.</p>
+                <div class="price" style="margin: 10px 0;">200 نقطة</div>
+                <button onclick="redeemReward(200, 'خصم 20% على الصواني')" class="btn-primary">استبدال الهدية 🎁</button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let customer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
+            let phone = customer ? customer.phone : localStorage.getItem('omda_user_phone');
+            let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
+            let pts = phone && pointsDB[phone] ? pointsDB[phone] : 0;
+            document.getElementById('user-reward-points').innerText = pts + ' نقطة';
+        });
+
+        function redeemReward(cost, rewardName) {
+            let customer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
+            let phone = customer ? customer.phone : localStorage.getItem('omda_user_phone');
+            if(!phone) {
+                alert('يجب تسجيل الدخول برقم هاتفك أولاً في الصفحة الرئيسية لتتمكن من استبدال النقاط!');
+                return;
+            }
+            let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
+            let pts = pointsDB[phone] || 0;
+            if(pts < cost) {
+                alert(`عذراً، رصيدك الحالي (${pts} نقطة) لا يكفي للحصول على (${rewardName}) التي تتطلب ${cost} نقطة.`);
+                return;
+            }
+            pointsDB[phone] = pts - cost;
+            localStorage.setItem('omda_points', JSON.stringify(pointsDB));
+            document.getElementById('user-reward-points').innerText = pointsDB[phone] + ' نقطة';
+            alert(`🎉 مبروك! تم استبدال النقاط بنجاح وتحصيل (${rewardName}). يرجى إبراز هذه الرسالة للكاشير أو إرسالها عبر واتساب لتأكيد الاستلام!`);
+        }
+    </script>
+</body>
+</html>
