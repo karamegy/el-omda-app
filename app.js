@@ -1328,8 +1328,11 @@ async function submitOrder() {
     }
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders.unshift(newOrder);
-    localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+    // منع تكرار الطلب محلياً إذا كان موجوداً مسبقاً
+    if (!allOrders.some(o => o.id === newOrder.id)) {
+        allOrders.unshift(newOrder);
+        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+    }
 
     let earnedPoints = Math.floor(total / 10);
     let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
@@ -1391,7 +1394,7 @@ function sendWhatsAppOrder() {
     const address = addressEl.value.trim();
 
     if(!name || !phone || !address) {
-        alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل قبل الطلب عبر واتساب!');
+        alert(' من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل قبل الطلب عبر واتساب!');
         return;
     }
 
@@ -1495,6 +1498,9 @@ function loadCustomerDashboard() {
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     
+    // ⭐ تصفية الطلبات لمنع التكرار نهائياً بناءً على ID الطلب
+    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
+
     const myOrders = allOrders.filter(o => 
         (currentCustomer.phone && o.phone === currentCustomer.phone) || 
         (currentCustomer.name && o.name === currentCustomer.name)
@@ -1910,6 +1916,8 @@ function loadAdminDashboard() {
     loadGoogleAccountsList();
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
+
     let totalSales = allOrders.reduce((sum, o) => sum + o.total, 0);
 
     let expenses = JSON.parse(localStorage.getItem('omda_expenses') || '[]');
@@ -2085,8 +2093,10 @@ function adminCreateOrder() {
     }
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders.unshift(newOrder);
-    localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+    if (!allOrders.some(o => o.id === newOrder.id)) {
+        allOrders.unshift(newOrder);
+        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+    }
 
     let earnedPoints = Math.floor(total / 10);
     let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
@@ -2274,6 +2284,8 @@ function trackCustomerOrder() {
     }
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
+
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
 
@@ -2350,6 +2362,7 @@ function loadLiveTrackingMap() {
     driversLayer.clearLayers();
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
     
     if(allOrders.length > previousOrdersCount && previousOrdersCount > 0) playAlertSound();
     previousOrdersCount = allOrders.length;
@@ -2679,6 +2692,9 @@ function initRealtimeCloudSync() {
             snapshot.forEach((doc) => {
                 cloudOrders.push(doc.data());
             });
+
+            // ⭐ تصفية الطلبات السحابية لمنع التكرار نهائياً
+            cloudOrders = Array.from(new Map(cloudOrders.map(o => [o.id, o])).values());
 
             localStorage.setItem('omda_orders', JSON.stringify(cloudOrders));
 
