@@ -35,7 +35,7 @@
             <button onclick="switchTab('cart')" class="nav-btn"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
             <button onclick="switchTab('reservation')" class="nav-btn"><i class="fa-solid fa-chair"></i> حجز طاولة</button>
             <button onclick="switchTab('favorites')" class="nav-btn"><i class="fa-solid fa-heart"></i> المفضلة</button>
-            <button onclick="switchTab('customer')" class="nav-btn"><i class="fa-solid fa-user"></i> حسابي</button>
+            <button onclick="switchTab('customer')" class="nav-btn"><i class="fa-solid fa-user"></i> حسابي والدخول</button>
             
             <!-- زر سياسة الخصوصية -->
             <button onclick="switchTab('privacy')" class="nav-btn" style="background-color: #78350f;"><i class="fa-solid fa-shield-halved"></i> الخصوصية</button>
@@ -57,26 +57,18 @@
     <!-- المحتوى الرئيسي -->
     <main class="container">
 
-        <!-- 1. قسم المنيو والطلب (مع بانر عرض المنتجات بالكامل والتنقل من الإطار) -->
+        <!-- 1. قسم المنيو والطلب -->
         <section id="tab-menu" class="tab-content active">
-            <!-- سليدر وعرض المنتجات بالكامل داخل الإطار مع أزرار التنقل -->
             <div id="hero-slider-banner" class="banner" style="position: relative; overflow: hidden; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(135deg, #78350f, #b45309); box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                
                 <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span style="background: #991b1b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-fire"></i> عروض ولائم وعصارة العمدة</span>
                     <span id="slider-counter" style="color: #fde047; font-size: 0.8rem; font-weight: bold;">1 / 16</span>
                 </div>
-
-                <!-- إطار عرض الصورة بالكامل مع أزرار التنقل يميناً ويساراً -->
                 <div style="position: relative; width: 100%; height: 230px; border-radius: 10px; overflow: hidden; background: #1c1917; display: flex; align-items: center; justify-content: center; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;" onclick="sliderClickAction()">
                     <img id="slider-prod-img" src="icon1-512.png" alt="صورة الوجبة المميزة" style="width: 100%; height: 100%; object-fit: contain; background: #000;">
-                    
-                    <!-- أزرار التنقل من داخل الإطار -->
                     <button type="button" onclick="event.stopPropagation(); prevSliderItem()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-right"></i></button>
                     <button type="button" onclick="event.stopPropagation(); nextSliderItem()" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-left"></i></button>
                 </div>
-
-                <!-- تفاصيل المنتج تحت الصورة -->
                 <div style="width: 100%; text-align: center; margin-top: 10px;">
                     <h3 id="slider-prod-name" style="color: #fef3c7; font-size: 1.2rem; margin: 4px 0;">👑 عمدة المشويات في مصر</h3>
                     <p id="slider-prod-desc" style="font-size: 0.85rem; color: #f5f5f4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">جاري تحميل أشهى المشويات على الفحم الحطب...</p>
@@ -99,7 +91,7 @@
             <div id="menu-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 1.5 صمم صينيتك بنفسك (Custom Tray Builder) -->
+        <!-- 1.5 صمم صينيتك بنفسك -->
         <section id="tab-custom-tray" class="tab-content">
             <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309);">
                 <h2>🎨 صمم صينيتك ووليمتك بنفسك</h2>
@@ -134,7 +126,7 @@
             </div>
         </section>
 
-        <!-- 2. قسم العروض الخاصة -->
+        <!-- 2. العروض الخاصة -->
         <section id="tab-offers" class="tab-content">
             <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d);">
                 <h2>🔥 عروض ولائم الصواني الجبارة 🔥</h2>
@@ -143,7 +135,7 @@
             <div id="offers-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 3. قسم سلة المبيعات والبرومو كود والطلب -->
+        <!-- 3. السلة -->
         <section id="tab-cart" class="tab-content">
             <h2>🛒 سلة المبيعات والطلبات (مع صور الأطباق)</h2>
             <div class="cart-container">
@@ -159,7 +151,6 @@
                         <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع)">
                         <textarea id="order-address" placeholder="عنوان التوصيل بالتفصيل"></textarea>
                         
-                        <!-- زر تحديد وتثبيت موقع الاستلام عبر GPS -->
                         <div style="margin-bottom: 10px;">
                             <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-secondary" style="background-color: #0284c7; color: white; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
                                 <i class="fa-solid fa-location-crosshairs"></i> تحديد وتثبيت موقع الاستلام عبر GPS 📍
@@ -176,7 +167,7 @@
             </div>
         </section>
 
-        <!-- 4. قسم حجز الطاولات والعزائم -->
+        <!-- 4. حجز الطاولات -->
         <section id="tab-reservation" class="tab-content">
             <h2>🪑 حجز طاولة أو عزومة في صالة المحل</h2>
             <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
@@ -193,63 +184,53 @@
             </div>
         </section>
 
-        <!-- 5. قسم المفضلة -->
+        <!-- 5. المفضلة -->
         <section id="tab-favorites" class="tab-content">
             <h2>❤️ قائمة الأطباق المفضلة</h2>
             <div id="favorites-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 6. قسم حساب الزبون وتتبع الشحنة والولاء -->
+        <!-- 6. بوابة تسجيل الدخول الموحدة للجميع (مدير، محاسب، طيار، عميل) -->
         <section id="tab-customer" class="tab-content">
-            <h2>👤 بوابة متابعة طلبات العميل ونقاط الولاء</h2>
+            <h2>🔐 بوابة تسجيل الدخول الموحدة (لكافة الصلاحيات والعملاء)</h2>
             
-            <!-- تسجيل الدخول السريع برقم الهاتف -->
-            <div class="customer-login-box" id="cust-phone-login-box" style="max-width: 450px; margin: 0 auto 20px auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <h3 style="font-size: 1rem; color: #b45309; margin-bottom: 8px; font-weight: bold;">⚡ تسجيل دخول سريع برقم الهاتف</h3>
-                <p style="font-size: 0.8rem; color: #78716c; margin-bottom: 10px;">أدخل رقم هاتفك لاسترجاع ملفك وطلباتك ونقاط ولائك فوراً:</p>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="quick-phone-input" placeholder="رقم الهاتف (مثل 01144730305)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px; font-size: 0.9rem;">
-                    <button type="button" onclick="loginByPhoneQuick()" class="btn-primary" style="padding: 10px 15px; font-size: 0.85rem;">دخول سريع</button>
-                </div>
-            </div>
+            <div class="customer-login-box" id="unified-login-box" style="max-width: 480px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #b45309;">
+                <p style="text-align: center; color: #57534e; margin-bottom: 20px; font-weight: bold;">
+                    سجل دخولك هنا سواء كنت (مدير، محاسب، طيار دليفري، أو عميل):
+                </p>
 
-            <div class="customer-login-box" id="cust-login-box" style="max-width: 450px; margin: 0 auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button type="button" onclick="window.switchAuthMode('login')" id="mode-login-btn" class="btn-primary" style="flex: 1; padding: 8px;">تسجيل الدخول</button>
-                    <button type="button" onclick="window.switchAuthMode('register')" id="mode-reg-btn" class="btn-secondary" style="flex: 1; padding: 8px;">حساب جديد</button>
-                </div>
-
-                <!-- زر تسجيل الدخول عبر جوجل -->
-                <button type="button" onclick="window.loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff;">
-                    <i class="fa-brands fa-google" style="color: #ea4335;"></i> المتابعة باستخدام حساب جوجل 🚀
+                <!-- زر تسجيل الدخول الموحد عبر جوجل -->
+                <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.2rem;"></i> تسجيل الدخول الموحد باستخدام جوجل 🚀
                 </button>
 
-                <div style="text-align: center; color: #78716c; margin-bottom: 15px; font-size: 0.85rem; border-bottom: 1px solid #e7e5e4; line-height: 0.1em;"><span style="background: #fff; padding: 0 10px;">أو بالبريد وكلمة المرور</span></div>
-
-                <!-- حقول حساب جديد إضافية (الاسم ورقم الهاتف) -->
-                <div id="register-extra-fields" class="hidden" style="margin-bottom: 10px;">
-                    <input type="text" id="auth-name" placeholder="الاسم الكريم" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
-                    <input type="text" id="auth-phone" placeholder="رقم الهاتف (للتواصل والتوصيل)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                <div style="text-align: center; color: #78716c; margin-bottom: 20px; font-size: 0.85rem; border-bottom: 1px solid #e7e5e4; line-height: 0.1em;">
+                    <span style="background: #fff; padding: 0 10px;">أو بالطريقة التقليدية</span>
                 </div>
 
-                <input type="email" id="auth-email" placeholder="البريد الإلكتروني" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
-                <input type="password" id="auth-password" placeholder="كلمة المرور" style="width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #d6d3d1; border-radius: 6px;">
-
-                <button type="button" id="auth-submit-btn" onclick="window.handleEmailAuth()" class="btn-primary" style="width: 100%; padding: 10px;">تسجيل الدخول</button>
+                <!-- حقول الدخول الموحد بالبريد/الهاتف وكلمة المرور -->
+                <div class="checkout-form" style="max-width: 100%;">
+                    <input type="text" id="unified-login-id" placeholder="البريد الإلكتروني أو رقم الهاتف">
+                    <input type="password" id="unified-pass" placeholder="كلمة المرور السرية">
+                    
+                    <button onclick="unifiedLoginCustom()" class="btn-primary" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 1rem; background-color: #b45309;">
+                        تسجيل الدخول للنظام 🔓
+                    </button>
+                </div>
             </div>
 
+            <!-- لوحة العميل (تظهر للعملاء بعد تسجيل الدخول) -->
             <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 <div class="cust-info" style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
-                        مرحباً بك يا <span id="cust-display-name" style="font-weight: bold; color: #b45309;"></span> (<span id="cust-display-phone"></span>)
+                        مرحباً بك يا <span id="cust-display-name" style="font-weight: bold; color: #b45309;"></span>
                     </div>
-                    <button onclick="window.customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white;">تسجيل خروج</button>
+                    <button onclick="customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white;">تسجيل خروج</button>
                 </div>
                 <div class="cust-info" style="background: #e0f2fe; margin-top: 15px; padding: 10px; border-radius: 8px; color: #0369a1;">
                     ⭐ رصيد نقاط الولاء: <span id="cust-points" style="font-weight: bold; font-size: 1.1rem;">0</span> نقطة (كل 100 جنيه = 10 نقاط هدية)
                 </div>
                 
-                <!-- زر الانتقال لمتجر المكافآت من داخل حساب العميل المسجل -->
                 <a href="rewards.html" class="btn-primary" style="text-decoration: none; display: block; text-align: center; margin-top: 15px; background-color: #d97706;">
                     <i class="fa-solid fa-gift"></i> استبدل نقاط ولائك بهدايا مجانية 🎁
                 </a>
@@ -259,7 +240,7 @@
             </div>
         </section>
 
-        <!-- 7. قسم سياسة الخصوصية (Privacy Policy) -->
+        <!-- 7. سياسة الخصوصية -->
         <section id="tab-privacy" class="tab-content">
             <div class="corporate-card bg-white p-6 sm:p-8 space-y-6 text-sm leading-relaxed" style="background: #fff; border-radius: 12px; padding: 25px; border: 1px solid #e7e5e4; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
                 <div class="flex items-center gap-3 border-b pb-4">
@@ -275,28 +256,12 @@
                 <div class="space-y-4 text-slate-600" style="display:flex; flex-direction:column; gap:15px; color:#57534e;">
                     <div style="background:#fafaf9; padding:15px; border-radius:8px; border:1px solid #f5f5f4;">
                         <h3 class="text-base font-bold text-amber-900 mb-1" style="color:#78350f; font-weight:bold; margin-bottom:5px;">1. مقدمة ونبذة تعريفية</h3>
-                        <p>مرحباً بك في تطبيق <strong>"كبابجي ومشويات العمدة"</strong>. نحن نولي اهتماماً بالغاً بحماية خصوصيتك وبياناتك الشخصية عند استخدامك لخدماتنا والمنيو ونظام التوصيل.</p>
+                        <p>مرحباً بك في تطبيق <strong>"كبابجي ومشويات العمدة"</strong>.</p>
                     </div>
-
-                    <div style="background:#fafaf9; padding:15px; border-radius:8px; border:1px solid #f5f5f4;">
-                        <h3 class="text-base font-bold text-amber-900 mb-1" style="color:#78350f; font-weight:bold; margin-bottom:5px;">2. البيانات التي نقوم بجمعها</h3>
-                        <ul style="list-style-type: disc; padding-right: 20px; display: flex; flex-direction: column; gap: 5px;">
-                            <li><strong>بيانات الحساب:</strong> الاسم، رقم الهاتف، والبريد الإلكتروني.</li>
-                            <li><strong>بيانات الموقع الجغرافي (GPS):</strong> لتحديد عنوان التوصيل بدقة وتتبع السائقين.</li>
-                            <li><strong>بيانات الاتصال:</strong> الكاميرا والميكروفون عند استخدام مكالمات الفيديو والصوت (WebRTC).</li>
-                        </ul>
-                    </div>
-
-                    <div style="background:#fafaf9; padding:15px; border-radius:8px; border:1px solid #f5f5f4;">
-                        <h3 class="text-base font-bold text-amber-900 mb-1" style="color:#78350f; font-weight:bold; margin-bottom:5px;">3. حماية وأمن البيانات</h3>
-                        <p>جميع البيانات تُحفظ في قواعد بيانات سحابية مشفرة وآمنة عبر (Google Firebase). نحن لا نبيع بياناتك مطلقاً لأي طرف ثالث.</p>
-                    </div>
-
-                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 space-y-1" style="background:#fef3c7; padding:15px; border-radius:8px; color:#78350f; border:1px solid #fde68a;">
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 space-y-1" style="background:#fef3c7; padding:15px; border-radius:8px; color:#78716f; border:1px solid #fde68a;">
                         <div>👑 <strong>اسم المنشأة:</strong> كبابجي ومشويات العمدة</div>
                         <div>📍 <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</div>
                         <div>📞 <strong>رقم الهاتف:</strong> 01144730305</div>
-                        <div>📧 <strong>البريد الإلكتروني:</strong> haretg@gmail.com</div>
                     </div>
                 </div>
             </div>
@@ -309,7 +274,6 @@
         <div style="background: #1c1917; width: 100%; max-width: 500px; border-radius: 12px; padding: 20px; color: white; border: 2px solid #b45309; text-align: center;">
             <h3 id="callStatusTitle" style="font-size: 1.2rem; color: #fde047; margin-bottom: 5px;">📞 جاري الاتصال...</h3>
             <p id="callOrderInfo" style="font-size: 0.85rem; color: #d6d3d1; margin-bottom: 15px;"></p>
-            
             <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
                 <div style="position: relative; width: 45%; background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3;">
                     <video id="localVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
@@ -320,7 +284,6 @@
                     <span style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); font-size: 10px; padding: 2px 6px; border-radius: 4px;">الطرف الآخر</span>
                 </div>
             </div>
-
             <div style="display: flex; gap: 10px; justify-content: center;">
                 <button id="answerCallBtn" onclick="answerIncomingCall()" class="hidden" style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-phone"></i> رد</button>
                 <button onclick="endWebRtcCall()" style="background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
@@ -328,11 +291,11 @@
         </div>
     </div>
 
-    <!-- إعداد وتهيئة Firebase السحابية ومصادقة جوجل والبريد -->
+    <!-- إعداد وتهيئة Firebase السحابية وتوجيه الحسابات الموحد -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
@@ -349,89 +312,42 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        let isRegisterMode = false;
-
-        window.switchAuthMode = function(mode) {
-            const regFields = document.getElementById('register-extra-fields');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const loginBtn = document.getElementById('mode-login-btn');
-            const regBtn = document.getElementById('mode-reg-btn');
-
-            if (mode === 'register') {
-                isRegisterMode = true;
-                regFields.classList.remove('hidden');
-                submitBtn.innerText = 'إنشاء الحساب الجديد';
-                regBtn.className = 'btn-primary';
-                loginBtn.className = 'btn-secondary';
-            } else {
-                isRegisterMode = false;
-                regFields.classList.add('hidden');
-                submitBtn.innerText = 'تسجيل الدخول';
-                loginBtn.className = 'btn-primary';
-                regBtn.className = 'btn-secondary';
-            }
-        };
-
         window.loginWithGoogle = async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
+                const email = user.email.toLowerCase();
+
+                let userRole = 'customer';
+                const docId = String(user.phoneNumber || email.replace(/[^a-zA-Z0-9]/g, '_'));
                 
+                try {
+                    const userDoc = await getDoc(doc(db, "users", docId));
+                    if (userDoc.exists()) {
+                        userRole = userDoc.data().role || 'customer';
+                    } else if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
+                        userRole = 'admin';
+                    }
+                } catch(e) {}
+
                 const userObj = {
-                    name: user.displayName || 'عميل جوجل',
-                    email: user.email,
-                    phone: localStorage.getItem('omda_user_phone') || 'غير متوفر',
-                    role: 'customer',
+                    name: user.displayName || 'مستخدم جوجل',
+                    email: email,
+                    phone: user.phoneNumber || 'غير متوفر',
+                    role: userRole,
                     provider: 'Google Auth',
                     date: new Date().toLocaleString('ar-EG')
                 };
                 
-                await setDoc(doc(db, "users", String(user.email.replace(/[^a-zA-Z0-9]/g, '_'))), userObj, { merge: true });
+                await setDoc(doc(db, "users", docId), userObj, { merge: true });
 
-                alert(`أهلاً بك يا ${user.displayName || 'عميلنا العزيز'} عبر جوجل! 👑`);
-            } catch (error) {
-                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
-            }
-        };
-
-        window.handleEmailAuth = async function() {
-            const email = document.getElementById('auth-email').value.trim();
-            const password = document.getElementById('auth-password').value.trim();
-            
-            if (!email || !password) {
-                alert('من فضلك أدخل البريد الإلكتروني وكلمة المرور!');
-                return;
-            }
-
-            try {
-                if (isRegisterMode) {
-                    const name = document.getElementById('auth-name').value.trim();
-                    const phone = document.getElementById('auth-phone').value.trim();
-                    if (!name || !phone) {
-                        alert('من فضلك أدخل الاسم ورقم الهاتف لإتمام إنشاء الحساب.');
-                        return;
-                    }
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                    await updateProfile(userCredential.user, { displayName: name });
-                    localStorage.setItem('omda_user_phone', phone);
-                    
-                    const newUserObj = {
-                        name,
-                        email,
-                        phone,
-                        role: 'customer',
-                        provider: 'Email Register',
-                        date: new Date().toLocaleString('ar-EG')
-                    };
-                    await setDoc(doc(db, "users", String(phone)), newUserObj, { merge: true });
-
-                    alert(`مرحباً بك يا ${name}! تم إنشاء حسابك بنجاح 🚀`);
+                if (typeof routeUserByRole === 'function') {
+                    routeUserByRole(userObj);
                 } else {
-                    await signInWithEmailAndPassword(auth, email, password);
-                    alert('تم تسجيل الدخول بنجاح! أهلاً بك مجدداً.');
+                    alert(`أهلاً بك يا ${userObj.name}!`);
                 }
             } catch (error) {
-                alert("خطأ في المصادقة: " + error.message);
+                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
             }
         };
 
@@ -439,10 +355,10 @@
             try {
                 await signOut(auth);
                 localStorage.removeItem('omda_current_cust');
+                localStorage.removeItem('omda_logged_user');
+                localStorage.removeItem('omda_session_user');
                 document.getElementById('customer-dashboard').classList.add('hidden');
-                document.getElementById('cust-login-box').classList.remove('hidden');
-                const phoneBox = document.getElementById('cust-phone-login-box');
-                if(phoneBox) phoneBox.style.display = 'block';
+                document.getElementById('unified-login-box').style.display = 'block';
                 alert('تم تسجيل الخروج بنجاح.');
             } catch (e) {
                 console.error(e);
@@ -452,17 +368,16 @@
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 const custName = user.displayName || user.email.split('@')[0];
-                const custPhone = localStorage.getItem('omda_user_phone') || user.phoneNumber || 'غير متوفر';
+                const custPhone = 'غير متوفرة';
                 window.currentCustomer = { name: custName, phone: custPhone, email: user.email };
-                localStorage.setItem('omda_current_cust', JSON.stringify(window.currentCustomer));
                 
-                document.getElementById('cust-login-box').classList.add('hidden');
-                const phoneBox = document.getElementById('cust-phone-login-box');
-                if(phoneBox) phoneBox.style.display = 'none';
+                const loginBox = document.getElementById('unified-login-box');
+                const dashBox = document.getElementById('customer-dashboard');
+                if(loginBox) loginBox.style.display = 'none';
+                if(dashBox) dashBox.classList.remove('hidden');
 
-                document.getElementById('customer-dashboard').classList.remove('hidden');
-                document.getElementById('cust-display-name').innerText = custName;
-                document.getElementById('cust-display-phone').innerText = custPhone;
+                const nameEl = document.getElementById('cust-display-name');
+                if(nameEl) nameEl.innerText = custName;
                 
                 if (typeof loadCustomerDashboard === 'function') {
                     loadCustomerDashboard();
@@ -471,9 +386,9 @@
         });
 
         window.db = db;
-        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot };
+        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
         
-        console.log("🔥 تم توصيل مشروع العمدة بقاعدة بيانات Firebase ومصادقة المستخدمين بنجاح!");
+        console.log("🔥 تم ربط صفحة العميل بنظام الدخول الموحد وسحابة Firebase بنجاح!");
     </script>
 
     <script src="app.js"></script>
