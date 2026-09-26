@@ -10,16 +10,18 @@
 </head>
 <body style="background: #1c1917; color: #fff; margin: 0; padding: 0; font-family: 'Cairo', sans-serif;">
 
-    <!-- الهيدر العلوي الموحد -->
+    <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم الموظف -->
     <header class="main-header" style="background: #000; border-bottom: 4px solid #dc2626; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <div class="logo-container" style="display: flex; align-items: center; gap: 12px;">
-            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img" style="width: 42px; height: 42px; border-radius: 50%;">
+            <div style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #dc2626; background: #000;">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
             <div>
-                <h1 style="font-size: 1.2rem; margin: 0; color: #fde047;">🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
+                <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
                 <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً (محمي بصلاحيات الموظفين)</span>
             </div>
         </div>
-        <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+        <nav class="nav-links" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
             <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-house"></i> الرئيسية</a>
             <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة</a>
             <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> الأدمن</a>
@@ -72,7 +74,7 @@
         
         console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase وتفعيل الحماية الأمنية!");
 
-        // حماية الصفحة وفحص الجلسة فور التحميل
+        // حماية الصفحة وفحص الجلسة ومزامنة البروفايل فور التحميل
         document.addEventListener('DOMContentLoaded', () => {
             if (!checkKitchenAccessSecurity()) return;
             loadKitchenOrdersFromLocal();
@@ -84,13 +86,17 @@
     <script>
         // دالة حماية أمنية صارمة تمنع الزوار والعملاء العاديين من دخول شاشة المطبخ
         function checkKitchenAccessSecurity() {
-            let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || '{}');
+            let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
             const role = (loggedUser.role || '').toLowerCase();
             const email = (loggedUser.email || '').toLowerCase();
             const phone = loggedUser.phone || '';
 
             const isMaster = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305');
             const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'chef';
+
+            // مزامنة الصورة والاسم في الهيدر بغض النظر عن حالة الموظف للتأكد من المظهر الموحد
+            const avatarEl = document.getElementById('nav-user-avatar');
+            if (avatarEl && loggedUser.photoURL) avatarEl.src = loggedUser.photoURL;
 
             if (!isAuthorizedStaff) {
                 alert("🚫 عذراً! هذه الشاشة (KDS) مخصصة لفريق المطبخ والمشرفين فقط. ممنوع دخول الزوار أو العملاء.");
