@@ -15,11 +15,11 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* خلفية مشويات حية وعالية الجودة متحركة بشكل سينمائي بدون تعتيم */
+/* تطبيق ثابت، والخلفية وحدها هي من تتحرك بزوم سينمائي ناعم بدون تحريك عناصر التطبيق */
 body {
     background: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1600&auto=format&fit=crop&q=80') no-repeat center center fixed;
     background-size: cover;
-    animation: cinematicGrillZoom 16s ease-in-out infinite alternate;
+    animation: cinematicBackgroundZoom 18s ease-in-out infinite alternate;
     color: #f5f5f4;
     direction: rtl;
     min-height: 100vh;
@@ -27,12 +27,12 @@ body {
     overflow-x: hidden;
 }
 
-@keyframes cinematicGrillZoom {
-    0% { transform: scale(1); filter: brightness(1); }
-    100% { transform: scale(1.04); filter: brightness(1.08); }
+@keyframes cinematicBackgroundZoom {
+    0% { background-size: 100% 100%; filter: brightness(1); }
+    100% { background-size: 112% 112%; filter: brightness(1.05); }
 }
 
-/* طبقة إضاءة ثري دي جمرية ونار مشتعلة حية وساطعة أسفل الشاشة */
+/* طبقة إضاءة ثري دي جمرية ونار مشتعلة حية وساطعة أسفل الشاشة (ثابتة في مكانها بتأثير نبض حقيقي) */
 body::before {
     content: '';
     position: fixed;
@@ -105,7 +105,7 @@ body::after {
     width: 100%;
 }
 
-/* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد بارز */
+/* الهيدر وشريط التنقل بتأثير زجاجي ثلاثي الأبعاد بارز وثابت */
 .main-header {
     background-color: rgba(28, 25, 23, 0.65);
     backdrop-filter: blur(12px);
