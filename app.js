@@ -59,7 +59,7 @@ function initHeroSlider() {
     sliderInterval = setInterval(() => {
         currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
         updateSliderContent();
-    }, 3000); // التبديل كل 3 ثواني بالضبط
+    }, 3000);
 }
 
 function updateSliderContent() {
@@ -111,7 +111,6 @@ function fetchCustomerGpsLocation() {
             alert("✓ تم تحديد موقع الاستلام بدقة بنجاح!");
         },
         (error) => {
-            console.warn("High accuracy GPS timeout, trying network location...", error);
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     customerLat = position.coords.latitude;
@@ -283,9 +282,6 @@ async function answerIncomingCall() {
     }
 }
 
-// ==========================================
-// التحقق من صلاحيات الأدمن والماستر (haretg@gmail.com)
-// ==========================================
 function checkAdminPermission() {
     let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
     if (loggedUser.email === 'haretg@gmail.com' || loggedUser.role === 'admin') {
@@ -305,12 +301,10 @@ function checkAdminPermission() {
 
     if (userEmail === 'haretg@gmail.com' || userEmail === 'admin@omda.com') return true;
 
-    const isAdminFlag = localStorage.getItem('isAdmin') === 'true' || 
-                        localStorage.getItem('role') === 'admin' || 
-                        localStorage.getItem('userRole') === 'admin' ||
-                        localStorage.getItem('isAdminLoggedIn') === 'true';
-
-    return isAdminFlag;
+    return localStorage.getItem('isAdmin') === 'true' || 
+           localStorage.getItem('role') === 'admin' || 
+           localStorage.getItem('userRole') === 'admin' ||
+           localStorage.getItem('isAdminLoggedIn') === 'true';
 }
 
 function enforceAdminSecurity() {
@@ -343,13 +337,10 @@ function enforceAdminSecurity() {
     }
 }
 
-// ==========================================
-// تهيئة التطبيق والخريطة عند التحميل
-// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     enforceAdminSecurity();
     loadSavedTicker();
-    initHeroSlider(); // تشغيل سليدر المنتجات
+    initHeroSlider();
 
     if(typeof renderMenu === 'function') renderMenu();
     if(typeof updateCartUI === 'function') updateCartUI();
@@ -567,9 +558,6 @@ async function addNewDriverWithLocation() {
     loadLiveTrackingMap();
 }
 
-// ==========================================
-// دوال المنيو، السلة المستمرة، والتسوق
-// ==========================================
 function loadSavedTicker() {
     const savedTicker = localStorage.getItem('omda_ticker_text');
     if(savedTicker) {
@@ -788,7 +776,7 @@ function saveAndAddNewProduct(prod) {
     document.getElementById('new-prod-desc').value = '';
 
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
-    initHeroSlider(); // تحديث السليدر
+    initHeroSlider();
 }
 
 function adminDeleteProduct(id) {
@@ -796,7 +784,7 @@ function adminDeleteProduct(id) {
     menuProducts = menuProducts.filter(p => p.id !== id);
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
     loadAdminDashboard();
-    initHeroSlider(); // تحديث السليدر
+    initHeroSlider();
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
@@ -964,6 +952,7 @@ async function submitOrder() {
         items: [...cart],
         total,
         status: 'pending',
+        assignedDriver: '',
         lat: finalLat,
         lng: finalLng,
         date: new Date().toLocaleString('ar-EG')
@@ -1198,9 +1187,20 @@ function showReceipt(order) {
     alert('📄 تم نسخ تفاصيل الفاتورة الرقمية إلى الحافظة بنجاح!\n\n' + receiptText);
 }
 
-// ==========================================
-// إدارة تسجيل دخول وطاقم الإدارة (haretg@gmail.com)
-// ==========================================
+// دالة تعيين السائق المسجل للطلب من لوحة التحكم أو الخريطة
+function assignDriverToOrder(orderId, driverName) {
+    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+    let order = allOrders.find(o => o.id === orderId);
+    if(order) {
+        order.assignedDriver = driverName;
+        order.status = 'delivery'; // تحديث الحالة إلى مع الدليفري عند إسناد سائق
+        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+        alert(`✓ تم تعيين السائق (${driverName || 'بدون'}) للطلب ${orderId} بنجاح 🏍️`);
+        if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
+        if(typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
+    }
+}
+
 function adminLogin() {
     const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
     const passInput = document.getElementById('admin-pass').value.trim();
@@ -1345,6 +1345,7 @@ function changeMyPassword() {
     document.getElementById('confirm-pass-input').value = '';
 }
 
+// دالة تحميل لوحة التحكم وعرض حسابات جوجل المسجلة
 function loadAdminDashboard() {
     const loginBox = document.getElementById('admin-login-box');
     const dashBox = document.getElementById('admin-dashboard');
@@ -1371,6 +1372,9 @@ function loadAdminDashboard() {
         if(staffNavBtn) staffNavBtn.style.display = 'flex';
         loadStaffList();
     }
+
+    // عرض حسابات جوجل المسجلة في القسم الجديد
+    loadGoogleAccountsList();
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let totalSales = allOrders.reduce((sum, o) => sum + o.total, 0);
@@ -1422,6 +1426,8 @@ function loadAdminDashboard() {
         }
     }
 
+    // عرض الطلبات مع قائمة اختيار وتعيين السائق المسجل
+    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
         ordersList.innerHTML = '';
@@ -1429,12 +1435,26 @@ function loadAdminDashboard() {
             ordersList.innerHTML = '<p>لا توجد طلبات توصيل جديدة حتى الآن.</p>';
         } else {
             allOrders.forEach((order, index) => {
+                let driverOptions = `<option value="">-- اختر سائق مسجل للطلب --</option>`;
+                drivers.forEach(d => {
+                    let selected = order.assignedDriver === d.name ? 'selected' : '';
+                    driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone})</option>`;
+                });
+
                 ordersList.innerHTML += `
                     <div class="order-card">
                         <p><strong>رقم الطلب:</strong> ${order.id} | <strong>العميل:</strong> ${order.name} (${order.phone})</p>
                         <p><strong>العنوان:</strong> ${order.address}</p>
                         <p><strong>الطلب:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
                         <p><strong>الإجمالي:</strong> ${order.total} جنيه | <strong>التاريخ:</strong> ${order.date}</p>
+                        
+                        <div style="margin: 10px 0; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px solid #bbf7d0;">
+                            <label style="font-size:0.9rem; font-weight:bold; color:#166534; display:block; margin-bottom:5px;">🏍️ تعيين سائق مسجل للطلب:</label>
+                            <select onchange="assignDriverToOrder('${order.id}', this.value)" style="padding:8px; border-radius:6px; width:100%; border:1px solid #86efac; background:#fff; font-weight:bold;">
+                                ${driverOptions}
+                            </select>
+                        </div>
+
                         <div style="margin-top: 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content: space-between;">
                             <div>
                                 <label style="font-size:0.9rem; font-weight:bold;">حالة الشحنة:</label>
@@ -1476,6 +1496,41 @@ function loadAdminDashboard() {
             });
         }
     }
+}
+
+// دالة عرض قائمة الحسابات المسجلة عبر جوجل في لوحة التحكم
+function loadGoogleAccountsList() {
+    const container = document.getElementById('admin-google-accounts-list');
+    if(!container) return;
+    container.innerHTML = '';
+
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(regUsers.length === 0) {
+        container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات مسجلة عبر جوجل حالياً.</p>';
+        return;
+    }
+
+    regUsers.forEach((usr, idx) => {
+        container.innerHTML += `
+            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider}</span><br>
+                    <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email}</span><br>
+                    <span style="font-size:0.8rem; color:#64748b;">📅 تاريخ التسجيل: ${usr.date}</span>
+                </div>
+                <button onclick="deleteGoogleAccount(${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+            </div>
+        `;
+    });
+}
+
+function deleteGoogleAccount(idx) {
+    if(!confirm('هل أنت متأكد من حذف هذا الحساب من القائمة؟')) return;
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    regUsers.splice(idx, 1);
+    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    loadGoogleAccountsList();
+    alert('تم حذف الحساب بنجاح.');
 }
 
 function addExpense() {
@@ -1521,6 +1576,7 @@ function adminCreateOrder() {
         items: [{ name: itemsText, price: total, qty: 1 }],
         total,
         status: 'pending',
+        assignedDriver: '',
         lat: restaurantCoords[0] + 0.015,
         lng: restaurantCoords[1] + 0.015,
         date: new Date().toLocaleString('ar-EG')
@@ -1794,13 +1850,24 @@ function loadLiveTrackingMap() {
         `);
 
         let statusClass = 'status-' + (order.status || 'pending');
+        let driverSelectOpts = `<option value="">-- اختر سائق --</option>`;
+        drivers.forEach(d => {
+            let sel = order.assignedDriver === d.name ? 'selected' : '';
+            driverSelectOpts += `<option value="${d.name}" ${sel}>${d.name}</option>`;
+        });
+
         listContainer.innerHTML += `
             <div class="track-card" onclick="map.flyTo([${orderLat}, ${orderLng}], 15)">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
                     <strong class="text-xs">${order.id}</strong>
                     <span class="status-badge ${statusClass}">${getStatusText(order.status)}</span>
                 </div>
-                <p style="font-size: 0.75rem; color: #57534e; margin: 2px 0;">👤 ${order.name} | 🏍️ ${order.assignedDriver || 'بدون'}</p>
+                <p style="font-size: 0.75rem; color: #57534e; margin: 2px 0;">👤 ${order.name}</p>
+                <div style="margin: 4px 0;" onclick="event.stopPropagation()">
+                    <select onchange="assignDriverToOrder('${order.id}', this.value)" style="font-size:0.7rem; padding:2px; width:100%; border-radius:4px; border:1px solid #d6d3d1;">
+                        ${driverSelectOpts}
+                    </select>
+                </div>
                 <p style="font-size: 0.7rem; color: #b45309; font-weight: bold; margin: 2px 0;">📏 ${distKm.toFixed(1)} كم | ⏱️ ${etaMinutes} د.</p>
                 <div style="display: flex; gap: 4px; margin-top: 4px;" onclick="event.stopPropagation()">
                     <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', true)" style="flex:1; background:#b45309; color:white; padding:3px; text-align:center; border-radius:4px; font-size:0.7rem; font-weight:bold; border:none; cursor:pointer;"><i class="fa-solid fa-video"></i> فيديو</button>
