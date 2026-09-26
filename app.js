@@ -63,7 +63,6 @@ function routeUserByRole(user) {
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
 
-    // 1. المدير العام أو الأدمن أو المحاسب فقط
     if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
         localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
@@ -71,7 +70,6 @@ function routeUserByRole(user) {
         return;
     }
 
-    // 2. طيار الدليفري
     if (role === 'driver') {
         localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
@@ -79,7 +77,6 @@ function routeUserByRole(user) {
         return;
     }
 
-    // 3. الموظف (Worker / Staff) - ممنوع منعاً باتاً من دخول لوحة التحكم
     if (role === 'worker' || role === 'staff') {
         localStorage.removeItem('omda_logged_user');
         alert(`👷 عذراً يا ${user.name || 'موظفنا العزيز'}، حسابك بصلاحية "موظف" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
@@ -87,7 +84,6 @@ function routeUserByRole(user) {
         return;
     }
 
-    // 4. العميل العادي
     localStorage.setItem('omda_current_cust', JSON.stringify(user));
     alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
     
@@ -584,7 +580,6 @@ function enforceAdminSecurity() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // التحقق الصارم في صفحة الأدمن لمنع الموظفين
     if (window.location.pathname.includes('admin.html')) {
         let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
         const email = (loggedUser.email || '').toLowerCase();
@@ -1457,6 +1452,11 @@ function submitReservation() {
     allRes.unshift(newRes);
     localStorage.setItem('omda_reservations', JSON.stringify(allRes));
 
+    // حفظ الحجز سحابياً فوراً
+    if (window.db && window.firebaseModules) {
+        window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => console.error(e));
+    }
+
     alert(`تم تسجيل حجز الطاولة بنجاح يا أسطى ${name}! سنتواصل معك قريباً.`);
     nameEl.value = '';
     phoneEl.value = '';
@@ -1593,13 +1593,25 @@ function showReceipt(order) {
     alert('📄 تم نسخ تفاصيل الفاتورة الرقمية إلى الحافظة بنجاح!\n\n' + receiptText);
 }
 
-function assignDriverToOrder(orderId, driverName) {
+async function assignDriverToOrder(orderId, driverName) {
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    let order = allOrders.find(o => o.id === orderId);
+    let order = allOrders.find(o => String(o.id) === String(orderId));
     if(order) {
         order.assignedDriver = driverName;
         order.status = 'delivery';
         localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+
+        if (window.db && window.firebaseModules) {
+            try {
+                await window.firebaseModules.updateDoc(
+                    window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                    { assignedDriver: driverName, status: 'delivery' }
+                );
+            } catch(e) {
+                console.error("Cloud assign driver error:", e);
+            }
+        }
+
         alert(`✓ تم تعيين السائق (${driverName || 'بدون'}) للطلب ${orderId} بنجاح 🏍️`);
         if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
         if(typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
@@ -1647,11 +1659,11 @@ async function loadGoogleAccountsList() {
                         <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
                         <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'}</span>
                     </div>
-                    <button onclick="deleteGoogleAccount('${docKey}', ${idx})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    <button onclick="deleteGoogleAccount('${docKey}')" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; background:#f8fafc; padding:8px; border-radius:6px; border:1px solid #e2e8f0;">
                     <label style="font-size:0.8rem; font-weight:bold; color:#334155; white-space:nowrap;">ترقية وتعيين الدور:</label>
-                    <select onchange="updateUserRole('${docKey}', ${idx}, this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
+                    <select onchange="updateUserRole('${docKey}', this.value)" style="flex:1; padding:6px; border-radius:6px; border:1px solid #cbd5e1; font-size:0.85rem; font-weight:bold; background:#fff;">
                         <option value="customer" ${currentRole==='customer'?'selected':''}>👤 عميل (Customer)</option>
                         <option value="admin" ${currentRole==='admin'?'selected':''}>👑 مدير / أدمن (Admin)</option>
                         <option value="accountant" ${currentRole==='accountant'?'selected':''}>💰 محاسب (Accountant)</option>
@@ -1664,7 +1676,7 @@ async function loadGoogleAccountsList() {
     });
 }
 
-async function updateUserRole(docKey, idx, newRole) {
+async function updateUserRole(docKey, newRole) {
     if (newRole === 'driver') {
         const authorized = await authenticateWithPasswordAndBiometric('driver');
         if (!authorized) {
@@ -1675,12 +1687,11 @@ async function updateUserRole(docKey, idx, newRole) {
     }
 
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    if(!regUsers[idx]) return;
+    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey));
+    if(!targetUser) return;
 
-    regUsers[idx].role = newRole;
+    targetUser.role = newRole;
     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-
-    let targetUser = regUsers[idx];
 
     if (window.db && window.firebaseModules) {
         try {
@@ -1701,7 +1712,7 @@ async function updateUserRole(docKey, idx, newRole) {
 
     if(newRole === 'driver') {
         let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-        if(!drivers.some(d => d.phone === phone || d.name === name)) {
+        if(!drivers.some(d => String(d.phone) === String(phone) || d.name === name)) {
             drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002 });
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
         }
@@ -1727,15 +1738,25 @@ async function updateUserRole(docKey, idx, newRole) {
     loadLiveTrackingMap();
 }
 
-function deleteGoogleAccount(idx) {
+async function deleteGoogleAccount(docKey) {
     if(!checkAdminPermission()) {
         alert("🚫 غير مسموح لك بحذف الحسابات!");
         return;
     }
     if(!confirm('هل أنت متأكد من حذف هذا الحساب من النظام؟')) return;
+    
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    regUsers.splice(idx, 1);
+    regUsers = regUsers.filter(u => String(u.phone) !== String(docKey) && String(u.email) !== String(docKey));
     localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "users", String(docKey)));
+        } catch(e) {
+            console.error("Cloud user delete error:", e);
+        }
+    }
+
     loadGoogleAccountsList();
     alert('تم حذف الحساب بنجاح.');
 }
@@ -1789,7 +1810,7 @@ function loadStaffList() {
         return;
     }
 
-    staffList.forEach((staff, index) => {
+    staffList.forEach((staff) => {
         let roleName = staff.role === 'admin' ? 'أدمن إضافي' : (staff.role === 'accountant' ? 'محاسب' : (staff.role === 'worker' ? 'عامل' : 'موظف'));
         container.innerHTML += `
             <div style="background:#fff; padding:8px; margin:5px 0; border-radius:6px; display:flex; justify-content:space-between; align-items:center; border:1px solid #d6d3d1;">
@@ -1797,16 +1818,16 @@ function loadStaffList() {
                     <strong>${staff.name}</strong> (${roleName})<br>
                     <span style="font-size:0.8rem; color:#57534e;">الإيميل: ${staff.email} | الهاتف: ${staff.phone}</span>
                 </div>
-                <button onclick="deleteStaff(${index})" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;">حذف</button>
+                <button onclick="deleteStaff('${staff.id}')" class="btn-danger btn-sm" style="padding:4px 8px; font-size:0.8rem;">حذف</button>
             </div>
         `;
     });
 }
 
-function deleteStaff(index) {
+function deleteStaff(staffId) {
     if(!confirm('هل أنت متأكد من حذف حساب هذا الموظف؟')) return;
     let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
-    staffList.splice(index, 1);
+    staffList = staffList.filter(s => String(s.id) !== String(staffId));
     localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
     loadStaffList();
     alert('تم حذف الحساب بنجاح.');
@@ -1947,7 +1968,7 @@ function loadAdminDashboard() {
         if(allOrders.length === 0) {
             ordersList.innerHTML = '<p>لا توجد طلبات توصيل جديدة حتى الآن.</p>';
         } else {
-            allOrders.forEach((order, index) => {
+            allOrders.forEach((order) => {
                 let driverOptions = `<option value="">-- اختر سائق مسجل للطلب --</option>`;
                 drivers.forEach(d => {
                     let selected = order.assignedDriver === d.name ? 'selected' : '';
@@ -1971,14 +1992,14 @@ function loadAdminDashboard() {
                         <div style="margin-top: 10px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content: space-between;">
                             <div>
                                 <label style="font-size:0.9rem; font-weight:bold;">حالة الشحنة:</label>
-                                <select onchange="updateOrderStatus(${index}, this.value)" style="padding:6px; border-radius:6px;">
+                                <select onchange="updateOrderStatus('${order.id}', this.value)" style="padding:6px; border-radius:6px;">
                                     <option value="pending" ${order.status==='pending'?'selected':''}>قيد المراجعة</option>
                                     <option value="cooking" ${order.status==='cooking'?'selected':''}>جاري التجهيز والشوي 🔥</option>
                                     <option value="delivery" ${order.status==='delivery'?'selected':''}>خرج مع الدليفري 🛵</option>
                                     <option value="done" ${order.status==='done'?'selected':''}>تم التوصيل ✅</option>
                                 </select>
                             </div>
-                            <button onclick="adminDeleteOrder(${index})" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
+                            <button onclick="adminDeleteOrder('${order.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
                         </div>
                     </div>
                 `;
@@ -1993,7 +2014,7 @@ function loadAdminDashboard() {
         if(allRes.length === 0) {
             resList.innerHTML = '<p>لا توجد حجوزات طاولات أو عزائم مسجلة حالياً.</p>';
         } else {
-            allRes.forEach((res, index) => {
+            allRes.forEach((res) => {
                 resList.innerHTML += `
                     <div class="order-card" style="border-right: 4px solid var(--secondary-color);">
                         <p><strong>رقم الحجز:</strong> ${res.id} | <strong>حاجز الطاولة:</strong> ${res.name} (${res.phone})</p>
@@ -2001,8 +2022,8 @@ function loadAdminDashboard() {
                         <p><strong>الملاحظات:</strong> ${res.notes || 'بدون ملاحظات'}</p>
                         <p><strong>حالة الحجز:</strong> <span class="status-badge ${res.status==='confirmed'?'status-done':'status-pending'}">${res.status==='confirmed'?'مؤكد ✅':'قيد المتابعة ⏳'}</span></p>
                         <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <button onclick="confirmReservation(${index})" class="btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.85rem;">تأكيد الحجز</button>
-                            <button onclick="adminDeleteReservation(${index})" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الحجز</button>
+                            <button onclick="confirmReservation('${res.id}')" class="btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.85rem;">تأكيد الحجز</button>
+                            <button onclick="adminDeleteReservation('${res.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الحجز</button>
                         </div>
                     </div>
                 `;
@@ -2060,6 +2081,10 @@ function adminCreateOrder() {
         date: new Date().toLocaleString('ar-EG')
     };
 
+    if (window.db && window.firebaseModules) {
+        window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", String(newOrder.id)), newOrder).catch(e => console.error(e));
+    }
+
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     allOrders.unshift(newOrder);
     localStorage.setItem('omda_orders', JSON.stringify(allOrders));
@@ -2080,36 +2105,86 @@ function adminCreateOrder() {
     loadAdminDashboard();
 }
 
-function updateOrderStatus(index, newStatus) {
+async function updateOrderStatus(orderId, newStatus) {
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders[index].status = newStatus;
-    localStorage.setItem('omda_orders', JSON.stringify(allOrders));
-    loadAdminDashboard();
+    let order = allOrders.find(o => String(o.id) === String(orderId));
+    if(order) {
+        order.status = newStatus;
+        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+
+        if (window.db && window.firebaseModules) {
+            try {
+                await window.firebaseModules.updateDoc(
+                    window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                    { status: newStatus }
+                );
+            } catch(e) {
+                console.error("Cloud status update error:", e);
+            }
+        }
+        loadAdminDashboard();
+        loadLiveTrackingMap();
+    }
 }
 
-function adminDeleteOrder(index) {
-    if(!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+async function adminDeleteOrder(orderId) {
+    if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
+    
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders.splice(index, 1);
+    allOrders = allOrders.filter(o => String(o.id) !== String(orderId));
     localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "orders", String(orderId)));
+        } catch(e) {
+            console.error("Cloud order delete error:", e);
+        }
+    }
+
     loadAdminDashboard();
-    alert('تم حذف الطلب بنجاح.');
+    loadLiveTrackingMap();
+    alert('✓ تم حذف الطلب بنجاح من النظام والسحابة.');
 }
 
-function confirmReservation(index) {
+async function confirmReservation(resId) {
     let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
-    allRes[index].status = 'confirmed';
-    localStorage.setItem('omda_reservations', JSON.stringify(allRes));
-    loadAdminDashboard();
+    let res = allRes.find(r => String(r.id) === String(resId));
+    if(res) {
+        res.status = 'confirmed';
+        localStorage.setItem('omda_reservations', JSON.stringify(allRes));
+
+        if (window.db && window.firebaseModules) {
+            try {
+                await window.firebaseModules.updateDoc(
+                    window.firebaseModules.doc(window.db, "reservations", String(resId)), 
+                    { status: 'confirmed' }
+                );
+            } catch(e) {
+                console.error("Cloud reservation update error:", e);
+            }
+        }
+        loadAdminDashboard();
+    }
 }
 
-function adminDeleteReservation(index) {
+async function adminDeleteReservation(resId) {
     if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
+    
     let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
-    allRes.splice(index, 1);
+    allRes = allRes.filter(r => String(r.id) !== String(resId));
     localStorage.setItem('omda_reservations', JSON.stringify(allRes));
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "reservations", String(resId)));
+        } catch(e) {
+            console.error("Cloud reservation delete error:", e);
+        }
+    }
+
     loadAdminDashboard();
-    alert('تم حذف الحجز بنجاح.');
+    alert('✓ تم حذف الحجز بنجاح.');
 }
 
 function adminLogout() {
@@ -2466,21 +2541,31 @@ function loadDriversAdminList() {
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     if(drivers.length === 0) { container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب مسجلة.</p>'; return; }
 
-    drivers.forEach((d, idx) => {
+    drivers.forEach((d) => {
         container.innerHTML += `
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
                 <div><strong>${d.name}</strong> (${d.phone})<br><span class="text-[10px] text-slate-500 mono-font">(${d.lat ? d.lat.toFixed(4) : 0}, ${d.lng ? d.lng.toFixed(4) : 0})</span></div>
-                <button onclick="deleteDriver(${idx})" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
+                <button onclick="deleteDriver('${d.id || d.name}')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
             </div>
         `;
     });
 }
 
-function deleteDriver(idx) {
+async function deleteDriver(driverId) {
     if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
+    
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.splice(idx, 1);
+    drivers = drivers.filter(d => String(d.id) !== String(driverId) && String(d.name) !== String(driverId));
     localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "drivers", String(driverId)));
+        } catch(e) {
+            console.error("Cloud driver delete error:", e);
+        }
+    }
+
     loadDriversAdminList();
     loadDriversOnMap();
     loadLiveTrackingMap();
@@ -2582,6 +2667,7 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
     });
 }
+
 // ==========================================
 // نظام المزامنة اللحظية السحابية الشاملة (الطلبات + الطيارين)
 // ==========================================
@@ -2589,17 +2675,14 @@ function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
         const { collection, onSnapshot } = window.firebaseModules;
         
-        // 1. الاستماع اللحظي لتغيرات الطلبات في السحابة
         onSnapshot(collection(window.db, "orders"), (snapshot) => {
             let cloudOrders = [];
             snapshot.forEach((doc) => {
                 cloudOrders.push(doc.data());
             });
 
-            // تحديث الذاكرة المحلية كنسخة احتياطية
             localStorage.setItem('omda_orders', JSON.stringify(cloudOrders));
 
-            // تحديث الواجهات والخريطة فوراً
             if (typeof loadLiveTrackingMap === 'function') {
                 loadLiveTrackingMap();
             }
@@ -2609,22 +2692,18 @@ function initRealtimeCloudSync() {
             if (typeof loadCustomerDashboard === 'function') {
                 loadCustomerDashboard();
             }
-            console.log("📦 تمت مزامنة الطلبات سحابياً بشكل لحظي!");
         }, (error) => {
             console.error("خطأ في مزامنة الطلبات:", error);
         });
 
-        // 2. الاستماع اللحظي لتغيرات وأماكن الطيارين على الخريطة
         onSnapshot(collection(window.db, "drivers"), (snapshot) => {
             let cloudDrivers = [];
             snapshot.forEach((doc) => {
                 cloudDrivers.push(doc.data());
             });
 
-            // تحديث الذاكرة المحلية للطيارين
             localStorage.setItem('omda_drivers', JSON.stringify(cloudDrivers));
 
-            // تحديث ماركرات الطيارين على الخريطة وجدول اللوحة فوراً
             if (typeof loadDriversOnMap === 'function') {
                 loadDriversOnMap();
             }
@@ -2634,18 +2713,15 @@ function initRealtimeCloudSync() {
             if (typeof loadDriversAdminList === 'function') {
                 loadDriversAdminList();
             }
-            console.log("🏍️ تمت مزامنة أسطول الطيارين سحابياً بشكل لحظي!");
         }, (error) => {
             console.error("خطأ في مزامنة الطيارين:", error);
         });
 
     } else {
-        // إعادة المحاولة إذا لم تكن فايربيس قد حملت بالكامل بعد
         setTimeout(initRealtimeCloudSync, 1000);
     }
 }
 
-// تفعيل المزامنة الشاملة فور تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     initRealtimeCloudSync();
 });
