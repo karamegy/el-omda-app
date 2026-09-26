@@ -93,13 +93,18 @@
 </head>
 <body>
 
-    <!-- هيدر صفحة الأدمن المطور -->
+    <!-- هيدر صفحة الأدمن المطور مع مزامنة صورة البروفايل واسم المستخدم -->
     <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f);">
         <div class="logo-container">
-            <img src="icon1-512.png" alt="لوجو مشويات العمدة" class="logo-img">
+            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md overflow-hidden border-2 border-amber-500" style="width: 48px; height: 48px; border-radius: 10px;">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
             <div>
-                <h1 id="admin-header-title">لوحة تحكم الماستر الشاملة 👑</h1>
-                <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">إدارة النظام، الخزنة، العمليات والمنيو</span>
+                <h1 id="admin-header-title" style="font-size: 1.1rem;">لوحة تحكم الماستر الشاملة 👑</h1>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">إدارة النظام، الخزنة، العمليات والمنيو</span>
+                    <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
+                </div>
             </div>
         </div>
         <nav class="nav-links">
@@ -368,7 +373,7 @@
         window.auth = auth;
         window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc };
 
-        // تسجيل حساب الأدمن عبر جوجل مع التوجيه الموحد
+        // تسجيل حساب الأدمن عبر جوجل مع التوجيه الموحد ومزامنة البروفايل
         window.adminLoginWithGoogle = async function() {
             try {
                 const result = await signInWithPopup(auth, googleProvider);
@@ -376,7 +381,7 @@
                 const email = user.email.toLowerCase();
 
                 let userRole = 'customer';
-                const docId = String(user.phoneNumber || email.replace(/[^a-zA-Z0-9]/g, '_'));
+                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
@@ -392,16 +397,18 @@
                     email: email,
                     phone: user.phoneNumber || '01144730305',
                     role: userRole,
+                    photoURL: user.photoURL || 'icon1-512.png',
                     provider: 'Google Auth',
                     date: new Date().toLocaleString('ar-EG')
                 };
 
                 await setDoc(doc(db, "users", docId), userObj, { merge: true });
+                localStorage.setItem('omda_logged_user', JSON.stringify(userObj));
+                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
 
                 if (typeof routeUserByRole === 'function') {
                     routeUserByRole(userObj);
                 } else {
-                    localStorage.setItem('omda_logged_user', JSON.stringify(userObj));
                     loadAdminDashboard();
                 }
             } catch (error) {
@@ -409,7 +416,22 @@
             }
         };
         
-        console.log("🔥 تم ربط لوحة التحكم الماستر بنظام التوجيه الموحد وسحابة Firebase بنجاح تام!");
+        // مزامنة وعرض بيانات البروفايل فور فتح لوحة التحكم
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
+            
+            const avatarEl = document.getElementById('nav-user-avatar');
+            const nameEl = document.getElementById('nav-username-display');
+
+            if (sessionUser && (sessionUser.name || sessionUser.email)) {
+                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
+                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+            } else {
+                if (nameEl) nameEl.innerText = 'زائر';
+            }
+        });
+
+        console.log("🔥 تم ربط لوحة التحكم الماستر بنظام الحسابات الموحد وسحابة Firebase بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
@@ -440,7 +462,9 @@
             let masterPass = localStorage.getItem('omda_master_password') || '1234';
 
             if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
-                const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', phone: '01144730305', role: 'admin' };
+                const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', phone: '01144730305', role: 'admin', photoURL: 'icon1-512.png' };
+                localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
+                localStorage.setItem('omda_session_user', JSON.stringify(masterUser));
                 routeUserByRole(masterUser);
                 return;
             }
@@ -449,6 +473,8 @@
             let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
 
             if(foundStaff) {
+                localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
+                localStorage.setItem('omda_session_user', JSON.stringify(foundStaff));
                 routeUserByRole(foundStaff);
             } else {
                 alert('بيانات الدخول غير صحيحة! تأكد من البريد/الهاتف وكلمة المرور.');
