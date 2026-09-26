@@ -438,9 +438,11 @@ function enforceAdminSecurity() {
     const badge = document.getElementById('userRoleBadge');
     const adminPanelLink = document.getElementById('adminPanelLink');
     
+    // جعل زر الأدمن ظاهراً دائماً لضمان وصولك إليه بضغطة زر
+    if (adminPanelLink) adminPanelLink.style.display = 'inline-flex';
+
     if (isAdmin) {
         if (badge) badge.innerText = "صلاحيات الماستر والأدمن الكاملة (Master Admin) 👑";
-        if (adminPanelLink) adminPanelLink.style.display = 'flex';
         const tabD = document.getElementById('tabDrivers');
         const tabB = document.getElementById('tabBranches');
         const tabP = document.getElementById('tabPortal');
@@ -451,7 +453,6 @@ function enforceAdminSecurity() {
         if(autoBtn) autoBtn.style.display = 'inline-flex';
     } else {
         if (badge) badge.innerText = "وضع تتبع الشحنة والطلبات للعملاء والزوار 📦";
-        if (adminPanelLink) adminPanelLink.style.display = 'none';
         const tabD = document.getElementById('tabDrivers');
         const tabB = document.getElementById('tabBranches');
         const tabP = document.getElementById('tabPortal');
