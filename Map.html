@@ -24,13 +24,18 @@
 </head>
 <body class="p-3 sm:p-6 space-y-4">
 
-    <!-- الهيدر العلوي -->
+    <!-- الهيدر العلوي مع مزامنة صورة البروفايل واسم المستخدم الحقيقي -->
     <header class="corporate-card p-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white shadow-sm">
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md"><i class="fa-solid fa-fire-burner"></i></div>
+            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md overflow-hidden border-2 border-amber-600">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
             <div>
                 <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // نظام التتبع والاتصال الحي 👑</h1>
-                <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
+                    <span id="nav-username-display" class="text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md"></span>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-2">
@@ -216,7 +221,7 @@
             <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل صاحب الطلب</h3>
             <div id="callOrderInfo" class="text-xs text-slate-600">جاري الاتصال...</div>
             
-            <div class="grid grid-cols-2 gap-3 bg-black rounded-xl overflow-hidden relative aspect-video">
+            <div class="grid grid-cols-2 gap-2 bg-black rounded-xl overflow-hidden relative aspect-video">
                 <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover bg-slate-900"></video>
                 <video id="localVideo" autoplay playsinline muted class="w-24 h-20 object-cover absolute bottom-2 left-2 rounded-lg border-2 border-white shadow-md"></video>
             </div>
@@ -234,7 +239,7 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
-    <!-- إعداد وتهيئة Firebase السحابية لصفحة الخريطة -->
+    <!-- إعداد وتهيئة Firebase وسکریبت مزامنة البروفايل -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -265,8 +270,23 @@
             where,
             getDoc
         };
+
+        // مزامنة وعرض بيانات البروفايل والحساب الحالي عند تحميل صفحة الخريطة
+        document.addEventListener('DOMContentLoaded', () => {
+            const sessionUser = JSON.parse(localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || localStorage.getItem('omda_logged_user') || '{}');
+            
+            const avatarEl = document.getElementById('nav-user-avatar');
+            const nameEl = document.getElementById('nav-username-display');
+
+            if (sessionUser && (sessionUser.name || sessionUser.email)) {
+                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
+                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+            } else {
+                if (nameEl) nameEl.innerText = 'زائر / غير مسجل';
+            }
+        });
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي وربطها بقاعدة بيانات Firebase سحابياً بنجاح تام!");
+        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي ومزامنة الحساب والبروفايل بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
