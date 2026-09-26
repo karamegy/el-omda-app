@@ -35,7 +35,7 @@
             <button onclick="switchTab('cart')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
             <button onclick="switchTab('reservation')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-chair"></i> حجز</button>
             <button onclick="switchTab('favorites')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-heart"></i> المفضلة</button>
-            <button onclick="switchTab('customer')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-user"></i> حسابي</button>
+            <button onclick="switchTab('customer')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-user"></i> حسابي والبروفايل</button>
             
             <button onclick="switchTab('privacy')" class="nav-btn" style="background-color: #78350f; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-shield-halved"></i> الخصوصية</button>
             <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #16a34a; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-map-location-dot"></i> الخريطة 🗺️</a>
@@ -180,30 +180,41 @@
             <div id="favorites-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وعزل الحسابات -->
+        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وقسم البروفايل المعزول -->
         <section id="tab-customer" class="tab-content">
-            <h2>🔐 بوابة تسجيل الدخول الموحدة بحساب جوجل الحقيقي</h2>
+            <h2>🔐 بوابة تسجيل الدخول الموحدة وإدارة البروفايل الشخصي</h2>
             
             <div class="customer-login-box" id="unified-login-box" style="max-width: 480px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #b45309;">
                 <p style="text-align: center; color: #57534e; margin-bottom: 20px; font-weight: bold;">
-                    يرجى تسجيل الدخول حصرياً باستخدام حساب جوجل لضمان عزل الحسابات ومزامنة بروفايلك الحقيقي وطلبك بدقة:
+                    سجل الدخول بحساب جوجل المعتمد لضمان مزامنة حسابك، طلباتك، وصورتك الشخصية ومنع تداخل الحسابات تماماً:
                 </p>
 
-                <!-- زر تسجيل الدخول الحصري عبر جوجل -->
                 <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.05rem;">
                     <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.3rem;"></i> تسجيل الدخول المعتمد باستخدام جوجل 🚀
                 </button>
             </div>
 
-            <!-- لوحة العميل (تظهر للعملاء بعد تسجيل الدخول الحقيقي) -->
+            <!-- لوحة العميل وبروفايله الشخصي (تظهر بعد تسجيل الدخول) -->
             <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <div class="cust-info" style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        مرحباً بك يا <span id="cust-display-name" style="font-weight: bold; color: #b45309;"></span>
-                        <div style="font-size: 0.8rem; color: #64748b;" id="cust-display-email"></div>
+                
+                <!-- قسم البروفايل وصورة الحساب -->
+                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fdf8f6; border-radius: 10px; border: 1px solid #fed7aa;">
+                    <div style="position: relative; width: 95px; height: 95px; margin: 0 auto 10px auto; border-radius: 50%; overflow: hidden; border: 3px solid #b45309; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                        <img id="cust-avatar-img" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
-                    <button onclick="customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white;">تسجيل خروج</button>
+                    <h3 id="cust-display-name" style="color: #78350f; font-size: 1.2rem; margin-bottom: 3px;">اسم المستخدم</h3>
+                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;" id="cust-display-email">email@domain.com</div>
+                    
+                    <label for="profile-pic-input" style="background: #b45309; color: white; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; display: inline-block; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                        <i class="fa-solid fa-camera"></i> تغيير صورة البروفايل الشخصي 🖼️
+                    </label>
+                    <input type="file" id="profile-pic-input" accept="image/*" style="display: none;" onchange="uploadProfilePicture(this)">
                 </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <button onclick="customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white; width: 100%;">تسجيل خروج آمن 🚪</button>
+                </div>
+
                 <div class="cust-info" style="background: #e0f2fe; margin-top: 15px; padding: 10px; border-radius: 8px; color: #0369a1;">
                     ⭐ رصيد نقاط الولاء: <span id="cust-points" style="font-weight: bold; font-size: 1.1rem;">0</span> نقطة (كل 100 جنيه = 10 نقاط هدية)
                 </div>
@@ -268,7 +279,7 @@
         </div>
     </div>
 
-    <!-- إعداد وتهيئة Firebase السحابية وتوجيه الحسابات الموحد بحساب جوجل فقط -->
+    <!-- تهيئة Firebase ومزامنة الحسابات ومنع تداخلها -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -294,14 +305,17 @@
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
                 const email = user.email.toLowerCase();
+                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
                 let userRole = 'customer';
-                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+                let existingPhoto = user.photoURL || 'icon1-512.png';
                 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
                     if (userDoc.exists()) {
-                        userRole = userDoc.data().role || 'customer';
+                        const data = userDoc.data();
+                        userRole = data.role || 'customer';
+                        if(data.photoURL) existingPhoto = data.photoURL;
                     } else if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
                         userRole = 'admin';
                     }
@@ -312,16 +326,17 @@
                     email: email,
                     phone: user.phoneNumber || 'غير متوفر',
                     role: userRole,
+                    photoURL: existingPhoto,
                     provider: 'Google Auth',
                     date: new Date().toLocaleString('ar-EG')
                 };
                 
                 await setDoc(doc(db, "users", docId), userObj, { merge: true });
+                localStorage.setItem('omda_current_cust', JSON.stringify(userObj));
+                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
 
                 if (typeof routeUserByRole === 'function') {
                     routeUserByRole(userObj);
-                } else {
-                    alert(`أهلاً بك يا ${userObj.name}!`);
                 }
             } catch (error) {
                 alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
@@ -342,15 +357,25 @@
             }
         };
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                const custName = user.displayName || user.email.split('@')[0];
-                const userObj = { 
-                    name: custName, 
-                    email: user.email.toLowerCase(), 
+                const email = user.email.toLowerCase();
+                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+                let userObj = { 
+                    name: user.displayName || email.split('@')[0], 
+                    email: email, 
                     phone: user.phoneNumber || 'غير متوفر',
+                    photoURL: user.photoURL || 'icon1-512.png',
                     provider: 'Google Auth'
                 };
+
+                try {
+                    const userDoc = await getDoc(doc(db, "users", docId));
+                    if (userDoc.exists()) {
+                        userObj = userDoc.data();
+                    }
+                } catch(e) {}
+
                 window.currentCustomer = userObj;
                 localStorage.setItem('omda_session_user', JSON.stringify(userObj));
                 localStorage.setItem('omda_current_cust', JSON.stringify(userObj));
@@ -362,8 +387,11 @@
 
                 const nameEl = document.getElementById('cust-display-name');
                 const emailEl = document.getElementById('cust-display-email');
-                if(nameEl) nameEl.innerText = custName;
-                if(emailEl) emailEl.innerText = user.email;
+                const avatarEl = document.getElementById('cust-avatar-img');
+
+                if(nameEl) nameEl.innerText = userObj.name;
+                if(emailEl) emailEl.innerText = userObj.email;
+                if(avatarEl && userObj.photoURL) avatarEl.src = userObj.photoURL;
                 
                 if (typeof loadCustomerDashboard === 'function') {
                     loadCustomerDashboard();
@@ -373,8 +401,6 @@
 
         window.db = db;
         window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
-        
-        console.log("🔥 تم ربط صفحة العميل بنظام حسابات جوجل وسحابة Firebase بنجاح ومعزل تماماً!");
     </script>
 
     <script src="app.js"></script>
