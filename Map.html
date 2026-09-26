@@ -252,14 +252,12 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // إتاحة قاعدة البيانات وأدواتها لملف app.js
         window.db = db;
         window.firebaseModules = { collection, getDocs, doc, onSnapshot };
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي مرتبطة بقاعدة بيانات Firebase بنجاح[span_1](start_span)[span_1](end_span)!");
+        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي مرتبطة بقاعدة بيانات Firebase بنجاح[span_0](start_span)[span_0](end_span)!");
     </script>
 
-    <!-- ربط ملف الجافاسكريبت الخارجي الشامل -->
     <script src="app.js"></script>
 </body>
 </html>
