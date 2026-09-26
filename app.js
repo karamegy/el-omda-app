@@ -46,6 +46,51 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
+// نظام سليدر العروض والمنتجات المتحرك (كل 3 ثواني)
+// ==========================================
+let currentSliderIndex = 0;
+let sliderInterval = null;
+let currentSliderProduct = null;
+
+function initHeroSlider() {
+    if (!window.menuProducts || menuProducts.length === 0) return;
+    updateSliderContent();
+    if (sliderInterval) clearInterval(sliderInterval);
+    sliderInterval = setInterval(() => {
+        currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
+        updateSliderContent();
+    }, 3000); // التبديل كل 3 ثواني بالضبط
+}
+
+function updateSliderContent() {
+    if (!window.menuProducts || menuProducts.length === 0) return;
+    const prod = menuProducts[currentSliderIndex];
+    currentSliderProduct = prod;
+
+    const nameEl = document.getElementById('slider-prod-name');
+    const descEl = document.getElementById('slider-prod-desc');
+    const priceEl = document.getElementById('slider-prod-price');
+    const imgEl = document.getElementById('slider-prod-img');
+
+    if (nameEl) nameEl.innerText = `👑 ${prod.name}`;
+    if (descEl) descEl.innerText = prod.desc;
+    if (priceEl) priceEl.innerText = `${prod.price} جنيه`;
+    if (imgEl) imgEl.src = prod.media || prod.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+}
+
+function sliderClickAction() {
+    if (currentSliderProduct) {
+        window.location.href = `product.html?id=${currentSliderProduct.id}`;
+    }
+}
+
+function sliderAddToCart() {
+    if (currentSliderProduct && typeof addToCart === 'function') {
+        addToCart(currentSliderProduct.id);
+    }
+}
+
+// ==========================================
 // نظام جلب موقع العميل عبر GPS
 // ==========================================
 function fetchCustomerGpsLocation() {
@@ -304,6 +349,7 @@ function enforceAdminSecurity() {
 document.addEventListener('DOMContentLoaded', () => {
     enforceAdminSecurity();
     loadSavedTicker();
+    initHeroSlider(); // تشغيل سليدر المنتجات
 
     if(typeof renderMenu === 'function') renderMenu();
     if(typeof updateCartUI === 'function') updateCartUI();
@@ -742,6 +788,7 @@ function saveAndAddNewProduct(prod) {
     document.getElementById('new-prod-desc').value = '';
 
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
+    initHeroSlider(); // تحديث السليدر
 }
 
 function adminDeleteProduct(id) {
@@ -749,6 +796,7 @@ function adminDeleteProduct(id) {
     menuProducts = menuProducts.filter(p => p.id !== id);
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
     loadAdminDashboard();
+    initHeroSlider(); // تحديث السليدر
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
@@ -812,7 +860,6 @@ function addToCart(productId) {
     alert(`تم إضافة (${prod.name}) إلى السلة بنجاح! 🛒`);
 }
 
-// دالة تحديث السلة وحفظها تلقائياً في التخزين المحلي لضمان استمراريتها بين الصفحات
 function updateCartUI() {
     localStorage.setItem('omda_cart', JSON.stringify(cart));
 
@@ -1036,28 +1083,6 @@ function submitReservation() {
     guestsEl.value = '';
     if(notesEl) notesEl.value = '';
     switchTab('menu');
-}
-
-function customerLogin() {
-    const phoneInput = document.getElementById('login-phone');
-    if(!phoneInput) return;
-    const phone = phoneInput.value.trim();
-    if(!phone) {
-        alert('أدخل رقم الهاتف من فضلك');
-        return;
-    }
-
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    const userOrder = allOrders.find(o => o.phone === phone);
-
-    if(!userOrder) {
-        alert('لا توجد طلبات مسجلة بهذا الرقم!');
-        return;
-    }
-
-    currentCustomer = { name: userOrder.name, phone: userOrder.phone };
-    localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
-    loadCustomerDashboard();
 }
 
 function loadCustomerDashboard() {
