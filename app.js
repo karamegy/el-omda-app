@@ -57,7 +57,7 @@ function getStandardUserDocId(userOrKey) {
     if (str.includes('@')) {
         return str.toLowerCase().replace(/[^a-zA-Z0-9]/g, '_');
     }
-    return str;
+    return str.replace(/[^a-zA-Z0-9_]/g, '_');
 }
 
 // ==========================================
@@ -1616,7 +1616,7 @@ async function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات والسائقين سحابياً (التحكم الشامل المتكامل)
+// وظائف إدارة الحسابات والسائقين سحابياً (التحكم الشامل المتكامل الآمن)
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1646,17 +1646,17 @@ async function loadGoogleAccountsList() {
     }
 
     container.innerHTML = '';
-    regUsers.forEach((usr) => {
+    regUsers.forEach((usr, index) => {
         let currentRole = usr.role || 'customer';
         let docKey = getStandardUserDocId(usr);
         container.innerHTML += `
-            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px; cursor:pointer;" onclick="openEditUserModal('${docKey}')">
+            <div style="background:#fff; padding:12px; border-radius:8px; border:1px solid #bfdbfe; display:flex; flex-direction:column; gap:8px; cursor:pointer;" onclick="openEditUserModal(${index})">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                     <div style="display:flex; align-items:center; gap:10px;">
                         <img src="${usr.photoURL || 'icon1-512.png'}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1px solid #3b82f6;">
                         <div>
-                            <strong>👤 ${usr.name}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
-                            <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
+                            <strong>👤 ${usr.name || 'بدون اسم'}</strong> <span style="background:#dbeafe; color:#1e40af; padding:2px 6px; border-radius:4px; font-size:0.75rem;">${usr.provider || 'مسجل'}</span><br>
+                            <span style="font-size:0.85rem; color:#475569;">📧 الإيميل: ${usr.email || 'غير متوفر'} | 📞 الهاتف: ${usr.phone || 'غير متوفر'}</span><br>
                             <span style="font-size:0.8rem; color:#64748b;">📅 التسجيل: ${usr.date || 'حديث'} | <b style="color:#0284c7;">انقر للتعديل ✍️</b></span>
                         </div>
                     </div>
@@ -1766,9 +1766,15 @@ async function deleteGoogleAccount(docKey) {
     alert('✓ تم حذف الحساب بنجاح.');
 }
 
-function openEditUserModal(docKey) {
+function openEditUserModal(indexOrKey) {
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
+    let targetUser = null;
+
+    if (typeof indexOrKey === 'number' || !isNaN(Number(indexOrKey))) {
+        targetUser = regUsers[Number(indexOrKey)];
+    } else {
+        targetUser = regUsers.find(u => String(u.phone) === String(indexOrKey) || String(u.email) === String(indexOrKey) || getStandardUserDocId(u) === String(indexOrKey));
+    }
 
     if (!targetUser) {
         alert("⚠️ لم يتم العثور على بيانات هذا المستخدم!");
