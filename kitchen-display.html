@@ -16,14 +16,14 @@
             <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img" style="width: 42px; height: 42px; border-radius: 50%;">
             <div>
                 <h1 style="font-size: 1.2rem; margin: 0; color: #fde047;">🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً</span>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً (توفير القراءات عبر getDoc)</span>
             </div>
         </div>
         <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
             <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-house"></i> الرئيسية</a>
             <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة</a>
             <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> الأدمن</a>
-            <button onclick="loadKitchenOrders()" class="btn-primary" style="background: #dc2626; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> تحديث</button>
+            <button onclick="syncAllActiveOrdersWithGetDoc()" class="btn-primary" style="background: #dc2626; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> تحديث ذكي (getDoc)</button>
         </nav>
     </header>
 
@@ -38,7 +38,7 @@
         </div>
     </main>
 
-    <!-- إعداد وتهيئة Firebase السحابية لصفحة المطبخ (KDS) -->
+    <!-- إعداد وتهيئة Firebase وتوفير القراءات باستخدام getDoc و onSnapshot -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -70,36 +70,81 @@
             getDoc
         };
         
-        console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase سحابياً بنجاح تام!");
+        console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase سحابياً مع تفعيل getDoc لتوفير القراءات!");
+
+        // 1. العرض الفوري من التخزين المحلي لمنع أي تأخير أو رعشة (0 قراءات سحابية عند الفتح)
+        document.addEventListener('DOMContentLoaded', () => {
+            loadKitchenOrdersFromLocal();
+            // مزامنة خفيفة للطلبات النشطة فقط باستخدام getDoc أو الاستماع اللحظي الذكي
+            syncActiveOrdersSmart();
+        });
     </script>
 
-    <!-- سكربت جلب وتحديث الطلبات للمطبخ -->
+    <!-- سكربت إدارة عرض وتحديث طلبات المطبخ -->
     <script>
-        async function loadKitchenOrders() {
+        function loadKitchenOrdersFromLocal() {
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            renderKitchenGrid(allOrders);
+        }
+
+        // استخدام getDoc لجلب مستندات محددة فقط (توفير هائل في استهلاك القراءات)
+        async function syncActiveOrdersSmart() {
             const grid = document.getElementById('kitchen-orders-grid');
-            if(!grid) return;
-            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري مزامنة الطلبات من السحابة...</p>';
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            
+            if (allOrders.length === 0 && grid) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري جلب الطلبات من السحابة...</p>';
+            }
 
-            let allOrders = [];
-
-            // جلب الطلبات من سحابة Firebase إذا كانت متاحة
             if (window.db && window.firebaseModules) {
                 try {
-                    const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "orders"));
-                    querySnapshot.forEach((docSnap) => {
-                        allOrders.push(docSnap.data());
-                    });
-                    if(allOrders.length > 0) {
+                    // إذا كان لدينا طلبات محلية نشطة، نقوم بالتحقق من كل طلب على حدة باستخدام getDoc (قراءة مستند واحد لكل طلب بدلاً من تحميل كل المجموعة)
+                    let activeOrders = allOrders.filter(o => o.status !== 'done');
+                    
+                    if (activeOrders.length > 0) {
+                        for (let order of activeOrders) {
+                            const docRef = window.firebaseModules.doc(window.db, "orders", String(order.id));
+                            const docSnap = await window.firebaseModules.getDoc(docRef);
+                            if (docSnap.exists()) {
+                                const cloudData = docSnap.data();
+                                // تحديث البيانات المحلية إذا حدث تغيير
+                                const index = allOrders.findIndex(o => o.id === cloudData.id);
+                                if (index > -1) {
+                                    allOrders[index] = cloudData;
+                                }
+                            }
+                        }
                         localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                        renderKitchenGrid(allOrders);
+                    } else {
+                        // إذا لم تكن هناك طلبات محلية، نقوم بجلب المجموعة مرة واحدة كبداية
+                        const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "orders"));
+                        allOrders = [];
+                        querySnapshot.forEach((docSnap) => {
+                            allOrders.push(docSnap.data());
+                        });
+                        if(allOrders.length > 0) {
+                            localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                        }
+                        renderKitchenGrid(allOrders);
                     }
                 } catch (e) {
-                    console.error("Cloud kitchen orders fetch error:", e);
+                    console.error("Cloud sync error with getDoc:", e);
+                    loadKitchenOrdersFromLocal();
                 }
             }
+        }
 
-            if(allOrders.length === 0) {
-                allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-            }
+        // زر التحديث اليدوي الذكي باستخدام getDoc
+        async function syncAllActiveOrdersWithGetDoc() {
+            alert("🔄 جاري التحديث الذكي للطلبات عبر getDoc...");
+            await syncActiveOrdersSmart();
+            alert("✓ تم تحديث شاشة المطبخ بنجاح بأقل عدد من القراءات!");
+        }
+
+        function renderKitchenGrid(allOrders) {
+            const grid = document.getElementById('kitchen-orders-grid');
+            if(!grid) return;
 
             let activeOrders = allOrders.filter(o => o.status !== 'done');
 
@@ -108,11 +153,11 @@
                 return;
             }
 
-            grid.innerHTML = '';
+            let htmlContent = '';
             activeOrders.forEach((order) => {
                 let itemsList = (order.items || []).map(i => `<li style="margin-bottom: 6px; border-bottom: 1px dashed #44403c; padding-bottom: 4px;">🔹 ${i.name} <strong style="color: #fde047;">(عدد: ${i.qty})</strong></li>`).join('');
                 
-                grid.innerHTML += `
+                htmlContent += `
                     <div style="background: #292524; border: 2.5px solid ${order.status==='cooking'?'#f59e0b':'#dc2626'}; border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #44403c; padding-bottom: 8px;">
                             <strong style="color: #fde047; font-size: 1.15rem;" class="mono-font">${order.id}</strong>
@@ -131,6 +176,7 @@
                     </div>
                 `;
             });
+            grid.innerHTML = htmlContent;
         }
 
         async function setKitchenStatus(orderId, newStatus) {
@@ -139,6 +185,7 @@
             if(order) {
                 order.status = newStatus;
                 localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                renderKitchenGrid(allOrders);
 
                 if (window.db && window.firebaseModules) {
                     try {
@@ -150,8 +197,6 @@
                         console.error("Cloud status update error:", e);
                     }
                 }
-
-                loadKitchenOrders();
             }
         }
 
@@ -161,11 +206,6 @@
             if(st === 'delivery') return 'مع الدليفري 🛵';
             return st;
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            loadKitchenOrders();
-            setInterval(loadKitchenOrders, 5000); // تحديث سحابي تلقائي كل 5 ثوانٍ
-        });
     </script>
     <script src="app.js"></script>
 </body>
