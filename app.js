@@ -812,6 +812,89 @@ function adminDeleteProduct(id) {
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
+// ==========================================
+// دوال تعديل وإدارة أصناف المنيو من لوحة الأدمن
+// ==========================================
+function openEditProductModal(id) {
+    const prod = menuProducts.find(p => p.id === id);
+    if (!prod) return;
+
+    document.getElementById('edit-prod-id').value = prod.id;
+    document.getElementById('edit-prod-name').value = prod.name;
+    document.getElementById('edit-prod-cat').value = prod.category;
+    document.getElementById('edit-prod-price').value = prod.price;
+    document.getElementById('edit-prod-desc').value = prod.desc;
+    
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeEditProductModal() {
+    const modal = document.getElementById('editProductModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function saveEditedProduct() {
+    const idInput = document.getElementById('edit-prod-id');
+    const nameInput = document.getElementById('edit-prod-name');
+    const catSelect = document.getElementById('edit-prod-cat');
+    const priceInput = document.getElementById('edit-prod-price');
+    const descInput = document.getElementById('edit-prod-desc');
+    const fileInput = document.getElementById('edit-prod-file');
+
+    if (!idInput || !nameInput || !priceInput || !descInput) return;
+
+    const id = parseInt(idInput.value);
+    const name = nameInput.value.trim();
+    const category = catSelect ? catSelect.value : 'grills';
+    const price = parseFloat(priceInput.value);
+    const desc = descInput.value.trim();
+
+    if (!name || isNaN(price) || !desc) {
+        alert('من فضلك ادخل اسم الوجبة، السعر، والوصف بشكل صحيح!');
+        return;
+    }
+
+    const prodIndex = menuProducts.findIndex(p => p.id === id);
+    if (prodIndex === -1) return;
+
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            menuProducts[prodIndex] = {
+                ...menuProducts[prodIndex],
+                name,
+                category,
+                price,
+                desc,
+                media: e.target.result,
+                mediaType: file.type.startsWith('video') ? 'video' : 'image'
+            };
+            finalizeProductEdit();
+        };
+        reader.readAsDataURL(file);
+    } else {
+        menuProducts[prodIndex] = {
+            ...menuProducts[prodIndex],
+            name,
+            category,
+            price,
+            desc
+        };
+        finalizeProductEdit();
+    }
+}
+
+function finalizeProductEdit() {
+    localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
+    closeEditProductModal();
+    loadAdminDashboard();
+    initHeroSlider();
+    if (typeof renderMenu === 'function') renderMenu();
+    alert('✓ تم تحديث وتعديل بيانات الوجبة بنجاح يا أسطى كرم! 👑');
+}
+
 function toggleFavorite(productId) {
     const index = favorites.indexOf(productId);
     if(index > -1) {
@@ -1436,11 +1519,12 @@ function loadAdminDashboard() {
         } else {
             menuProducts.forEach(prod => {
                 adminMenuList.innerHTML += `
-                    <div style="background: #fff; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e7e5e4;">
+                    <div style="background: #fff; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e7e5e4; cursor: pointer;" onclick="openEditProductModal(${prod.id})">
                         <div>
-                            <strong>${prod.name}</strong> (${prod.price} جنيه) - <span style="font-size:0.8rem; color:#78716c;">${prod.category}</span>
+                            <strong>${prod.name}</strong> (${prod.price} جنيه) - <span style="font-size:0.8rem; color:#78716c;">${prod.category}</span><br>
+                            <span style="font-size: 0.75rem; color: #0284c7;"><i class="fa-solid fa-pen"></i> انقر للتعديل</span>
                         </div>
-                        <button onclick="adminDeleteProduct(${prod.id})" class="btn-danger btn-sm" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
+                        <button onclick="event.stopPropagation(); adminDeleteProduct(${prod.id})" class="btn-danger btn-sm" style="padding: 4px 10px; font-size: 0.8rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 `;
             });
