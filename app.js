@@ -54,7 +54,7 @@ function findProductById(id) {
 }
 
 // ==========================================
-// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب (مؤمن بدقة)
+// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب
 // ==========================================
 function routeUserByRole(user) {
     localStorage.setItem('omda_session_user', JSON.stringify(user));
@@ -788,11 +788,12 @@ async function addNewDriverWithLocation() {
         lng = restaurantCoords[1] + 0.002;
     }
 
-    const newDriverObj = { id: Date.now(), name, phone, lat, lng };
+    const newDriverObj = { id: Date.now(), name, phone, lat, lng, role: 'driver' };
 
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriverObj.id)), newDriverObj);
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", String(phone)), { name, phone, role: 'driver', provider: 'Admin Added' }, { merge: true });
         } catch (e) {
             console.error("Firebase driver add error:", e);
         }
@@ -801,6 +802,12 @@ async function addNewDriverWithLocation() {
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     drivers.push(newDriverObj);
     localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    if(!regUsers.some(u => u.phone === phone)) {
+        regUsers.push({ name, phone, role: 'driver', provider: 'Admin Added' });
+        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
+    }
     
     alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
     
@@ -1328,7 +1335,6 @@ async function submitOrder() {
     }
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    // منع تكرار الطلب محلياً إذا كان موجوداً مسبقاً
     if (!allOrders.some(o => o.id === newOrder.id)) {
         allOrders.unshift(newOrder);
         localStorage.setItem('omda_orders', JSON.stringify(allOrders));
@@ -1497,8 +1503,6 @@ function loadCustomerDashboard() {
     if(pointsEl) pointsEl.innerText = userPoints;
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    
-    // ⭐ تصفية الطلبات لمنع التكرار نهائياً بناءً على ID الطلب
     allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
 
     const myOrders = allOrders.filter(o => 
@@ -1624,7 +1628,7 @@ async function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات
+// وظائف إدارة الحسابات والسائقين (المحدثة حصرياً للمسجلين)
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1718,7 +1722,7 @@ async function updateUserRole(docKey, newRole) {
     if(newRole === 'driver') {
         let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
         if(!drivers.some(d => String(d.phone) === String(phone) || d.name === name)) {
-            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002 });
+            drivers.push({ id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002, role: 'driver' });
             localStorage.setItem('omda_drivers', JSON.stringify(drivers));
         }
     } else if(newRole === 'admin' || newRole === 'accountant' || newRole === 'worker') {
@@ -1735,7 +1739,7 @@ async function updateUserRole(docKey, newRole) {
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح وتمت المزامنة سحابياً وفي قائمة الطيارين الموثقين! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
@@ -1968,7 +1972,9 @@ function loadAdminDashboard() {
         }
     }
 
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
+
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
         ordersList.innerHTML = '';
@@ -1977,9 +1983,9 @@ function loadAdminDashboard() {
         } else {
             allOrders.forEach((order) => {
                 let driverOptions = `<option value="">-- اختر سائق مسجل للطلب --</option>`;
-                drivers.forEach(d => {
+                verifiedDrivers.forEach(d => {
                     let selected = order.assignedDriver === d.name ? 'selected' : '';
-                    driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone})</option>`;
+                    driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone || d.email})</option>`;
                 });
 
                 ordersList.innerHTML += `
@@ -2352,6 +2358,7 @@ function filterOrders(status, btn) {
     loadLiveTrackingMap();
 }
 
+// ⭐ دالة تحميل الخريطة الحية والطلبات (محدثة بحيث تحمي الخريطة للزوار والعملاء العاديين)
 function loadLiveTrackingMap() {
     const listContainer = document.getElementById('live-orders-list');
     if(!listContainer || !markersLayer) return;
@@ -2360,6 +2367,9 @@ function loadLiveTrackingMap() {
     markersLayer.clearLayers();
     polylinesLayer.clearLayers();
     driversLayer.clearLayers();
+
+    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+    const isAdminOrDriver = checkAdminPermission() || loggedUser.role === 'driver';
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
@@ -2370,6 +2380,13 @@ function loadLiveTrackingMap() {
     let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     const statDrivers = document.getElementById('statDriversCount');
     if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
+
+    // حماية الخريطة: منع الزوار والعملاء العاديين من استعراض الشحنات العامة على الخريطة
+    if (!isAdminOrDriver) {
+        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">🔒 الخريطة العامة ومتابعة الأسطول مخصصة للإدارة والمناديب فقط. استخدم خانة البحث بالأعلى لتتبع طلبك برقم الهاتف أو الفاتورة.</p>';
+        loadDriversOnMap();
+        return;
+    }
 
     if(allOrders.length === 0) {
         listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً.</p>';
@@ -2514,7 +2531,7 @@ async function searchAndCalculateRoute() {
         } else {
             alert("تعذر العثور على العنوان المدخل.");
         }
-    } catch(e) { alert("حدث خطأ أثناء حساب المسار."); }
+    }	catch(e) { alert("حدث خطأ أثناء حساب المسار."); }
 }
 
 function clearActiveRoute() {
@@ -2546,18 +2563,26 @@ async function searchCustomLocation() {
     } catch(e) {}
 }
 
+// ⭐ دالة تحميل قائمة السائقين (محدثة بحيث تعتمد حصرياً على الحسابات المسجلة ذات دور طيار)
 function loadDriversAdminList() {
     const container = document.getElementById('drivers-list-container');
     if(!container) return;
     container.innerHTML = '';
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    if(drivers.length === 0) { container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب مسجلة.</p>'; return; }
+    
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
 
-    drivers.forEach((d) => {
+    if(verifiedDrivers.length === 0) { 
+        container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب دليفري مسجلة من الحسابات الحقيقية حالياً.</p>'; 
+        return; 
+    }
+
+    verifiedDrivers.forEach((d) => {
+        let docKey = d.phone || d.email;
         container.innerHTML += `
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
-                <div><strong>${d.name}</strong> (${d.phone})<br><span class="text-[10px] text-slate-500 mono-font">(${d.lat ? d.lat.toFixed(4) : 0}, ${d.lng ? d.lng.toFixed(4) : 0})</span></div>
-                <button onclick="deleteDriver('${d.id || d.name}')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">حذف</button>
+                <div><strong>${d.name}</strong> (${d.phone || d.email})<br><span class="text-[10px] text-emerald-600 font-bold">✓ حساب مسجل وموثق كطبار</span></div>
+                <button onclick="updateUserRole('${docKey}', 'customer')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">إلغاء الطيار</button>
             </div>
         `;
     });
@@ -2587,9 +2612,12 @@ function populateDriverPortalSelect() {
     const select = document.getElementById('portal-driver-select');
     if(!select) return;
     select.innerHTML = '';
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.forEach(d => {
-        select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone})</option>`;
+    
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
+
+    verifiedDrivers.forEach(d => {
+        select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone || d.email})</option>`;
     });
 }
 
@@ -2646,8 +2674,10 @@ function autoDispatchOrders() {
     if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بتنفيذ التوزيع الآلي!"); return; }
 
     let orders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    if(drivers.length === 0) { alert('أضف مناديب دليفري أولاً!'); return; }
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
+    let drivers = regUsers.filter(u => u.role === 'driver');
+
+    if(drivers.length === 0) { alert('أضف مناديب دليفري مسجلين أولاً!'); return; }
 
     let assignedCount = 0;
     orders.forEach(order => {
@@ -2693,20 +2723,12 @@ function initRealtimeCloudSync() {
                 cloudOrders.push(doc.data());
             });
 
-            // ⭐ تصفية الطلبات السحابية لمنع التكرار نهائياً
             cloudOrders = Array.from(new Map(cloudOrders.map(o => [o.id, o])).values());
-
             localStorage.setItem('omda_orders', JSON.stringify(cloudOrders));
 
-            if (typeof loadLiveTrackingMap === 'function') {
-                loadLiveTrackingMap();
-            }
-            if (typeof loadAdminDashboard === 'function') {
-                loadAdminDashboard();
-            }
-            if (typeof loadCustomerDashboard === 'function') {
-                loadCustomerDashboard();
-            }
+            if (typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
+            if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
+            if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
         }, (error) => {
             console.error("خطأ في مزامنة الطلبات:", error);
         });
@@ -2719,15 +2741,9 @@ function initRealtimeCloudSync() {
 
             localStorage.setItem('omda_drivers', JSON.stringify(cloudDrivers));
 
-            if (typeof loadDriversOnMap === 'function') {
-                loadDriversOnMap();
-            }
-            if (typeof loadLiveTrackingMap === 'function') {
-                loadLiveTrackingMap();
-            }
-            if (typeof loadDriversAdminList === 'function') {
-                loadDriversAdminList();
-            }
+            if (typeof loadDriversOnMap === 'function') loadDriversOnMap();
+            if (typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
+            if (typeof loadDriversAdminList === 'function') loadDriversAdminList();
         }, (error) => {
             console.error("خطأ في مزامنة الطيارين:", error);
         });
