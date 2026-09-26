@@ -310,7 +310,7 @@
     </main>
 
     <!-- نافذة تعديل الصنف المنبثقة (Modal) -->
-    <div id="editProductModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
+    <div id="editProductModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
         <div style="background: #fff; padding: 25px; border-radius: 14px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
             <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الصنف 👑</h3>
             <input type="hidden" id="edit-prod-id">
@@ -342,8 +342,39 @@
             <textarea id="edit-prod-desc" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #d6d3d1; border-radius: 8px; height: 90px;"></textarea>
 
             <div style="display: flex; gap: 10px;">
-                <button onclick="saveEditedProduct()" class="btn-primary" style="flex: 1; padding: 12px; background-color: #16a34a; font-weight: bold;">حفظ التعديلات ✅</button>
-                <button onclick="closeEditProductModal()" class="btn-secondary" style="flex: 1; padding: 12px; background-color: #dc2626; color: white; font-weight: bold;">إلغاء ❌</button>
+                <button onclick="saveEditedProduct()" class="btn-primary" style="flex: 1; padding: 12px; background-color: #16a34a; font-weight: bold; cursor: pointer;">حفظ التعديلات ✅</button>
+                <button onclick="closeEditProductModal()" class="btn-secondary" style="flex: 1; padding: 12px; background-color: #dc2626; color: white; font-weight: bold; cursor: pointer;">إلغاء ❌</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل بيانات المستخدم أو العميل المنبثقة (مضافة حديثاً لتعمل مع النقر على الحسابات) -->
+    <div id="editUserModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
+        <div style="background: #fff; padding: 25px; border-radius: 14px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
+            <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الحساب والصلاحية 👑</h3>
+            <input type="hidden" id="edit-user-original-id">
+            
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">اسم المستخدم:</label>
+            <input type="text" id="edit-user-name" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d6d3d1; border-radius: 8px;">
+            
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">البريد الإلكتروني:</label>
+            <input type="email" id="edit-user-email" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d6d3d1; border-radius: 8px;">
+
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">رقم الهاتف:</label>
+            <input type="text" id="edit-user-phone" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d6d3d1; border-radius: 8px;">
+
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">الصلاحية والدور:</label>
+            <select id="edit-user-role" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #d6d3d1; border-radius: 8px; font-weight: bold; background: #fff;">
+                <option value="customer">👤 عميل (Customer)</option>
+                <option value="admin">👑 مدير / أدمن (Admin)</option>
+                <option value="accountant">💰 محاسب (Accountant)</option>
+                <option value="worker">👷 عامل (Worker)</option>
+                <option value="driver">🏍️ طيار / دليفري (Driver)</option>
+            </select>
+
+            <div style="display: flex; gap: 10px;">
+                <button onclick="saveEditedUserAccount()" style="flex: 1; padding: 12px; background-color: var(--admin-primary); color: white; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">حفظ التعديلات ✓</button>
+                <button onclick="closeEditUserModal()" style="flex: 1; padding: 12px; background-color: #e7e5e4; color: #1c1917; font-weight: bold; border: none; border-radius: 8px; cursor: pointer;">إلغاء ✕</button>
             </div>
         </div>
     </div>
