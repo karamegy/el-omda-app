@@ -112,7 +112,7 @@
             <div class="admin-nav-grid">
                 <button onclick="switchAdminSection('vault', this)" class="admin-section-btn active"><i class="fa-solid fa-vault"></i> الخزنة والأرباح</button>
                 <button onclick="switchAdminSection('orders', this)" class="admin-section-btn"><i class="fa-solid fa-box-open"></i> الطلبات</button>
-                <button onclick="switchAdminSection('google-accounts', this)" class="admin-section-btn"><i class="fa-solid fa-users"></i> حسابات جوجل</button>
+                <button onclick="switchAdminSection('google-accounts', this)" class="admin-section-btn"><i class="fa-solid fa-users"></i> الحسابات والعملاء</button>
                 <button onclick="switchAdminSection('reservations', this)" class="admin-section-btn"><i class="fa-solid fa-chair"></i> الحجوزات</button>
                 <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة وجبة</button>
                 <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> المنيو الحالي</button>
@@ -153,11 +153,11 @@
                 <div id="admin-orders-list" class="admin-orders-list"></div>
             </div>
 
-            <!-- 2.5 قسم عرض كافة حسابات جوجل المسجلة -->
+            <!-- 2.5 قسم إدارة وتعيين أدوار كافة الحسابات والعملاء -->
             <div id="section-google-accounts" class="admin-panel-box" style="border-color: #2563eb;">
-                <h3 style="margin-bottom: 12px; color: #2563eb;"><i class="fa-solid fa-users"></i> كافة الحسابات والعملاء المسجلين عبر جوجل (Google Auth Accounts)</h3>
-                <p style="font-size: 0.85rem; color: #57534e; margin-bottom: 15px;">قائمة بجميع المستخدمين الذين سجلوا دخولهم أو أنشأوا حسابات عبر مصادقة جوجل في التطبيق:</p>
-                <div id="admin-google-accounts-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 350px; overflow-y: auto;"></div>
+                <h3 style="margin-bottom: 12px; color: #2563eb;"><i class="fa-solid fa-users"></i> إدارة الحسابات والعملاء وتعيين الأدوار (Accounts & Roles Control) 👑</h3>
+                <p style="font-size: 0.85rem; color: #57534e; margin-bottom: 15px;">قائمة بجميع العملاء والمستخدمين المسجلين. يمكنك ترقية وتعيين أدوارهم فوراً (عميل، مدير، محاسب، عامل، طيار):</p>
+                <div id="admin-google-accounts-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;"></div>
             </div>
 
             <!-- 3. حجوزات الطاولات والعزائم -->
@@ -228,6 +228,7 @@
                     <select id="staff-role" style="margin-bottom: 10px; width: 100%; padding: 10px; border-radius: 6px;">
                         <option value="admin">مشرف / أدمن إضافي (صلاحيات كاملة)</option>
                         <option value="accountant">محاسب (إدارة الخزنة والطلبات)</option>
+                        <option value="worker">عامل (إدارة المطبخ والخدمات)</option>
                         <option value="staff">موظف (متابعة الطلبات والحجوزات)</option>
                     </select>
                     <button onclick="createNewStaff()" class="btn-primary" style="background-color: #0284c7;">إضافة الحساب الجديد ➕</button>
@@ -336,6 +337,7 @@
                         name: user.displayName || 'مدير / عميل جوجل',
                         email: email,
                         phone: user.phoneNumber || 'غير متوفر',
+                        role: (email === 'haretg@gmail.com' || email === 'admin@omda.com') ? 'admin' : 'customer',
                         provider: 'Google Auth',
                         date: new Date().toLocaleString('ar-EG')
                     });
