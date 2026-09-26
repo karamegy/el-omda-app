@@ -46,7 +46,7 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// دالة موحدة وبحتة آمنة للـ ID (تمنع مشكلة String و Number نهائياً)
+// دالة موحدة وبحتة آمنة للـ ID
 // ==========================================
 function findProductById(id) {
     if (!menuProducts || menuProducts.length === 0) return null;
@@ -54,7 +54,7 @@ function findProductById(id) {
 }
 
 // ==========================================
-// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب
+// نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب (مؤمن بدقة)
 // ==========================================
 function routeUserByRole(user) {
     localStorage.setItem('omda_session_user', JSON.stringify(user));
@@ -63,19 +63,31 @@ function routeUserByRole(user) {
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
 
-    if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant' || role === 'worker') {
+    // 1. المدير العام أو الأدمن أو المحاسب فقط
+    if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
         localStorage.setItem('omda_logged_user', JSON.stringify(user));
-        alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك للوحة التحكم...`);
+        alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
         window.location.href = 'admin.html';
         return;
     }
 
+    // 2. طيار الدليفري
     if (role === 'driver') {
+        localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
         window.location.href = 'Map.html';
         return;
     }
 
+    // 3. الموظف (Worker / Staff) - ممنوع منعاً باتاً من دخول لوحة التحكم
+    if (role === 'worker' || role === 'staff') {
+        localStorage.removeItem('omda_logged_user');
+        alert(`👷 عذراً يا ${user.name || 'موظفنا العزيز'}، حسابك بصلاحية "موظف" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // 4. العميل العادي
     localStorage.setItem('omda_current_cust', JSON.stringify(user));
     alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
     
@@ -572,6 +584,21 @@ function enforceAdminSecurity() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // التحقق الصارم في صفحة الأدمن لمنع الموظفين
+    if (window.location.pathname.includes('admin.html')) {
+        let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+        const email = (loggedUser.email || '').toLowerCase();
+        const role = (loggedUser.role || '').toLowerCase();
+        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || loggedUser.phone === '01144730305' || role === 'admin' || role === 'accountant');
+
+        if (!isAdmin) {
+            alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة للإدارة العليا والمحاسبين فقط.");
+            localStorage.removeItem('omda_logged_user');
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+
     enforceAdminSecurity();
     loadSavedTicker();
     initHeroSlider();
@@ -1701,6 +1728,10 @@ async function updateUserRole(docKey, idx, newRole) {
 }
 
 function deleteGoogleAccount(idx) {
+    if(!checkAdminPermission()) {
+        alert("🚫 غير مسموح لك بحذف الحسابات!");
+        return;
+    }
     if(!confirm('هل أنت متأكد من حذف هذا الحساب من النظام؟')) return;
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     regUsers.splice(idx, 1);
