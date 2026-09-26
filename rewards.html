@@ -3,86 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر مكافآت ونقاط الولاء | مشويات العمدة</title>
+    <title>متجر مكافآت ونقاط الولاء | كبابجي ومشويات العمدة</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#b45309">
 </head>
-<body>
+<body class="p-3 sm:p-6 space-y-4" style="background: #f5f5f4; font-family: 'Cairo', sans-serif; margin: 0; padding: 0;">
 
-    <header class="main-header">
-        <div class="logo-container">
-            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img">
-            <h1>مكافآت الولاء 👑</h1>
+    <!-- الهيدر العلوي الموحد -->
+    <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div class="logo-container" style="display: flex; align-items: center; gap: 12px;">
+            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img" style="width: 42px; height: 42px; border-radius: 50%;">
+            <div>
+                <h1 style="font-size: 1.2rem; margin: 0; color: #fde047;">مكافآت الولاء 👑</h1>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متجر الهدايا والنقاط الرمزية</span>
+            </div>
         </div>
-        <nav class="nav-links">
-            <a href="index.html" class="nav-btn"><i class="fa-solid fa-house"></i> الرئيسية</a>
+        <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
+            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-house"></i> الرئيسية</a>
+            <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> الأدمن</a>
         </nav>
     </header>
 
-    <main class="container">
-        <div class="banner" style="background: linear-gradient(135deg, #0369a1, #0284c7);">
-            <h2>⭐ استبدل نقاط ولائك بوجبات مجانية</h2>
-            <p>كلما طلبت أكثر من مشويات العمدة، كلما جمعت نقاطاً أكثر واستمتعت بمكافآت حصرية!</p>
+    <main class="container" style="max-width: 900px; margin: 30px auto; padding: 0 15px;">
+        <div class="banner" style="background: linear-gradient(135deg, #0369a1, #0284c7); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(3,105,161,0.25);">
+            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">⭐ استبدل نقاط ولائك بوجبات مجانية</h2>
+            <p style="font-size: 0.95rem; color: #e0f2fe;">كلما طلبت أكثر من مشويات العمدة، كلما جمعت نقاطاً أكثر واستمتعت بمكافآت حصرية!</p>
         </div>
 
-        <div class="cart-container" style="max-width: 600px; margin: 0 auto; text-align: center; margin-bottom: 25px;">
-            <h3 style="color: #78350f; margin-bottom: 10px;">رصيد نقاطك الحالي</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #16a34a;" id="user-reward-points">0 نقطة</div>
-            <p style="font-size: 0.85rem; color: #57534e; margin-top: 5px;">(كل 100 جنيه مشتريات = 10 نقاط هدية مجانية)</p>
+        <div class="cart-container" style="max-width: 600px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 14px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid #0284c7;">
+            <h3 style="color: #78350f; margin-bottom: 10px; font-size: 1.1rem;">رصيد نقاطك الحالي</h3>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #16a34a;" id="user-reward-points" class="mono-font">0 نقطة</div>
+            <p style="font-size: 0.85rem; color: #57534e; margin-top: 8px;">(كل 100 جنيه مشتريات = 10 نقاط هدية مجانية)</p>
         </div>
 
-        <h3 style="color: #fde047; margin-bottom: 15px; text-align: center;">🎁 قائمة الهدايا المتاحة للاستبدال:</h3>
+        <h3 style="color: #b45309; margin-bottom: 20px; text-align: center; font-size: 1.25rem;">🎁 قائمة الهدايا المتاحة للاستبدال:</h3>
         
-        <div class="menu-grid">
-            <div class="menu-card" style="padding: 15px; text-align: center;">
-                <h3 style="color: #991b1b;">طبق ممبار فاخر مقرمش</h3>
-                <p>استبدل نقاطك واحصل على طبق ممبار ذهبي هدية.</p>
-                <div class="price" style="margin: 10px 0;">50 نقطة</div>
-                <button onclick="redeemReward(50, 'طبق ممبار فاخر')" class="btn-primary">استبدال الهدية 🎁</button>
+        <div class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
+            <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-bowl-food"></i></div>
+                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">طبق ممبار فاخر مقرمش</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">استبدل نقاطك واحصل على طبق ممبار ذهبي هدية.</p>
+                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">50 نقطة</div>
+                <button onclick="redeemReward(50, 'طبق ممبار فاخر')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال الهدية 🎁</button>
             </div>
 
-            <div class="menu-card" style="padding: 15px; text-align: center;">
-                <h3 style="color: #991b1b;">وجبة النعنشة المشوية</h3>
-                <p>ربع فرخة + سيخ كفتة + أرز وسلطة.</p>
-                <div class="price" style="margin: 10px 0;">120 نقطة</div>
-                <button onclick="redeemReward(120, 'وجبة النعنشة')" class="btn-primary">استبدال الهدية 🎁</button>
+            <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-drumstick-bite"></i></div>
+                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">وجبة النعنشة المشوية</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">ربع فرخة + سيخ كفتة + أرز وسلطة.</p>
+                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">120 نقطة</div>
+                <button onclick="redeemReward(120, 'وجبة النعنشة')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال الهدية 🎁</button>
             </div>
 
-            <div class="menu-card" style="padding: 15px; text-align: center;">
-                <h3 style="color: #991b1b;">خصم 20% على أي صينية</h3>
-                <p>قسيمة خصم جبارة على ركن الصواني والولائم.</p>
-                <div class="price" style="margin: 10px 0;">200 نقطة</div>
-                <button onclick="redeemReward(200, 'خصم 20% على الصواني')" class="btn-primary">استبدال الهدية 🎁</button>
+            <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-ticket"></i></div>
+                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">خصم 20% على أي صينية</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">قسيمة خصم جبارة على ركن الصواني والولائم.</p>
+                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">200 نقطة</div>
+                <button onclick="redeemReward(200, 'خصم 20% على الصواني')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال الهدية 🎁</button>
             </div>
         </div>
     </main>
 
+    <!-- إعداد وتهيئة Firebase السحابية لمتجر المكافآت -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
+            authDomain: "omda-a750f.firebaseapp.com",
+            projectId: "omda-a750f",
+            storageBucket: "omda-a750f.firebasestorage.app",
+            messagingSenderId: "1078714497381",
+            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
+            measurementId: "G-P763CFS7GG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.db = db;
+        window.firebaseModules = { 
+            collection, 
+            getDocs, 
+            doc, 
+            getDoc,
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            where 
+        };
+        
+        console.log("🎁🔥 تم ربط متجر المكافآت بقاعدة بيانات Firebase سحابياً بنجاح تام!");
+    </script>
+
+    <script src="app.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        let currentPoints = 0;
+        let currentIdentifier = '';
+
+        window.addEventListener('DOMContentLoaded', async () => {
             let customer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
-            let phone = customer ? customer.phone : localStorage.getItem('omda_user_phone');
-            let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
-            let pts = phone && pointsDB[phone] ? pointsDB[phone] : 0;
-            document.getElementById('user-reward-points').innerText = pts + ' نقطة';
+            currentIdentifier = customer ? (customer.phone || customer.email) : localStorage.getItem('omda_user_phone');
+
+            if (!currentIdentifier) {
+                let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || 'null');
+                if (loggedUser) {
+                    currentIdentifier = loggedUser.phone || loggedUser.email;
+                }
+            }
+
+            if (currentIdentifier && window.db && window.firebaseModules) {
+                try {
+                    const docRef = window.firebaseModules.doc(window.db, "users", String(currentIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
+                    const docSnap = await window.firebaseModules.getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().points !== undefined) {
+                        currentPoints = docSnap.data().points;
+                    }
+                } catch (e) {
+                    console.error("Cloud points fetch error:", e);
+                }
+            }
+
+            if (currentPoints === 0) {
+                let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
+                if (currentIdentifier && pointsDB[currentIdentifier]) {
+                    currentPoints = pointsDB[currentIdentifier];
+                }
+            }
+
+            document.getElementById('user-reward-points').innerText = currentPoints + ' نقطة';
         });
 
-        function redeemReward(cost, rewardName) {
-            let customer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
-            let phone = customer ? customer.phone : localStorage.getItem('omda_user_phone');
-            if(!phone) {
-                alert('يجب تسجيل الدخول برقم هاتفك أولاً في الصفحة الرئيسية لتتمكن من استبدال النقاط!');
+        async function redeemReward(cost, rewardName) {
+            if(!currentIdentifier) {
+                alert('يجب تسجيل الدخول برقم هاتفك أو بريدك الإلكتروني أولاً في الصفحة الرئيسية لتتمكن من استبدال النقاط!');
                 return;
             }
+
+            if(currentPoints < cost) {
+                alert(`عذراً، رصيدك الحالي (${currentPoints} نقطة) لا يكفي للحصول على (${rewardName}) التي تتطلب ${cost} نقطة.`);
+                return;
+            }
+
+            currentPoints -= cost;
+            document.getElementById('user-reward-points').innerText = currentPoints + ' نقطة';
+
+            // تحديث محلياً
             let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
-            let pts = pointsDB[phone] || 0;
-            if(pts < cost) {
-                alert(`عذراً، رصيدك الحالي (${pts} نقطة) لا يكفي للحصول على (${rewardName}) التي تتطلب ${cost} نقطة.`);
-                return;
-            }
-            pointsDB[phone] = pts - cost;
+            pointsDB[currentIdentifier] = currentPoints;
             localStorage.setItem('omda_points', JSON.stringify(pointsDB));
-            document.getElementById('user-reward-points').innerText = pointsDB[phone] + ' نقطة';
-            alert(`🎉 مبروك! تم استبدال النقاط بنجاح وتحصيل (${rewardName}). يرجى إبراز هذه الرسالة للكاشير أو إرسالها عبر واتساب لتأكيد الاستلام!`);
+
+            // تحديث سحابياً عبر Firebase
+            if (window.db && window.firebaseModules) {
+                try {
+                    const docRef = window.firebaseModules.doc(window.db, "users", String(currentIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
+                    await window.firebaseModules.setDoc(docRef, { points: currentPoints }, { merge: true });
+                } catch (e) {
+                    console.error("Cloud points update error:", e);
+                }
+            }
+
+            alert(`🎉 مبروك يا أسطى! تم استبدال النقاط بنجاح وتحصيل (${rewardName}). يرجى إبراز هذه الرسالة للكاشير أو إرسالها عبر واتساب لتأكيد الاستلام!`);
         }
     </script>
 </body>
