@@ -349,6 +349,19 @@
             try {
                 const result = await signInWithPopup(auth, googleProvider);
                 const user = result.user;
+                
+                // حفظ بيانات حساب جوجل سحابياً في مجموعة users
+                const userObj = {
+                    name: user.displayName || 'عميل جوجل',
+                    email: user.email,
+                    phone: localStorage.getItem('omda_user_phone') || 'غير متوفر',
+                    role: 'customer',
+                    provider: 'Google Auth',
+                    date: new Date().toLocaleString('ar-EG')
+                };
+                
+                await setDoc(doc(db, "users", String(user.email.replace(/[^a-zA-Z0-9]/g, '_'))), userObj, { merge: true });
+
                 alert(`أهلاً بك يا ${user.displayName || 'عميلنا العزيز'} عبر جوجل! 👑`);
             } catch (error) {
                 alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
@@ -375,6 +388,17 @@
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await updateProfile(userCredential.user, { displayName: name });
                     localStorage.setItem('omda_user_phone', phone);
+                    
+                    const newUserObj = {
+                        name,
+                        email,
+                        phone,
+                        role: 'customer',
+                        provider: 'Email Register',
+                        date: new Date().toLocaleString('ar-EG')
+                    };
+                    await setDoc(doc(db, "users", String(phone)), newUserObj, { merge: true });
+
                     alert(`مرحباً بك يا ${name}! تم إنشاء حسابك بنجاح 🚀`);
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
