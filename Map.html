@@ -234,10 +234,10 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
-    <!-- إعداد وتهيئة Firebase السحابية لصفحة الخريطة -->
+    <!-- إعداد وتهيئة Firebase السحابية لصفحة الخريطة وربطها بـ window -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
@@ -252,12 +252,24 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // ربط جميع دوال وسائط وكالة قاعدة البيانات بـ window لضمان عمل app.js بكفاءة تامة سحابياً
         window.db = db;
-        window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot };
+        window.firebaseModules = { 
+            collection, 
+            getDocs, 
+            doc, 
+            setDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot, 
+            query, 
+            where 
+        };
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي مرتبطة بقاعدة بيانات Firebase سحابياً بنجاح!");
+        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي وربطها بقاعدة بيانات Firebase سحابياً بنجاح تام!");
     </script>
 
+    <!-- ربط ملف الـ JavaScript المشترك -->
     <script src="app.js"></script>
 </body>
 </html>
