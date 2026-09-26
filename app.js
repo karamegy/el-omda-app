@@ -46,14 +46,14 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار
+// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل من الإطار (مصحح)
 // ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
 let currentSliderProduct = null;
 
 function initHeroSlider() {
-    if (!window.menuProducts || menuProducts.length === 0) return;
+    if (!menuProducts || menuProducts.length === 0) return;
     updateSliderContent();
     if (sliderInterval) clearInterval(sliderInterval);
     sliderInterval = setInterval(() => {
@@ -63,7 +63,7 @@ function initHeroSlider() {
 }
 
 function updateSliderContent() {
-    if (!window.menuProducts || menuProducts.length === 0) return;
+    if (!menuProducts || menuProducts.length === 0) return;
     const prod = menuProducts[currentSliderIndex];
     currentSliderProduct = prod;
 
@@ -81,14 +81,14 @@ function updateSliderContent() {
 }
 
 function nextSliderItem() {
-    if (!window.menuProducts || menuProducts.length === 0) return;
+    if (!menuProducts || menuProducts.length === 0) return;
     currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
     updateSliderContent();
     resetSliderTimer();
 }
 
 function prevSliderItem() {
-    if (!window.menuProducts || menuProducts.length === 0) return;
+    if (!menuProducts || menuProducts.length === 0) return;
     currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
     updateSliderContent();
     resetSliderTimer();
