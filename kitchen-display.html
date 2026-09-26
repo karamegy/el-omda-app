@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة المطبخ والشواء (KDS) | مشويات العمدة</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: #1c1917; color: #fff;">
+
+    <header class="main-header" style="background: #000; border-bottom: 4px solid #dc2626;">
+        <div class="logo-container">
+            <img src="icon1-512.png" alt="لوجو العمدة" class="logo-img">
+            <h1>🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
+        </div>
+        <nav class="nav-links">
+            <a href="admin.html" class="nav-btn"><i class="fa-solid fa-lock"></i> لوحة الأدمن</a>
+            <button onclick="loadKitchenOrders()" class="btn-primary" style="padding: 6px 12px;"><i class="fa-solid fa-rotate"></i> تحديث</button>
+        </nav>
+    </header>
+
+    <main class="container">
+        <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d);">
+            <h2>👨‍🍳 شاشة تجهيز المشويات والطلبات الواردة</h2>
+            <p>الطلبات تظهر هنا فوراً لتجهيزها على الفحم الحطب وإرسالها للطيارين!</p>
+        </div>
+
+        <div id="kitchen-orders-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+            <!-- يتم تعبئة الطلبات تلقائياً عبر الجافاسكريبت -->
+        </div>
+    </main>
+
+    <script>
+        function loadKitchenOrders() {
+            const grid = document.getElementById('kitchen-orders-grid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let activeOrders = allOrders.filter(o => o.status !== 'done');
+
+            if(activeOrders.length === 0) {
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.2rem;">لا توجد طلبات جديدة في المطبخ حالياً. الشيف في الاستعداد! 🔥</p>';
+                return;
+            }
+
+            activeOrders.forEach((order) => {
+                let itemsList = order.items.map(i => `<li style="margin-bottom: 4px;">🔹 ${i.name} (عدد: ${i.qty})</li>`).join('');
+                
+                grid.innerHTML += `
+                    <div style="background: #292524; border: 2px solid ${order.status==='cooking'?'#f59e0b':'#dc2626'}; border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #44403c; padding-bottom: 8px;">
+                            <strong style="color: #fde047; font-size: 1.1rem;">${order.id}</strong>
+                            <span class="status-badge status-${order.status}" style="font-size: 0.8rem;">${getStatusLabel(order.status)}</span>
+                        </div>
+                        <p style="margin-bottom: 6px;">👤 <strong>العميل:</strong> ${order.name}</p>
+                        <p style="margin-bottom: 10px;">📍 <strong>العنوان:</strong> ${order.address}</p>
+                        <div style="background: #1c1917; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+                            <strong style="font-size: 0.85rem; color: #fbbf24; display: block; margin-bottom: 5px;">الأصناف المطلوبة:</strong>
+                            <ul style="list-style: none; padding: 0; font-size: 0.9rem;">${itemsList}</ul>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button onclick="setKitchenStatus('${order.id}', 'cooking')" class="btn-primary" style="flex: 1; background: #d97706; font-size: 0.85rem; padding: 8px;">جاري الشوي 🔥</button>
+                            <button onclick="setKitchenStatus('${order.id}', 'delivery')" class="btn-primary" style="flex: 1; background: #0284c7; font-size: 0.85rem; padding: 8px;">جاهز للطيار 🛵</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function setKitchenStatus(orderId, newStatus) {
+            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let order = allOrders.find(o => o.id === orderId);
+            if(order) {
+                order.status = newStatus;
+                localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                loadKitchenOrders();
+            }
+        }
+
+        function getStatusLabel(st) {
+            if(st === 'pending') return 'قيد المراجعة ⏳';
+            if(st === 'cooking') return 'ع الفحم 🔥';
+            if(st === 'delivery') return 'مع الدليفري 🛵';
+            return st;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadKitchenOrders();
+            setInterval(loadKitchenOrders, 6000); // تحديث تلقائي كل 6 ثوانٍ
+        });
+    </script>
+</body>
+</html>
