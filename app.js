@@ -55,7 +55,6 @@ function routeUserByRole(user) {
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
 
-    // 1. حسابات الإدارة والماستر والموظفين والمحاسبين والعمال
     if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant' || role === 'worker') {
         localStorage.setItem('omda_logged_user', JSON.stringify(user));
         alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك للوحة التحكم...`);
@@ -63,14 +62,12 @@ function routeUserByRole(user) {
         return;
     }
 
-    // 2. حسابات الطيارين والدليفري
     if (role === 'driver') {
         alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
         window.location.href = 'Map.html';
         return;
     }
 
-    // 3. حسابات العملاء
     localStorage.setItem('omda_current_cust', JSON.stringify(user));
     alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
     
@@ -96,7 +93,6 @@ async function unifiedLoginCustom() {
 
     let masterPass = localStorage.getItem('omda_master_password') || '1234';
 
-    // أ) التحقق من حساب المدير الماستر
     if ((identifier === 'haretg@gmail.com' || identifier === 'admin@omda.com' || identifier === '01144730305' || identifier === 'مدير') && password === masterPass) {
         const masterUser = { 
             name: 'المدير العام (كرم حمدي)', 
@@ -108,7 +104,6 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    // ب) البحث في قائمة الموظفين والمحاسبين المسجلين
     let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     let foundStaff = staffList.find(s => (s.email.toLowerCase() === identifier || s.phone === identifier) && s.password === password);
 
@@ -117,7 +112,6 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    // ج) البحث في الحسابات السحابية / المسجلة
     let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     let foundUser = regUsers.find(u => (u.email.toLowerCase() === identifier || u.phone === identifier));
 
@@ -126,7 +120,6 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    // د) تسجيل دخول سريع كعميل جديد إذا لم يوجد
     const defaultCustomer = {
         name: 'عميل العمدة',
         email: identifier.includes('@') ? identifier : `${identifier}@omda.com`,
@@ -150,7 +143,7 @@ async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
         try {
             const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
             if (available) {
-                const credential = await navigator.credentials.get({
+                const credential = await window.PublicKeyCredential.get({
                     publicKey: {
                         challenge: new Uint8Array([1,2,3,4,5,6,7,8]),
                         timeout: 60000,
@@ -171,7 +164,7 @@ async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
 }
 
 // ==========================================
-// نظام التسجيل والدخول السريع برقم الهاتف للعملاء (مع الحفظ السحابي)
+// نظام التسجيل والدخول السريع برقم الهاتف (مع استخدام getDoc لتوفير القراءات)
 // ==========================================
 async function loginByPhoneQuick() {
     const phoneInput = document.getElementById('quick-phone-input');
@@ -183,22 +176,39 @@ async function loginByPhoneQuick() {
         return;
     }
 
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    let foundOrder = allOrders.find(o => o.phone === phone);
-    let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
+    let userObj = null;
 
-    currentCustomer = { name: custName, phone: phone, email: phone + '@omda.com', role: 'customer' };
+    // استخدام getDoc لجلب مستند العميل مباشرة برقم الهاتف (توفير القراءات سحابياً)
+    if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
+        try {
+            const docRef = window.firebaseModules.doc(window.db, "users", String(phone));
+            const docSnap = await window.firebaseModules.getDoc(docRef);
+            if (docSnap.exists()) {
+                userObj = docSnap.data();
+            }
+        } catch (e) {
+            console.error("Firebase cloud getDoc user error:", e);
+        }
+    }
+
+    if (!userObj) {
+        let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+        let foundOrder = allOrders.find(o => o.phone === phone);
+        let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
+
+        userObj = {
+            name: custName,
+            email: phone + '@omda.com',
+            phone: phone,
+            role: 'customer',
+            provider: 'Phone Quick',
+            date: new Date().toLocaleString('ar-EG')
+        };
+    }
+
+    currentCustomer = userObj;
     localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
     localStorage.setItem('omda_user_phone', phone);
-
-    const userObj = {
-        name: custName,
-        email: phone + '@omda.com',
-        phone: phone,
-        role: 'customer',
-        provider: 'Phone Quick',
-        date: new Date().toLocaleString('ar-EG')
-    };
 
     if (window.db && window.firebaseModules) {
         try {
@@ -218,7 +228,7 @@ async function loginByPhoneQuick() {
         localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
     }
 
-    alert(`أهلاً بك يا ${custName}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
+    alert(`أهلاً بك يا ${userObj.name}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
     
     const phoneBox = document.getElementById('cust-phone-login-box');
     if(phoneBox) phoneBox.style.display = 'none';
@@ -1415,7 +1425,6 @@ function loadCustomerDashboard() {
     const dashBox = document.getElementById('customer-dashboard');
     if(!dashBox) return;
 
-    // حماية أمنية صارمة: التحقق من تسجيل دخول العميل برقم الهاتف أو الايميل
     if (!currentCustomer || (!currentCustomer.phone && !currentCustomer.email)) {
         dashBox.classList.add('hidden');
         if (loginBox) loginBox.style.display = 'block';
@@ -1437,7 +1446,6 @@ function loadCustomerDashboard() {
 
     let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     
-    // التصفية الآمنة: مطابقة الطلبات حصرياً برقم هاتف أو اسم العميل الحالي لمنع رؤية طلبات الآخرين
     const myOrders = allOrders.filter(o => 
         (currentCustomer.phone && o.phone === currentCustomer.phone) || 
         (currentCustomer.name && o.name === currentCustomer.name)
@@ -1549,16 +1557,16 @@ function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة وتغيير أدوار الحسابات والتحكم الكامل للأدمن
+// وظائف إدارة الحسابات مع توفير القراءات عبر getDoc
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
     if(!container) return;
-    container.innerHTML = '<p style="text-align:center; color:#78716c; padding:10px;">⏳ جاري مزامنة الحسابات من السحابة...</p>';
+    container.innerHTML = '<p style="text-align:center; color:#78716c; padding:10px;">⏳ جاري تحميل الحسابات...</p>';
 
-    let regUsers = [];
+    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
 
-    if (window.db && window.firebaseModules) {
+    if(regUsers.length === 0 && window.db && window.firebaseModules && window.firebaseModules.getDocs) {
         try {
             const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
             querySnapshot.forEach((docSnap) => {
@@ -1570,10 +1578,6 @@ async function loadGoogleAccountsList() {
         } catch (e) {
             console.error("Error fetching cloud users:", e);
         }
-    }
-
-    if(regUsers.length === 0) {
-        regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     }
 
     if(regUsers.length === 0) {
@@ -1608,6 +1612,22 @@ async function loadGoogleAccountsList() {
             </div>
         `;
     });
+}
+
+// دالة فحص وتحديث مستند مستخدم فردي باستخدام getDoc لتوفير القراءات
+async function verifyAndUpdateUserWithGetDoc(docKey) {
+    if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
+        try {
+            const docRef = window.firebaseModules.doc(window.db, "users", String(docKey));
+            const docSnap = await window.firebaseModules.getDoc(docRef);
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+        } catch (e) {
+            console.error("getDoc user error:", e);
+        }
+    }
+    return null;
 }
 
 async function updateUserRole(docKey, idx, newRole) {
