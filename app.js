@@ -46,6 +46,14 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
+// دالة موحدة وبحتة آمنة للـ ID (تمنع مشكلة String و Number نهائياً)
+// ==========================================
+function findProductById(id) {
+    if (!menuProducts || menuProducts.length === 0) return null;
+    return menuProducts.find(p => String(p.id) === String(id));
+}
+
+// ==========================================
 // نظام التوجيه الذكي الموحد بناءً على صلاحية الحساب
 // ==========================================
 function routeUserByRole(user) {
@@ -164,7 +172,7 @@ async function authenticateWithPasswordAndBiometric(requiredRole = 'driver') {
 }
 
 // ==========================================
-// نظام التسجيل والدخول السريع برقم الهاتف (مع استخدام getDoc لتوفير القراءات)
+// نظام التسجيل والدخول السريع برقم الهاتف
 // ==========================================
 async function loginByPhoneQuick() {
     const phoneInput = document.getElementById('quick-phone-input');
@@ -178,7 +186,6 @@ async function loginByPhoneQuick() {
 
     let userObj = null;
 
-    // استخدام getDoc لجلب مستند العميل مباشرة برقم الهاتف (توفير القراءات سحابياً)
     if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
         try {
             const docRef = window.firebaseModules.doc(window.db, "users", String(phone));
@@ -237,7 +244,7 @@ async function loginByPhoneQuick() {
 }
 
 // ==========================================
-// نظام سليدر عرض جميع المنتجات بالصور الكاملة وأزرار التنقل
+// نظام سليدر عرض جميع المنتجات
 // ==========================================
 let currentSliderIndex = 0;
 let sliderInterval = null;
@@ -345,7 +352,7 @@ function fetchCustomerGpsLocation() {
 }
 
 // ==========================================
-// نظام نغمة الرنين والاتصال (WebRTC عبر سحابة Firestore)
+// نظام نغمة الرنين والاتصال (WebRTC)
 // ==========================================
 function startRingingTone() {
     if (ringingInterval) return;
@@ -838,7 +845,7 @@ function renderMenu(filter = 'all') {
     const filtered = filter === 'all' ? menuProducts : menuProducts.filter(p => p.category === filter);
 
     filtered.forEach(product => {
-        const isFav = favorites.includes(product.id);
+        const isFav = favorites.some(id => String(id) === String(product.id));
         const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
         const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
 
@@ -874,7 +881,7 @@ function renderOffers() {
     const offers = menuProducts.filter(p => p.category === 'trays');
 
     offers.forEach(product => {
-        const isFav = favorites.includes(product.id);
+        const isFav = favorites.some(id => String(id) === String(product.id));
         const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500';
 
         grid.innerHTML += `
@@ -1006,17 +1013,28 @@ function saveAndAddNewProduct(prod) {
     initHeroSlider();
 }
 
-function adminDeleteProduct(id) {
-    if(!confirm('هل أنت متأكد من حذف هذا الصنف نهائياً من المنيو؟')) return;
-    menuProducts = menuProducts.filter(p => p.id != id);
+async function adminDeleteProduct(id) {
+    if(!confirm('هل أنت متأكد من حذف هذا الصنف سحابياً؟')) return;
+    
+    menuProducts = menuProducts.filter(p => String(p.id) !== String(id));
     localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
-    loadAdminDashboard();
-    initHeroSlider();
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "products", String(id)));
+        } catch(e) {
+            console.error("Delete error:", e);
+        }
+    }
+
+    if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
+    if(typeof initHeroSlider === 'function') initHeroSlider();
+    if(typeof renderMenu === 'function') renderMenu();
     alert('تم حذف الصنف بنجاح من المنيو.');
 }
 
 function openEditProductModal(id) {
-    const prod = menuProducts.find(p => p.id == id);
+    const prod = findProductById(id);
     if (!prod) {
         alert("⚠️ عذراً، لم يتم العثور على بيانات هذا الصنف!");
         return;
@@ -1064,7 +1082,7 @@ function saveEditedProduct() {
         return;
     }
 
-    const prodIndex = menuProducts.findIndex(p => p.id == id);
+    const prodIndex = menuProducts.findIndex(p => String(p.id) === String(id));
     if (prodIndex === -1) return;
 
     if (fileInput && fileInput.files && fileInput.files[0]) {
@@ -1105,7 +1123,9 @@ function finalizeProductEdit() {
 }
 
 function toggleFavorite(productId) {
-    const index = favorites.indexOf(productId);
+    const stringId = String(productId);
+    const index = favorites.findIndex(id => String(id) === stringId);
+    
     if(index > -1) {
         favorites.splice(index, 1);
         alert('تم إزالة المنتج من المفضلة.');
@@ -1114,14 +1134,14 @@ function toggleFavorite(productId) {
         alert('تم إضافة المنتج إلى المفضلة ❤️');
     }
     localStorage.setItem('omda_favorites', JSON.stringify(favorites));
-    renderMenu();
+    if (typeof renderMenu === 'function') renderMenu();
 }
 
 function renderFavorites() {
     const grid = document.getElementById('favorites-grid');
     if(!grid) return;
     grid.innerHTML = '';
-    const favProducts = menuProducts.filter(p => favorites.includes(p.id));
+    const favProducts = menuProducts.filter(p => favorites.some(id => String(id) === String(p.id)));
 
     if(favProducts.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 20px;">لا توجد أطباق في قائمة المفضلة حالياً.</p>';
@@ -1150,9 +1170,12 @@ function renderFavorites() {
 }
 
 function addToCart(productId) {
-    const prod = menuProducts.find(p => p.id == productId);
-    if(!prod) return;
-    const existing = cart.find(item => item.id == productId);
+    const prod = findProductById(productId);
+    if(!prod) {
+        alert("⚠️ الوجبة غير موجودة!");
+        return;
+    }
+    const existing = cart.find(item => String(item.id) === String(productId));
 
     if (existing) {
         existing.qty++;
@@ -1206,7 +1229,7 @@ function updateCartUI() {
 }
 
 function removeFromCart(id) {
-    cart = cart.filter(item => item.id != id);
+    cart = cart.filter(item => String(item.id) !== String(id));
     updateCartUI();
 }
 
@@ -1418,7 +1441,7 @@ function submitReservation() {
 }
 
 // ==========================================
-// لوحة العميل (مؤمنة بالكامل: تعرض طلبات العميل الحالي فقط)
+// لوحة العميل
 // ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('cust-login-box');
@@ -1557,7 +1580,7 @@ function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات مع توفير القراءات عبر getDoc
+// وظائف إدارة الحسابات
 // ==========================================
 async function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
@@ -1612,22 +1635,6 @@ async function loadGoogleAccountsList() {
             </div>
         `;
     });
-}
-
-// دالة فحص وتحديث مستند مستخدم فردي باستخدام getDoc لتوفير القراءات
-async function verifyAndUpdateUserWithGetDoc(docKey) {
-    if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
-        try {
-            const docRef = window.firebaseModules.doc(window.db, "users", String(docKey));
-            const docSnap = await window.firebaseModules.getDoc(docRef);
-            if (docSnap.exists()) {
-                return docSnap.data();
-            }
-        } catch (e) {
-            console.error("getDoc user error:", e);
-        }
-    }
-    return null;
 }
 
 async function updateUserRole(docKey, idx, newRole) {
