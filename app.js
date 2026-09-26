@@ -1452,7 +1452,6 @@ function submitReservation() {
     allRes.unshift(newRes);
     localStorage.setItem('omda_reservations', JSON.stringify(allRes));
 
-    // حفظ الحجز سحابياً فوراً
     if (window.db && window.firebaseModules) {
         window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => console.error(e));
     }
