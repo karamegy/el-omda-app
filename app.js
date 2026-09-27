@@ -20,7 +20,6 @@ const defaultProducts = [
     { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' }
 ];
 
-// مسح أي استخدام للتخزين المحلي - الاعتماد الكلي على الذاكرة الحية والسحابة
 let menuProducts = [...defaultProducts];
 let cart = []; 
 let currentCustomer = null;
@@ -75,7 +74,7 @@ function findProductById(id) {
 }
 
 // ==========================================
-// نظام التوجيه الذكي ومزامنة الجلسة السحابية
+// نظام التوجيه الذكي ومزامنة الجلسة السحابية (محدث لمنع فقدان الجلسة عند Refresh)
 // ==========================================
 function routeUserByRole(user) {
     currentCustomer = user;
@@ -83,16 +82,19 @@ function routeUserByRole(user) {
     const email = (user.email || '').toLowerCase();
     const phone = String(user.phone || '');
     
-    // استخدام المعرف لتمريره في الرابط لجلب البيانات لحظيا من السحابة
     const uid = phone || email; 
 
     if (!user.photoURL) {
         user.photoURL = 'icon1-512.png';
     }
 
+    // حفظ الجلسة محلياً لضمان عدم ضياعها عند إعادة التحديث (Refresh)
+    try {
+        localStorage.setItem('omda_logged_user', JSON.stringify(user));
+    } catch(e) {}
+
     if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
         alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
-        // توجيه مع تمرير الهوية في الرابط للتحقق السحابي
         window.location.href = `admin.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
@@ -113,22 +115,42 @@ function routeUserByRole(user) {
     if (window.location.pathname.includes('admin.html')) {
         window.location.href = `index.html?uid=${encodeURIComponent(uid)}`;
     } else {
-        window.history.pushState({}, '', `?uid=${encodeURIComponent(uid)}`); // تحديث الرابط دون ريفريش
+        window.history.pushState({}, '', `?uid=${encodeURIComponent(uid)}`);
         if (typeof switchTab === 'function') switchTab('customer');
         if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
     }
 }
 
-// دالة جلب بيانات المستخدم لحظياً من فايربيز (بدون تخزين محلي)
+// دالة جلب بيانات المستخدم لحظياً من فايربيز مع دعم الذاكرة المحلية لمنع مشكلة الـ Refresh
 async function verifyUserFromCloudLive() {
     const urlParams = new URLSearchParams(window.location.search);
-    const uid = urlParams.get('uid');
+    let uid = urlParams.get('uid');
+
+    // إذا لم يكن الـ uid موجوداً في الرابط، يتم استرجاعه تلقائياً من الـ localStorage لمنع مشكلة الـ Refresh
+    if (!uid) {
+        try {
+            const savedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+            if (savedUser && (savedUser.phone || savedUser.email)) {
+                uid = savedUser.phone || savedUser.email;
+            }
+        } catch (e) {
+            console.error("LocalStorage read error:", e);
+        }
+    }
 
     if (!uid) return null;
 
-    // الماستر أدمن
-    if (uid === 'haretg@gmail.com' || uid === 'admin@omda.com' || uid === '01144730305') {
-        return { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', phone: '01144730305', role: 'admin', photoURL: 'icon1-512.png' };
+    // الماستر أدمن الرئيسي
+    if (uid.toLowerCase() === 'haretg@gmail.com' || uid.toLowerCase() === 'admin@omda.com' || uid === '01144730305') {
+        const masterUser = { 
+            name: 'المدير العام (كرم حمدي)', 
+            email: 'haretg@gmail.com', 
+            phone: '01144730305', 
+            role: 'admin', 
+            photoURL: 'icon1-512.png' 
+        };
+        localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
+        return masterUser;
     }
 
     // انتظار مبدئي للسحابة (الحد الأقصى 2.5 ثانية)
@@ -140,27 +162,54 @@ async function verifyUserFromCloudLive() {
 
     if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
         try {
-            const docRef = window.firebaseModules.doc(window.db, "users", getStandardUserDocId(uid));
-            const docSnap = await window.firebaseModules.getDoc(docRef);
-            if (docSnap.exists()) {
-                return docSnap.data();
+            const possibleDocIds = [
+                getStandardUserDocId(uid),
+                String(uid).toLowerCase().replace(/[^a-zA-Z0-9]/g, '_'),
+                String(uid)
+            ];
+
+            let cloudUser = null;
+            for (const docId of possibleDocIds) {
+                const docRef = window.firebaseModules.doc(window.db, "users", docId);
+                const docSnap = await window.firebaseModules.getDoc(docRef);
+                if (docSnap.exists()) {
+                    cloudUser = docSnap.data();
+                    break;
+                }
+            }
+
+            if (cloudUser) {
+                localStorage.setItem('omda_logged_user', JSON.stringify(cloudUser));
+                return cloudUser;
             }
         } catch (e) {
             console.error("Cloud fetch error:", e);
         }
     }
 
-    // بحث احتياطي في البيانات المحملة بالذاكرة
-    let foundUser = registeredUsers.find(u => u.phone === uid || u.email === uid);
-    if (!foundUser) foundUser = staffList.find(s => s.phone === uid || s.email === uid);
+    // بحث احتياطي في البيانات المحملة بالذاكرة الحية
+    let foundUser = registeredUsers.find(u => u.phone === uid || u.email?.toLowerCase() === uid.toLowerCase());
+    if (!foundUser) foundUser = staffList.find(s => s.phone === uid || s.email?.toLowerCase() === uid.toLowerCase());
     
-    return foundUser || null;
+    if (foundUser) {
+        localStorage.setItem('omda_logged_user', JSON.stringify(foundUser));
+        return foundUser;
+    }
+
+    // الاعتماد الأخير على الـ localStorage لضمان استمرارية الجلسة وعدم طرد المدير عند التحديث
+    try {
+        const localFallback = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+        if (localFallback && (localFallback.phone === uid || localFallback.email?.toLowerCase() === uid.toLowerCase() || localFallback.role === 'admin')) {
+            return localFallback;
+        }
+    } catch(e) {}
+
+    return null;
 }
 
-// فحص أمان صفحة الإدارة لحظة التحميل بناءً على السحابة
+// فحص أمان صفحة الإدارة لحظة التحميل بناءً على السحابة والذاكرة
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // جلب بيانات الجلسة الحية من قاعدة البيانات
     const liveUser = await verifyUserFromCloudLive();
     if (liveUser) {
         currentCustomer = liveUser;
@@ -2140,6 +2189,7 @@ async function adminDeleteReservation(resId) {
 
 function adminLogout() {
     currentCustomer = null;
+    localStorage.removeItem('omda_logged_user');
     window.location.href = 'index.html'; 
 }
 
