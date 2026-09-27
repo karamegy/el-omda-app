@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>شاشة المطبخ والشواء (KDS) | مشويات العمدة</title>
+    <title>لوحة عمليات الأسطول وتجهيز الشحنات | الأسطول اللوجستي</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
@@ -11,28 +11,28 @@
 <body style="background: #1c1917; color: #fff; margin: 0; padding: 0; font-family: 'Cairo', sans-serif;">
 
     <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم الموظف -->
-    <header class="main-header" style="background: #000; border-bottom: 4px solid #dc2626; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <header class="main-header" style="background: #000; border-bottom: 4px solid #b45309; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <div class="logo-container" style="display: flex; align-items: center; gap: 12px;">
-            <div style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #dc2626; background: #000;">
+            <div style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #b45309; background: #000;">
                 <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">🔥 شاشة مطبخ وشواء العمدة (KDS)</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة الشواء والطلبات الحية سحابياً (محمي بصلاحيات الموظفين)</span>
+                <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">🚀 لوحة عمليات الأسطول (Operations KDS)</h1>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متابعة تجهيز الشحنات والطلبات الحية سحابياً (محمي بصلاحيات الفريق)</span>
             </div>
         </div>
         <nav class="nav-links" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-house"></i> الرئيسية</a>
-            <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة</a>
-            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> الأدمن</a>
-            <button onclick="syncAllActiveOrdersWithGetDoc()" class="btn-primary" style="background: #dc2626; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> تحديث ذكي (getDoc)</button>
+            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-boxes-stacked"></i> الخدمات والمنيو</a>
+            <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> لوحة التحكم</a>
+            <button onclick="syncAllActiveOrdersWithGetDoc()" class="btn-primary" style="background: #b45309; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.85rem;"><i class="fa-solid fa-rotate"></i> تحديث ذكي (getDoc)</button>
         </nav>
     </header>
 
     <main class="container" style="max-width: 1300px; margin: 20px auto; padding: 0 15px;">
-        <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(153,27,27,0.3);">
-            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">👨‍🍳 شاشة تجهيز المشويات والطلبات الواردة سحابياً</h2>
-            <p style="font-size: 0.95rem; color: #fecaca;">الطلبات تظهر هنا حصرياً لفريق العمل لتجهيزها على الفحم الحطب وإرسالها للطيارين!</p>
+        <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(180,83,9,0.3);">
+            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">📦 شاشة تجهيز وإدارة الشحنات الواردة سحابياً</h2>
+            <p style="font-size: 0.95rem; color: #fef3c7;">الطلبات والشحنات تظهر هنا حصرياً لفريق العمل لتجهيزها وإسنادها لطياري الأسطول الفوري!</p>
         </div>
 
         <div id="kitchen-orders-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
@@ -72,7 +72,7 @@
             getDoc
         };
         
-        console.log("🍳🔥 تم ربط شاشة المطبخ (KDS) بقاعدة بيانات Firebase وتفعيل الحماية الأمنية!");
+        console.log("🚀📦 تم ربط لوحة عمليات الأسطول بقاعدة بيانات Firebase وتفعيل الحماية الأمنية!");
 
         // حماية الصفحة وفحص الجلسة ومزامنة البروفايل فور التحميل
         document.addEventListener('DOMContentLoaded', () => {
@@ -82,46 +82,46 @@
         });
     </script>
 
-    <!-- سكربت حماية وإدارة عرض وتحديث طلبات المطبخ -->
+    <!-- سكربت حماية وإدارة عرض وتحديث طلبات وشحنات الأسطول -->
     <script>
-        // دالة حماية أمنية صارمة تمنع الزوار والعملاء العاديين من دخول شاشة المطبخ
+        // دالة حماية أمنية صارمة تمنع الزوار والعملاء العاديين من دخول لوحة العمليات
         function checkKitchenAccessSecurity() {
-            let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
+            let loggedUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('fleet_session_user') || localStorage.getItem('fleet_current_cust') || '{}');
             const role = (loggedUser.role || '').toLowerCase();
             const email = (loggedUser.email || '').toLowerCase();
             const phone = loggedUser.phone || '';
 
-            const isMaster = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305');
-            const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'chef';
+            const isMaster = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone === '01144730305');
+            const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'driver';
 
             // مزامنة الصورة والاسم في الهيدر بغض النظر عن حالة الموظف للتأكد من المظهر الموحد
             const avatarEl = document.getElementById('nav-user-avatar');
             if (avatarEl && loggedUser.photoURL) avatarEl.src = loggedUser.photoURL;
 
             if (!isAuthorizedStaff) {
-                alert("🚫 عذراً! هذه الشاشة (KDS) مخصصة لفريق المطبخ والمشرفين فقط. ممنوع دخول الزوار أو العملاء.");
+                alert("🚫 عذراً! هذه الشاشة مخصصة لفريق العمل والمشرفين والمناديب فقط. ممنوع دخول الزوار أو العملاء.");
                 window.location.href = 'index.html';
                 return false;
             }
 
             const badge = document.getElementById('userRoleBadge');
             if(badge) {
-                badge.innerText = `مرحباً بك يا ${loggedUser.name || 'موظف العمدة'} (${role || 'مشرف'}) 👑`;
+                badge.innerText = `مرحباً بك يا ${loggedUser.name || 'موظف الأسطول'} (${role || 'مشرف'}) 👑`;
             }
             return true;
         }
 
         function loadKitchenOrdersFromLocal() {
-            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
             renderKitchenGrid(allOrders);
         }
 
         async function syncActiveOrdersSmart() {
             const grid = document.getElementById('kitchen-orders-grid');
-            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
             
             if (allOrders.length === 0 && grid) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري جلب الطلبات من السحابة...</p>';
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري جلب الشحنات والطلبات من السحابة...</p>';
             }
 
             if (window.db && window.firebaseModules) {
@@ -140,7 +140,7 @@
                                 }
                             }
                         }
-                        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                        localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
                         renderKitchenGrid(allOrders);
                     } else {
                         const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "orders"));
@@ -149,7 +149,7 @@
                             allOrders.push(docSnap.data());
                         });
                         if(allOrders.length > 0) {
-                            localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                            localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
                         }
                         renderKitchenGrid(allOrders);
                     }
@@ -161,9 +161,9 @@
         }
 
         async function syncAllActiveOrdersWithGetDoc() {
-            alert("🔄 جاري التحديث الذكي للطلبات عبر getDoc...");
+            alert("🔄 جاري التحديث الذكي للشحنات عبر getDoc...");
             await syncActiveOrdersSmart();
-            alert("✓ تم تحديث شاشة المطبخ بنجاح بأقل عدد من القراءات!");
+            alert("✓ تم تحديث لوحة العمليات بنجاح بأقل عدد من القراءات!");
         }
 
         function renderKitchenGrid(allOrders) {
@@ -173,7 +173,7 @@
             let activeOrders = allOrders.filter(o => o.status !== 'done');
 
             if(activeOrders.length === 0) {
-                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.2rem;">لا توجد طلبات جديدة في المطبخ حالياً. الشيف في الاستعداد! 🔥</p>';
+                grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.2rem;">لا توجد شحنات أو طلبات جديدة قيد الانتظار حالياً. الأسطول في الخدمة! 🚀</p>';
                 return;
             }
 
@@ -182,7 +182,7 @@
                 let itemsList = (order.items || []).map(i => `<li style="margin-bottom: 6px; border-bottom: 1px dashed #44403c; padding-bottom: 4px;">🔹 ${i.name} <strong style="color: #fde047;">(عدد: ${i.qty})</strong></li>`).join('');
                 
                 htmlContent += `
-                    <div style="background: #292524; border: 2.5px solid ${order.status==='cooking'?'#f59e0b':'#dc2626'}; border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
+                    <div style="background: #292524; border: 2.5px solid ${order.status==='cooking'?'#f59e0b':'#b45309'}; border-radius: 12px; padding: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #44403c; padding-bottom: 8px;">
                             <strong style="color: #fde047; font-size: 1.15rem;" class="mono-font">${order.id}</strong>
                             <span class="status-badge status-${order.status}" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px;">${getStatusLabel(order.status)}</span>
@@ -190,12 +190,12 @@
                         <p style="margin-bottom: 6px; font-size: 0.9rem;">👤 <strong>العميل:</strong> ${order.name} (${order.phone})</p>
                         <p style="margin-bottom: 12px; font-size: 0.9rem;">📍 <strong>العنوان:</strong> ${order.address}</p>
                         <div style="background: #1c1917; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #44403c;">
-                            <strong style="font-size: 0.85rem; color: #fbbf24; display: block; margin-bottom: 6px;">الأصناف المطلوبة على الفحم:</strong>
+                            <strong style="font-size: 0.85rem; color: #fbbf24; display: block; margin-bottom: 6px;">تفاصيل الشحنة والخدمات:</strong>
                             <ul style="list-style: none; padding: 0; font-size: 0.9rem; margin: 0;">${itemsList}</ul>
                         </div>
                         <div style="display: flex; gap: 8px;">
-                            <button onclick="setKitchenStatus('${order.id}', 'cooking')" class="btn-primary" style="flex: 1; background: #d97706; color: #white; border: none; font-size: 0.85rem; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">جاري الشوي 🔥</button>
-                            <button onclick="setKitchenStatus('${order.id}', 'delivery')" class="btn-primary" style="flex: 1; background: #0284c7; color: #white; border: none; font-size: 0.85rem; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">جاهز للطيار 🛵</button>
+                            <button onclick="setKitchenStatus('${order.id}', 'cooking')" class="btn-primary" style="flex: 1; background: #d97706; color: #white; border: none; font-size: 0.85rem; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">قيد التجهيز 📦</button>
+                            <button onclick="setKitchenStatus('${order.id}', 'delivery')" class="btn-primary" style="flex: 1; background: #0284c7; color: #white; border: none; font-size: 0.85rem; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">مع الطيار 🛵</button>
                         </div>
                     </div>
                 `;
@@ -204,11 +204,11 @@
         }
 
         async function setKitchenStatus(orderId, newStatus) {
-            let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
+            let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
             let order = allOrders.find(o => o.id === orderId);
             if(order) {
                 order.status = newStatus;
-                localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+                localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
                 renderKitchenGrid(allOrders);
 
                 if (window.db && window.firebaseModules) {
@@ -226,8 +226,8 @@
 
         function getStatusLabel(st) {
             if(st === 'pending') return 'قيد المراجعة ⏳';
-            if(st === 'cooking') return 'ع الفحم 🔥';
-            if(st === 'delivery') return 'مع الدليفري 🛵';
+            if(st === 'cooking') return 'قيد التجهيز 📦';
+            if(st === 'delivery') return 'مع الطيار 🛵';
             return st;
         }
     </script>
