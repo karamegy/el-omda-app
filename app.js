@@ -53,9 +53,7 @@ let localStream = null;
 let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-// ==========================================
 // دالة موحدة لتوليد معرف المستند (Doc ID) بدقة لـ Firestore
-// ==========================================
 function getStandardUserDocId(userOrKey) {
     if (typeof userOrKey === 'object' && userOrKey !== null) {
         if (userOrKey.phone) return String(userOrKey.phone);
@@ -73,22 +71,33 @@ function findProductById(id) {
     return menuProducts.find(p => String(p.id) === String(id));
 }
 
-// ==========================================
-// نظام التوجيه الذكي ومزامنة الجلسة السحابية (محدث لمنع فقدان الجلسة عند Refresh)
-// ==========================================
+// دالة موحدة لجمع وتوحيد السائقين من driversList ومن registeredUsers لمنع أي فراغ
+function getVerifiedDriversUnified() {
+    let verifiedDriversMap = new Map();
+    if (Array.isArray(driversList)) {
+        driversList.forEach(d => { 
+            if (d && d.name) verifiedDriversMap.set(d.name, { name: d.name, phone: d.phone || '' }); 
+        });
+    }
+    if (Array.isArray(registeredUsers)) {
+        registeredUsers.filter(u => u && (u.role || '').toLowerCase() === 'driver').forEach(u => {
+            if (u.name) verifiedDriversMap.set(u.name, { name: u.name, phone: u.phone || u.email || '' });
+        });
+    }
+    return Array.from(verifiedDriversMap.values());
+}
+
 function routeUserByRole(user) {
     currentCustomer = user;
     const role = (user.role || 'customer').toLowerCase();
     const email = (user.email || '').toLowerCase();
     const phone = String(user.phone || '');
-    
     const uid = phone || email; 
 
     if (!user.photoURL) {
         user.photoURL = 'icon1-512.png';
     }
 
-    // حفظ الجلسة محلياً لضمان عدم ضياعها عند إعادة التحديث (Refresh)
     try {
         localStorage.setItem('omda_logged_user', JSON.stringify(user));
     } catch(e) {}
@@ -121,26 +130,21 @@ function routeUserByRole(user) {
     }
 }
 
-// دالة جلب بيانات المستخدم لحظياً من فايربيز مع دعم الذاكرة المحلية لمنع مشكلة الـ Refresh
 async function verifyUserFromCloudLive() {
     const urlParams = new URLSearchParams(window.location.search);
     let uid = urlParams.get('uid');
 
-    // إذا لم يكن الـ uid موجوداً في الرابط، يتم استرجاعه تلقائياً من الـ localStorage لمنع مشكلة الـ Refresh
     if (!uid) {
         try {
             const savedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
             if (savedUser && (savedUser.phone || savedUser.email)) {
                 uid = savedUser.phone || savedUser.email;
             }
-        } catch (e) {
-            console.error("LocalStorage read error:", e);
-        }
+        } catch (e) {}
     }
 
     if (!uid) return null;
 
-    // الماستر أدمن الرئيسي
     if (uid.toLowerCase() === 'haretg@gmail.com' || uid.toLowerCase() === 'admin@omda.com' || uid === '01144730305') {
         const masterUser = { 
             name: 'المدير العام (كرم حمدي)', 
@@ -153,7 +157,6 @@ async function verifyUserFromCloudLive() {
         return masterUser;
     }
 
-    // انتظار مبدئي للسحابة (الحد الأقصى 2.5 ثانية)
     let attempts = 0;
     while (!window.db && attempts < 25) {
         await new Promise(r => setTimeout(r, 100));
@@ -182,12 +185,9 @@ async function verifyUserFromCloudLive() {
                 localStorage.setItem('omda_logged_user', JSON.stringify(cloudUser));
                 return cloudUser;
             }
-        } catch (e) {
-            console.error("Cloud fetch error:", e);
-        }
+        } catch (e) {}
     }
 
-    // بحث احتياطي في البيانات المحملة بالذاكرة الحية
     let foundUser = registeredUsers.find(u => u.phone === uid || u.email?.toLowerCase() === uid.toLowerCase());
     if (!foundUser) foundUser = staffList.find(s => s.phone === uid || s.email?.toLowerCase() === uid.toLowerCase());
     
@@ -196,7 +196,6 @@ async function verifyUserFromCloudLive() {
         return foundUser;
     }
 
-    // الاعتماد الأخير على الـ localStorage لضمان استمرارية الجلسة وعدم طرد المدير عند التحديث
     try {
         const localFallback = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
         if (localFallback && (localFallback.phone === uid || localFallback.email?.toLowerCase() === uid.toLowerCase() || localFallback.role === 'admin')) {
@@ -207,9 +206,7 @@ async function verifyUserFromCloudLive() {
     return null;
 }
 
-// فحص أمان صفحة الإدارة لحظة التحميل بناءً على السحابة والذاكرة
 document.addEventListener('DOMContentLoaded', async () => {
-    
     const liveUser = await verifyUserFromCloudLive();
     if (liveUser) {
         currentCustomer = liveUser;
@@ -381,9 +378,7 @@ async function loginByPhoneQuick() {
             if (docSnap.exists()) {
                 userObj = docSnap.data();
             }
-        } catch (e) {
-            console.error("Firebase cloud getDoc user error:", e);
-        }
+        } catch (e) {}
     }
 
     if (!userObj) {
@@ -410,9 +405,7 @@ async function loginByPhoneQuick() {
                 userObj, 
                 { merge: true }
             );
-        } catch (e) {
-            console.error("Firebase cloud user save error:", e);
-        }
+        } catch (e) {}
     }
 
     alert(`أهلاً بك يا ${userObj.name}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
@@ -543,7 +536,7 @@ function startRingingTone() {
             osc.start();
             osc.stop(audioCtx.currentTime + 0.8);
         }, 1200);
-    } catch(e) { console.log('Audio error:', e); }
+    } catch(e) {}
 }
 
 function stopRingingTone() {
@@ -842,9 +835,7 @@ async function addNewDriverWithLocation() {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriverObj.id)), newDriverObj);
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", String(phone)), { name, phone, role: 'driver', provider: 'Admin Added', photoURL: 'icon1-512.png' }, { merge: true });
-        } catch (e) {
-            console.error("Firebase driver add error:", e);
-        }
+        } catch (e) {}
     }
 
     alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
@@ -1047,9 +1038,7 @@ async function saveAndAddNewProduct(prod) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "products", String(prod.id)), prod);
-        } catch (e) {
-            console.error("Cloud product add error:", e);
-        }
+        } catch (e) {}
     }
     menuProducts.push(prod);
     alert(`تم إضافة المنتج (${prod.name}) بنجاح إلى المنيو سحابياً! 👑`);
@@ -1071,9 +1060,7 @@ async function adminDeleteProduct(id) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "products", String(id)));
-        } catch(e) {
-            console.error("Delete error:", e);
-        }
+        } catch(e) {}
     }
 
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
@@ -1156,9 +1143,7 @@ async function finalizeProductEditCloud(prod) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "products", String(prod.id)), prod, { merge: true });
-        } catch(e) {
-            console.error("Cloud edit product error:", e);
-        }
+        } catch(e) {}
     }
     closeEditProductModal();
     loadAdminDashboard();
@@ -1342,9 +1327,7 @@ async function submitOrder() {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", newOrder.id), newOrder);
-        } catch (e) {
-            console.error("Firebase order save error:", e);
-        }
+        } catch (e) {}
     }
 
     let earnedPoints = Math.floor(total / 10);
@@ -1367,9 +1350,7 @@ async function submitOrder() {
                 orderUserObj, 
                 { merge: true }
             );
-        } catch (e) {
-            console.error("Firebase order user sync error:", e);
-        }
+        } catch (e) {}
     }
 
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
@@ -1456,7 +1437,7 @@ async function submitReservation() {
     reservationsList.unshift(newRes);
 
     if (window.db && window.firebaseModules) {
-        window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => console.error(e));
+        window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => {});
     }
 
     alert(`تم تسجيل حجز الطاولة بنجاح يا أسطى ${name}! سنتواصل معك قريباً.`);
@@ -1469,9 +1450,6 @@ async function submitReservation() {
     switchTab('menu');
 }
 
-// ==========================================
-// لوحة العميل سحابياً
-// ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('cust-login-box');
     const dashBox = document.getElementById('customer-dashboard');
@@ -1599,9 +1577,7 @@ async function assignDriverToOrder(orderId, driverName) {
                     window.firebaseModules.doc(window.db, "orders", String(orderId)), 
                     { assignedDriver: driverName, status: 'delivery' }
                 );
-            } catch(e) {
-                console.error("Cloud assign driver error:", e);
-            }
+            } catch(e) {}
         }
 
         alert(`✓ تم تعيين السائق (${driverName || 'بدون'}) للطلب ${orderId} بنجاح 🏍️`);
@@ -1610,9 +1586,6 @@ async function assignDriverToOrder(orderId, driverName) {
     }
 }
 
-// ==========================================
-// إدارة الحسابات والسائقين سحابياً (Firebase Firestore)
-// ==========================================
 function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
     if(!container) return;
@@ -1672,9 +1645,7 @@ async function updateUserRole(docKey, newRole) {
                 targetUser, 
                 { merge: true }
             );
-        } catch (e) {
-            console.error("Error updating user role in cloud:", e);
-        }
+        } catch (e) {}
     }
 
     let name = targetUser.name;
@@ -1682,18 +1653,12 @@ async function updateUserRole(docKey, newRole) {
     let email = targetUser.email;
 
     if(newRole === 'driver') {
-        if(!driversList.some(d => String(d.phone) === String(phone) || d.name === name)) {
+        let verifiedDrivers = getVerifiedDriversUnified();
+        if(!verifiedDrivers.some(d => String(d.phone) === String(phone) || d.name === name)) {
             let newDriver = { id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002, role: 'driver' };
             if (window.db && window.firebaseModules) {
                 await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriver.id)), newDriver);
             }
-        }
-    } else if(newRole === 'admin' || newRole === 'accountant' || newRole === 'worker') {
-        if(!staffList.some(s => s.email === email)) {
-            staffList.push({ id: Date.now(), name, email, phone, password: '123', role: newRole });
-        } else {
-            let staffMember = staffList.find(s => s.email === email);
-            if(staffMember) staffMember.role = newRole;
         }
     }
 
@@ -1718,9 +1683,7 @@ async function deleteGoogleAccount(docKey) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "users", cloudDocId));
-        } catch(e) {
-            console.error("Cloud user delete error:", e);
-        }
+        } catch(e) {}
     }
 
     alert('✓ تم حذف الحساب بنجاح من السحابة.');
@@ -1796,9 +1759,7 @@ async function saveEditedUserAccount() {
                 targetUser,
                 { merge: true }
             );
-        } catch (e) {
-            console.error("Cloud user edit save error:", e);
-        }
+        } catch (e) {}
     }
 
     closeEditUserModal();
@@ -1974,7 +1935,8 @@ function loadAdminDashboard() {
         }
     }
 
-    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
+    // جلب قائمة الطيارين الموحدة لضمان ظهورهم في قائمة الطلبات
+    let verifiedDrivers = getVerifiedDriversUnified();
 
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
@@ -1986,7 +1948,7 @@ function loadAdminDashboard() {
                 let driverOptions = `<option value="">-- اختر سائق مسجل للطلب --</option>`;
                 verifiedDrivers.forEach(d => {
                     let selected = order.assignedDriver === d.name ? 'selected' : '';
-                    driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone || d.email})</option>`;
+                    driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone || ''})</option>`;
                 });
 
                 ordersList.innerHTML += `
@@ -2062,7 +2024,7 @@ async function addExpense() {
     expensesList.unshift(newExp);
 
     if (window.db && window.firebaseModules) {
-        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "expenses", String(newExp.id)), newExp).catch(e => console.error(e));
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "expenses", String(newExp.id)), newExp).catch(e => {});
     }
 
     alert('تم تسجيل المصروف في الخزنة بنجاح 💸');
@@ -2098,7 +2060,7 @@ async function adminCreateOrder() {
     };
 
     if (window.db && window.firebaseModules) {
-        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", String(newOrder.id)), newOrder).catch(e => console.error(e));
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", String(newOrder.id)), newOrder).catch(e => {});
     }
 
     let earnedPoints = Math.floor(total / 10);
@@ -2125,9 +2087,7 @@ async function updateOrderStatus(orderId, newStatus) {
                     window.firebaseModules.doc(window.db, "orders", String(orderId)), 
                     { status: newStatus }
                 );
-            } catch(e) {
-                console.error("Cloud status update error:", e);
-            }
+            } catch(e) {}
         }
         loadAdminDashboard();
         loadLiveTrackingMap();
@@ -2142,9 +2102,7 @@ async function adminDeleteOrder(orderId) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "orders", String(orderId)));
-        } catch(e) {
-            console.error("Cloud order delete error:", e);
-        }
+        } catch(e) {}
     }
 
     loadAdminDashboard();
@@ -2162,9 +2120,7 @@ async function confirmReservation(resId) {
                     window.firebaseModules.doc(window.db, "reservations", String(resId)), 
                     { status: 'confirmed' }
                 );
-            } catch(e) {
-                console.error("Cloud reservation update error:", e);
-            }
+            } catch(e) {}
         }
         loadAdminDashboard();
     }
@@ -2178,9 +2134,7 @@ async function adminDeleteReservation(resId) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "reservations", String(resId)));
-        } catch(e) {
-            console.error("Cloud reservation delete error:", e);
-        }
+        } catch(e) {}
     }
 
     loadAdminDashboard();
@@ -2377,6 +2331,8 @@ function loadLiveTrackingMap() {
         iconSize: [36, 36], iconAnchor: [18, 18]
     });
 
+    let verifiedDrivers = getVerifiedDriversUnified();
+
     filteredOrders.forEach((order) => {
         let orderLat = order.lat || (restaurantCoords[0] + 0.01);
         let orderLng = order.lng || (restaurantCoords[1] + 0.01);
@@ -2405,7 +2361,7 @@ function loadLiveTrackingMap() {
 
         let statusClass = 'status-' + (order.status || 'pending');
         let driverSelectOpts = `<option value="">-- اختر سائق --</option>`;
-        driversList.forEach(d => {
+        verifiedDrivers.forEach(d => {
             let sel = order.assignedDriver === d.name ? 'selected' : '';
             driverSelectOpts += `<option value="${d.name}" ${sel}>${d.name}</option>`;
         });
@@ -2542,7 +2498,7 @@ function loadDriversAdminList() {
     if(!container) return;
     container.innerHTML = '';
     
-    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
+    let verifiedDrivers = getVerifiedDriversUnified();
 
     if(verifiedDrivers.length === 0) { 
         container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب دليفري مسجلة من الحسابات الحقيقية حالياً.</p>'; 
@@ -2550,12 +2506,11 @@ function loadDriversAdminList() {
     }
 
     verifiedDrivers.forEach((d) => {
-        let docKey = d.phone || d.email;
+        let docKey = d.phone || d.name;
         container.innerHTML += `
             <div class="bg-slate-50 p-2 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="${d.photoURL || 'icon1-512.png'}" style="width:32px; height:32px; border-radius:50%; object-fit:cover;">
-                    <div><strong>${d.name}</strong> (${d.phone || d.email})<br><span class="text-[10px] text-emerald-600 font-bold">✓ طيار موثق سحابياً</span></div>
+                    <div><strong>${d.name}</strong> (${d.phone || 'بدون هاتف'})<br><span class="text-[10px] text-emerald-600 font-bold">✓ طيار موثق سحابياً</span></div>
                 </div>
                 <button onclick="updateUserRole('${docKey}', 'customer')" class="bg-red-50 text-red-600 px-2 py-1 rounded font-bold hover:bg-red-100 cursor-pointer">إلغاء الطيار</button>
             </div>
@@ -2571,9 +2526,7 @@ async function deleteDriver(driverId) {
     if (window.db && window.firebaseModules) {
         try {
             await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "drivers", String(driverId)));
-        } catch(e) {
-            console.error("Cloud driver delete error:", e);
-        }
+        } catch(e) {}
     }
 
     loadDriversAdminList();
@@ -2586,9 +2539,9 @@ function populateDriverPortalSelect() {
     if(!select) return;
     select.innerHTML = '';
     
-    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
+    let verifiedDrivers = getVerifiedDriversUnified();
     verifiedDrivers.forEach(d => {
-        select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone || d.email})</option>`;
+        select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone || ''})</option>`;
     });
 }
 
@@ -2626,9 +2579,7 @@ function toggleGpsTracking() {
                 if (window.db && window.firebaseModules) {
                     try {
                         await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(driver.id || driver.name)), driver, { merge: true });
-                    } catch (e) {
-                        console.error("Firebase driver update error:", e);
-                    }
+                    } catch (e) {}
                 }
             }
             statusBox.innerText = `تم بث الموقع (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
@@ -2642,7 +2593,7 @@ function toggleGpsTracking() {
 function autoDispatchOrders() {
     if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بتنفيذ التوزيع الآلي!"); return; }
 
-    let drivers = registeredUsers.filter(u => u.role === 'driver');
+    let drivers = getVerifiedDriversUnified();
     if(drivers.length === 0) { alert('أضف مناديب دليفري مسجلين أولاً!'); return; }
 
     let assignedCount = 0;
@@ -2671,18 +2622,14 @@ function getStatusText(status) {
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
+        navigator.serviceWorker.register('./sw.js').catch(err => {});
     });
 }
 
-// ==========================================
-// مزامنة سحابية لحظية 100% عبر Firebase Firestore
-// ==========================================
 function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
         const { collection, onSnapshot } = window.firebaseModules;
         
-        // 1. مزامنة الطلبات سحابياً
         onSnapshot(collection(window.db, "orders"), (snapshot) => {
             let cloudOrders = [];
             snapshot.forEach((doc) => { cloudOrders.push(doc.data()); });
@@ -2693,7 +2640,6 @@ function initRealtimeCloudSync() {
             if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
         });
 
-        // 2. مزامنة الطيارين سحابياً
         onSnapshot(collection(window.db, "drivers"), (snapshot) => {
             driversList = [];
             snapshot.forEach((doc) => { driversList.push(doc.data()); });
@@ -2703,14 +2649,12 @@ function initRealtimeCloudSync() {
             if (typeof loadDriversAdminList === 'function') loadDriversAdminList();
         });
 
-        // 3. مزامنة المستخدمين سحابياً
         onSnapshot(collection(window.db, "users"), (snapshot) => {
             registeredUsers = [];
             snapshot.forEach((doc) => { registeredUsers.push(doc.data()); });
             if (typeof loadGoogleAccountsList === 'function') loadGoogleAccountsList();
         });
 
-        // 4. مزامنة المنيو والأصناف سحابياً
         onSnapshot(collection(window.db, "products"), (snapshot) => {
             let cloudProds = [];
             snapshot.forEach((doc) => { cloudProds.push(doc.data()); });
@@ -2723,14 +2667,12 @@ function initRealtimeCloudSync() {
             if (typeof initHeroSlider === 'function') initHeroSlider();
         });
 
-        // 5. مزامنة المصروفات سحابياً
         onSnapshot(collection(window.db, "expenses"), (snapshot) => {
             expensesList = [];
             snapshot.forEach((doc) => { expensesList.push(doc.data()); });
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
         });
 
-        // 6. مزامنة الحجوزات سحابياً
         onSnapshot(collection(window.db, "reservations"), (snapshot) => {
             reservationsList = [];
             snapshot.forEach((doc) => { reservationsList.push(doc.data()); });
