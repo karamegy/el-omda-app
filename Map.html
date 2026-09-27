@@ -239,7 +239,7 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
-    <!-- إعداد وتهيئة Firebase وسکریبت مزامنة البروفايل -->
+    <!-- إعداد وتهيئة Firebase وسکریبت مزامنة البروفايل الموحد -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -271,9 +271,9 @@
             getDoc
         };
 
-        // مزامنة وعرض بيانات البروفايل والحساب الحالي عند تحميل صفحة الخريطة
+        <!-- استخدام المفتاح الموحد omda_logged_user المتطابق مع app.js -->
         document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || localStorage.getItem('omda_logged_user') || '{}');
+            const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
             
             const avatarEl = document.getElementById('nav-user-avatar');
             const nameEl = document.getElementById('nav-username-display');
@@ -286,7 +286,7 @@
             }
         });
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي ومزامنة الحساب والبروفايل بنجاح تام!");
+        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي ومزامنة الحساب الموحد بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
