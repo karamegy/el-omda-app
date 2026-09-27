@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خريطة التتبع الحي والأسطول والمكالمات | مشويات العمدة</title>
+    <title>خريطة التتبع الحي والأسطول والمكالمات | الأسطول اللوجستي</title>
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,7 +31,7 @@
                 <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h1 class="font-black text-slate-900 text-base sm:text-lg">كبابجي ومشويات العمدة // نظام التتبع والاتصال الحي 👑</h1>
+                <h1 class="font-black text-slate-900 text-base sm:text-lg">الأسطول اللوجستي // نظام التتبع والاتصال الحي 👑</h1>
                 <div class="flex items-center gap-2 flex-wrap">
                     <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
                     <span id="nav-username-display" class="text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md"></span>
@@ -40,15 +40,15 @@
         </div>
         <div class="flex items-center gap-2">
             <a href="admin.html" id="adminPanelLink" class="nav-link bg-slate-100 hover:bg-slate-200"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
-            <a href="index.html" class="nav-link bg-amber-50 text-amber-800 hover:bg-amber-100"><i class="fa-solid fa-store"></i> المنيو الرئيسي</a>
+            <a href="index.html" class="nav-link bg-amber-50 text-amber-800 hover:bg-amber-100"><i class="fa-solid fa-boxes-stacked"></i> الخدمات والمنيو</a>
         </div>
     </header>
 
     <!-- إحصائيات سريعة للأداء -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600">
-            <div><span class="text-slate-500">المطعم الرئيسي</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">شبرا منت</h4></div>
-            <i class="fa-solid fa-store text-amber-600 text-xl"></i>
+            <div><span class="text-slate-500">مركز العمليات</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">الرئيسي</h4></div>
+            <i class="fa-solid fa-headset text-amber-600 text-xl"></i>
         </div>
         <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600">
             <div><span class="text-slate-500">الأسطول والطيارين</span><h4 class="text-base font-black text-emerald-600 mono-font" id="statDriversCount">0 طيار</h4></div>
@@ -81,9 +81,9 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
-            <span class="font-bold text-amber-800 whitespace-nowrap"><i class="fa-solid fa-route ml-1"></i> ملاحة مسار الدليفري:</span>
-            <input type="text" id="routeStartInput" placeholder="نقطة البداية (المطعم الرئيسي)" class="corporate-input flex-1 min-w-[180px]" value="مطعم مشويات العمدة (الرئيسي)" readonly>
-            <input type="text" id="routeEndInput" placeholder="وجهة العميل (مثال: فيصل، الهرم، شبرا منت)" class="corporate-input flex-1 min-w-[180px]">
+            <span class="font-bold text-amber-800 whitespace-nowrap"><i class="fa-solid fa-route ml-1"></i> ملاحة مسار الشحن والتوصيل:</span>
+            <input type="text" id="routeStartInput" placeholder="نقطة الانطلاق (مركز الأسطول)" class="corporate-input flex-1 min-w-[180px]" value="مركز الأسطول اللوجستي الرئيسي" readonly>
+            <input type="text" id="routeEndInput" placeholder="وجهة التوصيل (مثال: فيصل، الهرم، مدينة نصر)" class="corporate-input flex-1 min-w-[180px]">
             <button onclick="searchAndCalculateRoute()" class="btn-primary py-2 px-4 text-xs cursor-pointer bg-amber-700 hover:bg-amber-800">
                 <i class="fa-solid fa-location-arrow ml-1"></i> رسم المسار و حساب ETA
             </button>
@@ -96,27 +96,27 @@
     <!-- التخطيط الرئيسي (القائمة الجانبية + الخريطة التفاعلية) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
-        <!-- القائمة الجانبية لإدارة الطلبات والطيارين والفروع -->
+        <!-- القائمة الجانبية لإدارة الطلبات والشحنات والطيارين -->
         <div class="corporate-card p-4 lg:col-span-1 space-y-3 max-h-[72vh] overflow-y-auto">
             <div class="sidebar-tabs" id="sidebarTabsContainer">
-                <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الطلبات</button>
+                <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الشحنات</button>
                 <button id="tabDrivers" onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
-                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> المطعم</button>
+                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> المراكز</button>
                 <button id="tabPortal" onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
-            <!-- تبويب الطلبات والشحنات الحية وتتبع العميل -->
+            <!-- تبويب الشحنات وتتبع العميل -->
             <div id="tab-content-orders">
                 <div class="flex justify-between items-center mb-2">
                     <h3 style="color: var(--primary);" class="font-bold text-xs"><i class="fa-solid fa-truck-fast"></i> تتبع الشحنات والطلبات</h3>
                     <button id="autoDispatchBtn" onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.65rem; background: #16a34a; display:none;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي</button>
                 </div>
                 
-                <!-- صندوق تتبع العميل برقم الهاتف أو رقم الفاتورة -->
+                <!-- صندوق تتبع العميل برقم الهاتف أو الفاتورة -->
                 <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mb-3 space-y-2">
-                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-map-location-dot ml-1"></i> تتبع طلبك أو فاتورتك على الخريطة:</h4>
+                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-map-location-dot ml-1"></i> تتبع شحنتك برقم الهاتف أو الفاتورة:</h4>
                     <div class="flex gap-1">
-                        <input type="text" id="customerTrackInput" placeholder="أدخل رقم الهاتف أو رقم الفاتورة (مثل OMDA-...)" class="corporate-input text-xs">
+                        <input type="text" id="customerTrackInput" placeholder="أدخل رقم الهاتف أو رقم الفاتورة (مثل FLEET-...)" class="corporate-input text-xs">
                         <button onclick="trackCustomerOrder()" class="btn-primary text-xs py-1.5 px-3 bg-amber-700 hover:bg-amber-800 whitespace-nowrap">تتبع 🔍</button>
                     </div>
                     <div id="customerTrackResult" class="text-[11px] text-slate-700 mt-2"></div>
@@ -125,9 +125,9 @@
                 <div class="filter-bar">
                     <button onclick="filterOrders('all', this)" class="filter-btn active">الكل</button>
                     <button onclick="filterOrders('pending', this)" class="filter-btn">قيد المراجعة</button>
-                    <button onclick="filterOrders('cooking', this)" class="filter-btn">ع الفحم</button>
-                    <button onclick="filterOrders('delivery', this)" class="filter-btn">مع الدليفري</button>
-                    <button onclick="filterOrders('done', this)" class="filter-btn">وصل</button>
+                    <button onclick="filterOrders('cooking', this)" class="filter-btn">قيد التجهيز</button>
+                    <button onclick="filterOrders('delivery', this)" class="filter-btn">مع الطيار</button>
+                    <button onclick="filterOrders('done', this)" class="filter-btn">تم التسليم</button>
                 </div>
                 <div id="live-orders-list" class="space-y-2 mt-2"></div>
             </div>
@@ -136,7 +136,7 @@
             <div id="tab-content-drivers" style="display: none;" class="space-y-3">
                 <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار دليفري جديد بالموقع</h3>
                 <div class="space-y-2">
-                    <input type="text" id="driver-name" placeholder="اسم الكابتن/السيارة" class="corporate-input">
+                    <input type="text" id="driver-name" placeholder="اسم الكابتن / الطيار" class="corporate-input">
                     <input type="text" id="driver-phone" placeholder="رقم الهاتف" class="corporate-input">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" step="any" id="driver-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
@@ -155,13 +155,13 @@
                 <div id="drivers-list-container" class="space-y-2 mt-3"></div>
             </div>
 
-            <!-- تبويب إدارة وإضافة المطعم الرئيسي (للإدارة فقط) -->
+            <!-- تبويب إدارة وإضافة مركز الأسطول الرئيسي (للإدارة فقط) -->
             <div id="tab-content-branches" style="display: none;" class="space-y-3">
-                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-shop"></i> ضبط موقع المطعم الرئيسي بدقة</h3>
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-shop"></i> ضبط موقع مركز الأسطول الرئيسي</h3>
                 <div class="space-y-2">
-                    <input type="text" id="branch-name" placeholder="اسم المطعم الرئيسي" class="corporate-input" value="مطعم مشويات العمدة (الرئيسي)">
-                    <input type="text" id="branch-phone" placeholder="هاتف المطعم" class="corporate-input" value="01144730305">
-                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input" value="شبرا منت، الجيزة">
+                    <input type="text" id="branch-name" placeholder="اسم مركز الأسطول" class="corporate-input" value="مركز الأسطول اللوجستي الرئيسي">
+                    <input type="text" id="branch-phone" placeholder="هاتف المركز" class="corporate-input" value="01144730305">
+                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input" value="القاهرة / الجيزة، مصر">
                     <div class="grid grid-cols-2 gap-2">
                         <input type="number" step="any" id="branch-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
                         <input type="number" step="any" id="branch-lng" placeholder="خط الطول Lng" class="corporate-input mono-font">
@@ -174,7 +174,7 @@
                             <i class="fa-solid fa-map-pin"></i> حدد من الخريطة
                         </button>
                     </div>
-                    <button onclick="saveMainRestaurantLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وتثبيت موقع المطعم الرئيسي 👑</button>
+                    <button onclick="saveMainRestaurantLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وتثبيت مركز الأسطول 👑</button>
                 </div>
                 <div id="branches-list-container" class="space-y-2 mt-3"></div>
             </div>
@@ -182,7 +182,7 @@
             <!-- تبويب بوابة السائق (بث GPS الحي) -->
             <div id="tab-content-portal" style="display: none;" class="space-y-3">
                 <h3 class="text-purple-700 font-bold text-xs"><i class="fa-solid fa-satellite-dish"></i> البث الحي لموقع السائق (GPS Tracker)</h3>
-                <p class="text-[11px] text-slate-500">اختر اسمك كسايق لبث موقعك الجغرافي الحي على الخريطة تلقائياً:</p>
+                <p class="text-[11px] text-slate-500">اختر اسمك كطيار لبث موقعك الجغرافي الحي على الخريطة تلقائياً:</p>
                 <select id="portal-driver-select" class="corporate-input"></select>
                 <button onclick="toggleGpsTracking()" id="gps-toggle-btn" class="btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer">بدء بث الموقع الحي 🛰️</button>
                 <div id="gps-status-box" class="text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold">الوضع: متوقف</div>
@@ -205,9 +205,9 @@
                             <i id="compassNeedle" class="fa-solid fa-compass text-amber-700 transition-transform duration-300"></i> 0°
                         </button>
                     </div>
-                    <button onclick="panToRestaurant()" class="touch-btn"><i class="fa-solid fa-shop text-amber-700"></i> التركيز على مطعم العمدة</button>
+                    <button onclick="panToRestaurant()" class="touch-btn"><i class="fa-solid fa-headset text-amber-700"></i> التركيز على مركز الأسطول</button>
                     <button onclick="panToUser()" class="touch-btn"><i class="fa-solid fa-crosshairs text-emerald-600"></i> موقعي الحالي GPS</button>
-                    <button onclick="resetMapView()" class="touch-btn"><i class="fa-solid fa-arrows-to-eye text-slate-600"></i> احتواء كافة الطلبات</button>
+                    <button onclick="resetMapView()" class="touch-btn"><i class="fa-solid fa-arrows-to-eye text-slate-600"></i> احتواء كافة الشحنات</button>
                 </div>
             </div>
 
@@ -218,7 +218,7 @@
     <!-- نافذة الاتصال الصوتي والمرئي (WebRTC Modal) -->
     <div id="callModal" class="hidden fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4">
         <div class="corporate-card bg-white w-full max-w-md p-5 space-y-4 text-center shadow-2xl border-2 border-amber-600">
-            <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل صاحب الطلب</h3>
+            <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل صاحب الشحنة</h3>
             <div id="callOrderInfo" class="text-xs text-slate-600">جاري الاتصال...</div>
             
             <div class="grid grid-cols-2 gap-2 bg-black rounded-xl overflow-hidden relative aspect-video">
@@ -271,9 +271,9 @@
             getDoc
         };
 
-        <!-- استخدام المفتاح الموحد omda_logged_user المتطابق مع app.js -->
+        // استخدام المفتاح الموحد fleet_logged_user المتطابق مع app.js
         document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+            const sessionUser = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
             
             const avatarEl = document.getElementById('nav-user-avatar');
             const nameEl = document.getElementById('nav-username-display');
@@ -286,7 +286,7 @@
             }
         });
         
-        console.log("🗺️🔥 تم تفعيل خريطة التتبع الحي ومزامنة الحساب الموحد بنجاح تام!");
+        console.log("🗺️🚀 تم تفعيل خريطة التتبع الحي للأسطول اللوجستي ومزامنة الحساب الموحد بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
