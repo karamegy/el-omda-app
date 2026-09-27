@@ -135,7 +135,7 @@ async function verifyUserFromCloudLive() {
 
     if (!uid) {
         try {
-            const savedUser = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
+            const savedUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('omda_logged_user') || '{}');
             if (savedUser && (savedUser.phone || savedUser.email)) {
                 uid = savedUser.phone || savedUser.email;
             }
@@ -196,7 +196,7 @@ async function verifyUserFromCloudLive() {
     }
 
     try {
-        const localFallback = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
+        const localFallback = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('omda_logged_user') || '{}');
         if (localFallback && (localFallback.phone === uid || localFallback.email?.toLowerCase() === uid.toLowerCase() || localFallback.role === 'admin')) {
             return localFallback;
         }
@@ -2674,7 +2674,7 @@ function initRealtimeCloudSync() {
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
         });
 
-        onSnapshot(collection(window.33db || window.db, "reservations"), (snapshot) => {
+        onSnapshot(collection(window.db, "reservations"), (snapshot) => {
             reservationsList = [];
             snapshot.forEach((doc) => { reservationsList.push(doc.data()); });
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
