@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة التحكم الماستر الشاملة | كبابجي ومشويات العمدة</title>
+    <title>لوحة التحكم الماستر الشاملة | الأسطول اللوجستي وإدارة الشحنات 🚀</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
@@ -100,16 +100,16 @@
                 <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h1 id="admin-header-title" style="font-size: 1.1rem;">لوحة تحكم الماستر الشاملة 👑</h1>
+                <h1 id="admin-header-title" style="font-size: 1.1rem;">لوحة تحكم الأسطول الشاملة 👑</h1>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">إدارة النظام، الخزنة، العمليات والمنيو</span>
+                    <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">إدارة النظام، الخزنة، الطيارين والتشغيل</span>
                     <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
                 </div>
             </div>
         </div>
         <nav class="nav-links">
-            <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التوصيل 🗺️</a>
-            <a href="index.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background-color: #b45309;"><i class="fa-solid fa-store"></i> زيارة الموقع 🏠</a>
+            <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> خريطة التتبع الحي 🗺️</a>
+            <a href="index.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; background-color: #b45309;"><i class="fa-solid fa-store"></i> خدمات الأسطول 🚀</a>
             <button onclick="adminLogout()" class="nav-btn" style="background-color: #dc2626;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
         </nav>
     </header>
@@ -121,8 +121,8 @@
         <div id="admin-login-box" class="admin-login-card">
             <div style="text-align: center; margin-bottom: 20px;">
                 <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; color: var(--admin-primary); margin-bottom: 10px;"></i>
-                <h2 style="color: #1c1917; font-size: 1.4rem; font-weight: bold;">بوابة الإدارة المركزية الماستر</h2>
-                <p style="color: #78716c; font-size: 0.9rem; margin-top: 5px;">سجل دخولك بصلاحيات الأدمن أو المحاسب للتحكم الكامل بنظام مشويات العمدة</p>
+                <h2 style="color: #1c1917; font-size: 1.4rem; font-weight: bold;">بوابة الإدارة المركزية للأسطول</h2>
+                <p style="color: #78716c; font-size: 0.9rem; margin-top: 5px;">سجل دخولك بصلاحيات الأدمن أو المحاسب للتحكم الكامل بمنصة الأسطول اللوجستي</p>
             </div>
             
             <!-- زر تسجيل دخول الأدمن عبر جوجل -->
@@ -147,31 +147,31 @@
             <!-- شريط معلومات الحساب الحالي -->
             <div style="background: linear-gradient(135deg, #fef3c7, #fde047); padding: 15px 20px; border-radius: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #fcd34d; box-shadow: 0 2px 8px rgba(0,0,0,0.03);">
                 <div>
-                    <span style="font-size: 1.05rem; color: #78350f;">👑 مرحباً بك يا أسطى: <strong id="logged-user-name">المدير العام</strong></span>
+                    <span style="font-size: 1.05rem; color: #78350f;">👑 مرحباً بك يا مدير النظام: <strong id="logged-user-name">المدير العام</strong></span>
                     <div style="font-size: 0.85rem; color: #92400e; margin-top: 3px;" id="logged-user-role">الصلاحية: مدير ماستر (Master Admin)</div>
                 </div>
                 <div style="background: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: bold; color: #166534; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-                    🟢 النظام متصل وسحابياً نشط
+                    🟢 النظام اللوجستي متصل وسحابياً نشط
                 </div>
             </div>
 
             <!-- أزرار التنقل السريع بين أقسام التحكم المتطورة -->
             <div class="admin-nav-grid">
                 <button onclick="switchAdminSection('vault', this)" class="admin-section-btn active"><i class="fa-solid fa-vault"></i> الخزنة والأرباح</button>
-                <button onclick="switchAdminSection('orders', this)" class="admin-section-btn"><i class="fa-solid fa-box-open"></i> الطلبات والدليفري</button>
+                <button onclick="switchAdminSection('orders', this)" class="admin-section-btn"><i class="fa-solid fa-box-open"></i> الشحنات والطيارين</button>
                 <button onclick="switchAdminSection('google-accounts', this)" class="admin-section-btn"><i class="fa-solid fa-users"></i> الحسابات والأدوار</button>
-                <button onclick="switchAdminSection('reservations', this)" class="admin-section-btn"><i class="fa-solid fa-chair"></i> حجوزات الطاولات</button>
-                <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة وجبة جديدة</button>
-                <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-utensils"></i> إدارة المنيو الحالي</button>
-                <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> تسجيل أوردر يدوي</button>
-                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> طاقم الموظفين</button>
+                <button onclick="switchAdminSection('reservations', this)" class="admin-section-btn"><i class="fa-solid fa-truck-fast"></i> طلبات الأسطول</button>
+                <button onclick="switchAdminSection('products', this)" class="admin-section-btn"><i class="fa-solid fa-photo-film"></i> إضافة خدمة جديدة</button>
+                <button onclick="switchAdminSection('menu-manage', this)" class="admin-section-btn"><i class="fa-solid fa-boxes-stacked"></i> إدارة الخدمات</button>
+                <button onclick="switchAdminSection('manual-order', this)" class="admin-section-btn"><i class="fa-solid fa-cart-plus"></i> تسجيل شحنة يدوية</button>
+                <button onclick="switchAdminSection('staff', this)" class="admin-section-btn" id="btn-staff-tab"><i class="fa-solid fa-users-gear"></i> طاقم العمل</button>
                 <button onclick="switchAdminSection('account-settings', this)" class="admin-section-btn"><i class="fa-solid fa-key"></i> كلمة المرور</button>
                 <button onclick="switchAdminSection('ticker', this)" class="admin-section-btn"><i class="fa-solid fa-bullhorn"></i> شريط الإعلانات</button>
             </div>
 
             <!-- 1. دفتر الخزنة والمبيعات اليومية -->
             <div id="section-vault" class="admin-panel-box active" style="border-top: 4px solid #16a34a;">
-                <h3 style="margin-bottom: 15px; color: #16a34a; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات اليومية</h3>
+                <h3 style="margin-bottom: 15px; color: #16a34a; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-vault"></i> دفتر الخزنة والمبيعات والتحصيل اليومي</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                     <div style="background: #dcfce7; padding: 15px; border-radius: 10px; text-align: center; color: #166534; border: 1px solid #bbf7d0;">
                         <h4 style="font-size: 0.95rem; margin-bottom: 5px;">إجمالي الإيرادات</h4>
@@ -188,7 +188,7 @@
                 </div>
                 <div class="checkout-form" style="max-width: 100%;">
                     <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px;">
-                        <input type="text" id="expense-reason" placeholder="سبب المصروف (مثل: شراء فحم حطب، صيانة شواية)">
+                        <input type="text" id="expense-reason" placeholder="سبب المصروف (مثل: صيانة دراجة أسطول، بنزين، أدوات مكتبية)">
                         <input type="number" id="expense-amount" placeholder="المبلغ بالجنيه">
                         <button onclick="addExpense()" class="btn-secondary" style="background-color: #9a3412; color: white; font-weight: bold;">تسجيل مصروف 💸</button>
                     </div>
@@ -196,69 +196,68 @@
                 <div id="expenses-list" style="margin-top: 20px; font-size: 0.95rem;"></div>
             </div>
 
-            <!-- 2. طلبات الدليفري وتوصيل وتعيين السائقين -->
+            <!-- 2. طلبات الشحن وتوصيل وتعيين السائقين -->
             <div id="section-orders" class="admin-panel-box" style="border-top: 4px solid var(--admin-primary);">
-                <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-box-open"></i> طلبات الدليفري وتعيين السائقين المسجلين</h3>
+                <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-box-open"></i> شحنات التوصيل وتعيين طياري الأسطول المسجلين</h3>
                 <div id="admin-orders-list" class="admin-orders-list"></div>
             </div>
 
             <!-- 2.5 قسم إدارة وتعيين أدوار الحسابات (متصل سحابياً بالكامل) -->
             <div id="section-google-accounts" class="admin-panel-box" style="border-top: 4px solid #2563eb;">
-                <h3 style="margin-bottom: 10px; color: #2563eb; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-users"></i> إدارة حسابات المستخدمين والعملاء سحابياً (Firebase Firestore) 👑</h3>
-                <p style="font-size: 0.9rem; color: #57534e; margin-bottom: 15px;">استعراض كافة الحسابات والعملاء وترقية صلاحياتهم فوراً (أدمن، محاسب، طيار، عامل، عميل):</p>
+                <h3 style="margin-bottom: 10px; color: #2563eb; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-users"></i> إدارة حسابات المستخدمين والمناديب سحابياً (Firebase Firestore) 👑</h3>
+                <p style="font-size: 0.9rem; color: #57534e; margin-bottom: 15px;">استعراض كافة الحسابات والعملاء وترقية صلاحياتهم فوراً (أدمن، محاسب، طيار، مساعد، عميل):</p>
                 <div id="admin-google-accounts-list" style="display: flex; flex-direction: column; gap: 12px; max-height: 450px; overflow-y: auto;"></div>
             </div>
 
-            <!-- 3. حجوزات الطاولات والعزائم -->
+            <!-- 3. طلبات تخصيص الأسطول والشركات -->
             <div id="section-reservations" class="admin-panel-box" style="border-top: 4px solid #b45309;">
-                <h3 style="color: #b45309; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-chair"></i> حجوزات الطاولات والعزائم في الصالة</h3>
+                <h3 style="color: #b45309; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-truck-fast"></i> طلبات تخصيص الأسطول وعقود الشركات</h3>
                 <div id="admin-reservations-list" class="admin-orders-list"></div>
             </div>
 
-            <!-- 4. إضافة وجبة جديدة بالصور أو الفيديوهات -->
+            <!-- 4. إضافة خدمة لوجستية جديدة بالصور أو الفيديوهات -->
             <div id="section-products" class="admin-panel-box" style="border-top: 4px solid #16a34a;">
-                <h3 style="margin-bottom: 15px; color: #16a34a; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-photo-film"></i> إضافة وجبة أو صنف جديد (صورة أو فيديو)</h3>
+                <h3 style="margin-bottom: 15px; color: #16a34a; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-photo-film"></i> إضافة خدمة توصيل أو باقة جديدة (صورة أو فيديو)</h3>
                 <div class="checkout-form" style="max-width: 100%;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                        <input type="text" id="new-prod-name" placeholder="اسم الأكلة أو الوجبة (مثلاً: صينية العمدة الكبرى)">
+                        <input type="text" id="new-prod-name" placeholder="اسم الخدمة أو البقة (مثلاً: اشتراك أسطول شهري)">
                         <select id="new-prod-cat">
-                            <option value="trays">ركن الصواني 🔥</option>
-                            <option value="grills">ركن المشويات</option>
-                            <option value="meals">الوجبات السريعة</option>
-                            <option value="tagines">الطواجن</option>
-                            <option value="appetizers">المقبلات والسلطات</option>
+                            <option value="express">توصيل فوري ⚡</option>
+                            <option value="cargo">شحنات وبضائع 📦</option>
+                            <option value="financial">تحصيل مالي COD 💰</option>
+                            <option value="corporate">اشتراكات شركات 🏢</option>
                         </select>
                     </div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
                         <input type="number" id="new-prod-price" placeholder="السعر بالجنيه">
                         <div>
-                            <label style="font-size: 0.85rem; color: #78716c; display: block; margin-bottom: 4px;">صورة أو فيديو الوجبة:</label>
+                            <label style="font-size: 0.85rem; color: #78716c; display: block; margin-bottom: 4px;">صورة أو فيديو الخدمة:</label>
                             <input type="file" id="new-prod-file" accept="image/*,video/*" style="padding: 8px; background: #fafaf9; border: 1px solid #d6d3d1; border-radius: 8px; width: 100%;">
                         </div>
                     </div>
-                    <textarea id="new-prod-desc" placeholder="وصف الوجبة ومكوناتها بالتفصيل..." style="margin-bottom: 12px;"></textarea>
-                    <button onclick="addNewProductWithMedia()" class="btn-primary" style="background-color: #16a34a; padding: 12px; font-weight: bold;">إضافة المنتج للمنيو والسلة فوراً 🚀</button>
+                    <textarea id="new-prod-desc" placeholder="وصف الخدمة ومميزاتها بالتفصيل..." style="margin-bottom: 12px;"></textarea>
+                    <button onclick="addNewProductWithMedia()" class="btn-primary" style="background-color: #16a34a; padding: 12px; font-weight: bold;">إضافة الخدمة لمنصة الأسطول فوراً 🚀</button>
                 </div>
             </div>
 
-            <!-- 5. إدارة وحذف وتعديل أصناف المنيو الحالي -->
+            <!-- 5. إدارة وحذف وتعديل خدمات الأسطول الحالي -->
             <div id="section-menu-manage" class="admin-panel-box" style="border-top: 4px solid #b45309;">
-                <h3 style="margin-bottom: 15px; color: #b45309; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-utensils"></i> إدارة وحذف أصناف المنيو الحالي (انقر على الصنف للتعديل الفوري)</h3>
+                <h3 style="margin-bottom: 15px; color: #b45309; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-boxes-stacked"></i> إدارة وحذف خدمات الأسطول الحالي (انقر على الخدمة للتعديل الفوري)</h3>
                 <div id="admin-menu-items-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 400px; overflow-y: auto;"></div>
             </div>
 
-            <!-- 6. تسجيل أوردر جديد يدوي -->
+            <!-- 6. تسجيل شحنة جديدة يدوياً -->
             <div id="section-manual-order" class="admin-panel-box" style="border-top: 4px solid #0369a1;">
-                <h3 style="margin-bottom: 15px; color: #0369a1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-cart-plus"></i> تسجيل أوردر جديد (عبر الهاتف أو الصالة للمدير/المحاسب)</h3>
+                <h3 style="margin-bottom: 15px; color: #0369a1; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-cart-plus"></i> تسجيل شحنة جديدة (عبر الهاتف أو العملاء للمدير/المحاسب)</h3>
                 <div class="checkout-form" style="max-width: 100%;">
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 12px;">
-                        <input type="text" id="admin-ord-name" placeholder="اسم العميل الكريم">
+                        <input type="text" id="admin-ord-name" placeholder="اسم العميل أو الشركة">
                         <input type="text" id="admin-ord-phone" placeholder="رقم هاتف العميل">
                     </div>
-                    <input type="text" id="admin-ord-address" placeholder="عنوان التوصيل بالتفصيل أو رقم الطاولة في الصالة" style="margin-bottom: 12px;">
-                    <input type="text" id="admin-ord-items" placeholder="وصف الطلب والأصناف (مثلاً: فرخة شيش + كيلو كفتة)" style="margin-bottom: 12px;">
+                    <input type="text" id="admin-ord-address" placeholder="عنوان الاستلام والتوصيل بالتفصيل" style="margin-bottom: 12px;">
+                    <input type="text" id="admin-ord-items" placeholder="وصف الشحنة والخدمات (مثلاً: توصيل فوري + تحصيل COD)" style="margin-bottom: 12px;">
                     <input type="number" id="admin-ord-total" placeholder="الإجمالي الكلي بالجنيه" style="margin-bottom: 12px;">
-                    <button onclick="adminCreateOrder()" class="btn-secondary" style="background-color: #0369a1; color: white; padding: 12px; font-weight: bold;">إنشاء الطلب وإرساله لحساب العميل 🚀</button>
+                    <button onclick="adminCreateOrder()" class="btn-secondary" style="background-color: #0369a1; color: white; padding: 12px; font-weight: bold;">إنشاء الشحنة وإرسالها لحساب العميل 🚀</button>
                 </div>
             </div>
 
@@ -277,8 +276,8 @@
                     <select id="staff-role" style="margin-bottom: 12px; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #d6d3d1; font-weight: bold;">
                         <option value="admin">مشرف / أدمن إضافي (صلاحيات كاملة)</option>
                         <option value="accountant">محاسب (إدارة الخزنة والمبيعات)</option>
-                        <option value="worker">عامل (خدمات المطبخ)</option>
-                        <option value="staff">موظف (متابعة الطلبات)</option>
+                        <option value="worker">عامل / مساعد (دعم العمليات)</option>
+                        <option value="driver">طيار / دليفري (توصيل الشحنات)</option>
                     </select>
                     <button onclick="createNewStaff()" class="btn-primary" style="background-color: #0284c7; padding: 12px; font-weight: bold;">إضافة الحساب الجديد ➕</button>
                 </div>
@@ -300,7 +299,7 @@
             <div id="section-ticker" class="admin-panel-box" style="border-top: 4px solid #991b1b;">
                 <h3 style="margin-bottom: 15px; color: #991b1b; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-bullhorn"></i> التحكم في شريط الإعلانات المتحرك (RSS)</h3>
                 <div class="checkout-form" style="max-width: 100%;">
-                    <input type="text" id="admin-ticker-input" placeholder="اكتب نص الإعلان المتحرك الجديد..." style="margin-bottom: 12px;">
+                    <input type="text" id="admin-ticker-input" placeholder="اكتب نص الإعلان المتحرك الجديد للأسطول..." style="margin-bottom: 12px;">
                     <button onclick="updateTickerText()" class="btn-primary" style="background-color: #991b1b; padding: 12px; font-weight: bold;">تحديث الشريط المتحرك فوراً 🚀</button>
                 </div>
             </div>
@@ -309,24 +308,23 @@
 
     </main>
 
-    <!-- نافذة تعديل الصنف المنبثقة (Modal) -->
+    <!-- نافذة تعديل الخدمة المنبثقة (Modal) -->
     <div id="editProductModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
         <div style="background: #fff; padding: 25px; border-radius: 14px; width: 100%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
-            <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الصنف 👑</h3>
+            <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الخدمة 👑</h3>
             <input type="hidden" id="edit-prod-id">
             
-            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">اسم الأكلة أو الوجبة:</label>
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">اسم الخدمة أو الباقة:</label>
             <input type="text" id="edit-prod-name" style="width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #d6d3d1; border-radius: 8px;">
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;">
                 <div>
                     <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">القسم:</label>
                     <select id="edit-prod-cat" style="width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px;">
-                        <option value="trays">ركن الصواني 🔥</option>
-                        <option value="grills">ركن المشويات</option>
-                        <option value="meals">الوجبات السريعة</option>
-                        <option value="tagines">الطواجن</option>
-                        <option value="appetizers">المقبلات والسلطات</option>
+                        <option value="express">توصيل فوري ⚡</option>
+                        <option value="cargo">شحنات وبضائع 📦</option>
+                        <option value="financial">تحصيل مالي COD 💰</option>
+                        <option value="corporate">اشتراكات شركات 🏢</option>
                     </select>
                 </div>
                 <div>
@@ -338,7 +336,7 @@
             <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">تحديث الصورة أو الفيديو (اختياري):</label>
             <input type="file" id="edit-prod-file" accept="image/*,video/*" style="width: 100%; padding: 6px; margin-bottom: 12px; border: 1px solid #d6d3d1; border-radius: 8px; background: #f9f9f9;">
 
-            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">وصف الوجبة:</label>
+            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 5px;">وصف الخدمة:</label>
             <textarea id="edit-prod-desc" style="width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #d6d3d1; border-radius: 8px; height: 90px;"></textarea>
 
             <div style="display: flex; gap: 10px;">
@@ -348,7 +346,7 @@
         </div>
     </div>
 
-    <!-- نافذة تعديل بيانات المستخدم أو العميل المنبثقة (مضافة حديثاً لتعمل مع النقر على الحسابات) -->
+    <!-- نافذة تعديل بيانات المستخدم أو العميل المنبثقة -->
     <div id="editUserModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 15px;">
         <div style="background: #fff; padding: 25px; border-radius: 14px; width: 100%; max-width: 450px; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
             <h3 style="color: var(--admin-primary); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الحساب والصلاحية 👑</h3>
@@ -368,7 +366,7 @@
                 <option value="customer">👤 عميل (Customer)</option>
                 <option value="admin">👑 مدير / أدمن (Admin)</option>
                 <option value="accountant">💰 محاسب (Accountant)</option>
-                <option value="worker">👷 عامل (Worker)</option>
+                <option value="worker">👷 مساعد (Worker)</option>
                 <option value="driver">🏍️ طيار / دليفري (Driver)</option>
             </select>
 
@@ -418,7 +416,7 @@
                     const userDoc = await getDoc(doc(db, "users", docId));
                     if (userDoc.exists()) {
                         userRole = userDoc.data().role || 'customer';
-                    } else if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
+                    } else if (email === 'haretg@gmail.com' || email === 'admin@fleet.com') {
                         userRole = 'admin';
                     }
                 } catch(e) {}
@@ -434,8 +432,8 @@
                 };
 
                 await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                localStorage.setItem('omda_logged_user', JSON.stringify(userObj));
-                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
+                localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
 
                 if (typeof routeUserByRole === 'function') {
                     routeUserByRole(userObj);
@@ -449,7 +447,7 @@
         
         // مزامنة وعرض بيانات البروفايل فور فتح لوحة التحكم
         document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
+            const sessionUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('fleet_session_user') || localStorage.getItem('fleet_current_cust') || '{}');
             
             const avatarEl = document.getElementById('nav-user-avatar');
             const nameEl = document.getElementById('nav-username-display');
@@ -462,7 +460,7 @@
             }
         });
 
-        console.log("🔥 تم ربط لوحة التحكم الماستر بنظام الحسابات الموحد وسحابة Firebase بنجاح تام!");
+        console.log("🔥 تم ربط لوحة التحكم الماستر بمنصة الأسطول اللوجستي وسحابة Firebase بنجاح تام!");
     </script>
 
     <!-- ربط ملف الـ JavaScript المشترك -->
@@ -490,22 +488,22 @@
                 return;
             }
 
-            let masterPass = localStorage.getItem('omda_master_password') || '1234';
+            let masterPass = localStorage.getItem('fleet_master_password') || '1234';
 
-            if((idInput === 'haretg@gmail.com' || idInput === 'admin@omda.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
+            if((idInput === 'haretg@gmail.com' || idInput === 'admin@fleet.com' || idInput === '01144730305' || idInput === 'مدير') && passInput === masterPass) {
                 const masterUser = { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', phone: '01144730305', role: 'admin', photoURL: 'icon1-512.png' };
-                localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
-                localStorage.setItem('omda_session_user', JSON.stringify(masterUser));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(masterUser));
+                localStorage.setItem('fleet_session_user', JSON.stringify(masterUser));
                 routeUserByRole(masterUser);
                 return;
             }
 
-            let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
+            let staffList = JSON.parse(localStorage.getItem('fleet_staff_list') || '[]');
             let foundStaff = staffList.find(s => (s.email.toLowerCase() === idInput || s.phone === idInput) && s.password === passInput);
 
             if(foundStaff) {
-                localStorage.setItem('omda_logged_user', JSON.stringify(foundStaff));
-                localStorage.setItem('omda_session_user', JSON.stringify(foundStaff));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(foundStaff));
+                localStorage.setItem('fleet_session_user', JSON.stringify(foundStaff));
                 routeUserByRole(foundStaff);
             } else {
                 alert('بيانات الدخول غير صحيحة! تأكد من البريد/الهاتف وكلمة المرور.');
@@ -513,7 +511,7 @@
         };
 
         window.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('omda_logged_user')) {
+            if(localStorage.getItem('fleet_logged_user')) {
                 loadAdminDashboard();
             }
         });
