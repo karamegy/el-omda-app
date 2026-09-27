@@ -1,23 +1,12 @@
 // ==========================================
-// بيانات المنيو الأساسية (افتراضية في الذاكرة الحية)
+// بيانات الخدمات اللوجستية وتوصيل الشحنات الأساسية
 // ==========================================
 const defaultProducts = [
-    { id: 1, name: "صينية العمدة الكبرى", category: "trays", price: 2750, desc: "فرخة شيش + نص طرب + كيلو كفتة + نص كباب + نص سجق + 4 حمام + أرز + نص ممبار + 2 لتر بيبيسي", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
-    { id: 2, name: "صينية الصحاب", category: "trays", price: 830, desc: "نص فرخة شيش + نص طرب + ربع سجق + طبق محشي مشكل + ربع ممبار + ورق عنب + 2 سمبوسة + أرز", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
-    { id: 3, name: "صينية العروسة", category: "trays", price: 2000, desc: "4 حمام + فرخة شيش + فرخة شواية + كيلو كفتة + طاجن ورق عنب بالكوارع + أرز", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", mediaType: 'image' },
-    { id: 4, name: "كباب ضاني (كيلو)", category: "grills", price: 1200, desc: "لحم ضاني بلدي طازج مشوي على الفحم الحطب", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
-    { id: 5, name: "طرب ضاني (كيلو)", category: "grills", price: 480, desc: "أجمل طرب ضاني محشي بالطعم الخرافي", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500", mediaType: 'image' },
-    { id: 6, name: "كفتة ضاني (كيلو)", category: "grills", price: 500, desc: "كفتة ضاني متبلة على طريقة العمدة الخاصة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500", mediaType: 'image' },
-    { id: 7, name: "كفتة كندوز (كيلو)", category: "grills", price: 320, desc: "كفتة بلدي كندوز مشوية بإتقان", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
-    { id: 8, name: "ريش ضاني (كيلو)", category: "grills", price: 1300, desc: "ريش ضاني ممتازة للعزومات", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
-    { id: 9, name: "وجبة النعنشة", category: "meals", price: 130, desc: "ربع فراخ + سيخ كفتة + أرز + سلطة + طحينة", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
-    { id: 10, name: "وجبة اللقلقانة", category: "meals", price: 80, desc: "سيخ كفتة + أرز + ملوخية + سلطة + عيش", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
-    { id: 11, name: "وجبة السعادة", category: "meals", price: 310, desc: "ربع فراخ + 1 حمام + ثمن طرب", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=500", mediaType: 'image' },
-    { id: 12, name: "وجبة الكرم", category: "meals", price: 160, desc: "ربع فراخ + كفتة + أرز + خضار سادة + عيش", image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500", mediaType: 'image' },
-    { id: 13, name: "حمام محشي أرز", category: "tagines", price: 180, desc: "حمام بلدي محشي أرز بالخلطة الممتازة", image: "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500", mediaType: 'image' },
-    { id: 14, name: "ورق عنب بالكوارع", category: "tagines", price: 150, desc: "طاجن ورق عنب بالكوارع اللذيذة", image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500", mediaType: 'image' },
-    { id: 15, name: "ورقة لحمة", category: "appetizers", price: 100, desc: "ورقة لحمة بالبصل والفلفل على الفحم", image: "https://images.unsplash.com/photo-1603048588665-791ca8aea617?w=500", mediaType: 'image' },
-    { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' }
+    { id: 1, name: "توصيل فوري (شحنة عادية)", category: "express", price: 60, desc: "توصيل سريع خلال ساعة داخل نطاق المدينة للطرود والأوراق والطلبات", image: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500", mediaType: 'image' },
+    { id: 2, name: "شحنة ثقيلة / بضائع", category: "cargo", price: 150, desc: "نقل وتوصيل البضائع الكبيرة والأجهزة عبر سيارات أو دراجات الأسطول", image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500", mediaType: 'image' },
+    { id: 3, name: "توصيل متعدد المحطات (Multi-Stop)", category: "express", price: 220, desc: "توصيل طلبات لعدة عملاء في خط سير واحد بأعلى كفاءة ووقت قياسي", image: "https://images.unsplash.com/photo-1617854818583-09e7f077a156?w=500", mediaType: 'image' },
+    { id: 4, name: "خدمة التحصيل المالي (COD)", category: "financial", price: 40, desc: "خدمة تحصيل قيمة الفواتير والأموال من العملاء وتسليمها لخزنة الأسطول بأمان تام", image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=500", mediaType: 'image' },
+    { id: 5, name: "اشتراك أسطول شهري (شركات ومتاجر)", category: "corporate", price: 2500, desc: "تخصيص طيارين وحسابات مالية متكاملة لخدمة الشركات والمتاجر التجارية", image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=500", mediaType: 'image' }
 ];
 
 let menuProducts = [...defaultProducts];
@@ -36,7 +25,7 @@ let pointsDB = {};
 let activeDiscount = 0;
 let customerLat = null;
 let customerLng = null;
-let restaurantCoords = [30.005, 31.185]; 
+let restaurantCoords = [30.005, 31.185]; // نقطة انطلاق الأسطول المركزية
 
 let map;
 let streetLayer, topoLayer, satelliteLayer;
@@ -53,7 +42,9 @@ let localStream = null;
 let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+// ==========================================
 // دالة موحدة لتوليد معرف المستند (Doc ID) بدقة لـ Firestore
+// ==========================================
 function getStandardUserDocId(userOrKey) {
     if (typeof userOrKey === 'object' && userOrKey !== null) {
         if (userOrKey.phone) return String(userOrKey.phone);
@@ -71,7 +62,7 @@ function findProductById(id) {
     return menuProducts.find(p => String(p.id) === String(id));
 }
 
-// دالة موحدة لجمع وتوحيد السائقين لضمان عدم ظهور القائمة فارغة أبداً
+// دالة موحدة لجمع وتوحيد الطيارين والمناديب
 function getVerifiedDriversUnified() {
     let verifiedDriversMap = new Map();
     if (Array.isArray(driversList)) {
@@ -90,7 +81,7 @@ function getVerifiedDriversUnified() {
         });
     }
     if (verifiedDriversMap.size === 0) {
-        verifiedDriversMap.set('طيار العمدة العام', { name: 'طيار العمدة العام', phone: '01144730305' });
+        verifiedDriversMap.set('طيار الأسطول العام', { name: 'طيار الأسطول العام', phone: '01144730305' });
     }
     return Array.from(verifiedDriversMap.values());
 }
@@ -107,28 +98,28 @@ function routeUserByRole(user) {
     }
 
     try {
-        localStorage.setItem('omda_logged_user', JSON.stringify(user));
+        localStorage.setItem('fleet_logged_user', JSON.stringify(user));
     } catch(e) {}
 
-    if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
-        alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
+    if (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
+        alert(`👑 أهلاً بك يا ${user.name || 'مدير النظام'}! جاري تحويلك لوحة تحكم الحسابات والأسطول...`);
         window.location.href = `admin.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
     if (role === 'driver') {
-        alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
+        alert(`🏍️ أهلاً بك يا طيار الأسطول (${user.name})! جاري فتح خريطة الطلبات والمهام...`);
         window.location.href = `Map.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
     if (role === 'worker' || role === 'staff') {
-        alert(`👷 عذراً يا ${user.name || 'موظفنا العزيز'}، حسابك بصلاحية "موظف" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
+        alert(`👷 عذراً يا ${user.name || 'الموظف العزيز'}، حسابك بصلاحية "مساعد" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
         window.location.href = `index.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
-    alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
+    alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في منصة الأسطول اللوجستي!`);
     if (window.location.pathname.includes('admin.html')) {
         window.location.href = `index.html?uid=${encodeURIComponent(uid)}`;
     } else {
@@ -144,7 +135,7 @@ async function verifyUserFromCloudLive() {
 
     if (!uid) {
         try {
-            const savedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+            const savedUser = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
             if (savedUser && (savedUser.phone || savedUser.email)) {
                 uid = savedUser.phone || savedUser.email;
             }
@@ -153,7 +144,7 @@ async function verifyUserFromCloudLive() {
 
     if (!uid) return null;
 
-    if (uid.toLowerCase() === 'haretg@gmail.com' || uid.toLowerCase() === 'admin@omda.com' || uid === '01144730305') {
+    if (uid.toLowerCase() === 'haretg@gmail.com' || uid.toLowerCase() === 'admin@fleet.com' || uid === '01144730305') {
         const masterUser = { 
             name: 'المدير العام (كرم حمدي)', 
             email: 'haretg@gmail.com', 
@@ -161,7 +152,7 @@ async function verifyUserFromCloudLive() {
             role: 'admin', 
             photoURL: 'icon1-512.png' 
         };
-        localStorage.setItem('omda_logged_user', JSON.stringify(masterUser));
+        localStorage.setItem('fleet_logged_user', JSON.stringify(masterUser));
         return masterUser;
     }
 
@@ -190,7 +181,7 @@ async function verifyUserFromCloudLive() {
             }
 
             if (cloudUser) {
-                localStorage.setItem('omda_logged_user', JSON.stringify(cloudUser));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(cloudUser));
                 return cloudUser;
             }
         } catch (e) {}
@@ -200,12 +191,12 @@ async function verifyUserFromCloudLive() {
     if (!foundUser) foundUser = staffList.find(s => s.phone === uid || s.email?.toLowerCase() === uid.toLowerCase());
     
     if (foundUser) {
-        localStorage.setItem('omda_logged_user', JSON.stringify(foundUser));
+        localStorage.setItem('fleet_logged_user', JSON.stringify(foundUser));
         return foundUser;
     }
 
     try {
-        const localFallback = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
+        const localFallback = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
         if (localFallback && (localFallback.phone === uid || localFallback.email?.toLowerCase() === uid.toLowerCase() || localFallback.role === 'admin')) {
             return localFallback;
         }
@@ -230,10 +221,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const email = (currentCustomer?.email || '').toLowerCase();
         const role = (currentCustomer?.role || '').toLowerCase();
         const phone = String(currentCustomer?.phone || '');
-        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant');
+        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone === '01144730305' || role === 'admin' || role === 'accountant');
 
         if (!isAdmin) {
-            alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة للإدارة العليا والمحاسبين فقط.");
+            alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة لإدارة الأسطول والمحاسبين فقط.");
             currentCustomer = null;
             window.location.href = 'index.html';
             return;
@@ -289,7 +280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.getElementById('branch-lng').value = lng;
                 pickingBranchMode = false;
                 map.getContainer().style.cursor = '';
-                alert(`✓ تم التقاط إحداثيات المطعم بدقة: (${lat}, ${lng})`);
+                alert(`✓ تم التقاط إحداثيات مركز الأسطول بدقة: (${lat}, ${lng})`);
                 switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
                 return;
             }
@@ -310,7 +301,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
                         <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
                         ${checkAdminPermission() ? `
-                            <button onclick="setRestaurantCoordsFromMap(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold; display:block; width:100%;">👑 تعيين كمطعم العمدة الرئيسي</button>
+                            <button onclick="setRestaurantCoordsFromMap(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold; display:block; width:100%;">👑 تعيين كمركز الأسطول الرئيسي</button>
                             <button onclick="setDriverCoordsFromMap(${lat},${lng})" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:4px; cursor:pointer; font-weight:bold; display:block; width:100%;">🏍️ استخدام كموقع للسائق</button>
                         ` : ''}
                     </div>
@@ -333,7 +324,7 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    if ((identifier === 'haretg@gmail.com' || identifier === 'admin@omda.com' || identifier === '01144730305' || identifier === 'مدير') && password === '1234') {
+    if ((identifier === 'haretg@gmail.com' || identifier === 'admin@fleet.com' || identifier === '01144730305' || identifier === 'مدير') && password === '1234') {
         const masterUser = { 
             name: 'المدير العام (كرم حمدي)', 
             email: 'haretg@gmail.com', 
@@ -358,8 +349,8 @@ async function unifiedLoginCustom() {
     }
 
     const defaultCustomer = {
-        name: 'عميل العمدة',
-        email: identifier.includes('@') ? identifier : `${identifier}@omda.com`,
+        name: 'عميل الأسطول',
+        email: identifier.includes('@') ? identifier : `${identifier}@fleet.com`,
         phone: identifier,
         role: 'customer',
         photoURL: 'icon1-512.png'
@@ -391,11 +382,11 @@ async function loginByPhoneQuick() {
 
     if (!userObj) {
         let foundOrder = allOrders.find(o => o.phone === phone);
-        let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
+        let custName = foundOrder ? foundOrder.name : 'عميل الأسطول الكريم';
 
         userObj = {
             name: custName,
-            email: phone + '@omda.com',
+            email: phone + '@fleet.com',
             phone: phone,
             role: 'customer',
             provider: 'Phone Quick',
@@ -416,7 +407,7 @@ async function loginByPhoneQuick() {
         } catch (e) {}
     }
 
-    alert(`أهلاً بك يا ${userObj.name}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
+    alert(`أهلاً بك يا ${userObj.name}! تم استرجاع ملفك وشحناتك ونقاط ولائك بنجاح 👑`);
     
     const phoneBox = document.getElementById('cust-phone-login-box');
     if(phoneBox) phoneBox.style.display = 'none';
@@ -449,11 +440,11 @@ function updateSliderContent() {
     const imgEl = document.getElementById('slider-prod-img');
     const counterEl = document.getElementById('slider-counter');
 
-    if (nameEl) nameEl.innerText = `👑 ${prod.name}`;
+    if (nameEl) nameEl.innerText = `🚀 ${prod.name}`;
     if (descEl) descEl.innerText = prod.desc;
     if (priceEl) priceEl.innerText = `${prod.price} جنيه`;
     if (counterEl) counterEl.innerText = `${currentSliderIndex + 1} / ${menuProducts.length}`;
-    if (imgEl) imgEl.src = prod.media || prod.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+    if (imgEl) imgEl.src = prod.media || prod.image || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500';
 }
 
 function nextSliderItem() {
@@ -498,13 +489,13 @@ function fetchCustomerGpsLocation() {
         return;
     }
 
-    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقعك بدقة عبر الأقمار الصناعية والشبكة...";
+    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقع الاستلام بدقة عبر الأقمار الصناعية...";
 
     navigator.geolocation.getCurrentPosition(
         (position) => {
             customerLat = position.coords.latitude;
             customerLng = position.coords.longitude;
-            if(statusEl) statusEl.innerText = `✓ تم تحديد موقعك بدقة بنجاح! (${customerLat.toFixed(4)}, ${customerLng.toFixed(4)})`;
+            if(statusEl) statusEl.innerText = `✓ تم تحديد موقع الاستلام بدقة بنجاح! (${customerLat.toFixed(4)}, ${customerLng.toFixed(4)})`;
             alert("✓ تم تحديد موقع الاستلام بدقة بنجاح!");
         },
         (error) => {
@@ -574,7 +565,7 @@ async function initiateWebRtcCall(orderId, customerPhone, isVideo = true) {
 
     modal.classList.remove('hidden');
     title.innerText = isVideo ? "🎥 مكالمة فيديو مباشرة مع العميل" : "📞 مكالمة صوتية مباشرة مع العميل";
-    info.innerText = `رقم الطلب: ${orderId} | هاتف العميل: ${customerPhone}`;
+    info.innerText = `رقم الشحنة: ${orderId} | هاتف العميل: ${customerPhone}`;
 
     startRingingTone();
 
@@ -731,14 +722,14 @@ function updateRestaurantMarkerOnMap() {
         map.removeLayer(window.restaurantMarkerObj);
     }
 
-    const omdaIcon = L.divIcon({
+    const fleetIcon = L.divIcon({
         className: 'custom-map-icon',
-        html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.6); border:3px solid white;"><i class="fa-solid fa-crown text-amber-300 text-lg"></i></div>`,
+        html: `<div style="background: linear-gradient(135deg, #b45309, #78350f); color:white; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 14px rgba(180,83,9,0.6); border:3px solid white;"><i class="fa-solid fa-headset text-amber-300 text-lg"></i></div>`,
         iconSize: [46, 46], iconAnchor: [23, 23]
     });
 
-    window.restaurantMarkerObj = L.marker(restaurantCoords, { icon: omdaIcon }).addTo(map)
-        .bindPopup("<b>👑 كبابجي ومشويات العمدة (المركز الرئيسي)</b><br>الفحم الحطب الأصلي - تم ضبط الموقع بنجاح").openPopup();
+    window.restaurantMarkerObj = L.marker(restaurantCoords, { icon: fleetIcon }).addTo(map)
+        .bindPopup("<b>👑 مركز الأسطول والعمليات اللوجستية الرئيسي</b><br>إدارة الطيارين والشحنات - تم ضبط الموقع بنجاح").openPopup();
 }
 
 function saveMainRestaurantLocation() {
@@ -755,7 +746,7 @@ function saveMainRestaurantLocation() {
     restaurantCoords = [lat, lng];
     updateRestaurantMarkerOnMap();
     map.setView(restaurantCoords, 15);
-    alert(`👑 تم حفظ وتحديث موقع "${name || 'مطعم العمدة'}" الرئيسي بنجاح على الخريطة!`);
+    alert(`👑 تم حفظ وتحديث مركز الأسطول "${name || 'المركز الرئيسي'}" بنجاح على الخريطة!`);
 }
 
 function setRestaurantCoordsFromMap(lat, lng) {
@@ -776,7 +767,7 @@ function enableBranchPickMode() {
     pickingBranchMode = true;
     if(map) {
         map.getContainer().style.cursor = 'crosshair';
-        alert("💡 انقر الآن على مكان المطعم على الخريطة لتحديد إحداثياته الدقيقة!");
+        alert("💡 انقر الآن على مكان مركز الأسطول على الخريطة لتحديد إحداثياته الدقيقة!");
     }
 }
 
@@ -846,7 +837,7 @@ async function addNewDriverWithLocation() {
         } catch (e) {}
     }
 
-    alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
+    alert(`تم إضافة السائق (${name}) وتحديد مكانه على خريطة الأسطول بنجاح 🏍️`);
     
     nameEl.value = '';
     phoneEl.value = '';
@@ -889,7 +880,7 @@ function renderMenu(filter = 'all') {
 
     filtered.forEach(product => {
         const isFav = favorites.some(id => String(id) === String(product.id));
-        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500';
         const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && (mediaSrc.startsWith('data:video') || mediaSrc.endsWith('.mp4')));
 
         let mediaHtml = isVid 
@@ -911,7 +902,7 @@ function renderMenu(filter = 'all') {
                     <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
-                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف للسلة</button>
+                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> اطلب الخدمة</button>
             </div>
         `;
     });
@@ -921,11 +912,11 @@ function renderOffers() {
     const grid = document.getElementById('offers-grid');
     if(!grid) return;
     grid.innerHTML = '';
-    const offers = menuProducts.filter(p => p.category === 'trays');
+    const offers = menuProducts.filter(p => p.category === 'corporate' || p.category === 'express');
 
     offers.forEach(product => {
         const isFav = favorites.some(id => String(id) === String(product.id));
-        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=500';
 
         grid.innerHTML += `
             <div class="menu-card" style="border: 2px solid #d97706;">
@@ -934,7 +925,7 @@ function renderOffers() {
                 </div>
                 <div class="menu-card-body">
                     <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="color: #991b1b; cursor: pointer;">👑 ${product.name}</h3>
+                        <h3 onclick="window.location.href='product.html?id=${product.id}'" style="color: #991b1b; cursor: pointer;">🚀 ${product.name}</h3>
                         <button onclick="toggleFavorite(${product.id})" style="background:none; border:none; cursor:pointer; font-size: 1.2rem; color: ${isFav ? '#dc2626' : '#a8a29e'};">
                             <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart"></i>
                         </button>
@@ -942,7 +933,7 @@ function renderOffers() {
                     <p onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
-                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف الصينية للسلة 🔥</button>
+                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> اطلب باقة الأسطول 🔥</button>
             </div>
         `;
     });
@@ -972,26 +963,26 @@ function addCustomTrayToCart() {
     const mahshi = document.getElementById('ext-mahshi');
     const pepsi = document.getElementById('ext-pepsi');
 
-    if(mombar && mombar.checked) { extrasTotal += 80; extrasDesc.push('ممبار'); }
-    if(mahshi && mahshi.checked) { extrasTotal += 60; extrasDesc.push('محشي'); }
-    if(pepsi && pepsi.checked) { extrasTotal += 50; extrasDesc.push('بيبيسي'); }
+    if(mombar && mombar.checked) { extrasTotal += 80; extrasDesc.push('تغليف خاص'); }
+    if(mahshi && mahshi.checked) { extrasTotal += 60; extrasDesc.push('تأمين الشحنة'); }
+    if(pepsi && pepsi.checked) { extrasTotal += 50; extrasDesc.push('أولوية قصوى'); }
 
     let totalPrice = sizePrice + extrasTotal;
-    let customName = `👑 صينية مخصصة (${sizeText.split(' ')[0]})`;
-    let customDesc = `المحتوى: ${meatType} ${extrasDesc.length ? '+ إضافات: ' + extrasDesc.join(', ') : ''} ${notes ? '| ملاحظات: ' + notes : ''}`;
+    let customName = `🚀 شحنة مخصصة (${sizeText.split(' ')[0]})`;
+    let customDesc = `النوع: ${meatType} ${extrasDesc.length ? '+ إضافات: ' + extrasDesc.join(', ') : ''} ${notes ? '| ملاحظات: ' + notes : ''}`;
 
-    const customTrayProd = {
+    const customShipmentProd = {
         id: Date.now(),
         name: customName,
         price: totalPrice,
         desc: customDesc,
-        image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500",
+        image: "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=500",
         mediaType: 'image'
     };
 
-    cart.push({ ...customTrayProd, qty: 1 });
+    cart.push({ ...customShipmentProd, qty: 1 });
     updateCartUI();
-    alert(`تم تصميم صينيتك الخاصة وإضافتها للسلة بنجاح يا أسطى! 🚀`);
+    alert(`تم تصميم شحنتك الخاصة وإضافتها للسلة بنجاح يا أسطى! 🚀`);
     switchTab('cart');
 }
 
@@ -1003,7 +994,7 @@ function addNewProductWithMedia() {
     const desc = document.getElementById('new-prod-desc').value.trim();
 
     if(!name || isNaN(price) || !desc) {
-        alert('من فضلك ادخل اسم المنتج، السعر، والوصف بشكل صحيح!');
+        alert('من فضلك ادخل اسم الخدمة، السعر، والوصف بشكل صحيح!');
         return;
     }
 
@@ -1034,7 +1025,7 @@ function addNewProductWithMedia() {
             name,
             category,
             price,
-            media: "https://images.unsplash.com/photo-1544025162-d76694265947?w=500",
+            media: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500",
             mediaType: 'image',
             desc
         };
@@ -1049,7 +1040,7 @@ async function saveAndAddNewProduct(prod) {
         } catch (e) {}
     }
     menuProducts.push(prod);
-    alert(`تم إضافة المنتج (${prod.name}) بنجاح إلى المنيو سحابياً! 👑`);
+    alert(`تم إضافة الخدمة (${prod.name}) بنجاح إلى خدمات الأسطول سحابياً! 👑`);
     
     document.getElementById('new-prod-name').value = '';
     document.getElementById('new-prod-price').value = '';
@@ -1061,7 +1052,7 @@ async function saveAndAddNewProduct(prod) {
 }
 
 async function adminDeleteProduct(id) {
-    if(!confirm('هل أنت متأكد من حذف هذا الصنف سحابياً؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذه الخدمة سحابياً؟')) return;
     
     menuProducts = menuProducts.filter(p => String(p.id) !== String(id));
 
@@ -1074,13 +1065,13 @@ async function adminDeleteProduct(id) {
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
     if(typeof initHeroSlider === 'function') initHeroSlider();
     if(typeof renderMenu === 'function') renderMenu();
-    alert('تم حذف الصنف بنجاح من المنيو والسحابة.');
+    alert('تم حذف الخدمة بنجاح من القائمة والسحابة.');
 }
 
 function openEditProductModal(id) {
     const prod = findProductById(id);
     if (!prod) {
-        alert("⚠️ عذراً، لم يتم العثور على بيانات هذا الصنف!");
+        alert("⚠️ عذراً، لم يتم العثور على بيانات هذه الخدمة!");
         return;
     }
 
@@ -1117,12 +1108,12 @@ async function saveEditedProduct() {
 
     const id = parseInt(idInput.value);
     const name = nameInput.value.trim();
-    const category = catSelect ? catSelect.value : 'grills';
+    const category = catSelect ? catSelect.value : 'express';
     const price = parseFloat(priceInput.value);
     const desc = descInput.value.trim();
 
     if (!name || isNaN(price) || !desc) {
-        alert('من فضلك ادخل اسم الوجبة، السعر، والوصف بشكل صحيح!');
+        alert('من فضلك ادخل اسم الخدمة، السعر، والوصف بشكل صحيح!');
         return;
     }
 
@@ -1157,7 +1148,7 @@ async function finalizeProductEditCloud(prod) {
     loadAdminDashboard();
     initHeroSlider();
     if (typeof renderMenu === 'function') renderMenu();
-    alert('✓ تم تحديث وتعديل بيانات الوجبة بنجاح سحابياً! 👑');
+    alert('✓ تم تحديث وتعديل بيانات الخدمة بنجاح سحابياً! 👑');
 }
 
 function toggleFavorite(productId) {
@@ -1166,10 +1157,10 @@ function toggleFavorite(productId) {
     
     if(index > -1) {
         favorites.splice(index, 1);
-        alert('تم إزالة المنتج من المفضلة.');
+        alert('تم إزالة الخدمة من المفضلة.');
     } else {
         favorites.push(productId);
-        alert('تم إضافة المنتج إلى المفضلة ❤️');
+        alert('تم إضافة الخدمة إلى المفضلة ❤️');
     }
     if (typeof renderMenu === 'function') renderMenu();
 }
@@ -1181,12 +1172,12 @@ function renderFavorites() {
     const favProducts = menuProducts.filter(p => favorites.some(id => String(id) === String(p.id)));
 
     if(favProducts.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 20px;">لا توجد أطباق في قائمة المفضلة حالياً.</p>';
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 20px;">لا توجد خدمات في قائمة المفضلة حالياً.</p>';
         return;
     }
 
     favProducts.forEach(product => {
-        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500';
+        const mediaSrc = product.media || product.image || 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=500';
         grid.innerHTML += `
             <div class="menu-card">
                 <div onclick="window.location.href='product.html?id=${product.id}'" style="cursor: pointer;">
@@ -1200,7 +1191,7 @@ function renderFavorites() {
                     <p>${product.desc}</p>
                     <div class="price">${product.price} جنيه</div>
                 </div>
-                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> أضف للسلة</button>
+                <button onclick="addToCart(${product.id})"><i class="fa-solid fa-cart-plus"></i> اطلب الخدمة</button>
             </div>
         `;
     });
@@ -1209,7 +1200,7 @@ function renderFavorites() {
 function addToCart(productId) {
     const prod = findProductById(productId);
     if(!prod) {
-        alert("⚠️ الوجبة غير موجودة!");
+        alert("⚠️ الخدمة غير موجودة!");
         return;
     }
     const existing = cart.find(item => String(item.id) === String(productId));
@@ -1221,7 +1212,7 @@ function addToCart(productId) {
     }
 
     updateCartUI();
-    alert(`تم إضافة (${prod.name}) إلى السلة بنجاح! 🛒`);
+    alert(`تم إضافة (${prod.name}) إلى سلة الطلبات بنجاح! 🛒`);
 }
 
 function updateCartUI() {
@@ -1233,7 +1224,7 @@ function updateCartUI() {
     list.innerHTML = '';
 
     if(cart.length === 0) {
-        list.innerHTML = '<p style="text-align: center; color: #78716c; padding: 20px;">سلة المبيعات فارغة حالياً.</p>';
+        list.innerHTML = '<p style="text-align: center; color: #78716c; padding: 20px;">سلة الشحنات فارغة حالياً.</p>';
         const totalEl = document.getElementById('cart-total');
         if(totalEl) totalEl.innerText = '0';
         return;
@@ -1273,9 +1264,9 @@ function applyPromoCode() {
     if(!inputEl) return;
     const code = inputEl.value.trim().toUpperCase();
     const note = document.getElementById('discount-note');
-    if(code === 'OMDA2026') {
+    if(code === 'FLEET2026') {
         activeDiscount = 0.10;
-        if(note) note.innerText = ' (تم تطبيق خصم البرومو كود 10% 🔥)';
+        if(note) note.innerText = ' (تم تطبيق خصم البرومو كود للأسطول 10% 🔥)';
         alert('مبروك! تم تطبيق كود الخصم 10% بنجاح.');
         updateCartUI();
     } else {
@@ -1297,12 +1288,12 @@ async function submitOrder() {
     const address = addressEl.value.trim();
 
     if(!name || !phone || !address) {
-        alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان التوصيل كاملاً!');
+        alert('من فضلك أدخل الاسم ورقم الهاتف وعنوان الاستلام والتوصيل كاملاً!');
         return;
     }
 
     if(cart.length === 0) {
-        alert('سلة المبيعات فارغة!');
+        alert('سلة الطلبات فارغة!');
         return;
     }
 
@@ -1319,7 +1310,7 @@ async function submitOrder() {
     let finalLng = customerLng !== null ? customerLng : (restaurantCoords[1] + 0.01);
 
     const newOrder = {
-        id: 'OMDA-' + Math.floor(100000 + Math.random() * 900000),
+        id: 'FLEET-' + Math.floor(100000 + Math.random() * 900000),
         name,
         phone,
         address,
@@ -1343,7 +1334,7 @@ async function submitOrder() {
 
     const orderUserObj = {
         name,
-        email: phone + '@omda.com',
+        email: phone + '@fleet.com',
         phone,
         role: 'customer',
         provider: 'Order Submission',
@@ -1361,7 +1352,7 @@ async function submitOrder() {
         } catch (e) {}
     }
 
-    alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
+    alert(`تم إرسال طلب الشحنة بنجاح يا أسطى ${name}! رقم الطلب: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
     
     cart = [];
     activeDiscount = 0;
@@ -1390,7 +1381,7 @@ function sendWhatsAppOrder() {
     }
 
     if(cart.length === 0) {
-        alert('سلة المبيعات فارغة!');
+        alert('سلة الطلبات فارغة!');
         return;
     }
 
@@ -1398,11 +1389,11 @@ function sendWhatsAppOrder() {
     let total = subtotal - (subtotal * activeDiscount);
     let itemsText = cart.map(i => `- ${i.name} (عدد: ${i.qty}) بسعر ${i.price * i.qty} ج`).join('%0A');
 
-    let msg = `*طلب جديد من تطبيق مشويات العمدة* 👑%0A%0A` +
+    let msg = `*طلب شحنة جديد من منصة الأسطول* 🚀%0A%0A` +
               `👤 *الاسم:* ${name}%0A` +
               `📞 *الهاتف:* ${phone}%0A` +
               `📍 *العنوان:* ${address}%0A%0A` +
-              `🛒 *الأصناف:*%0A${itemsText}%0A%0A` +
+              `🛒 *الخدمات المطلوبة:*%0A${itemsText}%0A%0A` +
               `💰 *الإجمالي بعد الخصم:* ${total} جنيه`;
 
     let waUrl = `https://wa.me/201144730305?text=${msg}`;
@@ -1426,12 +1417,12 @@ async function submitReservation() {
     const notes = notesEl ? notesEl.value.trim() : '';
 
     if(!name || !phone || !date || !time || !guests) {
-        alert('من فضلك املأ كافة بيانات الحجز الأساسية!');
+        alert('من فضلك املأ كافة بيانات الحجز اللوجستي!');
         return;
     }
 
     const newRes = {
-        id: 'RES-' + Math.floor(1000 + Math.random() * 9000),
+        id: 'REQ-' + Math.floor(1000 + Math.random() * 9000),
         name,
         phone,
         date,
@@ -1448,7 +1439,7 @@ async function submitReservation() {
         window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => {});
     }
 
-    alert(`تم تسجيل حجز الطاولة بنجاح يا أسطى ${name}! سنتواصل معك قريباً.`);
+    alert(`تم تسجيل طلب تخصيص الطيارين/الأسطول بنجاح يا أسطى ${name}! سنتواصل معك قريباً.`);
     nameEl.value = '';
     phoneEl.value = '';
     dateEl.value = '';
@@ -1474,7 +1465,7 @@ function loadCustomerDashboard() {
     
     const displayName = document.getElementById('cust-display-name');
     const displayPhone = document.getElementById('cust-display-phone');
-    if(displayName) displayName.innerText = currentCustomer.name || 'عميل العمدة';
+    if(displayName) displayName.innerText = currentCustomer.name || 'عميل الأسطول';
     if(displayPhone) displayPhone.innerText = currentCustomer.phone || '';
 
     let userPoints = currentCustomer.phone && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 0;
@@ -1491,7 +1482,7 @@ function loadCustomerDashboard() {
     list.innerHTML = '';
 
     if(myOrders.length === 0) {
-        list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد طلبات سابقة مسجلة برقم هاتفك.</p>';
+        list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد شحنات سابقة مسجلة برقم هاتفك.</p>';
         return;
     }
 
@@ -1504,7 +1495,7 @@ function loadCustomerDashboard() {
             } else {
                 reviewHtml = `
                     <div style="margin-top: 10px; background: #fef3c7; padding: 10px; border-radius: 8px;">
-                        <p style="font-size:0.85rem; font-weight:bold; margin-bottom:5px;">قيم تجربتك مع مشويات العمدة:</p>
+                        <p style="font-size:0.85rem; font-weight:bold; margin-bottom:5px;">قيم خدمة التوصيل مع الأسطول:</p>
                         <select id="rating-${order.id}" style="padding: 6px; margin-bottom: 5px; width: 100%; border-radius: 6px;">
                             <option value="5">⭐⭐⭐⭐⭐ ممتاز جداً</option>
                             <option value="4">⭐⭐⭐⭐ جيد جداً</option>
@@ -1519,18 +1510,18 @@ function loadCustomerDashboard() {
 
         list.innerHTML += `
             <div class="order-card" style="margin-bottom: 20px;">
-                <p><strong>رقم الطلب:</strong> ${order.id}</p>
+                <p><strong>رقم الشحنة:</strong> ${order.id}</p>
                 <p><strong>التاريخ:</strong> ${order.date}</p>
                 <p><strong>العنوان:</strong> ${order.address}</p>
                 <p><strong>الإجمالي:</strong> ${order.total} جنيه</p>
                 
                 <div style="margin: 15px 0; background: #f5f5f4; padding: 10px; border-radius: 8px;">
-                    <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: #78350f;">⏱️ حالة الطلب والتوصيل الحي:</p>
+                    <p style="font-size: 0.9rem; font-weight: bold; margin-bottom: 8px; color: #78350f;">⏱️ حالة الشحنة والتتبع الحي:</p>
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; text-align: center; gap: 5px;">
                         <div style="flex:1; padding: 5px; background: ${order.status==='pending'?'#fef08a':'#bbf7d0'}; border-radius:4px;">1. قيد المراجعة ⏳</div>
-                        <div style="flex:1; padding: 5px; background: ${order.status==='cooking'?'#fed7aa':(order.status==='delivery'||order.status==='done'?'#bbf7d0':'#e7e5e4')}; border-radius:4px;">2. ع الفحم 🔥</div>
-                        <div style="flex:1; padding: 5px; background: ${order.status==='delivery'?'#bae6fd':(order.status==='done'?'#bbf7d0':'#e7e5e4')}; border-radius:4px;">3. مع الدليفري 🛵</div>
-                        <div style="flex:1; padding: 5px; background: ${order.status==='done'?'#16a34a':'#e7e5e4'}; color:${order.status==='done'?'#fff':'#000'}; border-radius:4px;">4. وصل ✅</div>
+                        <div style="flex:1; padding: 5px; background: ${order.status==='cooking'?'#fed7aa':(order.status==='delivery'||order.status==='done'?'#bbf7d0':'#e7e5e4')}; border-radius:4px;">2. قيد التجهيز 📦</div>
+                        <div style="flex:1; padding: 5px; background: ${order.status==='delivery'?'#bae6fd':(order.status==='done'?'#bbf7d0':'#e7e5e4')}; border-radius:4px;">3. مع الطيار 🛵</div>
+                        <div style="flex:1; padding: 5px; background: ${order.status==='done'?'#16a34a':'#e7e5e4'}; color:${order.status==='done'?'#fff':'#000'}; border-radius:4px;">4. تم التسليم ✅</div>
                     </div>
                 </div>
 
@@ -1556,18 +1547,18 @@ function submitReview(orderId) {
 
 function showReceipt(order) {
     let itemsStr = order.items.map(i => `${i.name} (x${i.qty}) - ${i.price * i.qty} ج`).join('\n');
-    let receiptText = `👑 كبابجي ومشويات العمدة 👑\n` +
+    let receiptText = `👑 منصة الأسطول اللوجستي والحسابات 👑\n` +
                       `---------------------------\n` +
-                      `رقم الطلب: ${order.id}\n` +
+                      `رقم الشحنة: ${order.id}\n` +
                       `العميل: ${order.name}\n` +
                       `الهاتف: ${order.phone}\n` +
                       `العنوان: ${order.address}\n` +
                       `التاريخ: ${order.date}\n` +
                       `---------------------------\n` +
-                      `الأصناف:\n${itemsStr}\n` +
+                      `الخدمات:\n${itemsStr}\n` +
                       `---------------------------\n` +
                       `الإجمالي الكلي: ${order.total} جنيه\n` +
-                      `شكراً لاختيارك مشويات العمدة! ❤️`;
+                      `شكراً لاختيارك خدمات الأسطول! ❤️`;
     
     navigator.clipboard.writeText(receiptText);
     alert('📄 تم نسخ تفاصيل الفاتورة الرقمية إلى الحافظة بنجاح!\n\n' + receiptText);
@@ -1588,7 +1579,7 @@ async function assignDriverToOrder(orderId, driverName) {
             } catch(e) {}
         }
 
-        alert(`✓ تم تعيين السائق (${driverName || 'بدون'}) للطلب ${orderId} بنجاح 🏍️`);
+        alert(`✓ تم تعيين الطيار (${driverName || 'بدون'}) للشحنة ${orderId} بنجاح 🏍️`);
         if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
         if(typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
     }
@@ -1626,7 +1617,7 @@ function loadGoogleAccountsList() {
                         <option value="customer" ${currentRole==='customer'?'selected':''}>👤 عميل (Customer)</option>
                         <option value="admin" ${currentRole==='admin'?'selected':''}>👑 مدير / أدمن (Admin)</option>
                         <option value="accountant" ${currentRole==='accountant'?'selected':''}>💰 محاسب (Accountant)</option>
-                        <option value="worker" ${currentRole==='worker'?'selected':''}>👷 عامل (Worker)</option>
+                        <option value="worker" ${currentRole==='worker'?'selected':''}>👷 مساعد (Worker)</option>
                         <option value="driver" ${currentRole==='driver'?'selected':''}>🏍️ طيار / دليفري (Driver)</option>
                     </select>
                 </div>
@@ -1928,7 +1919,7 @@ function loadAdminDashboard() {
     if(adminMenuList) {
         adminMenuList.innerHTML = '';
         if(menuProducts.length === 0) {
-            adminMenuList.innerHTML = '<p style="color: #78716c;">لا توجد أصناف مسجلة في المنيو.</p>';
+            adminMenuList.innerHTML = '<p style="color: #78716c;">لا توجد خدمات مسجلة.</p>';
         } else {
             menuProducts.forEach(prod => {
                 adminMenuList.innerHTML += `
@@ -1944,17 +1935,17 @@ function loadAdminDashboard() {
         }
     }
 
-    // جلب قائمة الطيارين الموحدة لضمان ظهورهم في قائمة الطلبات فوراً
+    // جلب قائمة الطيارين الموحدة
     let verifiedDrivers = getVerifiedDriversUnified();
 
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
         ordersList.innerHTML = '';
         if(allOrders.length === 0) {
-            ordersList.innerHTML = '<p>لا توجد طلبات توصيل جديدة حتى الآن.</p>';
+            ordersList.innerHTML = '<p>لا توجد شحنات توصيل جديدة حتى الآن.</p>';
         } else {
             allOrders.forEach((order) => {
-                let driverOptions = `<option value="">-- اختر سائق مسجل للطلب --</option>`;
+                let driverOptions = `<option value="">-- اختر طيار مسجل للشحنة --</option>`;
                 verifiedDrivers.forEach(d => {
                     let selected = order.assignedDriver === d.name ? 'selected' : '';
                     driverOptions += `<option value="${d.name}" ${selected}>🏍️ ${d.name} (${d.phone || ''})</option>`;
@@ -1962,13 +1953,13 @@ function loadAdminDashboard() {
 
                 ordersList.innerHTML += `
                     <div class="order-card">
-                        <p><strong>رقم الطلب:</strong> ${order.id} | <strong>العميل:</strong> ${order.name} (${order.phone})</p>
+                        <p><strong>رقم الشحنة:</strong> ${order.id} | <strong>العميل:</strong> ${order.name} (${order.phone})</p>
                         <p><strong>العنوان:</strong> ${order.address}</p>
-                        <p><strong>الطلب:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
+                        <p><strong>الخدمة:</strong> ${order.items.map(i => i.name + ' (x' + i.qty + ')').join(', ')}</p>
                         <p><strong>الإجمالي:</strong> ${order.total} جنيه | <strong>التاريخ:</strong> ${order.date}</p>
                         
                         <div style="margin: 10px 0; background: #f0fdf4; padding: 10px; border-radius: 8px; border: 1px solid #bbf7d0;">
-                            <label style="font-size:0.9rem; font-weight:bold; color:#166534; display:block; margin-bottom:5px;">🏍️ تعيين سائق مسجل للطلب:</label>
+                            <label style="font-size:0.9rem; font-weight:bold; color:#166534; display:block; margin-bottom:5px;">🏍️ تعيين طيار مسجل للشحنة:</label>
                             <select onchange="assignDriverToOrder('${order.id}', this.value)" style="padding:8px; border-radius:6px; width:100%; border:1px solid #86efac; background:#fff; font-weight:bold;">
                                 ${driverOptions}
                             </select>
@@ -1979,12 +1970,12 @@ function loadAdminDashboard() {
                                 <label style="font-size:0.9rem; font-weight:bold;">حالة الشحنة:</label>
                                 <select onchange="updateOrderStatus('${order.id}', this.value)" style="padding:6px; border-radius:6px;">
                                     <option value="pending" ${order.status==='pending'?'selected':''}>قيد المراجعة</option>
-                                    <option value="cooking" ${order.status==='cooking'?'selected':''}>جاري التجهيز والشوي 🔥</option>
-                                    <option value="delivery" ${order.status==='delivery'?'selected':''}>خرج مع الدليفري 🛵</option>
-                                    <option value="done" ${order.status==='done'?'selected':''}>تم التوصيل ✅</option>
+                                    <option value="cooking" ${order.status==='cooking'?'selected':''}>قيد التجهيز 📦</option>
+                                    <option value="delivery" ${order.status==='delivery'?'selected':''}>مع الطيار 🛵</option>
+                                    <option value="done" ${order.status==='done'?'selected':''}>تم التسليم ✅</option>
                                 </select>
                             </div>
-                            <button onclick="adminDeleteOrder('${order.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
+                            <button onclick="adminDeleteOrder('${order.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الشحنة</button>
                         </div>
                     </div>
                 `;
@@ -1996,18 +1987,18 @@ function loadAdminDashboard() {
     if(resList) {
         resList.innerHTML = '';
         if(reservationsList.length === 0) {
-            resList.innerHTML = '<p>لا توجد حجوزات طاولات أو عزائم مسجلة حالياً.</p>';
+            resList.innerHTML = '<p>لا توجد طلبات تخصيص أسطول مسجلة حالياً.</p>';
         } else {
             reservationsList.forEach((res) => {
                 resList.innerHTML += `
                     <div class="order-card" style="border-right: 4px solid var(--secondary-color);">
-                        <p><strong>رقم الحجز:</strong> ${res.id} | <strong>حاجز الطاولة:</strong> ${res.name} (${res.phone})</p>
-                        <p><strong>التاريخ والوقت:</strong> ${res.date} الساعة ${res.time} | <strong>الأفراد:</strong> ${res.guests}</p>
+                        <p><strong>رقم الطلب:</strong> ${res.id} | <strong>العميل:</strong> ${res.name} (${res.phone})</p>
+                        <p><strong>التاريخ والوقت:</strong> ${res.date} الساعة ${res.time} | <strong>العدد:</strong> ${res.guests}</p>
                         <p><strong>الملاحظات:</strong> ${res.notes || 'بدون ملاحظات'}</p>
-                        <p><strong>حالة الحجز:</strong> <span class="status-badge ${res.status==='confirmed'?'status-done':'status-pending'}">${res.status==='confirmed'?'مؤكد ✅':'قيد المتابعة ⏳'}</span></p>
+                        <p><strong>الحالة:</strong> <span class="status-badge ${res.status==='confirmed'?'status-done':'status-pending'}">${res.status==='confirmed'?'مؤكد ✅':'قيد المتابعة ⏳'}</span></p>
                         <div style="margin-top: 10px; display: flex; gap: 10px;">
-                            <button onclick="confirmReservation('${res.id}')" class="btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.85rem;">تأكيد الحجز</button>
-                            <button onclick="adminDeleteReservation('${res.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف الحجز</button>
+                            <button onclick="confirmReservation('${res.id}')" class="btn-secondary btn-sm" style="padding: 6px 12px; font-size:0.85rem;">تأكيد الطلب</button>
+                            <button onclick="adminDeleteReservation('${res.id}')" class="btn-danger btn-sm" style="padding: 6px 12px; font-size:0.85rem;"><i class="fa-solid fa-trash"></i> حذف</button>
                         </div>
                     </div>
                 `;
@@ -2050,12 +2041,12 @@ async function adminCreateOrder() {
     const total = parseFloat(document.getElementById('admin-ord-total').value);
 
     if(!name || !phone || !address || !itemsText || isNaN(total)) {
-        alert('من فضلك املأ كافة بيانات الطلب بدقة!');
+        alert('من فضلك املأ كافة بيانات الشحنة بدقة!');
         return;
     }
 
     const newOrder = {
-        id: 'OMDA-' + Math.floor(100000 + Math.random() * 900000),
+        id: 'FLEET-' + Math.floor(100000 + Math.random() * 900000),
         name,
         phone,
         address,
@@ -2075,7 +2066,7 @@ async function adminCreateOrder() {
     let earnedPoints = Math.floor(total / 10);
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
 
-    alert(`تم إنشاء وتسجيل الطلب للعميل ${name} بنجاح!`);
+    alert(`تم إنشاء وتسجيل الشحنة للعميل ${name} بنجاح!`);
     
     document.getElementById('admin-ord-name').value = '';
     document.getElementById('admin-ord-phone').value = '';
@@ -2104,7 +2095,7 @@ async function updateOrderStatus(orderId, newStatus) {
 }
 
 async function adminDeleteOrder(orderId) {
-    if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً من السحابة؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذه الشحنة نهائياً من السحابة؟')) return;
     
     allOrders = allOrders.filter(o => String(o.id) !== String(orderId));
 
@@ -2116,7 +2107,7 @@ async function adminDeleteOrder(orderId) {
 
     loadAdminDashboard();
     loadLiveTrackingMap();
-    alert('✓ تم حذف الطلب بنجاح من السحابة.');
+    alert('✓ تم حذف الشحنة بنجاح من السحابة.');
 }
 
 async function confirmReservation(resId) {
@@ -2136,7 +2127,7 @@ async function confirmReservation(resId) {
 }
 
 async function adminDeleteReservation(resId) {
-    if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
     
     reservationsList = reservationsList.filter(r => String(r.id) !== String(resId));
 
@@ -2147,12 +2138,12 @@ async function adminDeleteReservation(resId) {
     }
 
     loadAdminDashboard();
-    alert('✓ تم حذف الحجز بنجاح.');
+    alert('✓ تم حذف الطلب بنجاح.');
 }
 
 function adminLogout() {
     currentCustomer = null;
-    localStorage.removeItem('omda_logged_user');
+    localStorage.removeItem('fleet_logged_user');
     window.location.href = 'index.html'; 
 }
 
@@ -2241,7 +2232,7 @@ function trackCustomerOrder() {
     let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
 
     if(!foundOrder) {
-        resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على طلب بهذا الرقم أو الهاتف.</span>`;
+        resultBox.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على شحنة بهذا الرقم أو الهاتف.</span>`;
         return;
     }
 
@@ -2256,14 +2247,14 @@ function trackCustomerOrder() {
     resultBox.innerHTML = `
         <div class="bg-white p-2.5 rounded-lg border border-amber-300 space-y-1.5 shadow-sm">
             <div class="flex justify-between items-center">
-                <strong class="text-amber-900">طلب رقم: ${foundOrder.id}</strong>
+                <strong class="text-amber-900">شحنة رقم: ${foundOrder.id}</strong>
                 <span class="status-badge status-${foundOrder.status}">${getStatusText(foundOrder.status)}</span>
             </div>
             <div>👤 العميل: ${foundOrder.name} (${foundOrder.phone})</div>
             <div>📍 العنوان: ${foundOrder.address}</div>
             <div class="border-t border-slate-100 pt-1 mt-1 text-emerald-800 font-bold">
-                🏍️ السائق المسؤول: ${driverName}
-                ${driverPhone !== 'غير متوفر' ? `<br>📞 هاتف السائق: <span class="mono-font">${driverPhone}</span>` : ''}
+                🏍️ الطيار المسؤول: ${driverName}
+                ${driverPhone !== 'غير متوفر' ? `<br>📞 هاتف الطيار: <span class="mono-font">${driverPhone}</span>` : ''}
             </div>
             <div class="flex gap-2 mt-2">
                 <button onclick="initiateWebRtcCall('${foundOrder.id}', '${foundOrder.phone}', true)" class="flex-1 bg-amber-700 text-white text-center py-1 rounded font-bold text-[11px] cursor-pointer"><i class="fa-solid fa-video"></i> فيديو</button>
@@ -2278,12 +2269,12 @@ function loadBranchesAdminList() {
     if(!container) return;
     container.innerHTML = `
         <div class="bg-amber-50/80 p-2.5 rounded-lg border border-amber-300 text-xs">
-            <strong>👑 المركز الرئيسي الحالي:</strong><br>
+            <strong>👑 مركز العمليات الرئيسي:</strong><br>
             <span class="mono-font text-amber-900">Lat: ${restaurantCoords[0]}, Lng: ${restaurantCoords[1]}</span>
         </div>
     `;
     const statBranches = document.getElementById('statBranchesCount');
-    if(statBranches) statBranches.innerText = 'شبرا منت';
+    if(statBranches) statBranches.innerText = 'المركز الرئيسي';
 }
 
 function loadBranchesOnMap() {}
@@ -2321,13 +2312,13 @@ function loadLiveTrackingMap() {
     if(statDrivers) statDrivers.innerText = driversList.length + ' طيار';
 
     if (!isAdminOrDriver) {
-        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">🔒 الخريطة العامة ومتابعة الأسطول مخصصة للإدارة والمناديب فقط. استخدم خانة البحث بالأعلى لتتبع طلبك برقم الهاتف أو الفاتورة.</p>';
+        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">🔒 الخريطة العامة ومتابعة الأسطول مخصصة للإدارة والمناديب فقط. استخدم خانة البحث بالأعلى لتتبع شحنتك برقم الهاتف أو الفاتورة.</p>';
         loadDriversOnMap();
         return;
     }
 
     if(allOrders.length === 0) {
-        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد طلبات مسجلة حالياً.</p>';
+        listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">لا توجد شحنات مسجلة حالياً.</p>';
         loadDriversOnMap();
         return;
     }
@@ -2356,11 +2347,11 @@ function loadLiveTrackingMap() {
         let marker = L.marker([orderLat, orderLng], { icon: deliveryIcon }).addTo(markersLayer);
         marker.bindPopup(`
             <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
-                <b>طلب رقم: ${order.id}</b><br>
+                <b>شحنة رقم: ${order.id}</b><br>
                 👤 ${order.name} (${order.phone})<br>
                 📍 ${order.address}<br>
                 📏 المسافة: ${distKm.toFixed(1)} كم | ETA: ${etaMinutes} دقيقة<br>
-                <b>السائق:</b> ${order.assignedDriver || 'لم يُسند بعد'}<br>
+                <b>الطيار:</b> ${order.assignedDriver || 'لم يُسند بعد'}<br>
                 <div class="flex gap-2 mt-2">
                     <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', true)" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:bold;">فيديو</button>
                     <button onclick="initiateWebRtcCall('${order.id}', '${order.phone}', false)" style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:6px; cursor:pointer; font-weight:bold;">صوت</button>
@@ -2369,7 +2360,7 @@ function loadLiveTrackingMap() {
         `);
 
         let statusClass = 'status-' + (order.status || 'pending');
-        let driverSelectOpts = `<option value="">-- اختر سائق --</option>`;
+        let driverSelectOpts = `<option value="">-- اختر طيار --</option>`;
         verifiedDrivers.forEach(d => {
             let sel = order.assignedDriver === d.name ? 'selected' : '';
             driverSelectOpts += `<option value="${d.name}" ${sel}>${d.name}</option>`;
@@ -2414,7 +2405,7 @@ function loadDriversOnMap() {
             L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(driversLayer)
                 .bindPopup(`
                     <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px;">
-                        <b>🏍️ السائق: ${driver.name}</b><br>
+                        <b>🏍️ الطيار: ${driver.name}</b><br>
                         الهاتف: <span class="mono-font text-amber-800 font-bold">${driver.phone}</span><br>
                         حالة البث: متصل وجاهز للتوصيل 🔥
                     </div>
@@ -2561,7 +2552,7 @@ function toggleGpsTracking() {
     if(!select || !statusBox || !btn) return;
 
     const driverName = select.value;
-    if(!driverName) { alert('اختر اسم السائق أولاً!'); return; }
+    if(!driverName) { alert('اختر اسم الطيار أولاً!'); return; }
 
     if(watchId) {
         navigator.geolocation.clearWatch(watchId);
@@ -2615,16 +2606,16 @@ function autoDispatchOrders() {
         }
     });
 
-    alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين المسجلين بدقة 🚀`);
+    alert(`تم توزيع وإسناد ${assignedCount} شحنة للطيارين المسجلين بدقة 🚀`);
     loadLiveTrackingMap();
 }
 
 function getStatusText(status) {
     switch(status) {
         case 'pending': return 'قيد المراجعة ⏳';
-        case 'cooking': return 'ع الفحم 🔥';
-        case 'delivery': return 'مع الدليفري 🛵';
-        case 'done': return 'وصل ✅';
+        case 'cooking': return 'قيد التجهيز 📦';
+        case 'delivery': return 'مع الطيار 🛵';
+        case 'done': return 'تم التسليم ✅';
         default: return 'جاري المعالجة';
     }
 }
@@ -2683,7 +2674,7 @@ function initRealtimeCloudSync() {
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
         });
 
-        onSnapshot(collection(window.db, "reservations"), (snapshot) => {
+        onSnapshot(collection(window.33db || window.db, "reservations"), (snapshot) => {
             reservationsList = [];
             snapshot.forEach((doc) => { reservationsList.push(doc.data()); });
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
