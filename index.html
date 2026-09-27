@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>كبابجي ومشويات العمدة | عمدة المشويات في مصر</title>
+    <title>منصة الأسطول اللوجستي وإدارة الشحنات والحسابات 🚀</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -13,133 +13,132 @@
 
     <!-- شريط الإعلانات المتحرك (RSS Ticker) -->
     <div class="ticker-container">
-        <div class="ticker-label"><i class="fa-solid fa-bullhorn"></i> إعلانات العمدة:</div>
+        <div class="ticker-label"><i class="fa-solid fa-bullhorn"></i> إعلانات الأسطول:</div>
         <div class="ticker-content">
-            <marquee id="main-ticker-text" scrollamount="6">🔥 أهلاً بكم في كبابجي ومشويات العمدة - أقوى العروض والولائم على الفحم الحطب يومياً! استخدم برومو كود OMDA2026 لخصم 10% على طلبك الأول 🔥</marquee>
+            <marquee id="main-ticker-text" scrollamount="6">🔥 أهلاً بكم في منصة الأسطول اللوجستي المتكامل - أسرع خدمة توصيل طرود وشحنات وتحصيل نقدي COD يومياً! استخدم برومو كود FLEET2026 لخصم 10% على شحنتك الأولى 🔥</marquee>
         </div>
     </div>
 
     <!-- الهيدر وشريط التنقل المنظم للموبايل والشاشات -->
     <header class="main-header">
         <div class="logo-container">
-            <img src="icon1-512.png" alt="لوجو مشويات العمدة" class="logo-img">
+            <img src="icon1-512.png" alt="لوجو الأسطول اللوجستي" class="logo-img">
             <div>
-                <h1>مشويات العمدة</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #fde047; font-weight: bold; display: block;">وضع العميل والزوار 📦</span>
+                <h1>الأسطول اللوجستي</h1>
+                <span id="userRoleBadge" style="font-size: 0.7rem; color: #fde047; font-weight: bold; display: block;">وضع تتبع الشحنة والطلبات للعملاء 📦</span>
             </div>
         </div>
         <nav class="nav-links" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; padding: 5px 0;">
-            <button onclick="switchTab('menu')" class="nav-btn active" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-utensils"></i> المنيو</button>
-            <button onclick="switchTab('custom-tray')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> صمم صينيتك</button>
-            <button onclick="switchTab('offers')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-fire"></i> العروض</button>
-            <button onclick="switchTab('cart')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-cart-shopping"></i> السلة (<span id="cart-count">0</span>)</button>
-            <button onclick="switchTab('reservation')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-chair"></i> حجز</button>
+            <button onclick="switchTab('menu')" class="nav-btn active" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-boxes-stacked"></i> الخدمات</button>
+            <button onclick="switchTab('custom-tray')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> صمم شحنتك</button>
+            <button onclick="switchTab('offers')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-fire"></i> الباقات</button>
+            <button onclick="switchTab('cart')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-cart-shopping"></i> سلة الشحنات (<span id="cart-count">0</span>)</button>
+            <button onclick="switchTab('reservation')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-truck-fast"></i> طلب أسطول</button>
             <button onclick="switchTab('favorites')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-heart"></i> المفضلة</button>
             <button onclick="switchTab('customer')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-user"></i> حسابي والبروفايل</button>
             
             <button onclick="switchTab('privacy')" class="nav-btn" style="background-color: #78350f; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-shield-halved"></i> الخصوصية</button>
-            <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #16a34a; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-map-location-dot"></i> الخريطة 🗺️</a>
-            <a href="branches.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #b45309; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-store"></i> فروعنا 📍</a>
-            <a href="kitchen-display.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #991b1b; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-fire-burner"></i> المطبخ 🔥</a>           
+            <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #16a34a; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
+            <a href="branches.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #b45309; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-store"></i> المراكز 📍</a>
+            <a href="kitchen-display.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #991b1b; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-desktop"></i> لوحة العمليات 🔥</a>           
         </nav>
     </header>
 
     <!-- المحتوى الرئيسي -->
     <main class="container">
 
-        <!-- 1. قسم المنيو والطلب -->
+        <!-- 1. قسم الخدمات والطلب -->
         <section id="tab-menu" class="tab-content active">
             <div id="hero-slider-banner" class="banner" style="position: relative; overflow: hidden; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(135deg, #78350f, #b45309); box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
                 <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="background: #991b1b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-fire"></i> عروض ولائم وعصارة العمدة</span>
-                    <span id="slider-counter" style="color: #fde047; font-size: 0.8rem; font-weight: bold; direction: ltr; unicode-bidi: embed;">1 / 16</span>
+                    <span style="background: #991b1b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-fire"></i> أسرع خدمات التوصيل واللوجستيات</span>
+                    <span id="slider-counter" style="color: #fde047; font-size: 0.8rem; font-weight: bold; direction: ltr; unicode-bidi: embed;">1 / 5</span>
                 </div>
                 <div style="position: relative; width: 100%; height: 230px; border-radius: 10px; overflow: hidden; background: #1c1917; display: flex; align-items: center; justify-content: center; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;" onclick="sliderClickAction()">
-                    <img id="slider-prod-img" src="icon1-512.png" alt="صورة الوجبة المميزة" style="width: 100%; height: 100%; object-fit: contain; background: #000;">
+                    <img id="slider-prod-img" src="icon1-512.png" alt="صورة الخدمة المميزة" style="width: 100%; height: 100%; object-fit: contain; background: #000;">
                     <button type="button" onclick="event.stopPropagation(); prevSliderItem()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-right"></i></button>
                     <button type="button" onclick="event.stopPropagation(); nextSliderItem()" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-left"></i></button>
                 </div>
                 <div style="width: 100%; text-align: center; margin-top: 10px;">
-                    <h3 id="slider-prod-name" style="color: #fef3c7; font-size: 1.2rem; margin: 4px 0;">👑 عمدة المشويات في مصر</h3>
-                    <p id="slider-prod-desc" style="font-size: 0.85rem; color: #f5f5f4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">جاري تحميل أشهى المشويات على الفحم الحطب...</p>
+                    <h3 id="slider-prod-name" style="color: #fef3c7; font-size: 1.2rem; margin: 4px 0;">🚀 منصة الأسطول والحسابات</h3>
+                    <p id="slider-prod-desc" style="font-size: 0.85rem; color: #f5f5f4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">جاري تحميل أسرع خدمات الشحن والتوصيل...</p>
                     <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
                         <div id="slider-prod-price" style="font-size: 1.1rem; font-weight: bold; color: #fde047;">0 جنيه</div>
-                        <button type="button" id="slider-action-btn" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary" style="padding: 6px 16px; font-size: 0.85rem; background-color: #16a34a; border: none; cursor: pointer; border-radius: 6px; color: white; font-weight: bold;"><i class="fa-solid fa-cart-plus"></i> أضف للسلة فوراً</button>
+                        <button type="button" id="slider-action-btn" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary" style="padding: 6px 16px; font-size: 0.85rem; background-color: #16a34a; border: none; cursor: pointer; border-radius: 6px; color: white; font-weight: bold;"><i class="fa-solid fa-cart-plus"></i> اطلب الخدمة فوراً</button>
                     </div>
                 </div>
             </div>
             
             <div class="categories-bar">
                 <button onclick="filterCategory('all')" class="cat-btn active">الكل</button>
-                <button onclick="filterCategory('trays')" class="cat-btn">ركن الصواني 🔥</button>
-                <button onclick="filterCategory('grills')" class="cat-btn">ركن المشويات</button>
-                <button onclick="filterCategory('meals')" class="cat-btn">الوجبات السريعة</button>
-                <button onclick="filterCategory('tagines')" class="cat-btn">الطواجن</button>
-                <button onclick="filterCategory('appetizers')" class="cat-btn">المقبلات والسلطات</button>
+                <button onclick="filterCategory('express')" class="cat-btn">توصيل فوري ⚡</button>
+                <button onclick="filterCategory('cargo')" class="cat-btn">شحنات وبضائع 📦</button>
+                <button onclick="filterCategory('financial')" class="cat-btn">تحصيل مالي COD 💰</button>
+                <button onclick="filterCategory('corporate')" class="cat-btn">اشتراكات شركات 🏢</button>
             </div>
 
             <div id="menu-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 1.5 صمم صينيتك بنفسك -->
+        <!-- 1.5 صمم شحنتك بنفسك -->
         <section id="tab-custom-tray" class="tab-content">
             <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309);">
-                <h2>🎨 صمم صينيتك ووليمتك بنفسك</h2>
-                <p>اختر الحجم، اللحوم المفضلة، والإضافات الحصرية وسيقوم الشيف بتجهيزها خصيصاً لك!</p>
+                <h2>🎨 صمم شحنتك وخدمة التوصيل الخاصة بك</h2>
+                <p>اختر نوع الشحنة، مسار التوصيل، والإضافات الحصرية وسيقوم طيار الأسطول بتنفيذها بدقة واحترافية!</p>
             </div>
             <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
                 <div class="checkout-form" style="max-width: 100%;">
-                    <label style="font-weight: bold; color: var(--secondary-color);">اختر الحجم الأساسي للصينية:</label>
+                    <label style="font-weight: bold; color: var(--secondary-color);">اختر نوع الشحنة أو الخدمة:</label>
                     <select id="custom-size">
-                        <option value="500">صينية صغرى (تكفي 2-3 أفراد) - 500 جنيه</option>
-                        <option value="1000">صينية وسط (تكفي 4-5 أفراد) - 1000 جنيه</option>
-                        <option value="2000">صينية العمدة الكبرى (تكفي عائلة كاملة) - 2000 جنيه</option>
+                        <option value="60">شحنة عادية / طرد صغير (داخل المدينة) - 60 جنيه</option>
+                        <option value="150">شحنة ثقيلة / بضائع ومعدات - 150 جنيه</option>
+                        <option value="250">خدمة توصيل متعدد المحطات (Multi-Stop) - 250 جنيه</option>
                     </select>
 
-                    <label style="font-weight: bold; color: var(--secondary-color);">اختر الصنف الرئيسي المشوي:</label>
+                    <label style="font-weight: bold; color: var(--secondary-color);">اختر طبيعة النقل والتحصيل:</label>
                     <select id="custom-meat">
-                        <option value="مشويات مشكلة (كباب وكفتة وطرب)">مشويات مشكلة (كباب، كفتة، طرب بلدي)</option>
-                        <option value="فراخ شيش وفحم وطرب">فراخ شيش فحم + طرب ضاني</option>
-                        <option value="حمام محشي وريش ضاني">حمام محشي أرز بالخلطة + ريش ضاني</option>
+                        <option value="توصيل عادي بدون تحصيل">توصيل طرد أو مستندات فقط</option>
+                        <option value="تحصيل نقدي قيمة فاتورة COD">تحصيل نقدي قيمة فاتورة (COD) وإيداعها الخزنة</option>
+                        <option value="توصيل بضائع هشة وعناية خاصة">توصيل بضائع هشة وعناية قصوى بالطلب</option>
                     </select>
 
-                    <label style="font-weight: bold; color: var(--secondary-color);">إضافات جانبية فاخرة:</label>
+                    <label style="font-weight: bold; color: var(--secondary-color);">إضافات الأسطول اللوجستية:</label>
                     <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fafaf9; padding: 10px; border-radius: 8px;">
-                        <label><input type="checkbox" id="ext-mombar" value="80"> طبق ممبار (+80 ج)</label>
-                        <label><input type="checkbox" id="ext-mahshi" value="60"> طاجن ورق عنب (+60 ج)</label>
-                        <label><input type="checkbox" id="ext-pepsi" value="50"> 2 لتر بيبيسي (+50 ج)</label>
+                        <label><input type="checkbox" id="ext-mombar" value="80"> تغليف خاص (+80 ج)</label>
+                        <label><input type="checkbox" id="ext-mahshi" value="60"> تأمين الشحنة (+60 ج)</label>
+                        <label><input type="checkbox" id="ext-pepsi" value="50"> أولوية قصوى فورية (+50 ج)</label>
                     </div>
 
-                    <textarea id="custom-notes" placeholder="أي ملاحظات خاصة بالتسوية، البهارات، أو الطلب الإضافي..."></textarea>
-                    <button onclick="addCustomTrayToCart()" class="btn-primary" style="background-color: var(--primary-color);">إضافة الصينى المخصصة للسلة 👑</button>
+                    <textarea id="custom-notes" placeholder="أي ملاحظات خاصة بالعنوان، مواعيد الاستلام، أو اسم المستلم..."></textarea>
+                    <button onclick="addCustomTrayToCart()" class="btn-primary" style="background-color: var(--primary-color);">إضافة الشحنة المخصصة للسلة 🚀</button>
                 </div>
             </div>
         </section>
 
-        <!-- 2. العروض الخاصة -->
+        <!-- 2. باقات الشركات والأسطول -->
         <section id="tab-offers" class="tab-content">
             <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d);">
-                <h2>🔥 عروض ولائم الصواني الجبارة 🔥</h2>
-                <p>اللمة تحلى مع صينية العمدة وصينية الدوار وعروض الصحاب والعروسة!</p>
+                <h2>🔥 باقات وعروض الأسطول التجاري والشركات 🔥</h2>
+                <p>خصص طيارين وحسابات مالية متكاملة لخدمة متجرك أو شركتك بأعلى كفاءة!</p>
             </div>
             <div id="offers-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 3. السلة -->
+        <!-- 3. سلة الشحنات -->
         <section id="tab-cart" class="tab-content">
-            <h2>🛒 سلة المبيعات والطلبات (مع صور الأطباق)</h2>
+            <h2>🛒 سلة الشحنات والخدمات اللوجستية</h2>
             <div class="cart-container">
                 <div id="cart-items-list" class="cart-items"></div>
                 <div class="cart-summary">
                     <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل OMDA2026)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
+                        <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل FLEET2026)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
                         <button onclick="applyPromoCode()" class="btn-secondary" style="padding: 10px 15px;">تطبيق الكوبون</button>
                     </div>
-                    <h3>إجمالي الطلب: <span id="cart-total">0</span> جنيه <span id="discount-note" style="font-size:0.9rem; color:#16a34a;"></span></h3>
+                    <h3>إجمالي الشحنات: <span id="cart-total">0</span> جنيه <span id="discount-note" style="font-size:0.9rem; color:#16a34a;"></span></h3>
                     <div class="checkout-form" style="margin-top: 15px;">
-                        <input type="text" id="order-name" placeholder="اسمك الكريم">
-                        <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع)">
-                        <textarea id="order-address" placeholder="عنوان التوصيل بالتفصيل"></textarea>
+                        <input type="text" id="order-name" placeholder="اسمك أو اسم شركتك">
+                        <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع الفوري)">
+                        <textarea id="order-address" placeholder="عنوان الاستلام والتوصيل بالتفصيل"></textarea>
                         
                         <div style="margin-bottom: 10px;">
                             <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-secondary" style="background-color: #0284c7; color: white; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
@@ -149,7 +148,7 @@
                         </div>
 
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="submitOrder()" class="btn-primary" style="flex: 1;">إرسال الطلب للتتبع 🚀</button>
+                            <button onclick="submitOrder()" class="btn-primary" style="flex: 1;">إرسال الشحنة للتتبع 🚀</button>
                             <button onclick="sendWhatsAppOrder()" class="btn-secondary" style="flex: 1; background-color: #25d366;"><i class="fa-brands fa-whatsapp"></i> اطلب عبر واتساب 💬</button>
                         </div>
                     </div>
@@ -157,36 +156,36 @@
             </div>
         </section>
 
-        <!-- 4. حجز الطاولات -->
+        <!-- 4. حجز الأسطول -->
         <section id="tab-reservation" class="tab-content">
-            <h2>🪑 حجز طاولة أو عزومة في صالة المحل</h2>
+            <h2>🪑 طلب تخصيص طيار أو أسطول توصيل شهري</h2>
             <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
-                <p style="margin-bottom: 15px; color: #57534e;">احجز مكانك مسبقاً أو رتب لعزومتك ووليمتك في صالة مشويات العمدة وسنقوم بتجهيزها فور وصولك!</p>
+                <p style="margin-bottom: 15px; color: #57534e;">احجز طيارين مخصصين لمتجرك مسبقاً أو رتب لعقد شحن وتوصيل تجاري وسنتواصل معك فوراً!</p>
                 <div class="checkout-form" style="max-width: 100%;">
-                    <input type="text" id="res-name" placeholder="اسم الحاجز الكريم">
+                    <input type="text" id="res-name" placeholder="اسم المسؤول أو الشركة">
                     <input type="text" id="res-phone" placeholder="رقم الهاتف">
                     <input type="date" id="res-date">
                     <input type="time" id="res-time">
-                    <input type="number" id="res-guests" placeholder="عدد الأفراد (مثلاً: 6 أفراد)" min="1">
-                    <textarea id="res-notes" placeholder="ملاحظات الطلب أو نوع الوليمة (مثلاً: حجز صينية العمدة الكبرى)"></textarea>
-                    <button onclick="submitReservation()" class="btn-primary">تأكيد حجز الطاولة / العزومة 🍽️</button>
+                    <input type="number" id="res-guests" placeholder="عدد الطيارين المطلوبين (مثلاً: 3 طيارين)" min="1">
+                    <textarea id="res-notes" placeholder="ملاحظات العقد التجاري أو نطاق التوصيل المطلوب..."></textarea>
+                    <button onclick="submitReservation()" class="btn-primary">تأكيد طلب تخصيص الأسطول 🚀</button>
                 </div>
             </div>
         </section>
 
         <!-- 5. المفضلة -->
         <section id="tab-favorites" class="tab-content">
-            <h2>❤️ قائمة الأطباق المفضلة</h2>
+            <h2>❤️ قائمة الخدمات والشحنات المفضلة</h2>
             <div id="favorites-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وقسم البروفايل المعزول -->
+        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وقسم البروفايل -->
         <section id="tab-customer" class="tab-content">
             <h2>🔐 بوابة تسجيل الدخول الموحدة وإدارة البروفايل الشخصي</h2>
             
             <div class="customer-login-box" id="unified-login-box" style="max-width: 480px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #b45309;">
                 <p style="text-align: center; color: #57534e; margin-bottom: 20px; font-weight: bold;">
-                    سجل الدخول بحساب جوجل المعتمد لضمان مزامنة حسابك، طلباتك، وصورتك الشخصية ومنع تداخل الحسابات تماماً:
+                    سجل الدخول بحساب جوجل المعتمد لضمان مزامنة حسابك، شحناتك، وصورتك الشخصية ومنع تداخل الحسابات تماماً:
                 </p>
 
                 <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.05rem;">
@@ -194,7 +193,7 @@
                 </button>
             </div>
 
-            <!-- لوحة العميل وبروفايله الشخصي (تظهر بعد تسجيل الدخول) -->
+            <!-- لوحة العميل وبروفايله الشخصي -->
             <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
                 
                 <!-- قسم البروفايل وصورة الحساب -->
@@ -223,7 +222,7 @@
                     <i class="fa-solid fa-gift"></i> استبدل نقاط ولائك بهدايا مجانية 🎁
                 </a>
 
-                <h3 style="margin-top: 20px; color: #292524;">📦 سجل طلباتك ومؤشر التوصيل الحي:</h3>
+                <h3 style="margin-top: 20px; color: #292524;">📦 سجل شحناتك ومؤشر التوصيل الحي:</h3>
                 <div id="customer-orders-list" class="orders-list" style="margin-top: 10px;"></div>
             </div>
         </section>
@@ -236,7 +235,7 @@
                         <i class="fa-solid fa-shield-halved"></i>
                     </div>
                     <div>
-                        <h2 class="font-black text-slate-900 text-lg" style="font-size:1.2rem; color:#1c1917; font-weight:bold;">سياسة الخصوصية - كبابجي ومشويات العمدة 👑</h2>
+                        <h2 class="font-black text-slate-900 text-lg" style="font-size:1.2rem; color:#1c1917; font-weight:bold;">سياسة الخصوصية - منصة الأسطول اللوجستي 🚀</h2>
                         <span class="text-xs text-amber-700 font-bold" style="font-size:0.8rem; color:#b45309;">آخر تحديث: سبتمبر 2026</span>
                     </div>
                 </div>
@@ -244,11 +243,11 @@
                 <div class="space-y-4 text-slate-600" style="display:flex; flex-direction:column; gap:15px; color:#57534e;">
                     <div style="background:#fafaf9; padding:15px; border-radius:8px; border:1px solid #f5f5f4;">
                         <h3 class="text-base font-bold text-amber-900 mb-1" style="color:#78350f; font-weight:bold; margin-bottom:5px;">1. مقدمة ونبذة تعريفية</h3>
-                        <p>مرحباً بك في تطبيق <strong>"كبابجي ومشويات العمدة"</strong>.</p>
+                        <p>مرحباً بك في تطبيق ومنصة <strong>"الأسطول اللوجستي وإدارة الشحنات"</strong>.</p>
                     </div>
                     <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 text-amber-900 space-y-1" style="background:#fef3c7; padding:15px; border-radius:8px; color:#78716f; border:1px solid #fde68a;">
-                        <div>👑 <strong>اسم المنشأة:</strong> كبابجي ومشويات العمدة</div>
-                        <div>📍 <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</div>
+                        <div>👑 <strong>اسم المنصة:</strong> الأسطول اللوجستي وإدارة الطيارين</div>
+                        <div>📍 <strong>المركز الرئيسي:</strong> مصر</div>
                         <div>📞 <strong>رقم الهاتف:</strong> 01144730305</div>
                     </div>
                 </div>
@@ -279,7 +278,7 @@
         </div>
     </div>
 
-    <!-- تهيئة Firebase ومزامنة الحسابات ومنع تداخلها -->
+    <!-- تهيئة Firebase ومزامنة الحسابات -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -316,7 +315,7 @@
                         const data = userDoc.data();
                         userRole = data.role || 'customer';
                         if(data.photoURL) existingPhoto = data.photoURL;
-                    } else if (email === 'haretg@gmail.com' || email === 'admin@omda.com') {
+                    } else if (email === 'haretg@gmail.com' || email === 'admin@fleet.com') {
                         userRole = 'admin';
                     }
                 } catch(e) {}
@@ -332,8 +331,8 @@
                 };
                 
                 await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                localStorage.setItem('omda_current_cust', JSON.stringify(userObj));
-                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
+                localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
 
                 if (typeof routeUserByRole === 'function') {
                     routeUserByRole(userObj);
@@ -346,9 +345,8 @@
         window.customerLogout = async function() {
             try {
                 await signOut(auth);
-                localStorage.removeItem('omda_current_cust');
-                localStorage.removeItem('omda_logged_user');
-                localStorage.removeItem('omda_session_user');
+                localStorage.removeItem('fleet_logged_user');
+                localStorage.removeItem('fleet_session_user');
                 document.getElementById('customer-dashboard').classList.add('hidden');
                 document.getElementById('unified-login-box').style.display = 'block';
                 alert('تم تسجيل الخروج بنجاح.');
@@ -377,8 +375,8 @@
                 } catch(e) {}
 
                 window.currentCustomer = userObj;
-                localStorage.setItem('omda_session_user', JSON.stringify(userObj));
-                localStorage.setItem('omda_current_cust', JSON.stringify(userObj));
+                localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
+                localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
                 
                 const loginBox = document.getElementById('unified-login-box');
                 const dashBox = document.getElementById('customer-dashboard');
