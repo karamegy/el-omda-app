@@ -20,8 +20,9 @@ const defaultProducts = [
     { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' }
 ];
 
+// مسح أي استخدام للتخزين المحلي - الاعتماد الكلي على الذاكرة الحية والسحابة
 let menuProducts = [...defaultProducts];
-let cart = []; // في الذاكرة فقط أثناء الجلسة الحالية
+let cart = []; 
 let currentCustomer = null;
 let favorites = [];
 let allOrders = [];
@@ -36,7 +37,7 @@ let pointsDB = {};
 let activeDiscount = 0;
 let customerLat = null;
 let customerLng = null;
-let restaurantCoords = [30.005, 31.185]; // الإحداثيات الافتراضية للمطعم
+let restaurantCoords = [30.005, 31.185]; 
 
 let map;
 let streetLayer, topoLayer, satelliteLayer;
@@ -74,13 +75,16 @@ function findProductById(id) {
 }
 
 // ==========================================
-// نظام التوجيه الذكي ومزامنة الجلسة الحية
+// نظام التوجيه الذكي ومزامنة الجلسة السحابية
 // ==========================================
 function routeUserByRole(user) {
     currentCustomer = user;
     const role = (user.role || 'customer').toLowerCase();
     const email = (user.email || '').toLowerCase();
-    const phone = user.phone || '';
+    const phone = String(user.phone || '');
+    
+    // استخدام المعرف لتمريره في الرابط لجلب البيانات لحظيا من السحابة
+    const uid = phone || email; 
 
     if (!user.photoURL) {
         user.photoURL = 'icon1-512.png';
@@ -88,32 +92,100 @@ function routeUserByRole(user) {
 
     if (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant') {
         alert(`👑 أهلاً بك يا ${user.name || 'المدير'}! جاري تحويلك لوحة التحكم...`);
-        window.location.href = 'admin.html';
+        // توجيه مع تمرير الهوية في الرابط للتحقق السحابي
+        window.location.href = `admin.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
     if (role === 'driver') {
         alert(`🏍️ أهلاً بك يا طيار العمدة (${user.name})! جاري فتح خريطة التوصيل...`);
-        window.location.href = 'Map.html';
+        window.location.href = `Map.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
     if (role === 'worker' || role === 'staff') {
         alert(`👷 عذراً يا ${user.name || 'موظفنا العزيز'}، حسابك بصلاحية "موظف" وليس له صلاحية دخول لوحة التحكم الرئيسية.`);
-        window.location.href = 'index.html';
+        window.location.href = `index.html?uid=${encodeURIComponent(uid)}`;
         return;
     }
 
     alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
     if (window.location.pathname.includes('admin.html')) {
-        window.location.href = 'index.html';
+        window.location.href = `index.html?uid=${encodeURIComponent(uid)}`;
     } else {
+        window.history.pushState({}, '', `?uid=${encodeURIComponent(uid)}`); // تحديث الرابط دون ريفريش
         if (typeof switchTab === 'function') switchTab('customer');
         if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
     }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+// دالة جلب بيانات المستخدم لحظياً من فايربيز (بدون تخزين محلي)
+async function verifyUserFromCloudLive() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const uid = urlParams.get('uid');
+
+    if (!uid) return null;
+
+    // الماستر أدمن
+    if (uid === 'haretg@gmail.com' || uid === 'admin@omda.com' || uid === '01144730305') {
+        return { name: 'المدير العام (كرم حمدي)', email: 'haretg@gmail.com', phone: '01144730305', role: 'admin', photoURL: 'icon1-512.png' };
+    }
+
+    // انتظار مبدئي للسحابة (الحد الأقصى 2.5 ثانية)
+    let attempts = 0;
+    while (!window.db && attempts < 25) {
+        await new Promise(r => setTimeout(r, 100));
+        attempts++;
+    }
+
+    if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
+        try {
+            const docRef = window.firebaseModules.doc(window.db, "users", getStandardUserDocId(uid));
+            const docSnap = await window.firebaseModules.getDoc(docRef);
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+        } catch (e) {
+            console.error("Cloud fetch error:", e);
+        }
+    }
+
+    // بحث احتياطي في البيانات المحملة بالذاكرة
+    let foundUser = registeredUsers.find(u => u.phone === uid || u.email === uid);
+    if (!foundUser) foundUser = staffList.find(s => s.phone === uid || s.email === uid);
+    
+    return foundUser || null;
+}
+
+// فحص أمان صفحة الإدارة لحظة التحميل بناءً على السحابة
+document.addEventListener('DOMContentLoaded', async () => {
+    
+    // جلب بيانات الجلسة الحية من قاعدة البيانات
+    const liveUser = await verifyUserFromCloudLive();
+    if (liveUser) {
+        currentCustomer = liveUser;
+    }
+
+    if (window.location.pathname.includes('admin.html')) {
+        if (!currentCustomer) {
+            alert("🚫 ممنوع الدخول! لم يتم العثور على بيانات جلسة صالحة سحابياً. جاري التحويل...");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const email = (currentCustomer?.email || '').toLowerCase();
+        const role = (currentCustomer?.role || '').toLowerCase();
+        const phone = String(currentCustomer?.phone || '');
+        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || phone === '01144730305' || role === 'admin' || role === 'accountant');
+
+        if (!isAdmin) {
+            alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة للإدارة العليا والمحاسبين فقط.");
+            currentCustomer = null;
+            window.location.href = 'index.html';
+            return;
+        }
+    }
+
     const avatarEl = document.getElementById('nav-user-avatar');
     const nameEl = document.getElementById('nav-username-display');
 
@@ -122,6 +194,79 @@ document.addEventListener('DOMContentLoaded', () => {
         if (avatarEl && currentCustomer.photoURL) avatarEl.src = currentCustomer.photoURL;
     } else {
         if (nameEl) nameEl.innerText = 'زائر';
+    }
+
+    if(typeof enforceAdminSecurity === 'function') enforceAdminSecurity();
+    if(typeof initHeroSlider === 'function') initHeroSlider();
+    if(typeof renderMenu === 'function') renderMenu();
+    if(typeof updateCartUI === 'function') updateCartUI();
+    if(typeof loadAdminDashboard === 'function' && window.location.pathname.includes('admin.html')) {
+        loadAdminDashboard();
+    }
+
+    if (document.getElementById('leafletMap')) {
+        map = L.map('leafletMap', { 
+            zoomControl: true,
+            rotate: true,
+            touchRotate: true,
+            rotateControl: false,
+            bearing: 0
+        }).setView(restaurantCoords, 14);
+
+        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
+        topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenTopoMap' });
+        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' });
+
+        streetLayer.addTo(map);
+
+        markersLayer = L.layerGroup().addTo(map);
+        polylinesLayer = L.layerGroup().addTo(map);
+        driversLayer = L.layerGroup().addTo(map);
+        branchesLayer = L.layerGroup().addTo(map);
+
+        updateRestaurantMarkerOnMap();
+
+        map.on('click', function(e) {
+            const lat = e.latlng.lat.toFixed(6);
+            const lng = e.latlng.lng.toFixed(6);
+
+            if (pickingBranchMode && checkAdminPermission()) {
+                document.getElementById('branch-lat').value = lat;
+                document.getElementById('branch-lng').value = lng;
+                pickingBranchMode = false;
+                map.getContainer().style.cursor = '';
+                alert(`✓ تم التقاط إحداثيات المطعم بدقة: (${lat}, ${lng})`);
+                switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
+                return;
+            }
+
+            if (pickingDriverMode && checkAdminPermission()) {
+                document.getElementById('driver-lat').value = lat;
+                document.getElementById('driver-lng').value = lng;
+                pickingDriverMode = false;
+                map.getContainer().style.cursor = '';
+                alert(`✓ تم التقاط إحداثيات موقع السائق بدقة: (${lat}, ${lng})`);
+                switchSidebarTab('drivers', document.querySelectorAll('.sidebar-tab')[1]);
+                return;
+            }
+
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`
+                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
+                        <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
+                        ${checkAdminPermission() ? `
+                            <button onclick="setRestaurantCoordsFromMap(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold; display:block; width:100%;">👑 تعيين كمطعم العمدة الرئيسي</button>
+                            <button onclick="setDriverCoordsFromMap(${lat},${lng})" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:4px; cursor:pointer; font-weight:bold; display:block; width:100%;">🏍️ استخدام كموقع للسائق</button>
+                        ` : ''}
+                    </div>
+                `)
+                .openOn(map);
+        });
+
+        loadLiveTrackingMap();
+        loadBranchesOnMap();
+        setInterval(loadLiveTrackingMap, 8000);
     }
 });
 
@@ -226,7 +371,7 @@ async function loginByPhoneQuick() {
     const phoneBox = document.getElementById('cust-phone-login-box');
     if(phoneBox) phoneBox.style.display = 'none';
 
-    loadCustomerDashboard();
+    routeUserByRole(userObj);
 }
 
 let currentSliderIndex = 0;
@@ -494,7 +639,7 @@ async function answerIncomingCall(orderId) {
 }
 
 function checkAdminPermission() {
-    if (currentCustomer && (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.role === 'admin')) {
+    if (currentCustomer && (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.role === 'admin' || currentCustomer.phone === '01144730305')) {
         return true;
     }
     return false;
@@ -529,92 +674,6 @@ function enforceAdminSecurity() {
         if(autoBtn) autoBtn.style.display = 'none';
     }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.location.pathname.includes('admin.html')) {
-        const email = (currentCustomer?.email || '').toLowerCase();
-        const role = (currentCustomer?.role || '').toLowerCase();
-        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || currentCustomer?.phone === '01144730305' || role === 'admin' || role === 'accountant');
-
-        if (!isAdmin) {
-            alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة للإدارة العليا والمحاسبين فقط.");
-            currentCustomer = null;
-            window.location.href = 'index.html';
-            return;
-        }
-    }
-
-    enforceAdminSecurity();
-    initHeroSlider();
-
-    if(typeof renderMenu === 'function') renderMenu();
-    if(typeof updateCartUI === 'function') updateCartUI();
-
-    if (document.getElementById('leafletMap')) {
-        map = L.map('leafletMap', { 
-            zoomControl: true,
-            rotate: true,
-            touchRotate: true,
-            rotateControl: false,
-            bearing: 0
-        }).setView(restaurantCoords, 14);
-
-        streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' });
-        topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '&copy; OpenTopoMap' });
-        satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' });
-
-        streetLayer.addTo(map);
-
-        markersLayer = L.layerGroup().addTo(map);
-        polylinesLayer = L.layerGroup().addTo(map);
-        driversLayer = L.layerGroup().addTo(map);
-        branchesLayer = L.layerGroup().addTo(map);
-
-        updateRestaurantMarkerOnMap();
-
-        map.on('click', function(e) {
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
-
-            if (pickingBranchMode && checkAdminPermission()) {
-                document.getElementById('branch-lat').value = lat;
-                document.getElementById('branch-lng').value = lng;
-                pickingBranchMode = false;
-                map.getContainer().style.cursor = '';
-                alert(`✓ تم التقاط إحداثيات المطعم بدقة: (${lat}, ${lng})`);
-                switchSidebarTab('branches', document.querySelectorAll('.sidebar-tab')[2]);
-                return;
-            }
-
-            if (pickingDriverMode && checkAdminPermission()) {
-                document.getElementById('driver-lat').value = lat;
-                document.getElementById('driver-lng').value = lng;
-                pickingDriverMode = false;
-                map.getContainer().style.cursor = '';
-                alert(`✓ تم التقاط إحداثيات موقع السائق بدقة: (${lat}, ${lng})`);
-                switchSidebarTab('drivers', document.querySelectorAll('.sidebar-tab')[1]);
-                return;
-            }
-
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(`
-                    <div style="font-family:'Cairo',sans-serif; text-align:right; font-size:12px; padding:4px;">
-                        <b>📍 الإحداثيات المحددة:</b><br><span class="mono-font text-amber-800">${lat}, ${lng}</span><br>
-                        ${checkAdminPermission() ? `
-                            <button onclick="setRestaurantCoordsFromMap(${lat},${lng})" style="background:#b45309; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:6px; cursor:pointer; font-weight:bold; display:block; width:100%;">👑 تعيين كمطعم العمدة الرئيسي</button>
-                            <button onclick="setDriverCoordsFromMap(${lat},${lng})" style="background:#16a34a; color:white; border:none; padding:5px 10px; border-radius:6px; margin-top:4px; cursor:pointer; font-weight:bold; display:block; width:100%;">🏍️ استخدام كموقع للسائق</button>
-                        ` : ''}
-                    </div>
-                `)
-                .openOn(map);
-        });
-
-        loadLiveTrackingMap();
-        loadBranchesOnMap();
-        setInterval(loadLiveTrackingMap, 8000);
-    }
-});
 
 function updateRestaurantMarkerOnMap() {
     if(!map) return;
@@ -1274,9 +1333,7 @@ async function submitOrder() {
     if(gpsStatusEl) gpsStatusEl.innerText = '';
     updateCartUI();
     
-    currentCustomer = orderUserObj;
-    switchTab('customer');
-    loadCustomerDashboard();
+    routeUserByRole(orderUserObj);
 }
 
 function sendWhatsAppOrder() {
@@ -2083,7 +2140,7 @@ async function adminDeleteReservation(resId) {
 
 function adminLogout() {
     currentCustomer = null;
-    window.location.href = 'admin.html';
+    window.location.href = 'index.html'; 
 }
 
 function switchLayer(type) {
