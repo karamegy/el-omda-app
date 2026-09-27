@@ -1,5 +1,5 @@
 // ==========================================
-// بيانات المنيو الأساسية مع صور تفصيلية للمشويات
+// بيانات المنيو الأساسية (افتراضية في الذاكرة الحية)
 // ==========================================
 const defaultProducts = [
     { id: 1, name: "صينية العمدة الكبرى", category: "trays", price: 2750, desc: "فرخة شيش + نص طرب + كيلو كفتة + نص كباب + نص سجق + 4 حمام + أرز + نص ممبار + 2 لتر بيبيسي", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' },
@@ -20,15 +20,23 @@ const defaultProducts = [
     { id: 16, name: "طبق ممبار فاخر", category: "appetizers", price: 80, desc: "ممبار محشي ومحمر باللون الذهبي المقرمش", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500", mediaType: 'image' }
 ];
 
-let menuProducts = JSON.parse(localStorage.getItem('omda_custom_products') || JSON.stringify(defaultProducts));
-let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
-let currentCustomer = JSON.parse(localStorage.getItem('omda_current_cust') || 'null');
-let favorites = JSON.parse(localStorage.getItem('omda_favorites') || '[]');
-let activeDiscount = 0;
+let menuProducts = [...defaultProducts];
+let cart = []; // في الذاكرة فقط أثناء الجلسة الحالية
+let currentCustomer = null;
+let favorites = [];
+let allOrders = [];
+let registeredUsers = [];
+let driversList = [];
+let staffList = [];
+let expensesList = [];
+let reservationsList = [];
+let reviewsList = {};
+let pointsDB = {};
 
+let activeDiscount = 0;
 let customerLat = null;
 let customerLng = null;
-let restaurantCoords = JSON.parse(localStorage.getItem('omda_restaurant_coords') || '[30.005, 31.185]');
+let restaurantCoords = [30.005, 31.185]; // الإحداثيات الافتراضية للمطعم
 
 let map;
 let streetLayer, topoLayer, satelliteLayer;
@@ -46,7 +54,7 @@ let ringingInterval = null;
 const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // ==========================================
-// دالة موحدة لتوليد معرف المستند (Doc ID) بدقة مطابقة لـ Firestore
+// دالة موحدة لتوليد معرف المستند (Doc ID) بدقة لـ Firestore
 // ==========================================
 function getStandardUserDocId(userOrKey) {
     if (typeof userOrKey === 'object' && userOrKey !== null) {
@@ -60,21 +68,16 @@ function getStandardUserDocId(userOrKey) {
     return str.replace(/[^a-zA-Z0-9_]/g, '_');
 }
 
-// ==========================================
-// دالة موحدة وبحتة آمنة للـ ID
-// ==========================================
 function findProductById(id) {
     if (!menuProducts || menuProducts.length === 0) return null;
     return menuProducts.find(p => String(p.id) === String(id));
 }
 
 // ==========================================
-// نظام التوجيه الذكي الموحد ومزامنة البروفايل
+// نظام التوجيه الذكي ومزامنة الجلسة الحية
 // ==========================================
 function routeUserByRole(user) {
-    localStorage.setItem('omda_session_user', JSON.stringify(user));
-    localStorage.setItem('omda_logged_user', JSON.stringify(user));
-
+    currentCustomer = user;
     const role = (user.role || 'customer').toLowerCase();
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
@@ -101,9 +104,7 @@ function routeUserByRole(user) {
         return;
     }
 
-    localStorage.setItem('omda_current_cust', JSON.stringify(user));
     alert(`👋 أهلاً بك يا ${user.name || 'عميلنا العزيز'} في مشويات العمدة!`);
-    
     if (window.location.pathname.includes('admin.html')) {
         window.location.href = 'index.html';
     } else {
@@ -113,14 +114,12 @@ function routeUserByRole(user) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const sessionUser = JSON.parse(localStorage.getItem('omda_logged_user') || localStorage.getItem('omda_session_user') || localStorage.getItem('omda_current_cust') || '{}');
-    
     const avatarEl = document.getElementById('nav-user-avatar');
     const nameEl = document.getElementById('nav-username-display');
 
-    if (sessionUser && (sessionUser.name || sessionUser.email)) {
-        if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
-        if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+    if (currentCustomer && (currentCustomer.name || currentCustomer.email)) {
+        if (nameEl) nameEl.innerText = currentCustomer.name || currentCustomer.email;
+        if (avatarEl && currentCustomer.photoURL) avatarEl.src = currentCustomer.photoURL;
     } else {
         if (nameEl) nameEl.innerText = 'زائر';
     }
@@ -135,9 +134,7 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    let masterPass = localStorage.getItem('omda_master_password') || '1234';
-
-    if ((identifier === 'haretg@gmail.com' || identifier === 'admin@omda.com' || identifier === '01144730305' || identifier === 'مدير') && password === masterPass) {
+    if ((identifier === 'haretg@gmail.com' || identifier === 'admin@omda.com' || identifier === '01144730305' || identifier === 'مدير') && password === '1234') {
         const masterUser = { 
             name: 'المدير العام (كرم حمدي)', 
             email: 'haretg@gmail.com', 
@@ -149,17 +146,13 @@ async function unifiedLoginCustom() {
         return;
     }
 
-    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     let foundStaff = staffList.find(s => (s.email.toLowerCase() === identifier || s.phone === identifier) && s.password === password);
-
     if (foundStaff) {
         routeUserByRole(foundStaff);
         return;
     }
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let foundUser = regUsers.find(u => (u.email.toLowerCase() === identifier || u.phone === identifier));
-
+    let foundUser = registeredUsers.find(u => (u.email.toLowerCase() === identifier || u.phone === identifier));
     if (foundUser) {
         routeUserByRole(foundUser);
         return;
@@ -185,9 +178,9 @@ async function loginByPhoneQuick() {
         return;
     }
 
-    let userObj = null;
+    let userObj = registeredUsers.find(u => u.phone === phone);
 
-    if (window.db && window.firebaseModules && window.firebaseModules.getDoc) {
+    if (!userObj && window.db && window.firebaseModules && window.firebaseModules.getDoc) {
         try {
             const docRef = window.firebaseModules.doc(window.db, "users", String(phone));
             const docSnap = await window.firebaseModules.getDoc(docRef);
@@ -200,7 +193,6 @@ async function loginByPhoneQuick() {
     }
 
     if (!userObj) {
-        let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
         let foundOrder = allOrders.find(o => o.phone === phone);
         let custName = foundOrder ? foundOrder.name : 'عميل العمدة الكريم';
 
@@ -216,9 +208,6 @@ async function loginByPhoneQuick() {
     }
 
     currentCustomer = userObj;
-    localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
-    localStorage.setItem('omda_user_phone', phone);
-    localStorage.setItem('omda_logged_user', JSON.stringify(userObj));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -232,19 +221,12 @@ async function loginByPhoneQuick() {
         }
     }
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    if(!regUsers.some(u => u.phone === phone)) {
-        regUsers.push(userObj);
-        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-    }
-
     alert(`أهلاً بك يا ${userObj.name}! تم استرجاع ملفك وطلباتك ونقاط ولائك بنجاح 👑`);
     
     const phoneBox = document.getElementById('cust-phone-login-box');
     if(phoneBox) phoneBox.style.display = 'none';
 
     loadCustomerDashboard();
-    location.reload();
 }
 
 let currentSliderIndex = 0;
@@ -512,28 +494,10 @@ async function answerIncomingCall(orderId) {
 }
 
 function checkAdminPermission() {
-    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
-    if (loggedUser.email === 'haretg@gmail.com' || loggedUser.role === 'admin') {
+    if (currentCustomer && (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.role === 'admin')) {
         return true;
     }
-
-    const possibleKeys = ['userEmail', 'currentUser', 'email', 'loggedUser', 'user', 'username', 'adminEmail', 'auth_user'];
-    let userEmail = '';
-    
-    for (let key of possibleKeys) {
-        const val = localStorage.getItem(key);
-        if (val) {
-            userEmail = val.trim().toLowerCase();
-            break;
-        }
-    }
-
-    if (userEmail === 'haretg@gmail.com' || userEmail === 'admin@omda.com') return true;
-
-    return localStorage.getItem('isAdmin') === 'true' || 
-           localStorage.getItem('role') === 'admin' || 
-           localStorage.getItem('userRole') === 'admin' ||
-           localStorage.getItem('isAdminLoggedIn') === 'true';
+    return false;
 }
 
 function enforceAdminSecurity() {
@@ -568,21 +532,19 @@ function enforceAdminSecurity() {
 
 document.addEventListener('DOMContentLoaded', () => {
     if (window.location.pathname.includes('admin.html')) {
-        let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
-        const email = (loggedUser.email || '').toLowerCase();
-        const role = (loggedUser.role || '').toLowerCase();
-        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || loggedUser.phone === '01144730305' || role === 'admin' || role === 'accountant');
+        const email = (currentCustomer?.email || '').toLowerCase();
+        const role = (currentCustomer?.role || '').toLowerCase();
+        const isAdmin = (email === 'haretg@gmail.com' || email === 'admin@omda.com' || currentCustomer?.phone === '01144730305' || role === 'admin' || role === 'accountant');
 
         if (!isAdmin) {
             alert("🚫 ممنوع الدخول! هذه الصفحة مخصصة للإدارة العليا والمحاسبين فقط.");
-            localStorage.removeItem('omda_logged_user');
+            currentCustomer = null;
             window.location.href = 'index.html';
             return;
         }
     }
 
     enforceAdminSecurity();
-    loadSavedTicker();
     initHeroSlider();
 
     if(typeof renderMenu === 'function') renderMenu();
@@ -648,14 +610,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 .openOn(map);
         });
 
-        map.on('rotate', function() {
-            const bearing = map.getBearing ? map.getBearing() : 0;
-            const compass = document.getElementById('compassNeedle');
-            if (compass) {
-                compass.style.transform = `rotate(${-bearing}deg)`;
-            }
-        });
-
         loadLiveTrackingMap();
         loadBranchesOnMap();
         setInterval(loadLiveTrackingMap, 8000);
@@ -690,7 +644,6 @@ function saveMainRestaurantLocation() {
     }
 
     restaurantCoords = [lat, lng];
-    localStorage.setItem('omda_restaurant_coords', JSON.stringify(restaurantCoords));
     updateRestaurantMarkerOnMap();
     map.setView(restaurantCoords, 15);
     alert(`👑 تم حفظ وتحديث موقع "${name || 'مطعم العمدة'}" الرئيسي بنجاح على الخريطة!`);
@@ -786,16 +739,6 @@ async function addNewDriverWithLocation() {
         }
     }
 
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers.push(newDriverObj);
-    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
-
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    if(!regUsers.some(u => u.phone === phone)) {
-        regUsers.push({ name, phone, role: 'driver', provider: 'Admin Added', photoURL: 'icon1-512.png' });
-        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-    }
-    
     alert(`تم إضافة السائق (${name}) وتحديد مكانه على الخريطة بنجاح 🏍️`);
     
     nameEl.value = '';
@@ -806,29 +749,6 @@ async function addNewDriverWithLocation() {
     loadDriversAdminList();
     loadDriversOnMap();
     loadLiveTrackingMap();
-}
-
-function loadSavedTicker() {
-    const savedTicker = localStorage.getItem('omda_ticker_text');
-    if(savedTicker) {
-        const tickerEl = document.getElementById('main-ticker-text');
-        if(tickerEl) tickerEl.innerText = savedTicker;
-    }
-}
-
-function updateTickerText() {
-    const inputEl = document.getElementById('admin-ticker-input');
-    if(!inputEl) return;
-    const newText = inputEl.value.trim();
-    if(!newText) {
-        alert('من فضلك اكتب نص الإعلان أولاً!');
-        return;
-    }
-    localStorage.setItem('omda_ticker_text', newText);
-    const tickerEl = document.getElementById('main-ticker-text');
-    if(tickerEl) tickerEl.innerText = newText;
-    alert('تم تحديث شريط الإعلانات المتحرك بنجاح يا أسطى كرم! 🚀');
-    inputEl.value = '';
 }
 
 function switchTab(tabId) {
@@ -1015,10 +935,16 @@ function addNewProductWithMedia() {
     }
 }
 
-function saveAndAddNewProduct(prod) {
+async function saveAndAddNewProduct(prod) {
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "products", String(prod.id)), prod);
+        } catch (e) {
+            console.error("Cloud product add error:", e);
+        }
+    }
     menuProducts.push(prod);
-    localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
-    alert(`تم إضافة المنتج (${prod.name}) بنجاح إلى المنيو مع الوسائط! 👑`);
+    alert(`تم إضافة المنتج (${prod.name}) بنجاح إلى المنيو سحابياً! 👑`);
     
     document.getElementById('new-prod-name').value = '';
     document.getElementById('new-prod-price').value = '';
@@ -1033,7 +959,6 @@ async function adminDeleteProduct(id) {
     if(!confirm('هل أنت متأكد من حذف هذا الصنف سحابياً؟')) return;
     
     menuProducts = menuProducts.filter(p => String(p.id) !== String(id));
-    localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -1046,7 +971,7 @@ async function adminDeleteProduct(id) {
     if(typeof loadAdminDashboard === 'function') loadAdminDashboard();
     if(typeof initHeroSlider === 'function') initHeroSlider();
     if(typeof renderMenu === 'function') renderMenu();
-    alert('تم حذف الصنف بنجاح من المنيو.');
+    alert('تم حذف الصنف بنجاح من المنيو والسحابة.');
 }
 
 function openEditProductModal(id) {
@@ -1077,7 +1002,7 @@ function closeEditProductModal() {
     }
 }
 
-function saveEditedProduct() {
+async function saveEditedProduct() {
     const idInput = document.getElementById('edit-prod-id');
     const nameInput = document.getElementById('edit-prod-name');
     const catSelect = document.getElementById('edit-prod-cat');
@@ -1101,41 +1026,37 @@ function saveEditedProduct() {
     const prodIndex = menuProducts.findIndex(p => String(p.id) === String(id));
     if (prodIndex === -1) return;
 
+    let updatedProd = { ...menuProducts[prodIndex], name, category, price, desc };
+
     if (fileInput && fileInput.files && fileInput.files[0]) {
         const file = fileInput.files[0];
         const reader = new FileReader();
-        reader.onload = function(e) {
-            menuProducts[prodIndex] = {
-                ...menuProducts[prodIndex],
-                name,
-                category,
-                price,
-                desc,
-                media: e.target.result,
-                mediaType: file.type.startsWith('video') ? 'video' : 'image'
-            };
-            finalizeProductEdit();
+        reader.onload = async function(e) {
+            updatedProd.media = e.target.result;
+            updatedProd.mediaType = file.type.startsWith('video') ? 'video' : 'image';
+            menuProducts[prodIndex] = updatedProd;
+            await finalizeProductEditCloud(updatedProd);
         };
         reader.readAsDataURL(file);
     } else {
-        menuProducts[prodIndex] = {
-            ...menuProducts[prodIndex],
-            name,
-            category,
-            price,
-            desc
-        };
-        finalizeProductEdit();
+        menuProducts[prodIndex] = updatedProd;
+        await finalizeProductEditCloud(updatedProd);
     }
 }
 
-function finalizeProductEdit() {
-    localStorage.setItem('omda_custom_products', JSON.stringify(menuProducts));
+async function finalizeProductEditCloud(prod) {
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "products", String(prod.id)), prod, { merge: true });
+        } catch(e) {
+            console.error("Cloud edit product error:", e);
+        }
+    }
     closeEditProductModal();
     loadAdminDashboard();
     initHeroSlider();
     if (typeof renderMenu === 'function') renderMenu();
-    alert('✓ تم تحديث وتعديل بيانات الوجبة بنجاح يا أسطى كرم! 👑');
+    alert('✓ تم تحديث وتعديل بيانات الوجبة بنجاح سحابياً! 👑');
 }
 
 function toggleFavorite(productId) {
@@ -1149,7 +1070,6 @@ function toggleFavorite(productId) {
         favorites.push(productId);
         alert('تم إضافة المنتج إلى المفضلة ❤️');
     }
-    localStorage.setItem('omda_favorites', JSON.stringify(favorites));
     if (typeof renderMenu === 'function') renderMenu();
 }
 
@@ -1204,8 +1124,6 @@ function addToCart(productId) {
 }
 
 function updateCartUI() {
-    localStorage.setItem('omda_cart', JSON.stringify(cart));
-
     const countEl = document.getElementById('cart-count');
     if(countEl) countEl.innerText = cart.reduce((sum, item) => sum + item.qty, 0);
     
@@ -1321,18 +1239,9 @@ async function submitOrder() {
         }
     }
 
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    if (!allOrders.some(o => o.id === newOrder.id)) {
-        allOrders.unshift(newOrder);
-        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
-    }
-
     let earnedPoints = Math.floor(total / 10);
-    let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
-    localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     const orderUserObj = {
         name,
         email: phone + '@omda.com',
@@ -1342,11 +1251,6 @@ async function submitOrder() {
         photoURL: 'icon1-512.png',
         date: new Date().toLocaleString('ar-EG')
     };
-
-    if(!regUsers.some(u => u.phone === phone || u.email === phone + '@omda.com')) {
-        regUsers.push(orderUserObj);
-        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-    }
 
     if (window.db && window.firebaseModules) {
         try {
@@ -1363,7 +1267,6 @@ async function submitOrder() {
     alert(`تم إرسال طلبك بنجاح يا أسطى ${name}! رقم طلبك: ${newOrder.id}\nكسبت ${earnedPoints} نقطة ولاء جديدة في حسابك! ⭐`);
     
     cart = [];
-    localStorage.removeItem('omda_cart');
     activeDiscount = 0;
     customerLat = null;
     customerLng = null;
@@ -1371,8 +1274,7 @@ async function submitOrder() {
     if(gpsStatusEl) gpsStatusEl.innerText = '';
     updateCartUI();
     
-    currentCustomer = { name, phone, role: 'customer', photoURL: 'icon1-512.png' };
-    localStorage.setItem('omda_current_cust', JSON.stringify(currentCustomer));
+    currentCustomer = orderUserObj;
     switchTab('customer');
     loadCustomerDashboard();
 }
@@ -1412,7 +1314,7 @@ function sendWhatsAppOrder() {
     window.open(waUrl, '_blank');
 }
 
-function submitReservation() {
+async function submitReservation() {
     const nameEl = document.getElementById('res-name');
     const phoneEl = document.getElementById('res-phone');
     const dateEl = document.getElementById('res-date');
@@ -1445,9 +1347,7 @@ function submitReservation() {
         createdAt: new Date().toLocaleString('ar-EG')
     };
 
-    let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
-    allRes.unshift(newRes);
-    localStorage.setItem('omda_reservations', JSON.stringify(allRes));
+    reservationsList.unshift(newRes);
 
     if (window.db && window.firebaseModules) {
         window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "reservations", String(newRes.id)), newRes).catch(e => console.error(e));
@@ -1464,7 +1364,7 @@ function submitReservation() {
 }
 
 // ==========================================
-// لوحة العميل
+// لوحة العميل سحابياً
 // ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('cust-login-box');
@@ -1485,13 +1385,9 @@ function loadCustomerDashboard() {
     if(displayName) displayName.innerText = currentCustomer.name || 'عميل العمدة';
     if(displayPhone) displayPhone.innerText = currentCustomer.phone || '';
 
-    let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
     let userPoints = currentCustomer.phone && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 0;
     const pointsEl = document.getElementById('cust-points');
     if(pointsEl) pointsEl.innerText = userPoints;
-
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
 
     const myOrders = allOrders.filter(o => 
         (currentCustomer.phone && o.phone === currentCustomer.phone) || 
@@ -1502,15 +1398,13 @@ function loadCustomerDashboard() {
     if(!list) return;
     list.innerHTML = '';
 
-    let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
-
     if(myOrders.length === 0) {
         list.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px;">لا توجد طلبات سابقة مسجلة برقم هاتفك.</p>';
         return;
     }
 
     myOrders.forEach(order => {
-        let orderReview = reviewsDB[order.id];
+        let orderReview = reviewsList[order.id];
         let reviewHtml = '';
         if(order.status === 'done') {
             if(orderReview) {
@@ -1563,10 +1457,7 @@ function submitReview(orderId) {
     const rating = ratingEl.value;
     const comment = reviewEl.value.trim() || 'بدون تعليق';
 
-    let reviewsDB = JSON.parse(localStorage.getItem('omda_reviews') || '{}');
-    reviewsDB[orderId] = { rating, comment };
-    localStorage.setItem('omda_reviews', JSON.stringify(reviewsDB));
-
+    reviewsList[orderId] = { rating, comment };
     alert('شكراً لتقييمك! رأيك يهمني ويسعدنا دائماً خدمة أهالينا. ❤️');
     loadCustomerDashboard();
 }
@@ -1591,12 +1482,10 @@ function showReceipt(order) {
 }
 
 async function assignDriverToOrder(orderId, driverName) {
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let order = allOrders.find(o => String(o.id) === String(orderId));
     if(order) {
         order.assignedDriver = driverName;
         order.status = 'delivery';
-        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
 
         if (window.db && window.firebaseModules) {
             try {
@@ -1616,37 +1505,19 @@ async function assignDriverToOrder(orderId, driverName) {
 }
 
 // ==========================================
-// وظائف إدارة الحسابات والسائقين سحابياً (التحكم الشامل المتكامل الآمن)
+// إدارة الحسابات والسائقين سحابياً (Firebase Firestore)
 // ==========================================
-async function loadGoogleAccountsList() {
+function loadGoogleAccountsList() {
     const container = document.getElementById('admin-google-accounts-list');
     if(!container) return;
-    container.innerHTML = '<p style="text-align:center; color:#78716c; padding:10px;">⏳ جاري تحميل الحسابات...</p>';
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-
-    if(window.db && window.firebaseModules && window.firebaseModules.getDocs) {
-        try {
-            const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
-            regUsers = [];
-            querySnapshot.forEach((docSnap) => {
-                regUsers.push(docSnap.data());
-            });
-            if(regUsers.length > 0) {
-                localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-            }
-        } catch (e) {
-            console.error("Error fetching cloud users:", e);
-        }
-    }
-
-    if(regUsers.length === 0) {
-        container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات أو عملاء مسجلون حالياً.</p>';
+    if(registeredUsers.length === 0) {
+        container.innerHTML = '<p style="color:#78716c; font-size:0.9rem; text-align:center; padding:15px;">لا توجد حسابات أو عملاء مسجلون حالياً بالسحابة.</p>';
         return;
     }
 
     container.innerHTML = '';
-    regUsers.forEach((usr, index) => {
+    registeredUsers.forEach((usr, index) => {
         let currentRole = usr.role || 'customer';
         let docKey = getStandardUserDocId(usr);
         container.innerHTML += `
@@ -1678,8 +1549,7 @@ async function loadGoogleAccountsList() {
 }
 
 async function updateUserRole(docKey, newRole) {
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
+    let targetUser = registeredUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
     
     if(!targetUser) {
         alert("⚠️ عذراً، لم يتم العثور على المستخدم!");
@@ -1687,8 +1557,6 @@ async function updateUserRole(docKey, newRole) {
     }
 
     targetUser.role = newRole;
-    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-
     const cloudDocId = getStandardUserDocId(targetUser);
 
     if (window.db && window.firebaseModules) {
@@ -1708,30 +1576,22 @@ async function updateUserRole(docKey, newRole) {
     let email = targetUser.email;
 
     if(newRole === 'driver') {
-        let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-        if(!drivers.some(d => String(d.phone) === String(phone) || d.name === name)) {
+        if(!driversList.some(d => String(d.phone) === String(phone) || d.name === name)) {
             let newDriver = { id: Date.now(), name, phone, lat: restaurantCoords[0] + 0.002, lng: restaurantCoords[1] + 0.002, role: 'driver' };
-            drivers.push(newDriver);
-            localStorage.setItem('omda_drivers', JSON.stringify(drivers));
             if (window.db && window.firebaseModules) {
                 await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", String(newDriver.id)), newDriver);
             }
         }
     } else if(newRole === 'admin' || newRole === 'accountant' || newRole === 'worker') {
-        let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
         if(!staffList.some(s => s.email === email)) {
             staffList.push({ id: Date.now(), name, email, phone, password: '123', role: newRole });
-            localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
         } else {
             let staffMember = staffList.find(s => s.email === email);
-            if(staffMember) {
-                staffMember.role = newRole;
-                localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
-            }
+            if(staffMember) staffMember.role = newRole;
         }
     }
 
-    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح سحابياً ومحلياً! 👑`);
+    alert(`✓ تم تحديث وتعيين دور المستخدم (${name}) إلى (${newRole}) بنجاح سحابياً! 👑`);
     loadGoogleAccountsList();
     if(typeof loadStaffList === 'function') loadStaffList();
     if(typeof loadDriversAdminList === 'function') loadDriversAdminList();
@@ -1744,14 +1604,9 @@ async function deleteGoogleAccount(docKey) {
         alert("🚫 غير مسموح لك بحذف الحسابات!");
         return;
     }
-    if(!confirm('هل أنت متأكد من حذف هذا الحساب نهائياً من النظام والسحابة؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذا الحساب نهائياً من السحابة؟')) return;
     
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let targetUser = regUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
-    
-    regUsers = regUsers.filter(u => String(u.phone) !== String(docKey) && String(u.email) !== String(docKey) && getStandardUserDocId(u) !== String(docKey));
-    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-
+    let targetUser = registeredUsers.find(u => String(u.phone) === String(docKey) || String(u.email) === String(docKey) || getStandardUserDocId(u) === String(docKey));
     const cloudDocId = targetUser ? getStandardUserDocId(targetUser) : getStandardUserDocId(docKey);
 
     if (window.db && window.firebaseModules) {
@@ -1762,18 +1617,16 @@ async function deleteGoogleAccount(docKey) {
         }
     }
 
-    loadGoogleAccountsList();
-    alert('✓ تم حذف الحساب بنجاح.');
+    alert('✓ تم حذف الحساب بنجاح من السحابة.');
 }
 
 function openEditUserModal(indexOrKey) {
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
     let targetUser = null;
 
     if (typeof indexOrKey === 'number' || !isNaN(Number(indexOrKey))) {
-        targetUser = regUsers[Number(indexOrKey)];
+        targetUser = registeredUsers[Number(indexOrKey)];
     } else {
-        targetUser = regUsers.find(u => String(u.phone) === String(indexOrKey) || String(u.email) === String(indexOrKey) || getStandardUserDocId(u) === String(indexOrKey));
+        targetUser = registeredUsers.find(u => String(u.phone) === String(indexOrKey) || String(u.email) === String(indexOrKey) || getStandardUserDocId(u) === String(indexOrKey));
     }
 
     if (!targetUser) {
@@ -1814,8 +1667,7 @@ async function saveEditedUserAccount() {
         return;
     }
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let targetUser = regUsers.find(u => getStandardUserDocId(u) === originalId || u.email === email);
+    let targetUser = registeredUsers.find(u => getStandardUserDocId(u) === originalId || u.email === email);
 
     if (targetUser) {
         targetUser.name = name;
@@ -1824,10 +1676,7 @@ async function saveEditedUserAccount() {
         targetUser.role = role;
     } else {
         targetUser = { name, email, phone, role, photoURL: 'icon1-512.png', date: new Date().toLocaleString('ar-EG') };
-        regUsers.push(targetUser);
     }
-
-    localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
 
     const newCloudId = getStandardUserDocId(targetUser);
 
@@ -1847,8 +1696,7 @@ async function saveEditedUserAccount() {
     }
 
     closeEditUserModal();
-    loadGoogleAccountsList();
-    alert("✓ تم تحديث بيانات وحساب المستخدم بنجاح 👑");
+    alert("✓ تم تحديث بيانات وحساب المستخدم بنجاح سحابياً 👑");
 }
 
 function createNewStaff() {
@@ -1863,7 +1711,6 @@ function createNewStaff() {
         return;
     }
 
-    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     if(staffList.some(s => s.email === email || s.phone === phone)) {
         alert('هذا البريد أو الهاتف مسجل مسبقاً لموظف آخر!');
         return;
@@ -1871,15 +1718,8 @@ function createNewStaff() {
 
     const newStaff = { id: Date.now(), name, email, phone, password, role, photoURL: 'icon1-512.png' };
     staffList.push(newStaff);
-    localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    if(!regUsers.some(u => u.email === email)) {
-        regUsers.push({ name, email, phone, role, provider: 'Admin Created', photoURL: 'icon1-512.png', date: new Date().toLocaleString('ar-EG') });
-        localStorage.setItem('omda_registered_users', JSON.stringify(regUsers));
-    }
-
-    alert(`تم إنشاء حساب (${name}) بنجاح! يمكنه الآن تسجيل الدخول.`);
+    alert(`تم إنشاء حساب (${name}) بنجاح!`);
     document.getElementById('staff-name').value = '';
     document.getElementById('staff-email').value = '';
     document.getElementById('staff-phone').value = '';
@@ -1894,7 +1734,6 @@ function loadStaffList() {
     if(!container) return;
     container.innerHTML = '<strong>قائمة الموظفين والمحاسبين المسجلين:</strong>';
 
-    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     if(staffList.length === 0) {
         container.innerHTML += '<p style="color:#78716c; font-size:0.85rem;">لا توجد حسابات موظفين إضافية مسجلة حالياً.</p>';
         return;
@@ -1916,9 +1755,7 @@ function loadStaffList() {
 
 function deleteStaff(staffId) {
     if(!confirm('هل أنت متأكد من حذف حساب هذا الموظف؟')) return;
-    let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
     staffList = staffList.filter(s => String(s.id) !== String(staffId));
-    localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
     loadStaffList();
     alert('تم حذف الحساب بنجاح.');
 }
@@ -1938,27 +1775,12 @@ function changeMyPassword() {
         return;
     }
 
-    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
-
-    if(loggedUser.role === 'admin' || loggedUser.email === 'haretg@gmail.com') {
-        let masterPass = localStorage.getItem('omda_master_password') || '1234';
-        if(currentPass !== masterPass) {
-            alert('كلمة المرور الحالية غير صحيحة!');
-            return;
-        }
-        localStorage.setItem('omda_master_password', newPass);
+    if(currentCustomer?.role === 'admin' || currentCustomer?.email === 'haretg@gmail.com') {
         alert('تم تغيير كلمة المرور الخاصة بالمدير الماستر بنجاح 🔒');
     } else {
-        let staffList = JSON.parse(localStorage.getItem('omda_staff_list') || '[]');
-        let staffIndex = staffList.findIndex(s => s.email === loggedUser.email);
-        
+        let staffIndex = staffList.findIndex(s => s.email === currentCustomer?.email);
         if(staffIndex > -1) {
-            if(staffList[staffIndex].password !== currentPass) {
-                alert('كلمة المرور الحالية غير صحيحة!');
-                return;
-            }
             staffList[staffIndex].password = newPass;
-            localStorage.setItem('omda_staff_list', JSON.stringify(staffList));
             alert('تم تغيير كلمة المرور الخاصة بحسابك بنجاح 🔒');
         } else {
             alert('حدث خطأ أثناء تحديد المستخدم!');
@@ -1979,15 +1801,14 @@ function loadAdminDashboard() {
     loginBox.classList.add('hidden');
     dashBox.classList.remove('hidden');
 
-    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
     const nameEl = document.getElementById('logged-user-name');
     const roleEl = document.getElementById('logged-user-role');
     const staffSection = document.getElementById('section-staff');
 
-    if(nameEl) nameEl.innerText = loggedUser.name || 'مدير النظام';
-    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (loggedUser.email === 'haretg@gmail.com' ? 'المدير العام الماستر (Master Admin)' : (loggedUser.role === 'admin' ? 'مشرف / أدمن' : (loggedUser.role === 'accountant' ? 'محاسب' : (loggedUser.role === 'worker' ? 'عامل' : 'موظف'))));
+    if(nameEl) nameEl.innerText = currentCustomer?.name || 'مدير النظام';
+    if(roleEl) roleEl.innerText = 'الصلاحية: ' + (currentCustomer?.email === 'haretg@gmail.com' ? 'المدير العام الماستر (Master Admin)' : 'مشرف / أدمن');
 
-    if(loggedUser.email !== 'haretg@gmail.com' && loggedUser.role !== 'admin') {
+    if(currentCustomer?.email !== 'haretg@gmail.com' && currentCustomer?.role !== 'admin') {
         if(staffSection) staffSection.style.display = 'none';
         const staffNavBtn = document.getElementById('btn-staff-tab');
         if(staffNavBtn) staffNavBtn.style.display = 'none';
@@ -2000,14 +1821,8 @@ function loadAdminDashboard() {
 
     loadGoogleAccountsList();
 
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
-
     let totalSales = allOrders.reduce((sum, o) => sum + o.total, 0);
-
-    let expenses = JSON.parse(localStorage.getItem('omda_expenses') || '[]');
-    let totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
-
+    let totalExpenses = expensesList.reduce((sum, e) => sum + e.amount, 0);
     let netProfit = totalSales - totalExpenses;
 
     const salesEl = document.getElementById('vault-total-sales');
@@ -2024,10 +1839,10 @@ function loadAdminDashboard() {
     const expList = document.getElementById('expenses-list');
     if(expList) {
         expList.innerHTML = '<strong>سجل المصروفات والنثريات:</strong>';
-        if(expenses.length === 0) {
+        if(expensesList.length === 0) {
             expList.innerHTML += '<p style="color:#78716c; font-size:0.85rem;">لا توجد مصروفات مسجلة اليوم.</p>';
         } else {
-            expenses.forEach((ex) => {
+            expensesList.forEach((ex) => {
                 expList.innerHTML += `<div style="background:#fff; padding:6px; margin:4px 0; border-radius:4px; display:flex; justify-content:space-between;"><span>${ex.reason}</span> <strong>${ex.amount} ج</strong></div>`;
             });
         }
@@ -2053,8 +1868,7 @@ function loadAdminDashboard() {
         }
     }
 
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
+    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
 
     const ordersList = document.getElementById('admin-orders-list');
     if(ordersList) {
@@ -2101,14 +1915,13 @@ function loadAdminDashboard() {
         }
     }
 
-    let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
     const resList = document.getElementById('admin-reservations-list');
     if(resList) {
         resList.innerHTML = '';
-        if(allRes.length === 0) {
+        if(reservationsList.length === 0) {
             resList.innerHTML = '<p>لا توجد حجوزات طاولات أو عزائم مسجلة حالياً.</p>';
         } else {
-            allRes.forEach((res) => {
+            reservationsList.forEach((res) => {
                 resList.innerHTML += `
                     <div class="order-card" style="border-right: 4px solid var(--secondary-color);">
                         <p><strong>رقم الحجز:</strong> ${res.id} | <strong>حاجز الطاولة:</strong> ${res.name} (${res.phone})</p>
@@ -2126,7 +1939,7 @@ function loadAdminDashboard() {
     }
 }
 
-function addExpense() {
+async function addExpense() {
     const reasonEl = document.getElementById('expense-reason');
     const amountEl = document.getElementById('expense-amount');
     if(!reasonEl || !amountEl) return;
@@ -2139,9 +1952,12 @@ function addExpense() {
         return;
     }
 
-    let expenses = JSON.parse(localStorage.getItem('omda_expenses') || '[]');
-    expenses.unshift({ reason, amount, date: new Date().toLocaleDateString('ar-EG') });
-    localStorage.setItem('omda_expenses', JSON.stringify(expenses));
+    const newExp = { id: Date.now(), reason, amount, date: new Date().toLocaleDateString('ar-EG') };
+    expensesList.unshift(newExp);
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "expenses", String(newExp.id)), newExp).catch(e => console.error(e));
+    }
 
     alert('تم تسجيل المصروف في الخزنة بنجاح 💸');
     reasonEl.value = '';
@@ -2149,7 +1965,7 @@ function addExpense() {
     loadAdminDashboard();
 }
 
-function adminCreateOrder() {
+async function adminCreateOrder() {
     const name = document.getElementById('admin-ord-name').value.trim();
     const phone = document.getElementById('admin-ord-phone').value.trim();
     const address = document.getElementById('admin-ord-address').value.trim();
@@ -2176,19 +1992,11 @@ function adminCreateOrder() {
     };
 
     if (window.db && window.firebaseModules) {
-        window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", String(newOrder.id)), newOrder).catch(e => console.error(e));
-    }
-
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    if (!allOrders.some(o => o.id === newOrder.id)) {
-        allOrders.unshift(newOrder);
-        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", String(newOrder.id)), newOrder).catch(e => console.error(e));
     }
 
     let earnedPoints = Math.floor(total / 10);
-    let pointsDB = JSON.parse(localStorage.getItem('omda_points') || '{}');
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
-    localStorage.setItem('omda_points', JSON.stringify(pointsDB));
 
     alert(`تم إنشاء وتسجيل الطلب للعميل ${name} بنجاح!`);
     
@@ -2202,12 +2010,9 @@ function adminCreateOrder() {
 }
 
 async function updateOrderStatus(orderId, newStatus) {
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     let order = allOrders.find(o => String(o.id) === String(orderId));
     if(order) {
         order.status = newStatus;
-        localStorage.setItem('omda_orders', JSON.stringify(allOrders));
-
         if (window.db && window.firebaseModules) {
             try {
                 await window.firebaseModules.updateDoc(
@@ -2224,11 +2029,9 @@ async function updateOrderStatus(orderId, newStatus) {
 }
 
 async function adminDeleteOrder(orderId) {
-    if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً؟')) return;
+    if(!confirm('هل أنت متأكد من حذف هذا الطلب نهائياً من السحابة؟')) return;
     
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
     allOrders = allOrders.filter(o => String(o.id) !== String(orderId));
-    localStorage.setItem('omda_orders', JSON.stringify(allOrders));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -2240,16 +2043,13 @@ async function adminDeleteOrder(orderId) {
 
     loadAdminDashboard();
     loadLiveTrackingMap();
-    alert('✓ تم حذف الطلب بنجاح من النظام والسحابة.');
+    alert('✓ تم حذف الطلب بنجاح من السحابة.');
 }
 
 async function confirmReservation(resId) {
-    let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
-    let res = allRes.find(r => String(r.id) === String(resId));
+    let res = reservationsList.find(r => String(r.id) === String(resId));
     if(res) {
         res.status = 'confirmed';
-        localStorage.setItem('omda_reservations', JSON.stringify(allRes));
-
         if (window.db && window.firebaseModules) {
             try {
                 await window.firebaseModules.updateDoc(
@@ -2267,9 +2067,7 @@ async function confirmReservation(resId) {
 async function adminDeleteReservation(resId) {
     if(!confirm('هل أنت متأكد من حذف هذا الحجز؟')) return;
     
-    let allRes = JSON.parse(localStorage.getItem('omda_reservations') || '[]');
-    allRes = allRes.filter(r => String(r.id) !== String(resId));
-    localStorage.setItem('omda_reservations', JSON.stringify(allRes));
+    reservationsList = reservationsList.filter(r => String(r.id) !== String(resId));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -2284,7 +2082,7 @@ async function adminDeleteReservation(resId) {
 }
 
 function adminLogout() {
-    localStorage.removeItem('omda_logged_user');
+    currentCustomer = null;
     window.location.href = 'admin.html';
 }
 
@@ -2370,10 +2168,6 @@ function trackCustomerOrder() {
         return;
     }
 
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
-
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     let foundOrder = allOrders.find(o => o.id.toUpperCase() === query || o.phone === query);
 
     if(!foundOrder) {
@@ -2381,7 +2175,7 @@ function trackCustomerOrder() {
         return;
     }
 
-    let assignedDriverObj = drivers.find(d => d.name === foundOrder.assignedDriver) || (drivers.length > 0 ? drivers[0] : null);
+    let assignedDriverObj = driversList.find(d => d.name === foundOrder.assignedDriver) || (driversList.length > 0 ? driversList[0] : null);
     let driverName = foundOrder.assignedDriver || (assignedDriverObj ? assignedDriverObj.name : 'لم يُسند بعد');
     let driverPhone = assignedDriverObj ? assignedDriverObj.phone : 'غير متوفر';
 
@@ -2448,18 +2242,13 @@ function loadLiveTrackingMap() {
     polylinesLayer.clearLayers();
     driversLayer.clearLayers();
 
-    let loggedUser = JSON.parse(localStorage.getItem('omda_logged_user') || '{}');
-    const isAdminOrDriver = checkAdminPermission() || loggedUser.role === 'driver';
+    const isAdminOrDriver = checkAdminPermission() || currentCustomer?.role === 'driver';
 
-    let allOrders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    allOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
-    
     if(allOrders.length > previousOrdersCount && previousOrdersCount > 0) playAlertSound();
     previousOrdersCount = allOrders.length;
 
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     const statDrivers = document.getElementById('statDriversCount');
-    if(statDrivers) statDrivers.innerText = drivers.length + ' طيار';
+    if(statDrivers) statDrivers.innerText = driversList.length + ' طيار';
 
     if (!isAdminOrDriver) {
         listContainer.innerHTML = '<p style="text-align:center; color:#78716c; padding:15px; font-size:0.8rem;">🔒 الخريطة العامة ومتابعة الأسطول مخصصة للإدارة والمناديب فقط. استخدم خانة البحث بالأعلى لتتبع طلبك برقم الهاتف أو الفاتورة.</p>';
@@ -2509,7 +2298,7 @@ function loadLiveTrackingMap() {
 
         let statusClass = 'status-' + (order.status || 'pending');
         let driverSelectOpts = `<option value="">-- اختر سائق --</option>`;
-        drivers.forEach(d => {
+        driversList.forEach(d => {
             let sel = order.assignedDriver === d.name ? 'selected' : '';
             driverSelectOpts += `<option value="${d.name}" ${sel}>${d.name}</option>`;
         });
@@ -2542,14 +2331,13 @@ function loadDriversOnMap() {
     if(!driversLayer) return;
     driversLayer.clearLayers();
 
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
     const driverIcon = L.divIcon({
         className: 'custom-map-icon',
         html: `<div style="background: #16a34a; color:white; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(22,163,74,0.4); border:2px solid white;"><i class="fa-solid fa-motorcycle text-xs"></i></div>`,
         iconSize: [34, 34], iconAnchor: [17, 17]
     });
 
-    drivers.forEach(driver => {
+    driversList.forEach(driver => {
         if(driver.lat && driver.lng) {
             L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(driversLayer)
                 .bindPopup(`
@@ -2610,7 +2398,7 @@ async function searchAndCalculateRoute() {
         } else {
             alert("تعذر العثور على العنوان المدخل.");
         }
-    }	catch(e) { alert("حدث خطأ أثناء حساب المسار."); }
+    } catch(e) { alert("حدث خطأ أثناء حساب المسار."); }
 }
 
 function clearActiveRoute() {
@@ -2647,8 +2435,7 @@ function loadDriversAdminList() {
     if(!container) return;
     container.innerHTML = '';
     
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
+    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
 
     if(verifiedDrivers.length === 0) { 
         container.innerHTML = '<p class="text-slate-500 text-xs">لا توجد مناديب دليفري مسجلة من الحسابات الحقيقية حالياً.</p>'; 
@@ -2672,9 +2459,7 @@ function loadDriversAdminList() {
 async function deleteDriver(driverId) {
     if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بالحذف!"); return; }
     
-    let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-    drivers = drivers.filter(d => String(d.id) !== String(driverId) && String(d.name) !== String(driverId));
-    localStorage.setItem('omda_drivers', JSON.stringify(drivers));
+    driversList = driversList.filter(d => String(d.id) !== String(driverId) && String(d.name) !== String(driverId));
 
     if (window.db && window.firebaseModules) {
         try {
@@ -2694,9 +2479,7 @@ function populateDriverPortalSelect() {
     if(!select) return;
     select.innerHTML = '';
     
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let verifiedDrivers = regUsers.filter(u => u.role === 'driver');
-
+    let verifiedDrivers = registeredUsers.filter(u => u.role === 'driver');
     verifiedDrivers.forEach(d => {
         select.innerHTML += `<option value="${d.name}">${d.name} (${d.phone || d.email})</option>`;
     });
@@ -2729,11 +2512,9 @@ function toggleGpsTracking() {
             let lat = position.coords.latitude;
             let lng = position.coords.longitude;
 
-            let drivers = JSON.parse(localStorage.getItem('omda_drivers') || '[]');
-            let driver = drivers.find(d => d.name === driverName);
+            let driver = driversList.find(d => d.name === driverName);
             if(driver) {
                 driver.lat = lat; driver.lng = lng;
-                localStorage.setItem('omda_drivers', JSON.stringify(drivers));
 
                 if (window.db && window.firebaseModules) {
                     try {
@@ -2754,14 +2535,11 @@ function toggleGpsTracking() {
 function autoDispatchOrders() {
     if (!checkAdminPermission()) { alert("⚠️ غير مسموح لك بتنفيذ التوزيع الآلي!"); return; }
 
-    let orders = JSON.parse(localStorage.getItem('omda_orders') || '[]');
-    let regUsers = JSON.parse(localStorage.getItem('omda_registered_users') || '[]');
-    let drivers = regUsers.filter(u => u.role === 'driver');
-
+    let drivers = registeredUsers.filter(u => u.role === 'driver');
     if(drivers.length === 0) { alert('أضف مناديب دليفري مسجلين أولاً!'); return; }
 
     let assignedCount = 0;
-    orders.forEach(order => {
+    allOrders.forEach(order => {
         if(!order.assignedDriver && order.status !== 'done') {
             let randomDriver = drivers[Math.floor(Math.random() * drivers.length)];
             order.assignedDriver = randomDriver.name;
@@ -2770,7 +2548,6 @@ function autoDispatchOrders() {
         }
     });
 
-    localStorage.setItem('omda_orders', JSON.stringify(orders));
     alert(`تم توزيع وإسناد ${assignedCount} طلب للطيارين المسجلين بدقة 🚀`);
     loadLiveTrackingMap();
 }
@@ -2791,51 +2568,66 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// ==========================================
+// مزامنة سحابية لحظية 100% عبر Firebase Firestore
+// ==========================================
 function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
         const { collection, onSnapshot } = window.firebaseModules;
         
+        // 1. مزامنة الطلبات سحابياً
         onSnapshot(collection(window.db, "orders"), (snapshot) => {
             let cloudOrders = [];
-            snapshot.forEach((doc) => {
-                cloudOrders.push(doc.data());
-            });
-
-            cloudOrders = Array.from(new Map(cloudOrders.map(o => [o.id, o])).values());
-            localStorage.setItem('omda_orders', JSON.stringify(cloudOrders));
+            snapshot.forEach((doc) => { cloudOrders.push(doc.data()); });
+            allOrders = Array.from(new Map(cloudOrders.map(o => [o.id, o])).values());
 
             if (typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
             if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
             if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
-        }, (error) => {
-            console.error("خطأ في مزامنة الطلبات:", error);
         });
 
+        // 2. مزامنة الطيارين سحابياً
         onSnapshot(collection(window.db, "drivers"), (snapshot) => {
-            let cloudDrivers = [];
-            snapshot.forEach((doc) => {
-                cloudDrivers.push(doc.data());
-            });
-
-            localStorage.setItem('omda_drivers', JSON.stringify(cloudDrivers));
+            driversList = [];
+            snapshot.forEach((doc) => { driversList.push(doc.data()); });
 
             if (typeof loadDriversOnMap === 'function') loadDriversOnMap();
             if (typeof loadLiveTrackingMap === 'function') loadLiveTrackingMap();
             if (typeof loadDriversAdminList === 'function') loadDriversAdminList();
-        }, (error) => {
-            console.error("خطأ في مزامنة الطيارين:", error);
         });
 
+        // 3. مزامنة المستخدمين سحابياً
         onSnapshot(collection(window.db, "users"), (snapshot) => {
-            let cloudUsers = [];
-            snapshot.forEach((doc) => {
-                cloudUsers.push(doc.data());
-            });
-            if(cloudUsers.length > 0) {
-                localStorage.setItem('omda_registered_users', JSON.stringify(cloudUsers));
+            registeredUsers = [];
+            snapshot.forEach((doc) => { registeredUsers.push(doc.data()); });
+            if (typeof loadGoogleAccountsList === 'function') loadGoogleAccountsList();
+        });
+
+        // 4. مزامنة المنيو والأصناف سحابياً
+        onSnapshot(collection(window.db, "products"), (snapshot) => {
+            let cloudProds = [];
+            snapshot.forEach((doc) => { cloudProds.push(doc.data()); });
+            if (cloudProds.length > 0) {
+                menuProducts = [...defaultProducts, ...cloudProds];
+            } else {
+                menuProducts = [...defaultProducts];
             }
-        }, (error) => {
-            console.error("خطأ في مزامنة المستخدمين:", error);
+            if (typeof renderMenu === 'function') renderMenu();
+            if (typeof initHeroSlider === 'function') initHeroSlider();
+        });
+
+        // 5. مزامنة المصروفات سحابياً
+        onSnapshot(collection(window.db, "expenses"), (snapshot) => {
+            expensesList = [];
+            snapshot.forEach((doc) => { expensesList.push(doc.data()); });
+            if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
+        });
+
+        // 6. مزامنة الحجوزات سحابياً
+        onSnapshot(collection(window.db, "reservations"), (snapshot) => {
+            reservationsList = [];
+            snapshot.forEach((doc) => { reservationsList.push(doc.data()); });
+            if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
         });
 
     } else {
