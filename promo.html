@@ -3,217 +3,615 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - فيديو الإعلان (صوت وصورة)</title>
+  <title>GITI Enterprise ERP 2027 - استوديو الإعلان الرسمي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <!-- مكتبة توليد الباركود QR Code -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
     body {
-      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+      background: radial-gradient(circle at center, #090d16 0%, #020617 100%);
       color: #ffffff;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      padding: 20px;
+      overflow-x: hidden;
+      padding: 15px;
+      position: relative;
     }
+
+    /* خلفية متوهجة متحركة */
+    body::before {
+      content: '';
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      background: rgba(59, 130, 246, 0.12);
+      filter: blur(140px);
+      border-radius: 50%;
+      z-index: 0;
+      animation: floatBg 10s ease-in-out infinite alternate;
+    }
+    @keyframes floatBg {
+      0% { transform: translate(-120px, -60px); }
+      100% { transform: translate(120px, 60px); }
+    }
+
+    /* رأس الصفحة الاستوديو */
+    .studio-header {
+      margin-bottom: 15px;
+      text-align: center;
+      z-index: 2;
+    }
+    .studio-header h2 {
+      font-size: 1.3rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 1px;
+    }
+    .studio-header p {
+      font-size: 0.85rem;
+      color: #64748b;
+    }
+
+    /* شاشة عرض الإعلان (حاوية الفيديو) */
     .video-container {
       width: 100%;
       max-width: 900px;
-      height: 500px;
-      background: rgba(15, 23, 42, 0.85);
-      border: 2px solid rgba(59, 130, 246, 0.4);
+      height: 480px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid rgba(59, 130, 246, 0.35);
       border-radius: 20px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.2);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.2);
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      padding: 40px;
-      backdrop-filter: blur(12px);
+      padding: 35px;
+      backdrop-filter: blur(16px);
+      z-index: 1;
+      overflow: hidden;
+      transition: all 0.3s ease;
     }
+
+    /* مؤشر حالة التسجيل داخل الشاشة */
+    .rec-indicator {
+      position: absolute;
+      top: 15px;
+      left: 20px;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      color: #fca5a5;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      z-index: 10;
+    }
+    .rec-indicator.active { display: flex; animation: pulseRec 1s infinite; }
+    @keyframes pulseRec { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    .rec-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; }
+
     .slide {
       position: absolute;
       opacity: 0;
-      transform: translateY(20px) scale(0.95);
-      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translateY(25px) scale(0.96);
+      transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
       pointer-events: none;
       width: 85%;
     }
+
     .slide.active {
       opacity: 1;
       transform: translateY(0) scale(1);
       pointer-events: auto;
     }
+
     .logo-badge {
-      font-size: 1.2rem;
+      display: inline-block;
+      font-size: 1rem;
       background: linear-gradient(135deg, #3b82f6, #10b981);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       font-weight: 900;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       letter-spacing: 2px;
+      text-transform: uppercase;
+      background-color: rgba(59, 130, 246, 0.08);
+      padding: 5px 14px;
+      border-radius: 50px;
+      border: 1px solid rgba(59, 130, 246, 0.25);
     }
+
     h1 {
-      font-size: 2.3rem;
+      font-size: 2.1rem;
       font-weight: 900;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       color: #f8fafc;
-      line-height: 1.3;
+      line-height: 1.25;
     }
+
     p {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       color: #94a3b8;
-      line-height: 1.6;
-      margin-bottom: 20px;
+      line-height: 1.5;
+      margin-bottom: 15px;
     }
+
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
-      margin-top: 15px;
-      text-align: right;
+      gap: 10px;
+      margin-top: 12px;
+      text-align: inherit;
     }
+
     .feature-item {
-      background: rgba(30, 41, 59, 0.7);
-      padding: 12px;
+      background: rgba(30, 41, 59, 0.75);
+      padding: 10px 14px;
       border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       font-weight: 700;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
       gap: 10px;
+      transition: 0.3s;
     }
-    .controls {
-      margin-top: 25px;
+    .feature-item:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      background: rgba(30, 41, 59, 0.95);
+    }
+
+    /* تنسيق الشريحة الأخيرة والباركود */
+    .cta-content-box {
       display: flex;
-      gap: 12px;
       align-items: center;
-      flex-wrap: wrap;
       justify-content: center;
+      gap: 25px;
+      margin-top: 10px;
     }
-    .btn {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 10px 22px;
-      border-radius: 8px;
-      font-weight: 700;
+    .qrcode-box {
+      background: #ffffff;
+      padding: 8px;
+      border-radius: 10px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+    }
+
+    /* نقاط التنقل السريع */
+    .dots-container {
+      position: absolute;
+      bottom: 15px;
+      display: flex;
+      gap: 6px;
+      z-index: 3;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
       cursor: pointer;
       transition: 0.3s;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
-    .btn:hover { background: #2563eb; transform: translateY(-2px); }
+    .dot.active {
+      width: 22px;
+      border-radius: 4px;
+      background: #3b82f6;
+    }
+
+    /* شريط التقدم */
     .progress-bar {
       position: absolute;
       bottom: 0;
       left: 0;
       height: 4px;
-      background: #3b82f6;
+      background: linear-gradient(90deg, #3b82f6, #10b981);
       width: 0%;
       transition: width 0.1s linear;
       border-bottom-right-radius: 20px;
       border-bottom-left-radius: 20px;
+      z-index: 2;
     }
+
+    /* لوحة التحكم الاستوديو (منسقة وفيها تبويبات واضحة) */
+    .studio-control-panel {
+      margin-top: 20px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 16px;
+      padding: 15px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 900px;
+      width: 100%;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      z-index: 2;
+      transition: opacity 0.3s;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: rgba(30, 41, 59, 0.9);
+      color: white;
+      border: 1px solid rgba(59, 130, 246, 0.35);
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    }
+    .btn:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-2px); }
+
+    .record-studio-btn {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      border-color: #ef4444;
+      color: white;
+      font-weight: 800;
+    }
+    .record-studio-btn.recording {
+      background: #10b981;
+      border-color: #059669;
+      animation: pulseRecord 1.5s infinite;
+    }
+    @keyframes pulseRecord {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
     .cta-btn {
       background: linear-gradient(135deg, #10b981, #059669);
-      font-size: 1.1rem;
-      padding: 12px 30px;
+      border: none;
+      font-size: 1rem;
+      padding: 10px 25px;
       border-radius: 50px;
-      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+    }
+    .cta-btn:hover { background: linear-gradient(135deg, #059669, #047857); }
+
+    /* موجات الصوت التفاعلية */
+    .sound-waves {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 14px;
+      margin-right: 4px;
+    }
+    .sound-waves span {
+      display: block;
+      width: 3px;
+      height: 100%;
+      background: #10b981;
+      border-radius: 2px;
+      animation: wavePulse 0.8s ease-in-out infinite alternate;
+    }
+    .sound-waves span:nth-child(2) { animation-delay: 0.2s; }
+    .sound-waves span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes wavePulse { from { height: 4px; } to { height: 14px; } }
+    .muted .sound-waves { display: none; }
+
+    /* وضع التصوير النظيف أثناء تسجيل الفيديو */
+    body.clean-recording-mode .studio-control-panel,
+    body.clean-recording-mode .studio-header {
+      opacity: 0;
+      pointer-events: none;
     }
   </style>
 </head>
 <body>
 
+  <div class="studio-header">
+    <h2>GITI ERP 2027 - استوديو الإعلان المباشر</h2>
+    <p>تحكم بالشرائح، شغل الصوت والموسيقى، وسجل الفيديو مباشرة بضغطة زر!</p>
+  </div>
+
   <div class="video-container" id="promoViewer">
+    <div class="rec-indicator" id="recBadge">
+      <div class="rec-dot"></div>
+      <span id="recTimer">REC 00:00</span>
+    </div>
     
-    <!-- الشريحة الأولى: المقدمة -->
-    <div class="slide active">
+    <!-- الشريحة الأولى -->
+    <div class="slide active" data-ar-title="نظام الإدارة المالية والفواتير الذكي لشركتك" data-ar-desc="ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك التجاري بكفاءة واحترافية غير مسبوقة."
+         data-en-title="Smart Financial & ERP System for Your Business" data-en-desc="Say goodbye to traditional methods and enter the era of cloud automation to manage your business efficiently.">
       <div class="logo-badge">GITI ENTERPRISE ERP 2027</div>
-      <h1>نظام الإدارة المالية والفواتير الذكي لشركتك</h1>
-      <p>ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك التجاري بكفاءة واحترافية غير مسبوقة.</p>
+      <h1 class="slide-title">نظام الإدارة المالية والفواتير الذكي لشركتك</h1>
+      <p class="slide-desc">ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك التجاري بكفاءة واحترافية غير مسبوقة.</p>
     </div>
 
-    <!-- الشريحة الثانية: الفواتير الحية و ZATCA -->
-    <div class="slide">
-      <div class="logo-badge">⚡ فواتير إلكترونية فورية</div>
-      <h1>إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
+    <!-- الشريحة الثانية -->
+    <div class="slide" data-ar-title="إصدار فواتير ذكية مع رمز الاستجابة السريع QR" data-ar-desc="نظام فواتير متطور يلبي كافة المعايير التنظيمية."
+         data-en-title="Instant Smart E-Invoicing with QR Codes" data-en-desc="Advanced invoicing system meeting regulatory standards.">
+      <div class="logo-badge" data-ar="⚡ فواتير إلكترونية فورية" data-en="⚡ Instant E-Invoicing">⚡ فواتير إلكترونية فورية</div>
+      <h1 class="slide-title">إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
       <div class="feature-grid">
-        <div class="feature-item">🧾 فواتير حية مباشرة</div>
-        <div class="feature-item">🖨️ طباعة حرارية معيارية</div>
-        <div class="feature-item">💬 إرسال فوري عبر واتساب</div>
-        <div class="feature-item">🏷️ حساب الضرائب والخصومات تلقائياً</div>
+        <div class="feature-item" data-ar="🧾 فواتير حية مباشرة ومطابقة" data-en="🧾 Live Matched Invoices">🧾 فواتير حية مباشرة ومطابقة</div>
+        <div class="feature-item" data-ar="🖨️ طباعة حرارية معيارية سريعة" data-en="🖨️ Fast Thermal Printing">🖨️ طباعة حرارية معيارية سريعة</div>
+        <div class="feature-item" data-ar="💬 إرسال فوري للفواتير عبر واتساب" data-en="💬 Instant WhatsApp Sending">💬 إرسال فوري للفواتير عبر واتساب</div>
+        <div class="feature-item" data-ar="🏷️ حساب الضرائب والخصومات تلقائياً" data-en="🏷️ Auto Tax & Discount Calc">🏷️ حساب الضرائب والخصومات تلقائياً</div>
       </div>
     </div>
 
-    <!-- الشريحة الثالثة: المخزن والعملاء -->
-    <div class="slide">
-      <div class="logo-badge">📦 المخازن وحسابات العملاء</div>
-      <h1>تحكم كامل في أصناف مخزنك وديون عملائك</h1>
+    <!-- الشريحة الثالثة -->
+    <div class="slide" data-ar-title="تحكم كامل في أصناف مخزنك وديون عملائك" data-ar-desc="إدارة دقيقة للمخزون والحسابات المالية."
+         data-en-title="Complete Inventory & Client Ledger Control" data-en-desc="Precise management for stock and client accounts.">
+      <div class="logo-badge" data-ar="📦 المخازن وحسابات العملاء" data-en="📦 Inventory & Clients">📦 المخازن وحسابات العملاء</div>
+      <h1 class="slide-title">تحكم كامل في أصناف مخزنك وديون عملائك</h1>
       <div class="feature-grid">
-        <div class="feature-item">📦 تتبع المخزون وتنبيهات النفاذ</div>
-        <div class="feature-item">👥 دفاتر مديونيات وحسابات العملاء</div>
-        <div class="feature-item">💵 تسجيل الدفعات والسداد النقدي</div>
-        <div class="feature-item">📊 تقارير أرباح ومصروفات دقيقة</div>
+        <div class="feature-item" data-ar="📦 تتبع المخزون وتنبيهات النفاذ" data-en="📦 Stock Tracking & Alerts">📦 تتبع المخزون وتنبيهات النفاذ</div>
+        <div class="feature-item" data-ar="👥 دفاتر مديونيات وحسابات العملاء" data-en="👥 Client Debt Ledgers">👥 دفاتر مديونيات وحسابات العملاء</div>
+        <div class="feature-item" data-ar="💵 تسجيل الدفعات والسداد النقدي" data-en="💵 Cash Payment Tracking">💵 تسجيل الدفعات والسداد النقدي</div>
+        <div class="feature-item" data-ar="📊 تقارير أرباح ومصروفات دقيقة" data-en="📊 Accurate Profit Reports">📊 تقارير أرباح ومصروفات دقيقة</div>
       </div>
     </div>
 
-    <!-- الشريحة الرابعة: السحابة والأمان -->
-    <div class="slide">
-      <div class="logo-badge">☁️ مزامنة سحابية وأمان تامة</div>
-      <h1>بياناتك آمنة، متزامنة، وتعمل بدون إنترنت</h1>
+    <!-- الشريحة الرابعة -->
+    <div class="slide" data-ar-title="بياناتك آمنة، متزامنة، وتعمل بدون إنترنت" data-ar-desc="تقنية سحابية متقدمة مع دعم التشغيل دون إنترنت."
+         data-en-title="Secure Cloud Sync & Offline Capability" data-en-desc="Advanced cloud tech with full offline support.">
+      <div class="logo-badge" data-ar="☁️ مزامنة سحابية وأمان تامة" data-en="☁️ Cloud Sync & Security">☁️ مزامنة سحابية وأمان تامة</div>
+      <h1 class="slide-title">بياناتك آمنة، متزامنة، وتعمل بدون إنترنت</h1>
       <div class="feature-grid">
-        <div class="feature-item">☁️ مزامنة فورية عبر Firebase</div>
-        <div class="feature-item">🔌 يعمل أوفلاين بالكامل (PWA)</div>
-        <div class="feature-item">💾 نسخ احتياطي واستيراد Excel/JSON</div>
-        <div class="feature-item">🔒 حماية وتراخيص مستخدمين متقدمة</div>
+        <div class="feature-item" data-ar="☁️ مزامنة فورية عبر Firebase" data-en="☁️ Instant Firebase Sync">☁️ مزامنة فورية عبر Firebase</div>
+        <div class="feature-item" data-ar="🔌 يعمل أوفلاين بالكامل (PWA)" data-en="🔌 Full Offline PWA Support">🔌 يعمل أوفلاين بالكامل (PWA)</div>
+        <div class="feature-item" data-ar="💾 نسخ احتياطي واستيراد Excel/JSON" data-en="💾 Excel & JSON Backups">💾 نسخ احتياطي واستيراد Excel/JSON</div>
+        <div class="feature-item" data-ar="🔒 حماية وتراخيص مستخدمين متقدمة" data-en="🔒 Advanced User Licensing">🔒 حماية وتراخيص مستخدمين متقدمة</div>
       </div>
     </div>
 
-    <!-- الشريحة الخامسة: دعوة لاتخاذ إجراء CTA -->
-    <div class="slide">
-      <div class="logo-badge">🚀 ابدأ نشاطك اليوم</div>
-      <h1>جاهز لنقل عملك إلى المستوى التالي؟</h1>
-      <p>انضم الآن إلى منظومة GITI ERP واستمتع بإدارة أعمالك بكل سهولة وسرعة من أي مكان وفي أي وقت.</p>
-      <button class="btn cta-btn" onclick="alert('حمل التطبيق الآن وابدأ رحلة نجاحك التجاري!')">جرب النظام مجاناً 🔥</button>
+    <!-- الشريحة الخامسة -->
+    <div class="slide" data-ar-title="جاهز لنقل عملك إلى المستوى التالي؟" data-ar-desc="امسح الرمز أدناه أو جرب النظام الآن!"
+         data-en-title="Ready to Take Your Business to the Next Level?" data-en-desc="Scan the QR code below or try the system now!">
+      <div class="logo-badge" data-ar="🚀 ابدأ نشاطك اليوم" data-en="🚀 Start Your Business Today">🚀 ابدأ نشاطك اليوم</div>
+      <h1 class="slide-title">جاهز لنقل عملك إلى المستوى التالي؟</h1>
+      <div class="cta-content-box">
+        <div>
+          <p class="slide-desc" style="margin-bottom: 12px;">انضم الآن إلى منظومة GITI ERP واستمتع بإدارة أعمالك بكل سهولة وسرعة من أي مكان.</p>
+          <button class="btn cta-btn" onclick="alert('حمل التطبيق الآن وابدأ رحلة نجاحك التجاري!')" data-ar="جرب النظام مجاناً 🔥" data-en="Try System Free 🔥">جرب النظام مجاناً 🔥</button>
+        </div>
+        <div class="qrcode-box" id="finalQrCode"></div>
+      </div>
     </div>
 
+    <div class="dots-container" id="dotsContainer"></div>
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <div class="controls">
-    <button class="btn" onclick="prevSlide()">❮ السابق</button>
-    <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
-    <button class="btn" onclick="toggleAudio()" id="audioBtn">الصوت: مفعل 🔊</button>
-    <button class="btn" onclick="nextSlide()">التالي ❯</button>
+  <!-- لوحة تحكم الاستوديو المنسقة -->
+  <div class="studio-control-panel" id="studioPanel">
+    <div class="control-row">
+      <button class="btn" onclick="prevSlide()" id="prevBtn">❮ الشريحة السابقة</button>
+      <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
+      <button class="btn" onclick="nextSlide()" id="nextBtn">الشريحة التالية ❯</button>
+      <button class="btn" onclick="restartPresentation()">🔄 إعادة من البداية</button>
+    </div>
+    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+      <button class="btn" onclick="toggleAudio()" id="audioBtn">
+        <span id="audioText">الصوت: مفعل</span>
+        <span class="sound-waves" id="soundWaves"><span></span><span></span><span></span></span>
+      </button>
+      <button class="btn" onclick="toggleLang()" id="langBtn">🌐 En / عربي</button>
+      <button class="btn" onclick="toggleFullScreen()">⛶ ملء الشاشة</button>
+      <button class="btn record-studio-btn" onclick="toggleScreenRecording()" id="recordBtn">🔴 تسجيل وحفظ الفيديو</button>
+    </div>
   </div>
 
   <script>
     let currentSlide = 0;
     const slides = document.querySelectorAll('.slide');
     const progressBar = document.getElementById('progressBar');
+    const dotsContainer = document.getElementById('dotsContainer');
     let isPlaying = true;
     let isAudioEnabled = true;
-    const slideTime = 7000; // 7 ثوانٍ لكل شريحة ليتسع وقت القراءة الصوتية
+    let currentLang = 'ar';
+    const slideTime = 7000;
     let startTime = Date.now();
+
+    // توليد الباركود
+    new QRCode(document.getElementById("finalQrCode"), {
+      text: window.location.href,
+      width: 100,
+      height: 100,
+      colorDark: "#000000",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.M
+    });
+
+    // الموسيقى الخلفية
+    let audioCtx = null;
+    let musicInterval = null;
+
+    function startAmbientMusic() {
+      if (!isAudioEnabled) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const chords = [
+          [261.63, 329.63, 392.00],
+          [220.00, 261.63, 329.63],
+          [174.61, 220.00, 261.63],
+          [196.00, 246.94, 293.66]
+        ];
+        let chordIdx = 0;
+
+        if (musicInterval) clearInterval(musicInterval);
+        musicInterval = setInterval(() => {
+          if (!isAudioEnabled || !isPlaying || !audioCtx) return;
+          const currentChord = chords[chordIdx];
+          chordIdx = (chordIdx + 1) % chords.length;
+
+          currentChord.forEach(freq => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 4);
+          });
+        }, 4000);
+      } catch (e) { console.warn(e); }
+    }
+
+    function stopAmbientMusic() {
+      if (musicInterval) clearInterval(musicInterval);
+      if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+    }
+
+    // نظام تسجيل الفيديو المباشر مع مؤقت وحجب عناصر التحكم
+    let mediaRecorder = null;
+    let recordedChunks = [];
+    let recTimerInterval = null;
+    let recSeconds = 0;
+
+    async function toggleScreenRecording() {
+      const recordBtn = document.getElementById('recordBtn');
+      const recBadge = document.getElementById('recBadge');
+      const recTimer = document.getElementById('recTimer');
+
+      if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+        try {
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: 'screen' }, audio: true });
+          recordedChunks = [];
+          mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+          
+          mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) recordedChunks.push(event.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: 'video/webm' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = `GITI_ERP_Official_Ad_${Date.now()}.webm`;
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+              document.body.removeChild(a);
+              window.URL.revokeObjectURL(url);
+            }, 100);
+
+            // استعادة شكل الواجهة
+            recordBtn.textContent = currentLang === 'ar' ? '🔴 تسجيل وحفظ الفيديو' : '🔴 Record & Save Video';
+            recordBtn.classList.remove('recording');
+            document.body.classList.remove('clean-recording-mode');
+            recBadge.classList.remove('active');
+            clearInterval(recTimerInterval);
+          };
+
+          mediaRecorder.start();
+          
+          // تفعيل وضع التصوير النظيف (إخفاء الأزرار ليكون الفيديو سينمائي بحت)
+          document.body.classList.add('clean-recording-mode');
+          recBadge.classList.add('active');
+          recordBtn.textContent = currentLang === 'ar' ? '⏹️ إيقاف وحفظ الفيديو' : '⏹️ Stop & Save';
+          recordBtn.classList.add('recording');
+
+          // بدء مؤقت التسجيل
+          recSeconds = 0;
+          recTimer.textContent = "REC 00:00";
+          recTimerInterval = setInterval(() => {
+            recSeconds++;
+            let mins = Math.floor(recSeconds / 60).toString().padStart(2, '0');
+            let secs = (recSeconds % 60).toString().padStart(2, '0');
+            recTimer.textContent = `REC ${mins}:${secs}`;
+          }, 1000);
+
+          // إعادة تشغيل العرض من البداية عند بدء التسجيل ليخرج الإعلان كاملاً ومنظماً
+          restartPresentation();
+
+        } catch (err) {
+          alert(currentLang === 'ar' ? '❌ تعذر بدء التسجيل أو تم إلغاؤه.' : '❌ Recording cancelled or failed.');
+        }
+      } else {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    // تبديل لغة الإعلان
+    function toggleLang() {
+      currentLang = currentLang === 'ar' ? 'en' : 'ar';
+      document.documentElement.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
+      document.documentElement.setAttribute('lang', currentLang);
+
+      slides.forEach(slide => {
+        const titleEl = slide.querySelector('.slide-title');
+        const descEl = slide.querySelector('.slide-desc');
+        const badgeEl = slide.querySelector('.logo-badge');
+        const btnEl = slide.querySelector('.cta-btn');
+
+        if (titleEl && slide.dataset[`${currentLang}Title`]) titleEl.textContent = slide.dataset[`${currentLang}Title`];
+        if (descEl && slide.dataset[`${currentLang}Desc`]) descEl.textContent = slide.dataset[`${currentLang}Desc`];
+        if (badgeEl && badgeEl.dataset[currentLang]) badgeEl.textContent = badgeEl.dataset[currentLang];
+        if (btnEl && btnEl.dataset[currentLang]) btnEl.textContent = btnEl.dataset[currentLang];
+
+        slide.querySelectorAll('.feature-item').forEach(item => {
+          if (item.dataset[currentLang]) item.textContent = item.dataset[currentLang];
+        });
+      });
+
+      document.getElementById('prevBtn').textContent = currentLang === 'ar' ? '❮ الشريحة السابقة' : '❮ Prev Slide';
+      document.getElementById('nextBtn').textContent = currentLang === 'ar' ? 'الشريحة التالية ❯' : 'Next Slide ❯';
+      document.getElementById('playPauseBtn').textContent = isPlaying ? (currentLang === 'ar' ? 'إيقاف مؤقت ⏸️' : 'Pause ⏸️️') : (currentLang === 'ar' ? 'تشغيل ▶️' : 'Play ▶️');
+      document.getElementById('audioText').textContent = isAudioEnabled ? (currentLang === 'ar' ? 'الصوت: مفعل' : 'Audio: On') : (currentLang === 'ar' ? 'الصوت: صامت' : 'Audio: Muted');
+
+      speakCurrentSlide();
+    }
+
+    // إنشاء نقاط التنقل
+    slides.forEach((_, index) => {
+      const dot = document.createElement('div');
+      dot.className = `dot ${index === 0 ? 'active' : ''}`;
+      dot.onclick = () => showSlide(index);
+      dotsContainer.appendChild(dot);
+    });
+
+    const dots = document.querySelectorAll('.dot');
+    function updateDots() {
+      dots.forEach((dot, idx) => dot.classList.toggle('active', idx === currentSlide));
+    }
 
     function speakCurrentSlide() {
       if (!isAudioEnabled || !isPlaying || !('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel(); // إيقاف أي كلام سابق
+      window.speechSynthesis.cancel();
 
       const slide = slides[currentSlide];
-      const h1 = slide.querySelector('h1')?.innerText || '';
-      const p = slide.querySelector('p')?.innerText || '';
+      const title = slide.querySelector('.slide-title')?.innerText || '';
+      const desc = slide.querySelector('.slide-desc')?.innerText || '';
       const features = Array.from(slide.querySelectorAll('.feature-item')).map(el => el.innerText).join('. ');
       
-      const fullText = `${h1}. ${p}. ${features}`;
+      const fullText = `${title}. ${desc}. ${features}`;
       const utterance = new SpeechSynthesisUtterance(fullText);
-      utterance.lang = 'ar-EG'; // اللغة العربية
-      utterance.rate = 1.0;     // سرعة القراءة
+      utterance.lang = currentLang === 'ar' ? 'ar-EG' : 'en-US';
+      utterance.rate = 1.0;
       window.speechSynthesis.speak(utterance);
     }
 
@@ -222,56 +620,66 @@
       slides.forEach(s => s.classList.remove('active'));
       currentSlide = (index + slides.length) % slides.length;
       slides[currentSlide].classList.add('active');
+      updateDots();
       startTime = Date.now();
       speakCurrentSlide();
     }
 
-    function nextSlide() {
-      showSlide(currentSlide + 1);
-    }
-
-    function prevSlide() {
-      showSlide(currentSlide - 1);
-    }
+    function nextSlide() { showSlide(currentSlide + 1); }
+    function prevSlide() { showSlide(currentSlide - 1); }
+    function restartPresentation() { showSlide(0); }
 
     function updateProgress() {
       if (!isPlaying) return;
       const elapsed = Date.now() - startTime;
       const progress = (elapsed / slideTime) * 100;
-      if (progress >= 100) {
-        nextSlide();
-      } else {
-        progressBar.style.width = progress + '%';
-      }
+      if (progress >= 100) nextSlide();
+      else progressBar.style.width = progress + '%';
     }
 
     function togglePlay() {
       isPlaying = !isPlaying;
       const btn = document.getElementById('playPauseBtn');
       if (isPlaying) {
-        btn.textContent = 'إيقاف مؤقت ⏸️';
+        btn.textContent = currentLang === 'ar' ? 'إيقاف مؤقت ⏸️' : 'Pause ⏸️';
+        startTime = Date.now();
         speakCurrentSlide();
+        startAmbientMusic();
       } else {
-        btn.textContent = 'تشغيل ▶️';
+        btn.textContent = currentLang === 'ar' ? 'تشغيل ▶️' : 'Play ▶️';
         window.speechSynthesis.cancel();
+        stopAmbientMusic();
       }
     }
 
     function toggleAudio() {
       isAudioEnabled = !isAudioEnabled;
-      const btn = document.getElementById('audioBtn');
+      const audioBtn = document.getElementById('audioBtn');
+      const audioText = document.getElementById('audioText');
       if (isAudioEnabled) {
-        btn.textContent = 'الصوت: مفعل 🔊';
+        audioText.textContent = currentLang === 'ar' ? 'الصوت: مفعل' : 'Audio: On';
+        audioBtn.classList.remove('muted');
         speakCurrentSlide();
+        startAmbientMusic();
       } else {
-        btn.textContent = 'الصوت: صامت 🔇';
+        audioText.textContent = currentLang === 'ar' ? 'الصوت: صامت' : 'Audio: Muted';
+        audioBtn.classList.add('muted');
         window.speechSynthesis.cancel();
+        stopAmbientMusic();
       }
     }
 
-    // بدء الصوت مع أول شريحة عند التحميل
+    function toggleFullScreen() {
+      const container = document.getElementById('promoViewer');
+      if (!document.fullscreenElement) container.requestFullscreen().catch(err => alert(err.message));
+      else document.exitFullscreen();
+    }
+
     window.onload = () => {
-      setTimeout(speakCurrentSlide, 500);
+      setTimeout(() => {
+        speakCurrentSlide();
+        startAmbientMusic();
+      }, 600);
     };
 
     setInterval(updateProgress, 50);
