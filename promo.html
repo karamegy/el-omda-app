@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GITI Enterprise ERP 2027 - فيديو الإعلان (صوت وصورة)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    body {
+      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+      color: #ffffff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 20px;
+    }
+    .video-container {
+      width: 100%;
+      max-width: 900px;
+      height: 500px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 2px solid rgba(59, 130, 246, 0.4);
+      border-radius: 20px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.2);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px;
+      backdrop-filter: blur(12px);
+    }
+    .slide {
+      position: absolute;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      width: 85%;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .logo-badge {
+      font-size: 1.2rem;
+      background: linear-gradient(135deg, #3b82f6, #10b981);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+      margin-bottom: 15px;
+      letter-spacing: 2px;
+    }
+    h1 {
+      font-size: 2.3rem;
+      font-weight: 900;
+      margin-bottom: 15px;
+      color: #f8fafc;
+      line-height: 1.3;
+    }
+    p {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 15px;
+      text-align: right;
+    }
+    .feature-item {
+      background: rgba(30, 41, 59, 0.7);
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .controls {
+      margin-top: 25px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .btn:hover { background: #2563eb; transform: translateY(-2px); }
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 4px;
+      background: #3b82f6;
+      width: 0%;
+      transition: width 0.1s linear;
+      border-bottom-right-radius: 20px;
+      border-bottom-left-radius: 20px;
+    }
+    .cta-btn {
+      background: linear-gradient(135deg, #10b981, #059669);
+      font-size: 1.1rem;
+      padding: 12px 30px;
+      border-radius: 50px;
+      box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="video-container" id="promoViewer">
+    
+    <!-- الشريحة الأولى: المقدمة -->
+    <div class="slide active">
+      <div class="logo-badge">GITI ENTERPRISE ERP 2027</div>
+      <h1>نظام الإدارة المالية والفواتير الذكي لشركتك</h1>
+      <p>ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك التجاري بكفاءة واحترافية غير مسبوقة.</p>
+    </div>
+
+    <!-- الشريحة الثانية: الفواتير الحية و ZATCA -->
+    <div class="slide">
+      <div class="logo-badge">⚡ فواتير إلكترونية فورية</div>
+      <h1>إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
+      <div class="feature-grid">
+        <div class="feature-item">🧾 فواتير حية مباشرة</div>
+        <div class="feature-item">🖨️ طباعة حرارية معيارية</div>
+        <div class="feature-item">💬 إرسال فوري عبر واتساب</div>
+        <div class="feature-item">🏷️ حساب الضرائب والخصومات تلقائياً</div>
+      </div>
+    </div>
+
+    <!-- الشريحة الثالثة: المخزن والعملاء -->
+    <div class="slide">
+      <div class="logo-badge">📦 المخازن وحسابات العملاء</div>
+      <h1>تحكم كامل في أصناف مخزنك وديون عملائك</h1>
+      <div class="feature-grid">
+        <div class="feature-item">📦 تتبع المخزون وتنبيهات النفاذ</div>
+        <div class="feature-item">👥 دفاتر مديونيات وحسابات العملاء</div>
+        <div class="feature-item">💵 تسجيل الدفعات والسداد النقدي</div>
+        <div class="feature-item">📊 تقارير أرباح ومصروفات دقيقة</div>
+      </div>
+    </div>
+
+    <!-- الشريحة الرابعة: السحابة والأمان -->
+    <div class="slide">
+      <div class="logo-badge">☁️ مزامنة سحابية وأمان تامة</div>
+      <h1>بياناتك آمنة، متزامنة، وتعمل بدون إنترنت</h1>
+      <div class="feature-grid">
+        <div class="feature-item">☁️ مزامنة فورية عبر Firebase</div>
+        <div class="feature-item">🔌 يعمل أوفلاين بالكامل (PWA)</div>
+        <div class="feature-item">💾 نسخ احتياطي واستيراد Excel/JSON</div>
+        <div class="feature-item">🔒 حماية وتراخيص مستخدمين متقدمة</div>
+      </div>
+    </div>
+
+    <!-- الشريحة الخامسة: دعوة لاتخاذ إجراء CTA -->
+    <div class="slide">
+      <div class="logo-badge">🚀 ابدأ نشاطك اليوم</div>
+      <h1>جاهز لنقل عملك إلى المستوى التالي؟</h1>
+      <p>انضم الآن إلى منظومة GITI ERP واستمتع بإدارة أعمالك بكل سهولة وسرعة من أي مكان وفي أي وقت.</p>
+      <button class="btn cta-btn" onclick="alert('حمل التطبيق الآن وابدأ رحلة نجاحك التجاري!')">جرب النظام مجاناً 🔥</button>
+    </div>
+
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" onclick="prevSlide()">❮ السابق</button>
+    <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
+    <button class="btn" onclick="toggleAudio()" id="audioBtn">الصوت: مفعل 🔊</button>
+    <button class="btn" onclick="nextSlide()">التالي ❯</button>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const progressBar = document.getElementById('progressBar');
+    let isPlaying = true;
+    let isAudioEnabled = true;
+    const slideTime = 7000; // 7 ثوانٍ لكل شريحة ليتسع وقت القراءة الصوتية
+    let startTime = Date.now();
+
+    function speakCurrentSlide() {
+      if (!isAudioEnabled || !isPlaying || !('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel(); // إيقاف أي كلام سابق
+
+      const slide = slides[currentSlide];
+      const h1 = slide.querySelector('h1')?.innerText || '';
+      const p = slide.querySelector('p')?.innerText || '';
+      const features = Array.from(slide.querySelectorAll('.feature-item')).map(el => el.innerText).join('. ');
+      
+      const fullText = `${h1}. ${p}. ${features}`;
+      const utterance = new SpeechSynthesisUtterance(fullText);
+      utterance.lang = 'ar-EG'; // اللغة العربية
+      utterance.rate = 1.0;     // سرعة القراءة
+      window.speechSynthesis.speak(utterance);
+    }
+
+    function showSlide(index) {
+      window.speechSynthesis.cancel();
+      slides.forEach(s => s.classList.remove('active'));
+      currentSlide = (index + slides.length) % slides.length;
+      slides[currentSlide].classList.add('active');
+      startTime = Date.now();
+      speakCurrentSlide();
+    }
+
+    function nextSlide() {
+      showSlide(currentSlide + 1);
+    }
+
+    function prevSlide() {
+      showSlide(currentSlide - 1);
+    }
+
+    function updateProgress() {
+      if (!isPlaying) return;
+      const elapsed = Date.now() - startTime;
+      const progress = (elapsed / slideTime) * 100;
+      if (progress >= 100) {
+        nextSlide();
+      } else {
+        progressBar.style.width = progress + '%';
+      }
+    }
+
+    function togglePlay() {
+      isPlaying = !isPlaying;
+      const btn = document.getElementById('playPauseBtn');
+      if (isPlaying) {
+        btn.textContent = 'إيقاف مؤقت ⏸️';
+        speakCurrentSlide();
+      } else {
+        btn.textContent = 'تشغيل ▶️';
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    function toggleAudio() {
+      isAudioEnabled = !isAudioEnabled;
+      const btn = document.getElementById('audioBtn');
+      if (isAudioEnabled) {
+        btn.textContent = 'الصوت: مفعل 🔊';
+        speakCurrentSlide();
+      } else {
+        btn.textContent = 'الصوت: صامت 🔇';
+        window.speechSynthesis.cancel();
+      }
+    }
+
+    // بدء الصوت مع أول شريحة عند التحميل
+    window.onload = () => {
+      setTimeout(speakCurrentSlide, 500);
+    };
+
+    setInterval(updateProgress, 50);
+  </script>
+</body>
+</html>
