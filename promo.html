@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو الإعلان الرسمي</title>
+  <title>GITI Enterprise ERP 2027 - استوديو الإعلان والحملات المتكامل</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <!-- مكتبة توليد الباركود QR Code -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -22,31 +22,25 @@
       position: relative;
     }
 
-    /* خلفية متوهجة متحركة */
+    /* خلفية ثابتة مستقرة بدون اهتزاز مزعج عند الفتح */
     body::before {
       content: '';
       position: absolute;
       width: 600px;
       height: 600px;
-      background: rgba(59, 130, 246, 0.12);
+      background: rgba(59, 130, 246, 0.1);
       filter: blur(140px);
       border-radius: 50%;
       z-index: 0;
-      animation: floatBg 10s ease-in-out infinite alternate;
-    }
-    @keyframes floatBg {
-      0% { transform: translate(-120px, -60px); }
-      100% { transform: translate(120px, 60px); }
     }
 
-    /* رأس الصفحة الاستوديو */
     .studio-header {
-      margin-bottom: 15px;
+      margin-bottom: 12px;
       text-align: center;
       z-index: 2;
     }
     .studio-header h2 {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 800;
       background: linear-gradient(135deg, #3b82f6, #10b981);
       -webkit-background-clip: text;
@@ -54,16 +48,16 @@
       letter-spacing: 1px;
     }
     .studio-header p {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: #64748b;
     }
 
-    /* شاشة عرض الإعلان (حاوية الفيديو) */
+    /* شاشة عرض الإعلان (حاوية الفيديو) مع تأثيرات الكاميرا المختلفة */
     .video-container {
       width: 100%;
       max-width: 900px;
-      height: 480px;
-      background: rgba(15, 23, 42, 0.9);
+      height: 460px;
+      background: rgba(15, 23, 42, 0.95);
       border: 2px solid rgba(59, 130, 246, 0.35);
       border-radius: 20px;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 40px rgba(59, 130, 246, 0.2);
@@ -76,10 +70,29 @@
       backdrop-filter: blur(16px);
       z-index: 1;
       overflow: hidden;
-      transition: all 0.3s ease;
+      transform-origin: center;
+      transition: transform 0.8s ease, filter 0.8s ease;
     }
 
-    /* مؤشر حالة التسجيل داخل الشاشة */
+    /* أنماط حركة الكاميرا والتأثيرات التصويرية */
+    .video-container.cam-cinematic .slide.active { animation: cinematicZoom 7s infinite alternate; }
+    .video-container.cam-pan .slide.active { animation: panEffect 7s infinite alternate; }
+    .video-container.cam-tilt .slide.active { animation: tiltEffect 7s infinite alternate; }
+    .video-container.cam-static .slide.active { transform: none !important; }
+
+    @keyframes cinematicZoom {
+      0% { transform: scale(0.95); }
+      100% { transform: scale(1.03); }
+    }
+    @keyframes panEffect {
+      0% { transform: translateX(-15px) scale(0.98); }
+      100% { transform: translateX(15px) scale(0.98); }
+    }
+    @keyframes tiltEffect {
+      0% { transform: rotate(-1deg) scale(0.98); }
+      100% { transform: rotate(1deg) scale(0.98); }
+    }
+
     .rec-indicator {
       position: absolute;
       top: 15px;
@@ -103,112 +116,102 @@
     .slide {
       position: absolute;
       opacity: 0;
-      transform: translateY(25px) scale(0.96);
-      transition: all 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.6s ease;
       pointer-events: none;
       width: 85%;
     }
 
     .slide.active {
       opacity: 1;
-      transform: translateY(0) scale(1);
       pointer-events: auto;
     }
 
     .logo-badge {
       display: inline-block;
-      font-size: 1rem;
+      font-size: 0.95rem;
       background: linear-gradient(135deg, #3b82f6, #10b981);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       font-weight: 900;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       letter-spacing: 2px;
       text-transform: uppercase;
       background-color: rgba(59, 130, 246, 0.08);
-      padding: 5px 14px;
+      padding: 4px 12px;
       border-radius: 50px;
       border: 1px solid rgba(59, 130, 246, 0.25);
     }
 
     h1 {
-      font-size: 2.1rem;
+      font-size: 1.9rem;
       font-weight: 900;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       color: #f8fafc;
       line-height: 1.25;
     }
 
     p {
-      font-size: 1.05rem;
+      font-size: 1rem;
       color: #94a3b8;
       line-height: 1.5;
-      margin-bottom: 15px;
+      margin-bottom: 12px;
     }
 
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 12px;
+      gap: 8px;
+      margin-top: 10px;
       text-align: inherit;
     }
 
     .feature-item {
       background: rgba(30, 41, 59, 0.75);
-      padding: 10px 14px;
-      border-radius: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
       border: 1px solid rgba(255, 255, 255, 0.06);
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       display: flex;
       align-items: center;
-      gap: 10px;
-      transition: 0.3s;
-    }
-    .feature-item:hover {
-      border-color: rgba(59, 130, 246, 0.4);
-      background: rgba(30, 41, 59, 0.95);
+      gap: 8px;
     }
 
-    /* تنسيق الشريحة الأخيرة والباركود */
     .cta-content-box {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 25px;
-      margin-top: 10px;
+      gap: 20px;
+      margin-top: 8px;
     }
     .qrcode-box {
       background: #ffffff;
-      padding: 8px;
-      border-radius: 10px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+      padding: 6px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
 
-    /* نقاط التنقل السريع */
     .dots-container {
       position: absolute;
-      bottom: 15px;
+      bottom: 12px;
       display: flex;
       gap: 6px;
       z-index: 3;
     }
     .dot {
-      width: 8px;
-      height: 8px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.2);
       cursor: pointer;
       transition: 0.3s;
     }
     .dot.active {
-      width: 22px;
+      width: 20px;
       border-radius: 4px;
       background: #3b82f6;
     }
 
-    /* شريط التقدم */
     .progress-bar {
       position: absolute;
       bottom: 0;
@@ -217,52 +220,50 @@
       background: linear-gradient(90deg, #3b82f6, #10b981);
       width: 0%;
       transition: width 0.1s linear;
-      border-bottom-right-radius: 20px;
-      border-bottom-left-radius: 20px;
       z-index: 2;
     }
 
-    /* لوحة التحكم الاستوديو (منسقة وفيها تبويبات واضحة) */
+    /* لوحة التحكم الاستوديو */
     .studio-control-panel {
-      margin-top: 20px;
+      margin-top: 15px;
       background: rgba(15, 23, 42, 0.95);
       border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 16px;
-      padding: 15px 20px;
+      border-radius: 14px;
+      padding: 12px 15px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
       max-width: 900px;
       width: 100%;
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       z-index: 2;
-      transition: opacity 0.3s;
     }
 
     .control-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       align-items: center;
       justify-content: center;
       flex-wrap: wrap;
     }
 
-    .btn {
+    .btn, select.btn {
       background: rgba(30, 41, 59, 0.9);
       color: white;
       border: 1px solid rgba(59, 130, 246, 0.35);
-      padding: 9px 18px;
-      border-radius: 10px;
+      padding: 8px 14px;
+      border-radius: 8px;
       font-weight: 700;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       cursor: pointer;
       transition: 0.3s;
       display: flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+      outline: none;
     }
-    .btn:hover { background: #3b82f6; border-color: #3b82f6; transform: translateY(-2px); }
+    .btn:hover { background: #3b82f6; border-color: #3b82f6; }
+    select.btn option { background: #0f172a; color: #fff; }
 
     .record-studio-btn {
       background: linear-gradient(135deg, #dc2626, #b91c1c);
@@ -273,31 +274,61 @@
     .record-studio-btn.recording {
       background: #10b981;
       border-color: #059669;
-      animation: pulseRecord 1.5s infinite;
     }
-    @keyframes pulseRecord {
-      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+
+    .campaign-btn {
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      border-color: #8b5cf6;
     }
 
     .cta-btn {
       background: linear-gradient(135deg, #10b981, #059669);
       border: none;
-      font-size: 1rem;
-      padding: 10px 25px;
+      font-size: 0.95rem;
+      padding: 8px 20px;
       border-radius: 50px;
-      box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
     }
-    .cta-btn:hover { background: linear-gradient(135deg, #059669, #047857); }
 
-    /* موجات الصوت التفاعلية */
+    /* Modal الحملات الإعلانية */
+    .modal {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(2, 6, 23, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: #0f172a;
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      border-radius: 16px;
+      max-width: 600px;
+      width: 100%;
+      padding: 25px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+      text-align: right;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 10px;
+    }
+    .close-modal { background: none; border: none; color: #ef4444; font-size: 1.2rem; cursor: pointer; font-weight: bold; }
+
     .sound-waves {
       display: inline-flex;
       align-items: center;
       gap: 3px;
-      height: 14px;
-      margin-right: 4px;
+      height: 12px;
     }
     .sound-waves span {
       display: block;
@@ -307,12 +338,9 @@
       border-radius: 2px;
       animation: wavePulse 0.8s ease-in-out infinite alternate;
     }
-    .sound-waves span:nth-child(2) { animation-delay: 0.2s; }
-    .sound-waves span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes wavePulse { from { height: 4px; } to { height: 14px; } }
+    @keyframes wavePulse { from { height: 3px; } to { height: 12px; } }
     .muted .sound-waves { display: none; }
 
-    /* وضع التصوير النظيف أثناء تسجيل الفيديو */
     body.clean-recording-mode .studio-control-panel,
     body.clean-recording-mode .studio-header {
       opacity: 0;
@@ -323,11 +351,11 @@
 <body>
 
   <div class="studio-header">
-    <h2>GITI ERP 2027 - استوديو الإعلان المباشر</h2>
-    <p>تحكم بالشرائح، شغل الصوت والموسيقى، وسجل الفيديو مباشرة بضغطة زر!</p>
+    <h2>GITI ERP 2027 - استوديو الإعلان والحملات الإعلانية</h2>
+    <p>تحكم بحركات الكاميرا، أطلق الحملات الإعلانية المتكاملة، وسجل الفيديو بسهولة!</p>
   </div>
 
-  <div class="video-container" id="promoViewer">
+  <div class="video-container cam-cinematic" id="promoViewer">
     <div class="rec-indicator" id="recBadge">
       <div class="rec-dot"></div>
       <span id="recTimer">REC 00:00</span>
@@ -387,7 +415,7 @@
       <h1 class="slide-title">جاهز لنقل عملك إلى المستوى التالي؟</h1>
       <div class="cta-content-box">
         <div>
-          <p class="slide-desc" style="margin-bottom: 12px;">انضم الآن إلى منظومة GITI ERP واستمتع بإدارة أعمالك بكل سهولة وسرعة من أي مكان.</p>
+          <p class="slide-desc" style="margin-bottom: 10px;">انضم الآن إلى منظومة GITI ERP واستمتع بإدارة أعمالك بكل سهولة.</p>
           <button class="btn cta-btn" onclick="alert('حمل التطبيق الآن وابدأ رحلة نجاحك التجاري!')" data-ar="جرب النظام مجاناً 🔥" data-en="Try System Free 🔥">جرب النظام مجاناً 🔥</button>
         </div>
         <div class="qrcode-box" id="finalQrCode"></div>
@@ -398,22 +426,54 @@
     <div class="progress-bar" id="progressBar"></div>
   </div>
 
-  <!-- لوحة تحكم الاستوديو المنسقة -->
+  <!-- لوحة تحكم الاستوديو -->
   <div class="studio-control-panel" id="studioPanel">
     <div class="control-row">
-      <button class="btn" onclick="prevSlide()" id="prevBtn">❮ الشريحة السابقة</button>
+      <button class="btn" onclick="prevSlide()" id="prevBtn">❮ السابق</button>
       <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
-      <button class="btn" onclick="nextSlide()" id="nextBtn">الشريحة التالية ❯</button>
-      <button class="btn" onclick="restartPresentation()">🔄 إعادة من البداية</button>
+      <button class="btn" onclick="nextSlide()" id="nextBtn">التالي ❯</button>
+      <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
+      
+      <!-- اختيار تأثيرات الكاميرا التصويرية -->
+      <select class="btn" id="cameraEffectSelect" onchange="changeCameraEffect(this.value)">
+        <option value="cam-cinematic">🎥 تأثير: تقريب سينمائي</option>
+        <option value="cam-pan">↔️ تأثير: حركة أفقية (Pan)</option>
+        <option value="cam-tilt">📐 تأثير: ميلان 3D</option>
+        <option value="cam-static">⏹️ ثبات تام (بدون حركة)</option>
+      </select>
     </div>
-    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
+
+    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 8px;">
       <button class="btn" onclick="toggleAudio()" id="audioBtn">
         <span id="audioText">الصوت: مفعل</span>
         <span class="sound-waves" id="soundWaves"><span></span><span></span><span></span></span>
       </button>
       <button class="btn" onclick="toggleLang()" id="langBtn">🌐 En / عربي</button>
+      <button class="btn campaign-btn" onclick="openCampaignModal()">📢 الحملات الإعلانية</button>
       <button class="btn" onclick="toggleFullScreen()">⛶ ملء الشاشة</button>
-      <button class="btn record-studio-btn" onclick="toggleScreenRecording()" id="recordBtn">🔴 تسجيل وحفظ الفيديو</button>
+      <button class="btn record-studio-btn" onclick="toggleScreenRecording()" id="recordBtn">🔴 تسجيل فيديو</button>
+    </div>
+  </div>
+
+  <!-- نافذة إدارة الحملات الإعلانية المتكاملة -->
+  <div class="modal" id="campaignModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📢 مركز الحملات الإعلانية المتكاملة (Ad Campaigns Hub)</h3>
+        <button class="close-modal" onclick="closeCampaignModal()">✕</button>
+      </div>
+      <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 15px;">اختر المنصة الإعلانية لتوليد خطة إعلانية جاهزة ومخصصة لتطبيق GITI Enterprise ERP 2027:</p>
+      
+      <div style="display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+        <button class="btn" style="background:#1877f2;" onclick="loadCampaign('fb')">Facebook & Instagram</button>
+        <button class="btn" style="background:#0a66c2;" onclick="loadCampaign('li')">LinkedIn B2B</button>
+        <button class="btn" style="background:#000000;" onclick="loadCampaign('tiktok')">TikTok / Reels</button>
+      </div>
+
+      <div id="campaignDetails" style="background: rgba(30, 41, 59, 0.6); padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);">
+        <h4 style="color: #38bdf8; margin-bottom: 8px;">اختر منصة من الأعلى لعرض تفاصيل الحملة...</h4>
+        <p style="font-size: 0.85rem; color: #cbd5e1;">ستحصل على نص الإعلان المستهدف، الجمهور، والميزانية المقترحة لجذب أصحاب الشركات والمحلات.</p>
+      </div>
     </div>
   </div>
 
@@ -431,12 +491,58 @@
     // توليد الباركود
     new QRCode(document.getElementById("finalQrCode"), {
       text: window.location.href,
-      width: 100,
-      height: 100,
+      width: 90,
+      height: 90,
       colorDark: "#000000",
       colorLight: "#ffffff",
       correctLevel: QRCode.CorrectLevel.M
     });
+
+    // التحكم في تأثير الكاميرا والتصوير
+    function changeCameraEffect(effectClass) {
+      const container = document.getElementById('promoViewer');
+      container.className = `video-container ${effectClass}`;
+    }
+
+    // نافذة الحملات الإعلانية
+    function openCampaignModal() {
+      document.getElementById('campaignModal').classList.add('active');
+    }
+    function closeCampaignModal() {
+      document.getElementById('campaignModal').classList.remove('active');
+    }
+
+    const campaignData = {
+      fb: {
+        title: "حملة فيسبوك وإنستجرام (B2C & أصحاب المتاجر)",
+        text: "نص الإعلان: 🧾 هل تعاني من حسابات الدفاتر الورقية وضياع الفواتير؟ نظام GITI ERP 2027 يمنحك فواتير إلكترونية متوافقة مع ضريبة القيمة المضافة، إدارة مخازن، ومتابعة ديون العملاء عبر الواتساب بنقرة واحدة! 🚀 احصل على نسختك الآن.",
+        target: "أصحاب المحلات التجارية، الشركات الصغيرة، المديرين الماليين (عمر 22 - 50 سنة في مصر والخليج).",
+        budget: "ميزانية مقترحة: 150 - 300 جنيه يومياً لزيادة التحويلات والتثبيت."
+      },
+      li: {
+        title: "حملة لينكد إن المهنية (B2B Enterprise)",
+        text: "نص الإعلان: 💼 ارفع كفاءة عملياتك اللوجستية والمالية مع GITI Enterprise ERP 2027. نظام سحابي متكامل مع دعم العمل أوفلاين ومزامنة فورية عبر السحابة. استثمر في أتمتة شركتك اليوم.",
+        target: "المديرون التنفيذيون (CEOs)، رواد الأعمال، ومديرو تقنية المعلومات (IT Managers).",
+        budget: "ميزانية مقترحة: 10$- 25$ يومياً لإعلانات العملاء المحتملين (Lead Generation)."
+      },
+      tiktok: {
+        title: "حملة تيك توك وريلز (فيديو سريع وجذاب)",
+        text: "نص الإعلان: ⚡ في 5 ثوانٍ فقط.. أنشئ فاتورة إلكترونية وارسلها لعميلك على الواتساب! جرب تطبيق GITI ERP 2027 الأسرع والأسهل لإدارة الأنشطة التجاريّة. رابط التحميل في البايو!",
+        target: "أصحاب المشاريع الناشئة، المتاجر الإلكترونية، والمشاريع المنزلية.",
+        budget: "ميزانية مقترحة: 100 جنيه يومياً لزيادة مشاهدات الفيديو والتفاعل."
+      }
+    };
+
+    function loadCampaign(type) {
+      const data = campaignData[type];
+      const box = document.getElementById('campaignDetails');
+      box.innerHTML = `
+        <h4 style="color: #38bdf8; margin-bottom: 8px;">${data.title}</h4>
+        <p style="font-size: 0.9rem; margin-bottom: 8px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px;">${data.text}</p>
+        <p style="font-size: 0.85rem; color: #94a3b8; margin-bottom: 4px;"><strong>🎯 الجمهور المستهدف:</strong> ${data.target}</p>
+        <p style="font-size: 0.85rem; color: #10b981;"><strong>💰 الميزانية:</strong> ${data.budget}</p>
+      `;
+    }
 
     // الموسيقى الخلفية
     let audioCtx = null;
@@ -448,26 +554,19 @@
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') audioCtx.resume();
         
-        const chords = [
-          [261.63, 329.63, 392.00],
-          [220.00, 261.63, 329.63],
-          [174.61, 220.00, 261.63],
-          [196.00, 246.94, 293.66]
-        ];
+        const chords = [[261.63, 329.63, 392.00], [220.00, 261.63, 329.63], [174.61, 220.00, 261.63], [196.00, 246.94, 293.66]];
         let chordIdx = 0;
-
         if (musicInterval) clearInterval(musicInterval);
         musicInterval = setInterval(() => {
           if (!isAudioEnabled || !isPlaying || !audioCtx) return;
           const currentChord = chords[chordIdx];
           chordIdx = (chordIdx + 1) % chords.length;
-
           currentChord.forEach(freq => {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.012, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.01, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
@@ -483,7 +582,7 @@
       if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
     }
 
-    // نظام تسجيل الفيديو المباشر مع مؤقت وحجب عناصر التحكم
+    // نظام تسجيل الفيديو المتوافق مع الهواتف والحواسب مع رسالة تنبيه واضحة في حال القيود
     let mediaRecorder = null;
     let recordedChunks = [];
     let recTimerInterval = null;
@@ -496,6 +595,11 @@
 
       if (!mediaRecorder || mediaRecorder.state === 'inactive') {
         try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+            alert('⚠️ متصفح هاتفك المحمول لا يدعم التسجيل المباشر للشاشة عبر هذه الأداة. يُرجى استخدام متصفح سطح المكتب (Google Chrome/Edge) لتسجيل الفيديو بجودة عالية.');
+            return;
+          }
+
           const stream = await navigator.mediaDevices.getDisplayMedia({ video: { mediaSource: 'screen' }, audio: true });
           recordedChunks = [];
           mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
@@ -510,7 +614,7 @@
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            a.download = `GITI_ERP_Official_Ad_${Date.now()}.webm`;
+            a.download = `GITI_ERP_Ad_${Date.now()}.webm`;
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
@@ -518,8 +622,7 @@
               window.URL.revokeObjectURL(url);
             }, 100);
 
-            // استعادة شكل الواجهة
-            recordBtn.textContent = currentLang === 'ar' ? '🔴 تسجيل وحفظ الفيديو' : '🔴 Record & Save Video';
+            recordBtn.textContent = currentLang === 'ar' ? '🔴 تسجيل فيديو' : '🔴 Record Video';
             recordBtn.classList.remove('recording');
             document.body.classList.remove('clean-recording-mode');
             recBadge.classList.remove('active');
@@ -527,14 +630,11 @@
           };
 
           mediaRecorder.start();
-          
-          // تفعيل وضع التصوير النظيف (إخفاء الأزرار ليكون الفيديو سينمائي بحت)
           document.body.classList.add('clean-recording-mode');
           recBadge.classList.add('active');
-          recordBtn.textContent = currentLang === 'ar' ? '⏹️ إيقاف وحفظ الفيديو' : '⏹️ Stop & Save';
+          recordBtn.textContent = currentLang === 'ar' ? '⏹️ إيقاف وحفظ' : '⏹️ Stop & Save';
           recordBtn.classList.add('recording');
 
-          // بدء مؤقت التسجيل
           recSeconds = 0;
           recTimer.textContent = "REC 00:00";
           recTimerInterval = setInterval(() => {
@@ -544,11 +644,10 @@
             recTimer.textContent = `REC ${mins}:${secs}`;
           }, 1000);
 
-          // إعادة تشغيل العرض من البداية عند بدء التسجيل ليخرج الإعلان كاملاً ومنظماً
           restartPresentation();
 
         } catch (err) {
-          alert(currentLang === 'ar' ? '❌ تعذر بدء التسجيل أو تم إلغاؤه.' : '❌ Recording cancelled or failed.');
+          alert('❌ تم إلغاء التسجيل أو أن المتصفح لا يسمح بالتقاط الشاشة.');
         }
       } else {
         mediaRecorder.stop();
@@ -556,7 +655,6 @@
       }
     }
 
-    // تبديل لغة الإعلان
     function toggleLang() {
       currentLang = currentLang === 'ar' ? 'en' : 'ar';
       document.documentElement.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
@@ -578,15 +676,14 @@
         });
       });
 
-      document.getElementById('prevBtn').textContent = currentLang === 'ar' ? '❮ الشريحة السابقة' : '❮ Prev Slide';
-      document.getElementById('nextBtn').textContent = currentLang === 'ar' ? 'الشريحة التالية ❯' : 'Next Slide ❯';
-      document.getElementById('playPauseBtn').textContent = isPlaying ? (currentLang === 'ar' ? 'إيقاف مؤقت ⏸️' : 'Pause ⏸️️') : (currentLang === 'ar' ? 'تشغيل ▶️' : 'Play ▶️');
+      document.getElementById('prevBtn').textContent = currentLang === 'ar' ? '❮ السابق' : '❮ Prev';
+      document.getElementById('nextBtn').textContent = currentLang === 'ar' ? 'التالي ❯' : 'Next ❯';
+      document.getElementById('playPauseBtn').textContent = isPlaying ? (currentLang === 'ar' ? 'إيقاف مؤقت ⏸️' : 'Pause ⏸') : (currentLang === 'ar' ? 'تشغيل ▶️' : 'Play ▶️');
       document.getElementById('audioText').textContent = isAudioEnabled ? (currentLang === 'ar' ? 'الصوت: مفعل' : 'Audio: On') : (currentLang === 'ar' ? 'الصوت: صامت' : 'Audio: Muted');
 
       speakCurrentSlide();
     }
 
-    // إنشاء نقاط التنقل
     slides.forEach((_, index) => {
       const dot = document.createElement('div');
       dot.className = `dot ${index === 0 ? 'active' : ''}`;
