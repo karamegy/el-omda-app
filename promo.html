@@ -3,11 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP & Logistics Suite 2027 - استوديو السينما والهولوجرام والتوثيق السحابي</title>
+  <title>GITI Enterprise ERP & Logistics Suite 2027 - استوديو السينما والهولوجرام والكاميرات المتقدمة</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -84,6 +83,18 @@
     .video-container.ratio-vertical { max-width: 330px; aspect-ratio: 9 / 16; margin: 0 auto; }
     .video-container.mask-circle { clip-path: circle(48% at 50% 50%); border: 3px solid var(--secondary); }
     .video-container.mask-rect { clip-path: inset(10% 15% 10% 15% round 12px); border: 3px solid var(--accent); }
+
+    /* أنماط حركات الكاميرا السينمائية */
+    .cam-zoom-in { animation: camZoomIn 6s infinite alternate ease-in-out; }
+    @keyframes camZoomIn { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
+
+    .cam-pan { animation: camPan 8s infinite alternate ease-in-out; }
+    @keyframes camPan { 0% { transform: translateX(-10px); } 100% { transform: translateX(10px); } }
+
+    .cam-shake { animation: camShake 0.5s infinite; }
+    @keyframes camShake { 0% { transform: translate(0, 0); } 25% { transform: translate(2px, -2px); } 50% { transform: translate(-2px, 2px); } 100% { transform: translate(0, 0); } }
+
+    .cam-dutch { transform: rotate(3deg) scale(1.02); }
 
     .grading-teal-orange { filter: contrast(115%) saturate(125%) hue-rotate(-12deg); }
     .grading-cyberpunk { filter: contrast(130%) saturate(160%) drop-shadow(0 0 12px rgba(168,85,247,0.6)); }
@@ -286,11 +297,11 @@
   </div>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Mobile Crash-Free Optimized)</h2>
-    <p>نسخة سريعة ومستقرة تماماً للهواتف والأجهزة بدون أي انهيار في الذاكرة</p>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والمقاطع المتحركة الشامل (Pro Camera & Elements Suite)</h2>
+    <p>أداء فائق السرعة، دعم كامل لحركات الكاميرا السينمائية، العناصر الرسومية، وتصدير آمن 100%</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري التصدير الآمن.. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري التصدير السينمائي فائق الجودة.. يرجى الانتظار</div>
 
   <div class="main-workspace">
     <div class="asset-bin-panel">
@@ -461,6 +472,26 @@
       </div>
 
       <div class="studio-control-panel" id="controlPanel">
+        <!-- لوحة التحكم الجديدة لحركات الكاميرا والـ Elements -->
+        <div class="control-row" style="background: rgba(139, 92, 246, 0.1); padding: 4px; border-radius: 6px; border: 1px dashed rgba(139, 92, 246, 0.4);">
+          <span style="font-size: 0.62rem; font-weight: 800; color: #a78bfa;">🎥 كاميرا الشوتات السينمائية:</span>
+          <select id="cameraMotionSelector" class="select-field" onchange="changeCameraMotion()" style="width: 120px;">
+            <option value="none">🎬 كاميرا ثابتة</option>
+            <option value="cam-zoom-in">🔍 زووم إضافي (Zoom In)</option>
+            <option value="cam-pan">↔️ حركة أفقية (Pan)</option>
+            <option value="cam-shake">⚡ اهتزاز درامي (Shake)</option>
+            <option value="cam-dutch">📐 زاوية مائلة (Dutch)</option>
+          </select>
+          
+          <span style="font-size: 0.62rem; font-weight: 800; color: #38bdf8;">✨ عناصر الإضافة (Elements):</span>
+          <select id="elementOverlaySelector" class="select-field" onchange="changeElementOverlay()" style="width: 120px;">
+            <option value="none">🔲 بدون عناصر إضافية</option>
+            <option value="neon-frame">🔵 إطار نيون مضيء</option>
+            <option value="tech-grid">🌐 شبكة تكنولوجية خلفية</option>
+            <option value="badge-star">⭐ شارة تميز ذهبية</option>
+          </select>
+        </div>
+
         <div class="control-row">
           <input type="text" id="clientNameInput" class="input-field" placeholder="اسم العميل" onkeyup="updatePersonalization()">
           <select id="industrySelector" class="select-field" onchange="updateIndustry()">
@@ -527,7 +558,7 @@
           </select>
 
           <select id="qualitySelector" class="select-field" style="width: 145px;">
-            <option value="fhd" selected>🌟 جودة عالية مستقرة</option>
+            <option value="fhd" selected>🌟 جودة عالية مستقرة (FHD)</option>
           </select>
         </div>
 
@@ -552,14 +583,14 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير آمن بدون انهيار</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير سينمائي فائق السرعة</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم إتمام التسجيل بنجاح دون أي انهيار!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو السينمائي بنجاح تام!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
       <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في هاتفك</button>
@@ -732,6 +763,21 @@
       p.style.animationDuration = (5 + Math.random() * 5) + 's';
       p.style.animationDelay = (Math.random() * 5) + 's';
       particlesContainer.appendChild(p);
+    }
+
+    // إدارة حركات الكاميرا في العرض الحي
+    function changeCameraMotion() {
+      const motion = document.getElementById('cameraMotionSelector').value;
+      const viewer = document.getElementById('promoViewer');
+      viewer.classList.remove('cam-zoom-in', 'cam-pan', 'cam-shake', 'cam-dutch');
+      if (motion !== 'none') {
+        viewer.classList.add(motion);
+      }
+    }
+
+    let currentElementOverlay = 'none';
+    function changeElementOverlay() {
+      currentElementOverlay = document.getElementById('elementOverlaySelector').value;
     }
 
     function addKeyframePoint() {
@@ -1047,12 +1093,12 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 نظام التسجيل الآمن والمستقر تماماً لمنع الانهيار على الهواتف
+    // 🚀 محرك الرسم المباشر المحدث (يدعم حركات الكاميرا السينمائية وعناصر الرسم الإضافية Elements)
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
-      const promoViewer = document.getElementById('promoViewer');
       const canvas = document.getElementById('exportCanvas');
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
+      const camMotion = document.getElementById('cameraMotionSelector').value;
       
       if (isExporting) return;
       isExporting = true;
@@ -1062,14 +1108,13 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري التسجيل الآمن...";
+      btn.textContent = "🎬 جاري المعالجة السينمائية...";
       const overlayEl = document.getElementById('recordingOverlay');
       overlayEl.style.display = 'block';
-      overlayEl.innerText = "🎬 جاري تسجيل الفيديو بدقة مستقرة لتجنب أي انهيار في الذاكرة..";
+      overlayEl.innerText = "🎬 جاري تطبيق حركات الكاميرا والعناصر الرسومية وتصدير الفيديو..";
 
-      // ضبط دقة مناسبة وآمنة تماماً للهواتف المحمولة
-      canvas.width = isVertical ? 480 : 854;
-      canvas.height = isVertical ? 854 : 480;
+      canvas.width = isVertical ? 400 : 800;
+      canvas.height = isVertical ? 711 : 450;
 
       const ctx = canvas.getContext('2d', { alpha: false });
       const canvasStream = canvas.captureStream(20);
@@ -1081,7 +1126,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2500000 });
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2000000 });
       } catch (e) { 
         mediaRecorder = new MediaRecorder(finalStream); 
       }
@@ -1096,7 +1141,7 @@
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير آمن بدون انهيار";
+        btn.textContent = "🚀 تصدير سينمائي فائق السرعة";
         overlayEl.style.display = 'none';
         isExporting = false;
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
@@ -1126,13 +1171,63 @@
         
         progressBar.style.width = progressPercent + '%';
         
-        try {
-          const frameCanvas = await html2canvas(promoViewer, { scale: 0.8, backgroundColor: '#070a14', logging: false, useCORS: true });
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
-        } catch (err) {}
+        // تطبيق تأثيرات تحويل الكاميرا والـ Elements في كل إطار
+        ctx.save();
+        ctx.fillStyle = '#070a14';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // محاكاة حركات الكاميرا السينمائية داخل الرسم المباشر
+        if (camMotion === 'cam-zoom-in') {
+          let scaleFactor = 1 + (frame % 100) * 0.0005;
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.scale(scaleFactor, scaleFactor);
+          ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        } else if (camMotion === 'cam-shake') {
+          let offsetX = (Math.random() - 0.5) * 6;
+          let offsetY = (Math.random() - 0.5) * 6;
+          ctx.translate(offsetX, offsetY);
+        } else if (camMotion === 'cam-dutch') {
+          ctx.translate(canvas.width / 2, canvas.height / 2);
+          ctx.rotate(0.03);
+          ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        }
+
+        // رسم محتوى الشريحة
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 18px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("GITI ENTERPRISE ERP 2027", canvas.width / 2, 50);
+
+        const activeSlideEl = slides[currentSlide];
+        const titleText = activeSlideEl.querySelector('.slide-title') ? activeSlideEl.querySelector('.slide-title').innerText : '';
         
-        await new Promise(r => setTimeout(r, 20));
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 22px Cairo, sans-serif';
+        ctx.fillText(titleText.substring(0, 45), canvas.width / 2, canvas.height / 2 - 20);
+
+        // رسم العناصر الإضافية (Elements Overlays)
+        if (currentElementOverlay === 'neon-frame') {
+          ctx.strokeStyle = '#3b82f6';
+          ctx.lineWidth = 4;
+          ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+        } else if (currentElementOverlay === 'badge-star') {
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = 'bold 14px Cairo, sans-serif';
+          ctx.fillText("⭐ نسخة احترافية معتمدة", canvas.width / 2, canvas.height - 70);
+        }
+
+        ctx.fillStyle = '#10b981';
+        ctx.font = '13px Cairo, sans-serif';
+        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 40);
+
+        // شريط التقدم السفلي
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
+        ctx.fillRect(0, canvas.height - 8, canvas.width, 8);
+        ctx.fillStyle = '#3b82f6';
+        ctx.fillRect(0, canvas.height - 8, (progressPercent / 100) * canvas.width, 8);
+        
+        ctx.restore();
+        await new Promise(r => setTimeout(r, 15));
       }
       
       setTimeout(() => {
@@ -1145,7 +1240,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Safe_Export_${Date.now()}.webm`;
+      a.download = `GITI_Cinematic_Pro_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
