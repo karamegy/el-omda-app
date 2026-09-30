@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو الإعلان المطور (نسخة تسجيل الشاشة الاحترافية)</title>
+  <title>GITI Enterprise ERP 2027 - استوديو الهاتف الذكي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -38,29 +39,14 @@
     .studio-header h2 { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .studio-header p { font-size: 0.78rem; color: #64748b; }
 
-    /* الحاوية الأساسية للعرض */
     .video-container {
       width: 100%; max-width: 900px; height: 460px; background: #0f172a; 
       border: 2px solid rgba(59, 130, 246, 0.35); border-radius: 20px; 
       position: relative; display: flex; align-items: center; justify-content: center; 
       text-align: center; padding: 30px; z-index: 1; overflow: hidden;
       box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
-      transition: all 0.3s ease;
     }
 
-    /* تنسيقات الشاشة الكاملة أثناء التسجيل للحصول على أعلى دقة */
-    .video-container.recording-mode {
-      position: fixed;
-      top: 0; left: 0; width: 100vw; height: 100vh;
-      max-width: none; border-radius: 0; border: none; z-index: 9999;
-    }
-    /* تكبير العناصر قليلاً عند الشاشة الكاملة لتناسب الدقة العالية */
-    .video-container.recording-mode .slide-title { font-size: 3rem; }
-    .video-container.recording-mode .slide-desc { font-size: 1.5rem; max-width: 1200px; }
-    .video-container.recording-mode .feature-item { font-size: 1.2rem; padding: 15px 25px; }
-    .video-container.recording-mode .default-badge { font-size: 1.2rem; }
-
-    /* مؤثرات الإضاءة الديناميكية */
     .dynamic-light-1, .dynamic-light-2 {
       position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.6;
       animation: moveLights 10s infinite alternate ease-in-out;
@@ -85,61 +71,61 @@
     @keyframes popIn { 0% { opacity: 0; transform: scale(0.8) translateY(15px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
     @keyframes slideUp { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: translateY(0); } }
 
-    .custom-logo-img { max-height: 80px; margin-bottom: 8px; border-radius: 8px; display: none; }
+    .custom-logo-img { max-height: 70px; margin-bottom: 8px; border-radius: 8px; display: none; }
     .custom-logo-img.active { display: block; }
     .default-badge.hidden { display: none !important; }
-    .default-badge { display: inline-block; font-size: 0.85rem; font-weight: 900; margin-bottom: 6px; letter-spacing: 2px; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); padding: 6px 16px; border-radius: 50px; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
-    h1 { font-size: 1.8rem; font-weight: 900; margin-bottom: 12px; color: #f8fafc; line-height: 1.4; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
-    p { font-size: 1rem; color: #cbd5e1; line-height: 1.6; margin-bottom: 15px; max-width: 800px; background: rgba(0,0,0,0.5); padding: 8px 15px; border-radius: 10px; }
+    .default-badge { display: inline-block; font-size: 0.8rem; font-weight: 900; margin-bottom: 6px; letter-spacing: 2px; text-transform: uppercase; background: rgba(59, 130, 246, 0.15); padding: 5px 14px; border-radius: 50px; border: 1px solid rgba(59, 130, 246, 0.4); color: #60a5fa; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+    h1 { font-size: 1.5rem; font-weight: 900; margin-bottom: 8px; color: #f8fafc; line-height: 1.3; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+    p { font-size: 0.9rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 10px; max-width: 750px; background: rgba(0,0,0,0.5); padding: 6px 12px; border-radius: 8px; }
 
-    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 15px; width: 100%; max-width: 800px; }
-    .feature-item { background: rgba(30, 41, 59, 0.85); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; text-align: right; backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; width: 100%; max-width: 750px; }
+    .feature-item { background: rgba(30, 41, 59, 0.85); padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.3); font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; gap: 8px; text-align: right; backdrop-filter: blur(5px); box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
 
-    .cta-content-box { display: flex; align-items: center; justify-content: center; gap: 30px; margin-top: 15px; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
-    .qrcode-box { background: #ffffff; padding: 10px; border-radius: 10px; box-shadow: 0 0 30px rgba(255,255,255,0.4); }
+    .cta-content-box { display: flex; align-items: center; justify-content: center; gap: 20px; margin-top: 10px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+    .qrcode-box { background: #ffffff; padding: 8px; border-radius: 8px; box-shadow: 0 0 20px rgba(255,255,255,0.3); }
 
-    .dots-container { position: absolute; bottom: 15px; display: flex; gap: 8px; z-index: 3; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: 0.3s; }
-    .dot.active { width: 25px; border-radius: 4px; background: #3b82f6; box-shadow: 0 0 10px #3b82f6; }
-    .progress-bar { position: absolute; bottom: 0; left: 0; height: 5px; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; transition: width 0.1s linear; z-index: 2; }
+    .dots-container { position: absolute; bottom: 12px; display: flex; gap: 6px; z-index: 3; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: 0.3s; }
+    .dot.active { width: 20px; border-radius: 4px; background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
+    .progress-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; transition: width 0.1s linear; z-index: 2; }
 
-    .studio-control-panel { margin-top: 15px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 15px; display: flex; flex-direction: column; gap: 12px; max-width: 900px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 2; }
-    .control-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
-    .btn { background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid rgba(59, 130, 246, 0.35); padding: 8px 15px; border-radius: 8px; font-weight: 700; font-size: 0.85rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 5px; outline: none; }
+    .studio-control-panel { margin-top: 15px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 900px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 2; }
+    .control-row { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .btn { background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid rgba(59, 130, 246, 0.35); padding: 7px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 5px; outline: none; }
     .btn:hover { background: #3b82f6; border-color: #3b82f6; }
     
-    .input-field, .select-field { background: #0f172a; border: 1px solid rgba(59, 130, 246, 0.5); color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; width: 200px; }
+    .input-field, .select-field { background: #0f172a; border: 1px solid rgba(59, 130, 246, 0.5); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; width: 170px; }
     .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; }
     .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
 
     .voice-btn { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; }
     .voice-btn.muted { background: rgba(30, 41, 59, 0.9); border-color: rgba(255,255,255,0.2); color: #94a3b8; }
     
-    /* زر التصدير المميز */
-    .export-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; font-weight: 800; font-size: 0.95rem; padding: 10px 20px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-    .export-btn:hover { background: linear-gradient(135deg, #f87171, #ef4444); transform: translateY(-2px); }
+    .export-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; font-weight: 800; font-size: 0.9rem; padding: 8px 16px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
+    .export-btn:hover { background: linear-gradient(135deg, #f87171, #ef4444); }
     .export-btn.loading { background: #64748b; cursor: not-allowed; animation: pulse 1.5s infinite; pointer-events: none; }
     
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 
-    /* تعليمات التسجيل التي تظهر للمستخدم */
     #recordingOverlay {
-        display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-        background: rgba(239, 68, 68, 0.9); color: white; padding: 10px 20px; border-radius: 30px;
-        font-weight: bold; font-size: 1.2rem; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        display: none; position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+        background: rgba(239, 68, 68, 0.95); color: white; padding: 8px 16px; border-radius: 20px;
+        font-weight: bold; font-size: 1rem; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         animation: blinkRed 1.5s infinite;
     }
-    @keyframes blinkRed { 0% { background: rgba(239, 68, 68, 0.9); } 50% { background: rgba(185, 28, 28, 0.9); } 100% { background: rgba(239, 68, 68, 0.9); } }
+    @keyframes blinkRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    #exportCanvas { display: none; }
   </style>
 </head>
 <body>
 
   <div class="studio-header">
-    <h2>GITI ERP 2027 - استوديو التصدير السينمائي (Native Screen Capture)</h2>
-    <p>أعلى جودة ممكنة 4K/8K (حسب شاشتك) مع دمج كامل للصوت السحابي والمؤثرات</p>
+    <h2>GITI ERP 2027 - استوديو الهاتف الذكي</h2>
+    <p>تسجيل سينمائي داخلي متطور مخصص للهواتف المحمولة</p>
   </div>
 
-  <div id="recordingOverlay">🔴 جاري تسجيل الإعلان... يرجى عدم لمس الماوس</div>
+  <div id="recordingOverlay">🔴 جاري تسجيل الفيديو من هاتفك... يرجى الانتظار</div>
 
   <div class="video-container" id="promoViewer">
     <div class="dynamic-light-1"></div>
@@ -220,7 +206,7 @@
   </div>
 
   <div class="studio-control-panel" id="controlPanel">
-    <div class="control-row" style="background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px;">
+    <div class="control-row" style="background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px;">
       <input type="text" id="clientNameInput" class="input-field" placeholder="اسم العميل (مثال: شركة النور)" onkeyup="updatePersonalization()">
       <select id="industrySelector" class="select-field" onchange="updateIndustry()">
         <option value="general">عام (مخازن وفواتير)</option>
@@ -234,25 +220,26 @@
     </div>
 
     <div class="control-row">
-      <select id="bgMusicSelector" class="select-field" style="width: 180px;" onchange="changeMusic()">
+      <select id="bgMusicSelector" class="select-field" style="width: 170px;" onchange="changeMusic()">
         <option value="none">بدون موسيقى</option>
         <option value="corporate" selected>🎵 موسيقى هادئة (Corporate)</option>
       </select>
       <button class="btn voice-btn" id="voiceToggleBtn" onclick="toggleVoice()">🔊 المعلق الصوتي: مفعل</button>
     </div>
 
-    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px;">
+    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 10px;">
       <button class="btn" onclick="prevSlide()">❮ السابق</button>
       <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
       <button class="btn" onclick="nextSlide()">التالي ❯</button>
       <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
       
-      <!-- زر التصدير الاحترافي الجديد -->
-      <button class="btn export-btn" id="exportVideoBtn" onclick="startProfessionalRecording()">🎥 تصدير فيديو سينمائي (أعلى جودة)</button>
+      <!-- زر التصدير الذكي للهاتف -->
+      <button class="btn export-btn" id="exportVideoBtn" onclick="startMobileRecording()">🎥 تصدير فيديو (جوال)</button>
     </div>
   </div>
 
-  <!-- الموسيقى -->
+  <canvas id="exportCanvas"></canvas>
+
   <audio id="musicCorporate" loop crossorigin="anonymous"><source src="https://assets.mixkit.co/music/preview/mixkit-corporate-technology-113.mp3" type="audio/mpeg"></audio>
 
   <script>
@@ -264,15 +251,27 @@
     let isVoiceEnabled = true;
     let activeMusic = document.getElementById('musicCorporate'); 
     activeMusic.volume = 0.2;
-    const slideTime = 7000; // وقت كل شريحة
+    const slideTime = 7000;
     let startTime = Date.now();
-    let autoPlayInterval; // للتحكم بمرور الوقت
+    let autoPlayInterval;
     let isRecordingSession = false;
 
-    // توليد الباركود
-    new QRCode(document.getElementById("finalQrCode"), { text: window.location.href, width: 100, height: 100, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    // إعداد الـ AudioContext لدمج الصوت في التسجيل الداخلي للجوال
+    let audioCtx = null;
+    let dest = null;
+    let sourceNode = null;
 
-    // إنشاء النقاط السفلية
+    function initAudioContext() {
+      if(audioCtx) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      dest = audioCtx.createMediaStreamDestination();
+      sourceNode = audioCtx.createMediaElementSource(activeMusic);
+      sourceNode.connect(audioCtx.destination);
+      sourceNode.connect(dest);
+    }
+
+    new QRCode(document.getElementById("finalQrCode"), { text: window.location.href, width: 80, height: 80, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+
     slides.forEach((_, index) => {
       const dot = document.createElement('div');
       dot.className = `dot ${index === 0 ? 'active' : ''}`;
@@ -327,6 +326,7 @@
       const type = document.getElementById('bgMusicSelector').value;
       if (type !== 'none') {
         activeMusic = document.getElementById('musicCorporate');
+        if(!audioCtx) initAudioContext();
         activeMusic.volume = 0.2;
         if(isPlaying) activeMusic.play().catch(e=>{});
       } else { activeMusic = null; }
@@ -369,8 +369,7 @@
         slides[currentSlide].classList.add('active');
         readCurrentSlide();
         if(currentSlide === slides.length - 1) {
-          // إطلاق الاحتفالات في الشريحة الأخيرة، وجعلها تظهر فوق كل شيء في وضع الشاشة الكاملة
-          confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 10000 });
+          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 10000 });
         }
       }, 50);
       updateDots();
@@ -392,6 +391,8 @@
     function togglePlay() {
       isPlaying = !isPlaying;
       document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️' : 'تشغيل ▶️';
+      if(!audioCtx) initAudioContext();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       
       if (isPlaying) {
         startTime = Date.now() - (parseFloat(progressBar.style.width) / 100 * slideTime);
@@ -405,50 +406,57 @@
       }
     }
 
-    // بدء التشغيل التلقائي
     autoPlayInterval = setInterval(updateProgress, 50);
 
+    // تفاعل أول للبدء الصوتي
+    document.body.addEventListener('click', () => {
+      if(!audioCtx) {
+        initAudioContext();
+        if(isPlaying && activeMusic) activeMusic.play().catch(e=>{});
+      }
+    }, {once:true});
+
     // =========================================================================
-    // التصدير الاحترافي عبر MediaDevices.getDisplayMedia (أعلى جودة ممكنة)
+    // نظام التسجيل الداخلي المخصص للهواتف المحمولة (Mobile Internal Recorder)
     // =========================================================================
-    async function startProfessionalRecording() {
+    async function startMobileRecording() {
       const btn = document.getElementById('exportVideoBtn');
+      const promoViewer = document.getElementById('promoViewer');
+      const canvas = document.getElementById('exportCanvas');
+      
       if (btn.classList.contains('loading')) return;
 
-      alert("تعليمات هامة:\n1. ستظهر لك نافذة تطلب مشاركة الشاشة.\n2. اختر (علامة التبويب هذه - This Tab).\n3. تأكد من تفعيل خيار (مشاركة الصوت - Share Audio) أسفل النافذة.\n4. اضغط مشاركة وسيبدأ التسجيل تلقائياً بأعلى دقة.");
+      if(!audioCtx) initAudioContext();
+      if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
 
-      let stream;
-      try {
-        // طلب التقاط الشاشة مع الصوت الخاص بالنظام/المتصفح
-        stream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            displaySurface: "browser",
-            frameRate: { ideal: 60, max: 60 },
-            width: { ideal: 3840 }, // طلب دقة 4K إذا أمكن
-            height: { ideal: 2160 }
-          },
-          audio: true // هذا سيلتقط الموسيقى وصوت الـ SpeechSynthesis معاً!
-        });
-      } catch (err) {
-        console.error("تم إلغاء التسجيل أو حدث خطأ: ", err);
-        return;
-      }
-
-      // إعداد واجهة التسجيل وتكبير الشاشة
       isRecordingSession = true;
       btn.classList.add('loading');
-      btn.textContent = "جاري التسجيل... لا تغلق الصفحة";
+      btn.textContent = "⏳ جاري توليد الفيديو عبر هاتفك...";
       document.getElementById('recordingOverlay').style.display = 'block';
-      document.getElementById('controlPanel').style.display = 'none'; // إخفاء لوحة التحكم أثناء التسجيل
-      
-      const viewer = document.getElementById('promoViewer');
-      viewer.classList.add('recording-mode'); // تفعيل وضع الشاشة الكاملة للعرض
-      
-      // التأكد من أن التسجيل عالي الجودة بـ Bitrate مرتفع جداً (8 Mbps)
-      const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 8000000 };
+      document.getElementById('controlPanel').style.display = 'none';
+
+      // ضبط دقة الكانفاس لتكون واضحة ومناسبة لمعالجة الجوال (HD 1280x720)
+      canvas.width = 1280;
+      canvas.height = 720;
+      const ctx = canvas.getContext('2d');
+
+      const canvasStream = canvas.captureStream(30);
+      let finalStream;
+
+      if (dest && dest.stream.getAudioTracks().length > 0) {
+        const audioTrack = dest.stream.getAudioTracks()[0];
+        finalStream = new MediaStream([...canvasStream.getVideoTracks(), audioTrack]);
+      } else {
+        finalStream = canvasStream;
+      }
+
+      const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 2500000 };
       let mediaRecorder;
-      try { mediaRecorder = new MediaRecorder(stream, options); } 
-      catch (e) { mediaRecorder = new MediaRecorder(stream); }
+      try {
+        mediaRecorder = new MediaRecorder(finalStream, options);
+      } catch (e) {
+        mediaRecorder = new MediaRecorder(finalStream);
+      }
 
       const chunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
@@ -456,46 +464,73 @@
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = `GITI_VIP_Cinematic_${Date.now()}.webm`; document.body.appendChild(a); a.click();
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `GITI_VIP_Mobile_${Date.now()}.webm`;
+        document.body.appendChild(a);
+        a.click();
         
-        // إعادة الواجهة لطبيعتها
-        setTimeout(() => { 
-          document.body.removeChild(a); window.URL.revokeObjectURL(url);
-          btn.classList.remove('loading'); btn.textContent = "🎥 تصدير فيديو سينمائي (أعلى جودة)";
+        setTimeout(() => {
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          btn.classList.remove('loading');
+          btn.textContent = "🎥 تصدير فيديو (جوال)";
           document.getElementById('recordingOverlay').style.display = 'none';
           document.getElementById('controlPanel').style.display = 'flex';
-          viewer.classList.remove('recording-mode');
           isRecordingSession = false;
+          cancelAnimationFrame(animationId);
         }, 100);
       };
 
-      // ربط إيقاف مشاركة الشاشة من قبل المستخدم بإيقاف التسجيل
-      stream.getVideoTracks()[0].onended = () => {
-        if(mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      mediaRecorder.start();
+
+      let isRecording = true;
+      let animationId;
+
+      const recordFrames = async () => {
+        if (!isRecording) return;
+        try {
+          const frameCanvas = await html2canvas(promoViewer, {
+            scale: 1.25,
+            backgroundColor: '#0f172a',
+            logging: false,
+            useCORS: true
+          });
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+        } catch (err) {
+          console.error("Frame capture error:", err);
+        }
+        if (isRecording) {
+          animationId = requestAnimationFrame(recordFrames);
+        }
       };
 
-      // بدء العرض من البداية وبدء التسجيل
-      isPlaying = false; // إيقاف العرض العادي
-      clearInterval(autoPlayInterval); // إيقاف المؤقت القديم
-      
+      // إعادة تعيين العرض من البداية وبدء الصوت والموسيقى
+      isPlaying = false;
+      clearInterval(autoPlayInterval);
       showSlide(0);
-      if(activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e=>{}); }
       
-      mediaRecorder.start();
-      
-      // محاكاة التشغيل والتنقل التلقائي الخاص بالتسجيل
+      if (activeMusic) {
+        activeMusic.currentTime = 0;
+        activeMusic.play().catch(e => {});
+      }
+
+      recordFrames();
+
+      // التنقل التلقائي بين الشرائح أثناء التسجيل الداخلي (7 ثوانٍ لكل شريحة)
+      const exportSlideTime = 7000;
       let currentRecSlide = 0;
-      const exportSlideTime = 7000; // 7 ثواني لكل شريحة لضمان القراءة بهدوء
       
       const recInterval = setInterval(() => {
         currentRecSlide++;
         if (currentRecSlide >= slides.length) {
           clearInterval(recInterval);
+          isRecording = false;
           setTimeout(() => {
-            // إيقاف التسجيل وإنهاء الـ Stream
-            if(mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            stream.getTracks().forEach(track => track.stop());
-          }, 3000); // ترك 3 ثواني في الشريحة الأخيرة لرؤية الاحتفالات
+            if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+          }, 1500);
         } else {
           nextSlide();
         }
