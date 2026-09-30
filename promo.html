@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render Ultimate)</title>
+  <title>GITI Enterprise ERP & Logistics Suite 2027 - استوديو السينما والهولوجرام والتوثيق السحابي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -32,9 +33,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       overflow-x: hidden;
-      padding: 8px;
+      padding: 10px;
       position: relative;
     }
 
@@ -43,7 +43,16 @@
       background: var(--bg-glow); filter: blur(130px); border-radius: 50%; z-index: 0; transition: 0.5s;
     }
 
-    .studio-header { margin-bottom: 2px; text-align: center; z-index: 2; }
+    /* شريط تسجيل الدخول عبر فايربيس المدمج في الهيدر */
+    .auth-top-bar {
+      width: 100%; max-width: 980px; display: flex; justify-content: space-between; align-items: center;
+      background: rgba(11, 15, 25, 0.95); border: 1px solid var(--border-color); padding: 8px 14px;
+      border-radius: 10px; margin-bottom: 8px; z-index: 10; font-size: 0.72rem; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .auth-user-info { display: flex; align-items: center; gap: 8px; }
+    .auth-user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+
+    .studio-header { margin-bottom: 6px; text-align: center; z-index: 2; }
     .studio-header h2 { font-size: 1.05rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 18px var(--bg-glow); }
     .studio-header p { font-size: 0.65rem; color: #94a3b8; }
 
@@ -264,9 +273,24 @@
 </head>
 <body>
 
+  <!-- شريط تسجيل الدخول والمزامنة عبر Firebase الحقيقي -->
+  <div class="auth-top-bar" id="authTopBar">
+    <div class="auth-user-info" id="authUserInfo">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="auth-user-avatar" id="topUserAvatar" alt="جوجل">
+      <div>
+        <span id="topUserName" style="font-weight: 700; color: #fde047;">غير مسجل الدخول</span>
+        <span id="topUserEmail" style="font-size: 0.6rem; color: #94a3b8; display: block;">سجل بحساب جوجل لتأكيد المزامنة والسحب السحابي</span>
+      </div>
+    </div>
+    <div>
+      <button class="btn" id="authLoginBtn" onclick="loginWithGoogle()" style="background:#ea4335; border:none; padding:5px 12px;"><i class="fa-brands fa-google"></i> تسجيل الدخول بجوجل</button>
+      <button class="btn hidden" id="authLogoutBtn" onclick="customerLogout()" style="background:#dc2626; border:none; padding:5px 12px;"><i class="fa-solid fa-right-from-bracket"></i> خروج</button>
+    </div>
+  </div>
+
   <div class="studio-header">
     <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render Ultimate)</h2>
-    <p>كل المميزات والأقسام المتقدمة مدمجة: محرر بياني، VFX، تعليق ذكي، حاسبة ROI، وتتبع أسطول مباشر</p>
+    <p>كل المميزات والأقسام المتقدمة مدمجة مع ربط Firebase وسجلات الأسطول واللوجستيات المباشرة</p>
   </div>
 
   <div id="recordingOverlay">🎬 جاري التصدير الاحترافي فائق النقاء (Pro-Render).. يرجى الانتظار</div>
@@ -394,7 +418,7 @@
           </div>
         </div>
 
-        <!-- شريحة حاسبة العائد على الاستثمار ROI المضافة حديثاً -->
+        <!-- شريحة حاسبة العائد على الاستثمار ROI -->
         <div class="slide">
           <div class="default-badge">📈 حاسبة العائد المالي (ROI)</div>
           <h1 class="slide-title">توقع حجم أرباحك السنوية مع نظام GITI</h1>
@@ -405,7 +429,7 @@
           </div>
         </div>
 
-        <!-- شريحة تتبع الأسطول المباشر المضافة حديثاً -->
+        <!-- شريحة تتبع الأسطول المباشر -->
         <div class="slide">
           <div class="default-badge">🚚 وحدة تتبع الأسطول المباشر</div>
           <h1 class="slide-title">مراقبة حية لخطوط سير مركبات شركتك</h1>
@@ -474,7 +498,7 @@
         </div>
 
         <div class="mixer-drawer">
-          <span>🎚️ المكسر الصوتي وأستوديو الذكاء:</span>
+          <span>🎚️️ المكسر الصوتي وأستوديو الذكاء:</span>
           <div class="mixer-slider">🎵 موسيقى: <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.2" oninput="updateMixer()"></div>
           <div class="mixer-slider">🗣️ المعلق: <input type="range" id="voiceRate" min="0.7" max="1.3" step="0.1" value="0.9" oninput="updateMixer()"></div>
           <div class="mixer-slider">🔊 المؤثرات: <input type="range" id="sfxVol" min="0" max="1" step="0.1" value="0.15" oninput="updateMixer()"></div>
@@ -555,6 +579,135 @@
 
   <canvas id="exportCanvas"></canvas>
   <audio id="musicCorporate" loop crossorigin="anonymous"><source src="https://assets.mixkit.co/music/preview/mixkit-corporate-technology-113.mp3" type="audio/mpeg"></audio>
+
+  <!-- تهيئة Firebase ومزامنة الحسابات -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
+        authDomain: "omda-a750f.firebaseapp.com",
+        projectId: "omda-a750f",
+        storageBucket: "omda-a750f.firebasestorage.app",
+        messagingSenderId: "1078714497381",
+        appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
+        measurementId: "G-P763CFS7GG"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    window.loginWithGoogle = async function() {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            const email = user.email.toLowerCase();
+            const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+            let userRole = 'customer';
+            let existingPhoto = user.photoURL || 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
+            
+            try {
+                const userDoc = await getDoc(doc(db, "users", docId));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    userRole = data.role || 'customer';
+                    if(data.photoURL) existingPhoto = data.photoURL;
+                } else if (email === 'haretg@gmail.com' || email === 'admin@fleet.com') {
+                    userRole = 'admin';
+                }
+            } catch(e) {}
+
+            const userObj = {
+                name: user.displayName || 'مستخدم جوجل الحقيقي',
+                email: email,
+                phone: user.phoneNumber || 'غير متوفر',
+                role: userRole,
+                photoURL: existingPhoto,
+                provider: 'Google Auth',
+                date: new Date().toLocaleString('ar-EG')
+            };
+            
+            await setDoc(doc(db, "users", docId), userObj, { merge: true });
+            localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
+            localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
+
+            updateAuthUI(userObj);
+            alert("✨ تم تسجيل الدخول بنجاح عبر حساب جوجل ومزامنة البيانات مع قاعدة بيانات Firebase!");
+        } catch (error) {
+            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+        }
+    };
+
+    window.customerLogout = async function() {
+        try {
+            await signOut(auth);
+            localStorage.removeItem('fleet_logged_user');
+            localStorage.removeItem('fleet_session_user');
+            updateAuthUI(null);
+            alert('تم تسجيل الخروج بنجاح.');
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    function updateAuthUI(userObj) {
+        const nameEl = document.getElementById('topUserName');
+        const emailEl = document.getElementById('topUserEmail');
+        const avatarEl = document.getElementById('topUserAvatar');
+        const loginBtn = document.getElementById('authLoginBtn');
+        const logoutBtn = document.getElementById('authLogoutBtn');
+
+        if(userObj) {
+            if(nameEl) nameEl.innerText = userObj.name;
+            if(emailEl) emailEl.innerText = userObj.email;
+            if(avatarEl && userObj.photoURL) avatarEl.src = userObj.photoURL;
+            if(loginBtn) loginBtn.classList.add('hidden');
+            if(logoutBtn) logoutBtn.classList.remove('hidden');
+        } else {
+            if(nameEl) nameEl.innerText = 'غير مسجل الدخول';
+            if(emailEl) emailEl.innerText = 'سجل بحساب جوجل لتأكيد المزامنة والسحب السحابي';
+            if(avatarEl) avatarEl.src = 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg';
+            if(loginBtn) loginBtn.classList.remove('hidden');
+            if(logoutBtn) logoutBtn.classList.add('hidden');
+        }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            const email = user.email.toLowerCase();
+            const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+            let userObj = { 
+                name: user.displayName || email.split('@')[0], 
+                email: email, 
+                phone: user.phoneNumber || 'غير متوفر',
+                photoURL: user.photoURL || 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                provider: 'Google Auth'
+            };
+
+            try {
+                const userDoc = await getDoc(doc(db, "users", docId));
+                if (userDoc.exists()) {
+                    userObj = userDoc.data();
+                }
+            } catch(e) {}
+
+            window.currentCustomer = userObj;
+            localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
+            localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
+            updateAuthUI(userObj);
+        } else {
+            updateAuthUI(null);
+        }
+    });
+
+    window.db = db;
+    window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
+  </script>
 
   <script>
     let currentSlide = 0;
