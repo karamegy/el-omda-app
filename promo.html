@@ -1144,6 +1144,7 @@
       const watermarkText = document.getElementById('watermarkDisplay').innerText;
       const hasLightLeaks = document.getElementById('vfxLightLeaks').classList.contains('active');
       const isLetterbox = document.getElementById('promoViewer').classList.contains('cinematic-bars');
+      const gradingVal = document.getElementById('gradingSelector').value;
       
       if (isExporting) return;
       isExporting = true;
@@ -1162,6 +1163,18 @@
       canvas.height = isVertical ? 711 : 450;
 
       const ctx = canvas.getContext('2d', { alpha: false });
+
+      // تطبيق الفلاتر الملونة (Color Grading) مباشرة داخل الـ Canvas لتظهر في الفيديو المصدر
+      if (gradingVal === 'grading-teal-orange') {
+        ctx.filter = 'contrast(115%) saturate(125%) hue-rotate(-12deg)';
+      } else if (gradingVal === 'grading-cyberpunk') {
+        ctx.filter = 'contrast(130%) saturate(160%)';
+      } else if (gradingVal === 'grading-noir') {
+        ctx.filter = 'grayscale(100%) contrast(145%) brightness(95%)';
+      } else {
+        ctx.filter = 'none';
+      }
+
       const canvasStream = canvas.captureStream(20);
       let finalStream = canvasStream;
       
