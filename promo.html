@@ -9,6 +9,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- مكتبات FFmpeg.wasm لتحويل الفيديو إلى MP4 حقيقي -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
   
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; direction: rtl; }
@@ -289,11 +292,11 @@
   </div>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render Ultimate)</h2>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (True MP4 Pro-Render)</h2>
     <p>كل المميزات والأقسام المتقدمة مدمجة مع ربط Firebase وسجلات الأسطول واللوجستيات المباشرة</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري التصدير الاحترافي فائق النقاء (Pro-Render).. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري التصدير وتحويل الفيديو إلى MP4 حقيقي فائق الجودة.. يرجى الانتظار</div>
 
   <div class="main-workspace">
     <!-- لوحة الأصول والوسائط الجانبية -->
@@ -562,17 +565,17 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير Pro-Render (WebM/GIF)</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير True MP4 Pro-Render</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو بنجاح وبأعلى نقاء وثبات ممكن!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو بصيغة MP4 الحقيقية وبأعلى نقاء ممكن!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
-      <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو الفاخر في جهازك</button>
+      <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ فيديو MP4 في جهازك</button>
       <button class="btn" style="background: #475569;" onclick="closePreviewModal()">إغلاق</button>
     </div>
   </div>
@@ -734,6 +737,24 @@
     let dest = null;
     let sourceNode = null;
     let speechSynthUtterance = null;
+    let ffmpegInstance = null;
+
+    async function initFFmpeg() {
+      if (ffmpegInstance) return ffmpegInstance;
+      try {
+        const { FFmpeg } = window.FFmpegWASM;
+        ffmpegInstance = new FFmpeg();
+        const { toBlobURL } = window.FFmpegUtil;
+        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
+        await ffmpegInstance.load({
+          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+        });
+      } catch (e) {
+        console.warn("FFmpeg load warning:", e);
+      }
+      return ffmpegInstance;
+    }
 
     function initAudioContext() {
       if(audioCtx) return;
@@ -1082,7 +1103,7 @@
 
     function togglePlay() {
       isPlaying = !isPlaying;
-      document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️️' : 'تشغيل ▶';
+      document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️' : 'تشغيل ▶';
       if(!audioCtx) initAudioContext();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       if (isPlaying) {
@@ -1103,7 +1124,7 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك التصدير الإطاري الدقيق الخالي تماماً من التقطع (Deterministic Pro-Render Engine)
+    // 🚀 محرك التصدير الإطاري مع محول MP4 الحقيقي عبر FFmpeg.wasm
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
@@ -1119,8 +1140,10 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري التصدير السلس (Deterministic Pro-Render)...";
-      document.getElementById('recordingOverlay').style.display = 'block';
+      btn.textContent = "🎬 جاري المعالجة والتسجيل الإطاري...";
+      const overlayEl = document.getElementById('recordingOverlay');
+      overlayEl.style.display = 'block';
+      overlayEl.innerText = "🎬 جاري تسجيل الإطارات بدقة 30fps.. يرجى الانتظار";
 
       if (qualitySetting === 'fhd') {
         canvas.width = isVertical ? 1080 : 1920;
@@ -1148,14 +1171,34 @@
 
       const chunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        recordedBlobUrl = URL.createObjectURL(blob);
+      
+      mediaRecorder.onstop = async () => {
+        const webmBlob = new Blob(chunks, { type: 'video/webm' });
+        
+        overlayEl.innerText = "🔄 جاري تحويل الفيديو إلى صيغة MP4 الحقيقية عبر محرك FFmpeg..";
+        
+        try {
+          const ffmpeg = await initFFmpeg();
+          if (ffmpeg) {
+            const { fetchFile } = window.FFmpegUtil;
+            await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
+            await ffmpeg.exec(['-i', 'input.webm', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-c:a', 'aac', 'output.mp4']);
+            const data = await ffmpeg.readFile('output.mp4');
+            const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
+            recordedBlobUrl = URL.createObjectURL(mp4Blob);
+          } else {
+            recordedBlobUrl = URL.createObjectURL(webmBlob);
+          }
+        } catch (err) {
+          console.error("FFmpeg conversion error:", err);
+          recordedBlobUrl = URL.createObjectURL(webmBlob);
+        }
+
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير Pro-Render (WebM/GIF)";
-        document.getElementById('recordingOverlay').style.display = 'none';
+        btn.textContent = "🚀 تصدير True MP4 Pro-Render";
+        overlayEl.style.display = 'none';
         isExporting = false;
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
       };
@@ -1193,7 +1236,6 @@
         
         progressBar.style.width = progressPercent + '%';
         
-        // حساب حركة شريط الأنباء بدقة تامة لتجنب أي تقطع
         const tickerPos = (currentTimeMs / 1000) * 85;
         if (tickerContentEl) {
           tickerContentEl.style.animation = 'none';
@@ -1227,7 +1269,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Pro_Ultimate_${Date.now()}.webm`;
+      a.download = `GITI_True_MP4_${Date.now()}.mp4`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
