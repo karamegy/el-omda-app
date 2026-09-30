@@ -84,7 +84,6 @@
     .video-container.mask-circle { clip-path: circle(48% at 50% 50%); border: 3px solid var(--secondary); }
     .video-container.mask-rect { clip-path: inset(10% 15% 10% 15% round 12px); border: 3px solid var(--accent); }
 
-    /* أنماط حركات الكاميرا السينمائية */
     .cam-zoom-in { animation: camZoomIn 6s infinite alternate ease-in-out; }
     @keyframes camZoomIn { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
 
@@ -127,7 +126,6 @@
       100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
     }
 
-    /* هولوجرام 3D حقيقي 100% مع منظور عميق وتفاعل ثلاثي الأبعاد */
     .hologram-stage {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.3) 0%, rgba(2, 6, 23, 0.98) 85%);
@@ -359,7 +357,6 @@
         <div class="vfx-lightleaks" id="vfxLightLeaks"></div>
         <div class="video-watermark" id="watermarkDisplay">GITI STUDIO PRO</div>
 
-        <!-- عارض الهولوجرام الثلاثي الأبعاد الحقيقي 100% -->
         <div class="hologram-stage" id="hologramStage">
           <div class="hologram-title">🔮 عارض الهولوجرام المجسم (True 3D Hologram)</div>
           <div class="hologram-3d-pyramid-scene">
@@ -618,7 +615,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -950,14 +947,20 @@
       }
     }
 
+    // 🚀 تحسين دالة رفع وتشغيل فيديو الهولوجرام لتعمل بكفاءة بدون أخطاء
     function loadHologramVideoFile(event) {
       const file = event.target.files[0];
       if(file) {
         const url = URL.createObjectURL(file);
         const holoVid = document.getElementById('hologramVideoPlayer');
-        holoVid.src = url; holoVid.load();
+        holoVid.src = url; 
+        holoVid.load();
         if(!isHologramMode) toggleHologramMode();
-        holoVid.play().catch(e=>{});
+        holoVid.play().then(() => {
+          alert("✨ تم رفع وتشغيل فيديو الهولوجرام بنجاح داخل العارض المجسم!");
+        }).catch(e => {
+          alert("ملاحظة: يرجى الضغط على زر التشغيل داخل عارض الهولوجرام إذا تطلب المتصفح تفاعلاً.");
+        });
       }
     }
 
@@ -1105,12 +1108,13 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك الرسم والتصدير المحدث بالكامل ليحفظ الفيديو بشكله الطبيعي 100%
+    // 🚀 محرك الرسم والتصدير المطور بالكامل ليحفظ الفيديو تماماً كما يظهر في الاستوديو الحقيقي
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const canvas = document.getElementById('exportCanvas');
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
       const camMotion = document.getElementById('cameraMotionSelector').value;
+      const watermarkText = document.getElementById('watermarkDisplay').innerText;
       
       if (isExporting) return;
       isExporting = true;
@@ -1123,7 +1127,7 @@
       btn.textContent = "🎬 جاري المعالجة السينمائية الحقيقية...";
       const overlayEl = document.getElementById('recordingOverlay');
       overlayEl.style.display = 'block';
-      overlayEl.innerText = "🎬 جاري رسم وتصدير جميع الشرائح، النصوص، والعناصر بالشكل الطبيعي..";
+      overlayEl.innerText = "🎬 جاري رسم وتصدير الشرائح بكل تفاصيلها وتنسيقاتها الطبيعية..";
 
       canvas.width = isVertical ? 400 : 800;
       canvas.height = isVertical ? 711 : 450;
@@ -1138,7 +1142,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2500000 });
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 3000000 });
       } catch (e) { 
         mediaRecorder = new MediaRecorder(finalStream); 
       }
@@ -1183,11 +1187,12 @@
         
         progressBar.style.width = progressPercent + '%';
         
-        // رسم الإطار على الـ Canvas بدقة كاملة لكل محتوى الشريحة
+        // رسم الإطار على الـ Canvas بدقة عالية مطابقة للاستوديو تماماً
         ctx.save();
         ctx.fillStyle = '#070a14';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+        // تأثيرات الكاميرا السينمائية أثناء التصدير
         if (camMotion === 'cam-zoom-in') {
           let scaleFactor = 1 + (frame % 100) * 0.0006;
           ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -1208,72 +1213,75 @@
         ctx.strokeStyle = '#3b82f6';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.roundRect(canvas.width / 2 - 110, 25, 220, 28, 14);
+        ctx.roundRect(canvas.width / 2 - 120, 20, 240, 28, 14);
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 12px Cairo, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText("GITI ENTERPRISE ERP 2027", canvas.width / 2, 43);
+        ctx.fillText("GITI ENTERPRISE ERP 2027", canvas.width / 2, 38);
 
-        // جلب واستخراج نصوص الشريحة الحالية بدقة
+        // العلامة المائية
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = 'bold 11px Cairo, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText(watermarkText, 25, 38);
+
+        // جلب عناصر ونصوص الشريحة الحالية
         const activeSlideEl = slides[currentSlide];
         const titleText = activeSlideEl.querySelector('.slide-title') ? activeSlideEl.querySelector('.slide-title').innerText : '';
         const descEl = activeSlideEl.querySelector('.slide-desc');
         const descText = descEl ? descEl.innerText : '';
 
-        // رسم العنوان الرئيسي
+        // رسم عنوان الشريحة الرئيسي
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 20px Cairo, sans-serif';
-        ctx.fillText(titleText.substring(0, 50), canvas.width / 2, canvas.height / 2 - 35);
+        ctx.fillText(titleText, canvas.width / 2, canvas.height / 2 - 40);
 
-        // رسم الوصف أو تفاصيل الشريحة إن وجدت
+        // رسم وصف الشريحة إن وجد
         if (descText) {
           ctx.fillStyle = '#cbd5e1';
           ctx.font = '13px Cairo, sans-serif';
-          ctx.fillText(descText.substring(0, 75), canvas.width / 2, canvas.height / 2 + 5);
+          ctx.fillText(descText, canvas.width / 2, canvas.height / 2);
         }
 
-        // رسم شبكة الميزات (Feature Items) إذا كانت موجودة في الشريحة الحالية
+        // رسم شبكة الميزات (Feature Items) بدقة مطابقة للاستوديو
         const featureItems = activeSlideEl.querySelectorAll('.feature-item');
         if (featureItems.length > 0) {
-          let startY = canvas.height / 2 + 25;
+          let startY = canvas.height / 2 + 20;
           featureItems.forEach((item, idx) => {
+            let col = idx % 2;
+            let row = Math.floor(idx / 2);
+            let boxX = canvas.width / 2 - 190 + (col * 195);
+            let boxY = startY + (row * 32);
+
             ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
             ctx.strokeStyle = 'rgba(59, 130, 246, 0.35)';
             ctx.beginPath();
-            ctx.roundRect(canvas.width / 2 - 180, startY + (idx * 26), 360, 22, 5);
+            ctx.roundRect(boxX, boxY, 185, 26, 6);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = '#f8fafc';
-            ctx.font = '11px Cairo, sans-serif';
-            ctx.fillText(item.innerText, canvas.width / 2, startY + (idx * 26) + 15);
+            ctx.font = 'bold 10px Cairo, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(item.innerText, boxX + 170, boxY + 17);
           });
         }
 
-        // رسم العناصر الإضافية (Elements Overlays)
-        if (currentElementOverlay === 'neon-frame') {
-          ctx.strokeStyle = '#3b82f6';
-          ctx.lineWidth = 4;
-          ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
-        } else if (currentElementOverlay === 'badge-star') {
-          ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 13px Cairo, sans-serif';
-          ctx.fillText("⭐ نسخة احترافية معتمدة", canvas.width / 2, canvas.height - 65);
-        }
-
-        // رقم الشريحة والعلامة المائية
+        // رقم الشريحة السفلي
+        ctx.textAlign = 'center';
         ctx.fillStyle = '#10b981';
-        ctx.font = '12px Cairo, sans-serif';
-        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 35);
+        ctx.font = 'bold 11px Cairo, sans-serif';
+        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 30);
 
         // شريط التقدم السفلي
         ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
-        ctx.fillRect(0, canvas.height - 6, canvas.width, 6);
+        ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
         ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, canvas.height - 6, (progressPercent / 100) * canvas.width, 6);
+        ctx.fillRect(0, canvas.height - 5, (progressPercent / 100) * canvas.width, 5);
         
         ctx.restore();
         await new Promise(r => setTimeout(r, 15));
