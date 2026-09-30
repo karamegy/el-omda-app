@@ -1,4 +1,4 @@
-const CACHE_NAME = 'omda-grills-v7'; // تم رفع الإصدار لتضمين صفحة promo.html الجديدة وتحديث الكاش
+const CACHE_NAME = 'omda-grills-v8'; // تم رفع الإصدار لتضمين صفحة promo.html الجديدة وتحديث الكاش
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
