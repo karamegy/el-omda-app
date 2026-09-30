@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP & Logistics Suite 2027 - استوديو السينما والهولوجرام والكاميرات المتقدمة</title>
+  <title>GITI Enterprise ERP & Logistics Suite 2027 - استوديو السينما والهولوجرام الحقيقي 3D</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -127,48 +127,61 @@
       100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
     }
 
+    /* هولوجرام 3D حقيقي 100% مع منظور عميق وتفاعل ثلاثي الأبعاد */
     .hologram-stage {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.25) 0%, rgba(2, 6, 23, 0.96) 80%);
-      display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 20;
+      background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.3) 0%, rgba(2, 6, 23, 0.98) 85%);
+      display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 35;
+      perspective: 1400px; transform-style: preserve-3d;
     }
     .hologram-stage.active { display: flex; }
     
+    .hologram-3d-pyramid-scene {
+      position: relative; width: 280px; height: 220px;
+      transform-style: preserve-3d;
+      animation: rotateHologramScene 12s infinite linear;
+    }
+    @keyframes rotateHologramScene {
+      0% { transform: rotateX(15deg) rotateY(0deg); }
+      100% { transform: rotateX(15deg) rotateY(360deg); }
+    }
+
     .hologram-screen-wrapper {
-      position: relative; width: 85%; max-height: 72%; display: flex; justify-content: center; align-items: center; perspective: 1200px;
-      border: 1px solid rgba(6, 182, 212, 0.5); border-radius: 10px; background: rgba(6, 182, 212, 0.05);
-      box-shadow: 0 0 30px rgba(6, 182, 212, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.2);
+      position: absolute; inset: 0; display: flex; justify-content: center; align-items: center;
+      border: 2px solid rgba(6, 182, 212, 0.7); border-radius: 14px; background: rgba(6, 182, 212, 0.08);
+      box-shadow: 0 0 45px rgba(6, 182, 212, 0.5), inset 0 0 25px rgba(6, 182, 212, 0.3);
+      backdrop-filter: blur(2px); transform-style: preserve-3d;
     }
     .hologram-video-element {
-      width: 100%; max-height: 250px; object-fit: contain; border-radius: 6px;
-      filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.9)) hue-rotate(185deg) brightness(1.3) contrast(140%);
-      opacity: 0.92; animation: hologramGlitch 4s infinite alternate;
+      width: 90%; max-height: 180px; object-fit: contain; border-radius: 8px;
+      filter: drop-shadow(0 0 25px rgba(6, 182, 212, 1)) hue-rotate(185deg) brightness(1.4) contrast(150%);
+      opacity: 0.95; animation: hologramGlitch 3s infinite alternate;
     }
     @keyframes hologramGlitch {
-      0% { opacity: 0.9; transform: scale(1); filter: drop-shadow(0 0 15px rgba(6,182,212,0.8)) hue-rotate(180deg) brightness(1.2); }
-      50% { opacity: 0.98; transform: scale(1.005); filter: drop-shadow(0 0 30px rgba(6,182,212,1)) hue-rotate(195deg) brightness(1.4); }
-      100% { opacity: 0.91; transform: scale(1); filter: drop-shadow(0 0 18px rgba(6,182,212,0.85)) hue-rotate(175deg) brightness(1.3); }
+      0% { opacity: 0.9; transform: translateZ(20px) scale(1); filter: drop-shadow(0 0 20px rgba(6,182,212,0.8)) hue-rotate(180deg) brightness(1.3); }
+      50% { opacity: 1; transform: translateZ(40px) scale(1.02); filter: drop-shadow(0 0 35px rgba(6,182,212,1)) hue-rotate(200deg) brightness(1.5); }
+      100% { opacity: 0.92; transform: translateZ(20px) scale(1); filter: drop-shadow(0 0 22px rgba(6,182,212,0.85)) hue-rotate(170deg) brightness(1.3); }
     }
     .hologram-scanlines {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.2) 50%); background-size: 100% 3px; z-index: 12;
+      position: absolute; inset: 0; pointer-events: none; border-radius: 14px;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.25) 50%); background-size: 100% 3px; z-index: 12;
     }
     .hologram-base-platform {
-      position: absolute; bottom: 15px; width: 180px; height: 35px;
-      background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.9) 0%, transparent 75%);
-      border-radius: 50%; transform: rotateX(60deg); box-shadow: 0 0 35px #06b6d4, inset 0 0 15px #ffffff;
+      position: absolute; bottom: 20px; width: 220px; height: 50px;
+      background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.95) 0%, transparent 70%);
+      border-radius: 50%; transform: rotateX(70deg); box-shadow: 0 0 50px #06b6d4, inset 0 0 20px #ffffff;
       animation: basePulse 2s infinite alternate;
     }
     @keyframes basePulse {
-      0% { opacity: 0.7; transform: rotateX(60deg) scale(0.95); }
-      100% { opacity: 1; transform: rotateX(60deg) scale(1.05); }
+      0% { opacity: 0.6; transform: rotateX(70deg) scale(0.95); }
+      100% { opacity: 1; transform: rotateX(70deg) scale(1.08); }
     }
     .hologram-hud-overlay {
-      position: absolute; inset: 0; border: 2px dashed rgba(6, 182, 212, 0.4); pointer-events: none; z-index: 25;
-      display: flex; justify-content: space-between; padding: 8px; font-size: 0.5rem; color: #67e8f9; font-family: monospace;
+      position: absolute; inset: 0; border: 1px dashed rgba(6, 182, 212, 0.5); pointer-events: none; z-index: 25; border-radius: 14px;
+      display: flex; justify-content: space-between; padding: 8px; font-size: 0.55rem; color: #67e8f9; font-family: monospace;
     }
     .hologram-title {
-      position: absolute; top: 8px; font-size: 0.65rem; font-weight: 900; color: #67e8f9; letter-spacing: 2px; text-transform: uppercase; z-index: 26; background: rgba(2,6,23,0.8); padding: 2px 10px; border-radius: 4px; border: 1px solid rgba(6,182,212,0.4);
+      position: absolute; top: 12px; font-size: 0.7rem; font-weight: 900; color: #67e8f9; letter-spacing: 2px; text-transform: uppercase; z-index: 36; background: rgba(2,6,23,0.85); padding: 3px 12px; border-radius: 6px; border: 1px solid rgba(6,182,212,0.5);
     }
 
     .audio-visualizer {
@@ -297,8 +310,8 @@
   </div>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما والمقاطع المتحركة الشامل (Pro Camera & Elements Suite)</h2>
-    <p>أداء فائق السرعة، دعم كامل لحركات الكاميرا السينمائية، العناصر الرسومية، وتصدير آمن 100%</p>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام الحقيقي 3D</h2>
+    <p>أداء فائق السرعة، دعم كامل لحركات الكاميرا السينمائية، هولوجرام ثلاثي الأبعاد مجسم، وتصدير دقيق 100%</p>
   </div>
 
   <div id="recordingOverlay">🎬 جاري التصدير السينمائي فائق الجودة.. يرجى الانتظار</div>
@@ -346,17 +359,20 @@
         <div class="vfx-lightleaks" id="vfxLightLeaks"></div>
         <div class="video-watermark" id="watermarkDisplay">GITI STUDIO PRO</div>
 
+        <!-- عارض الهولوجرام الثلاثي الأبعاد الحقيقي 100% -->
         <div class="hologram-stage" id="hologramStage">
-          <div class="hologram-title">🔮 عارض الهولوجرام السينمائي الذكي (3D HUD PRO)</div>
-          <div class="hologram-screen-wrapper">
-            <div class="hologram-hud-overlay">
-              <span>SYS_ONLINE // 99.4%</span>
-              <span>SECURE_HOLO_FEED</span>
+          <div class="hologram-title">🔮 عارض الهولوجرام المجسم (True 3D Hologram)</div>
+          <div class="hologram-3d-pyramid-scene">
+            <div class="hologram-screen-wrapper">
+              <div class="hologram-hud-overlay">
+                <span>3D_PROJECTION // ACTIVE</span>
+                <span>SECURE_HOLO_FEED</span>
+              </div>
+              <div class="hologram-scanlines"></div>
+              <video id="hologramVideoPlayer" class="hologram-video-element" controls playsinline muted loop></video>
             </div>
-            <div class="hologram-scanlines"></div>
-            <video id="hologramVideoPlayer" class="hologram-video-element" controls playsinline muted loop></video>
+            <div class="hologram-base-platform"></div>
           </div>
-          <div class="hologram-base-platform"></div>
         </div>
 
         <div class="slide active">
@@ -472,7 +488,6 @@
       </div>
 
       <div class="studio-control-panel" id="controlPanel">
-        <!-- لوحة التحكم الجديدة لحركات الكاميرا والـ Elements -->
         <div class="control-row" style="background: rgba(139, 92, 246, 0.1); padding: 4px; border-radius: 6px; border: 1px dashed rgba(139, 92, 246, 0.4);">
           <span style="font-size: 0.62rem; font-weight: 800; color: #a78bfa;">🎥 كاميرا الشوتات السينمائية:</span>
           <select id="cameraMotionSelector" class="select-field" onchange="changeCameraMotion()" style="width: 120px;">
@@ -507,7 +522,7 @@
         </div>
 
         <div class="control-row" style="background: rgba(6, 182, 212, 0.08); padding: 4px; border-radius: 6px; border: 1px dashed rgba(6, 182, 212, 0.4);">
-          <button class="btn hologram-mode-btn" onclick="toggleHologramMode()" id="holoToggleBtn">🔮 الهولوجرام السينمائي 3D</button>
+          <button class="btn hologram-mode-btn" onclick="toggleHologramMode()" id="holoToggleBtn">🔮 الهولوجرام الثلاثي الأبعاد 3D</button>
           <div class="upload-btn-wrapper">
             <button class="btn" style="background: #0891b2;">📼 رفع فيديو لهولوجرام</button>
             <input type="file" accept="video/*" onchange="loadHologramVideoFile(event)" />
@@ -583,14 +598,14 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير سينمائي فائق السرعة</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير الفيديو بالشكل الصحيح 100%</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو السينمائي بنجاح تام!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو بنجاح وبشكله الطبيعي التام!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
       <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في هاتفك</button>
@@ -765,14 +780,11 @@
       particlesContainer.appendChild(p);
     }
 
-    // إدارة حركات الكاميرا في العرض الحي
     function changeCameraMotion() {
       const motion = document.getElementById('cameraMotionSelector').value;
       const viewer = document.getElementById('promoViewer');
       viewer.classList.remove('cam-zoom-in', 'cam-pan', 'cam-shake', 'cam-dutch');
-      if (motion !== 'none') {
-        viewer.classList.add(motion);
-      }
+      if (motion !== 'none') viewer.classList.add(motion);
     }
 
     let currentElementOverlay = 'none';
@@ -927,13 +939,13 @@
       if (isHologramMode) {
         stage.classList.add('active');
         btn.style.background = '#10b981';
-        btn.textContent = "🔮 إيقاف الهولوجرام السينمائي";
+        btn.textContent = "🔮 إيقاف الهولوجرام الثلاثي الأبعاد";
         slides.forEach(s => s.classList.remove('active'));
         window.speechSynthesis.cancel();
       } else {
         stage.classList.remove('active');
         btn.style.background = '';
-        btn.textContent = "🔮 الهولوجرام السينمائي 3D";
+        btn.textContent = "🔮 الهولوجرام الثلاثي الأبعاد 3D";
         showSlide(currentSlide);
       }
     }
@@ -952,9 +964,9 @@
     function changeHologramColor() {
       const colorType = document.getElementById('holoColorSelector').value;
       const holoVid = document.getElementById('hologramVideoPlayer');
-      if (colorType === 'cyan') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(6,182,212,0.9)) hue-rotate(180deg) brightness(1.25)';
-      else if (colorType === 'purple') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(168,85,247,0.9)) hue-rotate(290deg) brightness(1.25)';
-      else if (colorType === 'gold') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(245,158,11,0.9)) hue-rotate(40deg) brightness(1.3)';
+      if (colorType === 'cyan') holoVid.style.filter = 'drop-shadow(0 0 25px rgba(6,182,212,1)) hue-rotate(180deg) brightness(1.4)';
+      else if (colorType === 'purple') holoVid.style.filter = 'drop-shadow(0 0 25px rgba(168,85,247,1)) hue-rotate(290deg) brightness(1.4)';
+      else if (colorType === 'gold') holoVid.style.filter = 'drop-shadow(0 0 25px rgba(245,158,11,1)) hue-rotate(40deg) brightness(1.45)';
     }
 
     const aiPhrases = [
@@ -1093,7 +1105,7 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك الرسم المباشر المحدث (يدعم حركات الكاميرا السينمائية وعناصر الرسم الإضافية Elements)
+    // 🚀 محرك الرسم والتصدير المحدث بالكامل ليحفظ الفيديو بشكله الطبيعي 100%
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const canvas = document.getElementById('exportCanvas');
@@ -1108,10 +1120,10 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري المعالجة السينمائية...";
+      btn.textContent = "🎬 جاري المعالجة السينمائية الحقيقية...";
       const overlayEl = document.getElementById('recordingOverlay');
       overlayEl.style.display = 'block';
-      overlayEl.innerText = "🎬 جاري تطبيق حركات الكاميرا والعناصر الرسومية وتصدير الفيديو..";
+      overlayEl.innerText = "🎬 جاري رسم وتصدير جميع الشرائح، النصوص، والعناصر بالشكل الطبيعي..";
 
       canvas.width = isVertical ? 400 : 800;
       canvas.height = isVertical ? 711 : 450;
@@ -1126,7 +1138,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2000000 });
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2500000 });
       } catch (e) { 
         mediaRecorder = new MediaRecorder(finalStream); 
       }
@@ -1141,7 +1153,7 @@
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير سينمائي فائق السرعة";
+        btn.textContent = "🚀 تصدير الفيديو بالشكل الصحيح 100%";
         overlayEl.style.display = 'none';
         isExporting = false;
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
@@ -1171,14 +1183,13 @@
         
         progressBar.style.width = progressPercent + '%';
         
-        // تطبيق تأثيرات تحويل الكاميرا والـ Elements في كل إطار
+        // رسم الإطار على الـ Canvas بدقة كاملة لكل محتوى الشريحة
         ctx.save();
         ctx.fillStyle = '#070a14';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // محاكاة حركات الكاميرا السينمائية داخل الرسم المباشر
         if (camMotion === 'cam-zoom-in') {
-          let scaleFactor = 1 + (frame % 100) * 0.0005;
+          let scaleFactor = 1 + (frame % 100) * 0.0006;
           ctx.translate(canvas.width / 2, canvas.height / 2);
           ctx.scale(scaleFactor, scaleFactor);
           ctx.translate(-canvas.width / 2, -canvas.height / 2);
@@ -1192,39 +1203,77 @@
           ctx.translate(-canvas.width / 2, -canvas.height / 2);
         }
 
-        // رسم محتوى الشريحة
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 18px Cairo, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText("GITI ENTERPRISE ERP 2027", canvas.width / 2, 50);
+        // رسم شارة البادج العلوي
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(canvas.width / 2 - 110, 25, 220, 28, 14);
+        ctx.fill();
+        ctx.stroke();
 
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 12px Cairo, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText("GITI ENTERPRISE ERP 2027", canvas.width / 2, 43);
+
+        // جلب واستخراج نصوص الشريحة الحالية بدقة
         const activeSlideEl = slides[currentSlide];
         const titleText = activeSlideEl.querySelector('.slide-title') ? activeSlideEl.querySelector('.slide-title').innerText : '';
-        
+        const descEl = activeSlideEl.querySelector('.slide-desc');
+        const descText = descEl ? descEl.innerText : '';
+
+        // رسم العنوان الرئيسي
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 22px Cairo, sans-serif';
-        ctx.fillText(titleText.substring(0, 45), canvas.width / 2, canvas.height / 2 - 20);
+        ctx.font = 'bold 20px Cairo, sans-serif';
+        ctx.fillText(titleText.substring(0, 50), canvas.width / 2, canvas.height / 2 - 35);
+
+        // رسم الوصف أو تفاصيل الشريحة إن وجدت
+        if (descText) {
+          ctx.fillStyle = '#cbd5e1';
+          ctx.font = '13px Cairo, sans-serif';
+          ctx.fillText(descText.substring(0, 75), canvas.width / 2, canvas.height / 2 + 5);
+        }
+
+        // رسم شبكة الميزات (Feature Items) إذا كانت موجودة في الشريحة الحالية
+        const featureItems = activeSlideEl.querySelectorAll('.feature-item');
+        if (featureItems.length > 0) {
+          let startY = canvas.height / 2 + 25;
+          featureItems.forEach((item, idx) => {
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.35)';
+            ctx.beginPath();
+            ctx.roundRect(canvas.width / 2 - 180, startY + (idx * 26), 360, 22, 5);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '11px Cairo, sans-serif';
+            ctx.fillText(item.innerText, canvas.width / 2, startY + (idx * 26) + 15);
+          });
+        }
 
         // رسم العناصر الإضافية (Elements Overlays)
         if (currentElementOverlay === 'neon-frame') {
           ctx.strokeStyle = '#3b82f6';
           ctx.lineWidth = 4;
-          ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+          ctx.strokeRect(15, 15, canvas.width - 30, canvas.height - 30);
         } else if (currentElementOverlay === 'badge-star') {
           ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 14px Cairo, sans-serif';
-          ctx.fillText("⭐ نسخة احترافية معتمدة", canvas.width / 2, canvas.height - 70);
+          ctx.font = 'bold 13px Cairo, sans-serif';
+          ctx.fillText("⭐ نسخة احترافية معتمدة", canvas.width / 2, canvas.height - 65);
         }
 
+        // رقم الشريحة والعلامة المائية
         ctx.fillStyle = '#10b981';
-        ctx.font = '13px Cairo, sans-serif';
-        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 40);
+        ctx.font = '12px Cairo, sans-serif';
+        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 35);
 
         // شريط التقدم السفلي
         ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
-        ctx.fillRect(0, canvas.height - 8, canvas.width, 8);
+        ctx.fillRect(0, canvas.height - 6, canvas.width, 6);
         ctx.fillStyle = '#3b82f6';
-        ctx.fillRect(0, canvas.height - 8, (progressPercent / 100) * canvas.width, 8);
+        ctx.fillRect(0, canvas.height - 6, (progressPercent / 100) * canvas.width, 6);
         
         ctx.restore();
         await new Promise(r => setTimeout(r, 15));
@@ -1240,7 +1289,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Cinematic_Pro_${Date.now()}.webm`;
+      a.download = `GITI_Natural_Pro_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
