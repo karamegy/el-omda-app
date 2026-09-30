@@ -318,6 +318,7 @@
     .pill-btn.active { background: #3b82f6; color: #fff; }
 
     .record-studio-btn { background: linear-gradient(135deg, #dc2626, #b91c1c); border-color: #ef4444; color: white; font-weight: 800; }
+    .record-studio-btn.recording { background: #10b981; border-color: #059669; animation: pulseRec 1.5s infinite; }
     .campaign-btn { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; }
     .teleprompter-btn { background: linear-gradient(135deg, #f59e0b, #d97706); border-color: #f59e0b; color: #fff; }
     .cta-btn { background: linear-gradient(135deg, #10b981, #059669); border: none; font-size: 0.85rem; padding: 7px 18px; border-radius: 50px; }
@@ -387,7 +388,7 @@
 
   <div class="studio-header">
     <h2>GITI ERP 2027 - استوديو الإعلان المطور المتكامل</h2>
-    <p>جميع المميزات المتقدمة (مُلقن ذكي، تفاعل المزايا، محول العملات، وشريط الثقة)!</p>
+    <p>جميع المميزات المتقدمة مع تسجيل الشاشة وتنزيل الفيديو مباشرة!</p>
   </div>
 
   <!-- شريط ثقة السوق المتحرك (Social Proof Ticker) -->
@@ -416,7 +417,7 @@
       <h1 class="slide-title">إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
       <div class="feature-grid">
         <div class="feature-item" onclick="openFeatureModal('فواتير حية مباشرة', 'إصدار فواتير بيع وشراء فورية متوافقة مع متطلبات الضريبة والباركود المعياري.')" data-ar="🧾 فواتير حية مباشرة ومطابقة" data-en="🧾 Live Matched Invoices">🧾 فواتير حية مباشرة ومطابقة</div>
-        <div class="feature-item" onclick="openFeatureModal('طباعة حرارية معيارية', 'دعم كامل لطابعات الإيصالات الحرارية (Bluetooth & USB) لسرعة إصدار البون للعملاء.')" data-ar="🖨️ طباعة حرارية معيارية سريعة" data-en="🖨️ Fast Thermal Printing">🖨️ طباعة حرارية معيارية سريعة</div>
+        <div class="feature-item" onclick="openFeatureModal('طباعة حرارية معيارية', 'دعم كامل لطابعات الإيصالات الحرارية (Bluetooth & USB) لسرعة إصدار البون للعملاء.')" data-ar="🖨️ طباعة حرارية معيارية سريعة" data-en="🖨️️ Fast Thermal Printing">🖨️ طباعة حرارية معيارية سريعة</div>
         <div class="feature-item" onclick="openFeatureModal('مشاركة واتساب فورية', 'إرسال رابط الفاتورة أو تفاصيل الحساب إلى واتساب العميل بنقرة زر واحدة دون الحاجة للحفظ.')" data-ar="💬 إرسال فوري للفواتير عبر واتساب" data-en="💬 Instant WhatsApp Sending">💬 إرسال فوري للفواتير عبر واتساب</div>
         <div class="feature-item" onclick="openFeatureModal('حساب الضرائب التلقائي', 'احتساب ضريبة القيمة المضافة والخصومات والعمولات بدقة تامة وبدون أي أخطاء حسابية.')" data-ar="🏷️ حساب الضرائب والخصومات تلقائياً" data-en="🏷️ Auto Tax & Discount Calc">🏷️ حساب الضرائب والخصومات تلقائياً</div>
       </div>
@@ -493,7 +494,7 @@
       <button class="btn teleprompter-btn" onclick="openTeleprompter()">📜 مُلقن النص</button>
       <button class="btn campaign-btn" onclick="openCampaignModal()">📢 الحملات</button>
       <button class="btn" onclick="sharePromoLink()" style="background:#059669;">🔗 مشاركة</button>
-      <button class="btn record-studio-btn" onclick="toggleScreenRecording()" id="recordBtn">🔴 تسجيل</button>
+      <button class="btn record-studio-btn" onclick="toggleScreenRecording()" id="recordBtn">🔴 تسجيل فيديو</button>
     </div>
   </div>
 
@@ -733,7 +734,7 @@
       if (!mediaRecorder || mediaRecorder.state === 'inactive') {
         try {
           if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-            alert('📱 ملاحظة للموبايل: استخدم مسجل الشاشة المدمج في هاتفك أثناء تشغيل العرض بملء الشاشة للحصول على أجمل فيديو إعلاني!');
+            alert('📱 ملاحظة مهمة للموبايل: متصفحات الهواتف لا تدعم التقاط الشاشة البرمجي المباشر. يُرجى استخدام مسجل الشاشة المدمج في هاتفك أثناء تشغيل العرض للحصول على أفضل فيديو إعلاني.');
             return;
           }
 
@@ -753,7 +754,7 @@
             a.click();
             setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100);
 
-            recordBtn.textContent = '🔴 تسجيل';
+            recordBtn.textContent = currentLang === 'ar' ? '🔴 تسجيل فيديو' : '🔴 Record Video';
             recordBtn.classList.remove('recording');
             document.body.classList.remove('clean-recording-mode');
             recBadge.classList.remove('active');
@@ -763,7 +764,7 @@
           mediaRecorder.start();
           document.body.classList.add('clean-recording-mode');
           recBadge.classList.add('active');
-          recordBtn.textContent = '⏹️ إيقاف';
+          recordBtn.textContent = currentLang === 'ar' ? '⏹️ إيقاف وحفظ' : '⏹️ Stop & Save';
           recordBtn.classList.add('recording');
 
           recSeconds = 0;
