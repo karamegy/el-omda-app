@@ -791,7 +791,7 @@
     function toggleCloudRenderFarm() {
       isCloudRenderActive = !isCloudRenderActive;
       if(isCloudRenderActive) {
-        alert("☁️️ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
+        alert("☁ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
       } else {
         alert("💻 تم العودة للمعالجة المحلية المباشرة (Local GPU Render).");
       }
@@ -1082,7 +1082,7 @@
 
     function togglePlay() {
       isPlaying = !isPlaying;
-      document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️' : 'تشغيل ▶';
+      document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️️' : 'تشغيل ▶';
       if(!audioCtx) initAudioContext();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       if (isPlaying) {
@@ -1103,7 +1103,7 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك التصدير السينمائي المحسن (Pro-Render Ultimate 30fps with requestAnimationFrame)
+    // 🚀 محرك التصدير الإطاري الدقيق الخالي تماماً من التقطع (Deterministic Pro-Render Engine)
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
@@ -1119,7 +1119,7 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري التصدير السلس (Pro-Render Ultimate)...";
+      btn.textContent = "🎬 جاري التصدير السلس (Deterministic Pro-Render)...";
       document.getElementById('recordingOverlay').style.display = 'block';
 
       if (qualitySetting === 'fhd') {
@@ -1162,57 +1162,65 @@
 
       mediaRecorder.start();
       
-      if (isHologramMode) {
-        const holoVid = document.getElementById('hologramVideoPlayer');
-        holoVid.currentTime = 0; holoVid.play().catch(e=>{});
-        if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
-        setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, holoVid.duration && !isNaN(holoVid.duration) ? holoVid.duration * 1000 : 10000);
-      } else {
-        restartPresentation();
-        if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
+      if (activeMusic) { 
+        activeMusic.currentTime = 0; 
+        activeMusic.play().catch(e => {}); 
       }
 
-      let lastRenderTime = 0;
-      const targetInterval = 1000 / 30;
-
-      const renderLoop = async (timestamp) => {
-        if (!isExporting) return;
+      clearInterval(autoPlayInterval);
+      
+      const fps = 30;
+      const totalSlidesCount = slides.length;
+      const totalDurationSec = (totalSlidesCount * slideTime) / 1000;
+      const totalFrames = Math.floor(totalDurationSec * fps);
+      const tickerContentEl = document.querySelector('.ticker-content');
+      
+      for (let frame = 0; frame < totalFrames; frame++) {
+        if (!isExporting) break;
         
-        if (timestamp - lastRenderTime >= targetInterval) {
-          lastRenderTime = timestamp;
-          try {
-            const frameCanvas = await html2canvas(promoViewer, { 
-              scale: 1.5,
-              backgroundColor: '#070a14', 
-              logging: false, 
-              useCORS: true,
-              foreignObjectRendering: false
-            });
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
-          } catch (err) {}
+        const currentTimeMs = (frame / fps) * 1000;
+        const targetSlideIdx = Math.floor(currentTimeMs / slideTime) % totalSlidesCount;
+        const slideElapsed = currentTimeMs % slideTime;
+        const progressPercent = (slideElapsed / slideTime) * 100;
+        
+        if (currentSlide !== targetSlideIdx) {
+          currentSlide = targetSlideIdx;
+          slides.forEach((s, idx) => {
+            s.classList.toggle('active', idx === currentSlide);
+          });
+          updateDots();
         }
         
-        if (isExporting) {
-          requestAnimationFrame(renderLoop);
+        progressBar.style.width = progressPercent + '%';
+        
+        // حساب حركة شريط الأنباء بدقة تامة لتجنب أي تقطع
+        const tickerPos = (currentTimeMs / 1000) * 85;
+        if (tickerContentEl) {
+          tickerContentEl.style.animation = 'none';
+          tickerContentEl.style.transform = `translateX(${tickerPos % 1200 - 600}px)`;
         }
-      };
-
-      requestAnimationFrame(renderLoop);
-
-      if (!isHologramMode) {
-        let totalSlides = slides.length; let currentRecStep = 0;
-        const exportInterval = setInterval(() => {
-          currentRecStep++;
-          if (currentRecStep >= totalSlides) {
-            clearInterval(exportInterval);
-            setTimeout(() => { 
-              isExporting = false;
-              if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); 
-            }, 1000);
-          } else { nextSlide(); }
-        }, slideTime);
+        
+        try {
+          const frameCanvas = await html2canvas(promoViewer, { 
+            scale: 1.5,
+            backgroundColor: '#070a14', 
+            logging: false, 
+            useCORS: true,
+            foreignObjectRendering: false
+          });
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+        } catch (err) {}
+        
+        await new Promise(r => setTimeout(r, 10));
       }
+      
+      setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+        if (activeMusic) activeMusic.pause();
+      }, 500);
     }
 
     function downloadFinalVideo() {
