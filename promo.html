@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك الاحترافية (4K/8K)</title>
+  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك (PWA Optimized)</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -248,10 +248,10 @@
 
   <div class="studio-header">
     <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك</h2>
-    <p>منصة مونتاج متكاملة، جودات خارقة 4K/8K، دمج صوت المعلق، وتأثيرات سينمائية تلقائية</p>
+    <p>منصة مونتاج متكاملة، جودات آمنة ومستقرة لتطبيقات الـ PWA، دمج صوت المعلق، وتأثيرات سينمائية تلقائية</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري التصدير بجودة فائقة ودمج الصوتيات.. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري التصدير الآمن ومعالجة الفيديو داخل التطبيق.. يرجى الانتظار</div>
 
   <div class="main-workspace">
     <!-- لوحة الأصول والوسائط الجانبية (Asset Bin) -->
@@ -456,11 +456,10 @@
             <option value="8000">بطيء (8ث)</option>
           </select>
 
-          <!-- اختيار دقة التصدير (Full HD / 4K / 8K) -->
-          <select id="qualitySelector" class="select-field" style="width: 110px;">
-            <option value="fhd">🖥️ جودة Full HD</option>
-            <option value="4k" selected>🌟 جودة 4K ألترا</option>
-            <option value="8k">💎 جودة 8K سينمائي</option>
+          <!-- خيارات الجودة الآمنة للـ PWA لمنع توقف الصفحة -->
+          <select id="qualitySelector" class="select-field" style="width: 125px;">
+            <option value="hd" selected>📱 جودة HD (آمن وسريع)</option>
+            <option value="fhd">🖥️ جودة Full HD (متوسط)</option>
           </select>
         </div>
 
@@ -484,14 +483,14 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير فيديو AI (4K/8K)</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير فيديو آمن (PWA)</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بدقة خارقة مع دمج الصوت بنجاح!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بنجاح وثبات داخل التطبيق!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
       <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في جهازك</button>
@@ -869,12 +868,13 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // المحرك المحدث للتصدير بجودات عالية (Full HD / 4K / 8K) ودمج الصوتيات ودعم الخطوط العربية المتصلة بالكامل
+    // المحرك الآمن والمحدث لتصدير الفيديو في الـ PWA بدون تجميد الشاشة
     async function startAIVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
       const canvas = document.getElementById('exportCanvas');
       const qualitySetting = document.getElementById('qualitySelector').value;
+      const isVertical = document.getElementById('ratioSelector').value === 'vertical';
       
       if (isExporting) return;
       isExporting = true;
@@ -884,24 +884,20 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري المعالجة بجودة خيالية (4K/8K).. يرجى الانتظار";
+      btn.textContent = "🎬 جاري المعالجة الآمنة داخل التطبيق.. يرجى الانتظار";
       document.getElementById('recordingOverlay').style.display = 'block';
 
-      const isVertical = document.getElementById('ratioSelector').value === 'vertical';
-      
-      if (qualitySetting === '8k') {
-        canvas.width = isVertical ? 4320 : 7680;
-        canvas.height = isVertical ? 7680 : 4320;
-      } else if (qualitySetting === '4k') {
-        canvas.width = isVertical ? 2160 : 3840;
-        canvas.height = isVertical ? 3840 : 2160;
-      } else {
+      // أبعاد أمان لمنع انهيار الـ WebView في الـ PWA
+      if (qualitySetting === 'fhd') {
         canvas.width = isVertical ? 1080 : 1920;
         canvas.height = isVertical ? 1920 : 1080;
+      } else {
+        canvas.width = isVertical ? 720 : 1280;
+        canvas.height = isVertical ? 1280 : 720;
       }
 
       const ctx = canvas.getContext('2d');
-      const canvasStream = canvas.captureStream(30);
+      const canvasStream = canvas.captureStream(15); // معدل إطارات آمن 15fps لحماية أداء الهاتف
       let finalStream = canvasStream;
       
       if (dest && dest.stream.getAudioTracks().length > 0) {
@@ -910,7 +906,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: qualitySetting === '8k' ? 25000000 : (qualitySetting === '4k' ? 15000000 : 6000000) }); 
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 2500000 }); 
       }
       catch (e) { 
         try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } 
@@ -925,10 +921,9 @@
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير فيديو AI (4K/8K)";
+        btn.textContent = "🚀 تصدير فيديو آمن (PWA)";
         document.getElementById('recordingOverlay').style.display = 'none';
         isExporting = false;
-        cancelAnimationFrame(animationId);
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
       };
 
@@ -944,17 +939,16 @@
         if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
       }
 
-      let animationId;
-      const recordFrames = async () => {
-        if (!isExporting) return;
+      // التقاط الإطارات عبر مؤقت آمن (بدون تجميد الـ Main Thread)
+      const captureTimer = setInterval(async () => {
+        if (!isExporting) { clearInterval(captureTimer); return; }
         try {
           const frameCanvas = await html2canvas(promoViewer, { 
-            scale: qualitySetting === '8k' ? 4 : (qualitySetting === '4k' ? 2 : 1.5), 
+            scale: qualitySetting === 'fhd' ? 1.2 : 1, 
             backgroundColor: '#070a14', 
             logging: false, 
             useCORS: true,
             onclone: (clonedDoc) => {
-              // ضمان اتجاه النصوص وخصائص الخط أثناء عملية الـ Canvas Clone لتفادي أي تقطيع حرفي
               const clonedViewer = clonedDoc.getElementById('promoViewer');
               if (clonedViewer) {
                 clonedViewer.style.direction = 'rtl';
@@ -967,9 +961,7 @@
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
         } catch (err) {}
-        if (isExporting) { animationId = requestAnimationFrame(recordFrames); }
-      };
-      recordFrames();
+      }, 66); // كل 66 ميلي ثانية (~15fps)
 
       if (!isHologramMode) {
         let totalSlides = slides.length; let currentRecStep = 0;
@@ -977,6 +969,7 @@
           currentRecStep++;
           if (currentRecStep >= totalSlides) {
             clearInterval(exportInterval);
+            clearInterval(captureTimer);
             setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, 1000);
           } else { nextSlide(); }
         }, slideTime);
@@ -987,7 +980,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Studio_PRO_4K_8K_${Date.now()}.webm`;
+      a.download = `GITI_PWA_Studio_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
