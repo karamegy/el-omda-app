@@ -6,7 +6,6 @@
   <title>GITI Enterprise ERP 2027 - استوديو الهاتف الذكي</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
@@ -35,17 +34,29 @@
       z-index: 0;
     }
 
-    .studio-header { margin-bottom: 8px; text-align: center; z-index: 2; }
+    .studio-header { margin-bottom: 8px; text-align: center; z-index: 2; transition: 0.3s; }
     .studio-header h2 { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, #3b82f6, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     .studio-header p { font-size: 0.78rem; color: #64748b; }
 
+    /* الحاوية الأساسية للعرض */
     .video-container {
       width: 100%; max-width: 900px; height: 460px; background: #0f172a; 
       border: 2px solid rgba(59, 130, 246, 0.35); border-radius: 20px; 
       position: relative; display: flex; align-items: center; justify-content: center; 
       text-align: center; padding: 30px; z-index: 1; overflow: hidden;
       box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+      transition: all 0.5s ease;
     }
+
+    /* وضع الشاشة الكاملة أثناء التسجيل الخارجي للجوال */
+    .video-container.mobile-recording-fullscreen {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; width: 100vw !important; height: 100vh !important;
+      max-width: none !important; border-radius: 0 !important; border: none !important; z-index: 99999 !important;
+    }
+    .video-container.mobile-recording-fullscreen .slide-title { font-size: 2.2rem; }
+    .video-container.mobile-recording-fullscreen .slide-desc { font-size: 1.1rem; max-width: 1000px; }
+    .video-container.mobile-recording-fullscreen .feature-item { font-size: 0.95rem; padding: 12px 18px; }
 
     .dynamic-light-1, .dynamic-light-2 {
       position: absolute; border-radius: 50%; filter: blur(80px); z-index: 0; opacity: 0.6;
@@ -89,7 +100,7 @@
     .dot.active { width: 20px; border-radius: 4px; background: #3b82f6; box-shadow: 0 0 8px #3b82f6; }
     .progress-bar { position: absolute; bottom: 0; left: 0; height: 4px; background: linear-gradient(90deg, #3b82f6, #10b981); width: 0%; transition: width 0.1s linear; z-index: 2; }
 
-    .studio-control-panel { margin-top: 15px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 900px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 2; }
+    .studio-control-panel { margin-top: 15px; background: rgba(15, 23, 42, 0.95); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 900px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,0.6); z-index: 2; transition: 0.3s; }
     .control-row { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
     .btn { background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid rgba(59, 130, 246, 0.35); padding: 7px 12px; border-radius: 8px; font-weight: 700; font-size: 0.8rem; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 5px; outline: none; }
     .btn:hover { background: #3b82f6; border-color: #3b82f6; }
@@ -101,31 +112,25 @@
     .voice-btn { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; }
     .voice-btn.muted { background: rgba(30, 41, 59, 0.9); border-color: rgba(255,255,255,0.2); color: #94a3b8; }
     
-    .export-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; font-weight: 800; font-size: 0.9rem; padding: 8px 16px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-    .export-btn:hover { background: linear-gradient(135deg, #f87171, #ef4444); }
-    .export-btn.loading { background: #64748b; cursor: not-allowed; animation: pulse 1.5s infinite; pointer-events: none; }
-    
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+    /* زر العرض التلقائي للتسجيل الخارجي */
+    .export-btn { background: linear-gradient(135deg, #10b981, #059669); border: none; font-weight: 800; font-size: 0.9rem; padding: 8px 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); }
+    .export-btn:hover { background: linear-gradient(135deg, #34d399, #10b981); }
 
     #recordingOverlay {
         display: none; position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-        background: rgba(239, 68, 68, 0.95); color: white; padding: 8px 16px; border-radius: 20px;
-        font-weight: bold; font-size: 1rem; z-index: 10000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        animation: blinkRed 1.5s infinite;
+        background: rgba(16, 185, 129, 0.95); color: white; padding: 8px 16px; border-radius: 20px;
+        font-weight: bold; font-size: 1rem; z-index: 100000; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
-    @keyframes blinkRed { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-    #exportCanvas { display: none; }
   </style>
 </head>
 <body>
 
-  <div class="studio-header">
-    <h2>GITI ERP 2027 - استوديو الهاتف الذكي</h2>
-    <p>تسجيل سينمائي داخلي متطور مخصص للهواتف المحمولة</p>
+  <div class="studio-header" id="studioHeader">
+    <h2>GITI ERP 2027 - استوديو العرض السينمائي للجوال</h2>
+    <p>أعلى جودة شاشة ممكنة مع دمج الصوت والموسيقى بالكامل</p>
   </div>
 
-  <div id="recordingOverlay">🔴 جاري تسجيل الفيديو من هاتفك... يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 وضع التسجيل السينمائي نشط الآن.. اسحب شاشة هاتفك وسجل براحتك!</div>
 
   <div class="video-container" id="promoViewer">
     <div class="dynamic-light-1"></div>
@@ -233,12 +238,10 @@
       <button class="btn" onclick="nextSlide()">التالي ❯</button>
       <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
       
-      <!-- زر التصدير الذكي للهاتف -->
-      <button class="btn export-btn" id="exportVideoBtn" onclick="startMobileRecording()">🎥 تصدير فيديو (جوال)</button>
+      <!-- زر بدء العرض التلقائي للتسجيل السينمائي من الجوال -->
+      <button class="btn export-btn" onclick="startMobileScreenRecordingMode()">🎬 تشغيل التسجيل السينمائي</button>
     </div>
   </div>
-
-  <canvas id="exportCanvas"></canvas>
 
   <audio id="musicCorporate" loop crossorigin="anonymous"><source src="https://assets.mixkit.co/music/preview/mixkit-corporate-technology-113.mp3" type="audio/mpeg"></audio>
 
@@ -254,28 +257,13 @@
     const slideTime = 7000;
     let startTime = Date.now();
     let autoPlayInterval;
-    let isRecordingSession = false;
-
-    // إعداد الـ AudioContext لدمج الصوت في التسجيل الداخلي للجوال
-    let audioCtx = null;
-    let dest = null;
-    let sourceNode = null;
-
-    function initAudioContext() {
-      if(audioCtx) return;
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      dest = audioCtx.createMediaStreamDestination();
-      sourceNode = audioCtx.createMediaElementSource(activeMusic);
-      sourceNode.connect(audioCtx.destination);
-      sourceNode.connect(dest);
-    }
 
     new QRCode(document.getElementById("finalQrCode"), { text: window.location.href, width: 80, height: 80, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
 
     slides.forEach((_, index) => {
       const dot = document.createElement('div');
       dot.className = `dot ${index === 0 ? 'active' : ''}`;
-      dot.onclick = () => { if(!isRecordingSession) showSlide(index); };
+      dot.onclick = () => showSlide(index);
       dotsContainer.appendChild(dot);
     });
     const dots = document.querySelectorAll('.dot');
@@ -326,7 +314,6 @@
       const type = document.getElementById('bgMusicSelector').value;
       if (type !== 'none') {
         activeMusic = document.getElementById('musicCorporate');
-        if(!audioCtx) initAudioContext();
         activeMusic.volume = 0.2;
         if(isPlaying) activeMusic.play().catch(e=>{});
       } else { activeMusic = null; }
@@ -369,7 +356,7 @@
         slides[currentSlide].classList.add('active');
         readCurrentSlide();
         if(currentSlide === slides.length - 1) {
-          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 10000 });
+          confetti({ particleCount: 200, spread: 100, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 100000 });
         }
       }, 50);
       updateDots();
@@ -391,8 +378,6 @@
     function togglePlay() {
       isPlaying = !isPlaying;
       document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️' : 'تشغيل ▶️';
-      if(!audioCtx) initAudioContext();
-      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
       
       if (isPlaying) {
         startTime = Date.now() - (parseFloat(progressBar.style.width) / 100 * slideTime);
@@ -408,133 +393,33 @@
 
     autoPlayInterval = setInterval(updateProgress, 50);
 
-    // تفاعل أول للبدء الصوتي
-    document.body.addEventListener('click', () => {
-      if(!audioCtx) {
-        initAudioContext();
-        if(isPlaying && activeMusic) activeMusic.play().catch(e=>{});
-      }
-    }, {once:true});
-
     // =========================================================================
-    // نظام التسجيل الداخلي المخصص للهواتف المحمولة (Mobile Internal Recorder)
+    // وضع العرض التلقائي لتسجيل الشاشة من الجوال بجودة كامحة وصوت كامل
     // =========================================================================
-    async function startMobileRecording() {
-      const btn = document.getElementById('exportVideoBtn');
-      const promoViewer = document.getElementById('promoViewer');
-      const canvas = document.getElementById('exportCanvas');
-      
-      if (btn.classList.contains('loading')) return;
-
-      if(!audioCtx) initAudioContext();
-      if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
-
-      isRecordingSession = true;
-      btn.classList.add('loading');
-      btn.textContent = "⏳ جاري توليد الفيديو عبر هاتفك...";
-      document.getElementById('recordingOverlay').style.display = 'block';
+    function startMobileScreenRecordingMode() {
+      // إخفاء الهيدر ولوحة التحكم تماماً لتظهر فقط شاشة الإعلان بشكل سينمائي
+      document.getElementById('studioHeader').style.display = 'none';
       document.getElementById('controlPanel').style.display = 'none';
-
-      // ضبط دقة الكانفاس لتكون واضحة ومناسبة لمعالجة الجوال (HD 1280x720)
-      canvas.width = 1280;
-      canvas.height = 720;
-      const ctx = canvas.getContext('2d');
-
-      const canvasStream = canvas.captureStream(30);
-      let finalStream;
-
-      if (dest && dest.stream.getAudioTracks().length > 0) {
-        const audioTrack = dest.stream.getAudioTracks()[0];
-        finalStream = new MediaStream([...canvasStream.getVideoTracks(), audioTrack]);
-      } else {
-        finalStream = canvasStream;
-      }
-
-      const options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 2500000 };
-      let mediaRecorder;
-      try {
-        mediaRecorder = new MediaRecorder(finalStream, options);
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(finalStream);
-      }
-
-      const chunks = [];
-      mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `GITI_VIP_Mobile_${Date.now()}.webm`;
-        document.body.appendChild(a);
-        a.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(a);
-          window.URL.revokeObjectURL(url);
-          btn.classList.remove('loading');
-          btn.textContent = "🎥 تصدير فيديو (جوال)";
-          document.getElementById('recordingOverlay').style.display = 'none';
-          document.getElementById('controlPanel').style.display = 'flex';
-          isRecordingSession = false;
-          cancelAnimationFrame(animationId);
-        }, 100);
-      };
+      const promoViewer = document.getElementById('promoViewer');
+      promoViewer.classList.add('mobile-recording-fullscreen');
+      
+      document.getElementById('recordingOverlay').style.display = 'block';
 
-      mediaRecorder.start();
-
-      let isRecording = true;
-      let animationId;
-
-      const recordFrames = async () => {
-        if (!isRecording) return;
-        try {
-          const frameCanvas = await html2canvas(promoViewer, {
-            scale: 1.25,
-            backgroundColor: '#0f172a',
-            logging: false,
-            useCORS: true
-          });
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
-        } catch (err) {
-          console.error("Frame capture error:", err);
-        }
-        if (isRecording) {
-          animationId = requestAnimationFrame(recordFrames);
-        }
-      };
-
-      // إعادة تعيين العرض من البداية وبدء الصوت والموسيقى
-      isPlaying = false;
+      // البدء من الشريحة الأولى وتشغيل الموسيقى والصوت
+      isPlaying = true;
+      document.getElementById('playPauseBtn').textContent = 'إيقاف مؤقت ⏸️';
+      if(activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e=>{}); }
+      
+      restartPresentation();
+      startTime = Date.now();
       clearInterval(autoPlayInterval);
-      showSlide(0);
-      
-      if (activeMusic) {
-        activeMusic.currentTime = 0;
-        activeMusic.play().catch(e => {});
-      }
+      autoPlayInterval = setInterval(updateProgress, 50);
 
-      recordFrames();
-
-      // التنقل التلقائي بين الشرائح أثناء التسجيل الداخلي (7 ثوانٍ لكل شريحة)
-      const exportSlideTime = 7000;
-      let currentRecSlide = 0;
-      
-      const recInterval = setInterval(() => {
-        currentRecSlide++;
-        if (currentRecSlide >= slides.length) {
-          clearInterval(recInterval);
-          isRecording = false;
-          setTimeout(() => {
-            if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-          }, 1500);
-        } else {
-          nextSlide();
-        }
-      }, exportSlideTime);
+      // تنبيه توضيحي للمستخدم
+      setTimeout(() => {
+        alert("📌 التعليمات:\n1. الآن العرض يعمل بكامل الشاشة وبأعلى جودة لهاتفك مع صوت المعلق والموسيقى.\n2. قم بسحب شاشة هاتفك من الأعلى واضغط على (تسجيل الشاشة - Screen Recorder).\n3. اترك العرض يكتمل حتى نهايته، ثم أوقف التسجيل ليحفظ الفيديو في استوديو هاتفك بجودة خرافية ومتاحة فوراً!");
+      }, 500);
     }
   </script>
 </body>
