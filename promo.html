@@ -498,7 +498,7 @@
         </div>
 
         <div class="mixer-drawer">
-          <span>🎚️️ المكسر الصوتي وأستوديو الذكاء:</span>
+          <span>🎚 المكسر الصوتي وأستوديو الذكاء:</span>
           <div class="mixer-slider">🎵 موسيقى: <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.2" oninput="updateMixer()"></div>
           <div class="mixer-slider">🗣️ المعلق: <input type="range" id="voiceRate" min="0.7" max="1.3" step="0.1" value="0.9" oninput="updateMixer()"></div>
           <div class="mixer-slider">🔊 المؤثرات: <input type="range" id="sfxVol" min="0" max="1" step="0.1" value="0.15" oninput="updateMixer()"></div>
@@ -791,7 +791,7 @@
     function toggleCloudRenderFarm() {
       isCloudRenderActive = !isCloudRenderActive;
       if(isCloudRenderActive) {
-        alert("☁️ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
+        alert("☁️️ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
       } else {
         alert("💻 تم العودة للمعالجة المحلية المباشرة (Local GPU Render).");
       }
@@ -1103,7 +1103,7 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // محرك التصدير الفاخر فائق النقاء (Pro-Render Engine at 30fps with Scale 2 for After Effects Quality)
+    // 🚀 محرك التصدير السينمائي المحسن (Pro-Render Ultimate 30fps with requestAnimationFrame)
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
@@ -1119,7 +1119,7 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = isCloudRenderActive ? "☁️ جاري التصدير عبر مزرعة السحاب (Cloud Render)..." : "🎬 جاري التصدير بجودة After Effects الفائقة (30fps)..";
+      btn.textContent = "🎬 جاري التصدير السلس (Pro-Render Ultimate)...";
       document.getElementById('recordingOverlay').style.display = 'block';
 
       if (qualitySetting === 'fhd') {
@@ -1130,7 +1130,7 @@
         canvas.height = isVertical ? 1280 : 720;
       }
 
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
       const canvasStream = canvas.captureStream(30);
       let finalStream = canvasStream;
       
@@ -1140,9 +1140,8 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 8000000 });
-      }
-      catch (e) { 
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 12000000 });
+      } catch (e) { 
         try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } 
         catch (err) { mediaRecorder = new MediaRecorder(finalStream); } 
       }
@@ -1173,28 +1172,33 @@
         if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
       }
 
-      const captureTimer = setInterval(async () => {
-        if (!isExporting) { clearInterval(captureTimer); return; }
-        try {
-          const frameCanvas = await html2canvas(promoViewer, { 
-            scale: 2,
-            backgroundColor: '#070a14', 
-            logging: false, 
-            useCORS: true,
-            onclone: (clonedDoc) => {
-              const clonedViewer = clonedDoc.getElementById('promoViewer');
-              if (clonedViewer) {
-                clonedViewer.style.direction = 'rtl';
-                clonedViewer.querySelectorAll('*').forEach(el => {
-                  el.style.fontFamily = "'Cairo', sans-serif";
-                });
-              }
-            }
-          });
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
-        } catch (err) {}
-      }, 33);
+      let lastRenderTime = 0;
+      const targetInterval = 1000 / 30;
+
+      const renderLoop = async (timestamp) => {
+        if (!isExporting) return;
+        
+        if (timestamp - lastRenderTime >= targetInterval) {
+          lastRenderTime = timestamp;
+          try {
+            const frameCanvas = await html2canvas(promoViewer, { 
+              scale: 1.5,
+              backgroundColor: '#070a14', 
+              logging: false, 
+              useCORS: true,
+              foreignObjectRendering: false
+            });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
+          } catch (err) {}
+        }
+        
+        if (isExporting) {
+          requestAnimationFrame(renderLoop);
+        }
+      };
+
+      requestAnimationFrame(renderLoop);
 
       if (!isHologramMode) {
         let totalSlides = slides.length; let currentRecStep = 0;
@@ -1202,8 +1206,10 @@
           currentRecStep++;
           if (currentRecStep >= totalSlides) {
             clearInterval(exportInterval);
-            clearInterval(captureTimer);
-            setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, 1000);
+            setTimeout(() => { 
+              isExporting = false;
+              if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); 
+            }, 1000);
           } else { nextSlide(); }
         }, slideTime);
       }
