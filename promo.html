@@ -346,6 +346,8 @@
           <option value="4">الشريحة 5</option>
           <option value="5">الشريحة 6 (ROI)</option>
           <option value="6">الشريحة 7 (الأسطول)</option>
+          <option value="7">الشريحة 8 (الموارد البشرية)</option>
+          <option value="8">الشريحة 9 (الاشتراكات السحابية)</option>
         </select>
         <input type="text" id="liveTitleInput" class="input-field" placeholder="عنوان الشريحة" onkeyup="saveSlideText()" style="flex:1;">
         <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);" onclick="aiEnhanceScript()" title="توليد عنوان ذكي">✨ ذكاء اصطناعي</button>
@@ -455,6 +457,30 @@
             <div style="width: 80%; height: 2px; background: rgba(255,255,255,0.2); position: relative;">
               <div style="position: absolute; top: -6px; right: 40%; width: 14px; height: 14px; background: var(--secondary); border-radius: 50%; box-shadow: 0 0 10px var(--secondary); animation: moveFleet 3s infinite alternate ease-in-out;"></div>
             </div>
+          </div>
+        </div>
+
+        <!-- قسم جديد 1: الموارد البشرية الحضور والانصراف -->
+        <div class="slide">
+          <div class="default-badge">👥 نظام الموارد البشرية (HR)</div>
+          <h1 class="slide-title">إدارة حضور وانصراف الموظفين والرواتب</h1>
+          <div class="feature-grid">
+            <div class="feature-item">⏱️ بصمة حضور وانصراف ذكية</div>
+            <div class="feature-item">💵 حساب المسيرات والرواتب آلياً</div>
+            <div class="feature-item">📅 إدارة الإجازات والطلبات</div>
+            <div class="feature-item">📊 تقارير الأداء وإنتاجية الموظفين</div>
+          </div>
+        </div>
+
+        <!-- قسم جديد 2: الاشتراكات السحابية -->
+        <div class="slide">
+          <div class="default-badge">☁️ الاشتراكات والتعاقدات</div>
+          <h1 class="slide-title">تجديد آلي ومتابعة تراخيص SaaS</h1>
+          <div class="feature-grid">
+            <div class="feature-item">🔔 تنبيهات مواعيد التجديد التلقائي</div>
+            <div class="feature-item">💳 بوابات دفع إلكترونية آمنة</div>
+            <div class="feature-item">📑 عقود إلكترونية موثقة</div>
+            <div class="feature-item">📈 إحصائيات نمو المشتركين</div>
           </div>
         </div>
 
@@ -813,7 +839,9 @@
       if(preset === 'lightleaks') lightLeaks.classList.add('active');
     }
 
+    let currentRoiVal = 100000;
     function updateRoiCalculation(val) {
+      currentRoiVal = val;
       document.getElementById('roiSalesVal').innerText = parseInt(val).toLocaleString() + " ج";
       const savedProfit = Math.round(val * 0.35);
       document.getElementById('roiResultVal').innerText = savedProfit.toLocaleString() + " جنيه";
@@ -856,7 +884,7 @@
         container.appendChild(item);
         if(file.type.startsWith('image/')) {
           const url = URL.createObjectURL(file);
-          for(let i=1; i<=7; i++) {
+          for(let i=1; i<=9; i++) {
             const imgEl = document.getElementById(`logo${i}`);
             if(imgEl) { imgEl.src = url; imgEl.classList.add('active'); }
           }
@@ -947,7 +975,6 @@
       }
     }
 
-    // 🚀 تحسين دالة رفع وتشغيل فيديو الهولوجرام لتعمل بكفاءة بدون أخطاء
     function loadHologramVideoFile(event) {
       const file = event.target.files[0];
       if(file) {
@@ -1108,13 +1135,15 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك الرسم والتصدير المطور بالكامل ليحفظ الفيديو تماماً كما يظهر في الاستوديو الحقيقي
+    // 🚀 محرك الرسم والتصدير المطور بالكامل ليحفظ الفيديو بكل تأثيراته وليراته تماماً كما يظهر بالاستوديو
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const canvas = document.getElementById('exportCanvas');
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
       const camMotion = document.getElementById('cameraMotionSelector').value;
       const watermarkText = document.getElementById('watermarkDisplay').innerText;
+      const hasLightLeaks = document.getElementById('vfxLightLeaks').classList.contains('active');
+      const isLetterbox = document.getElementById('promoViewer').classList.contains('cinematic-bars');
       
       if (isExporting) return;
       isExporting = true;
@@ -1127,7 +1156,7 @@
       btn.textContent = "🎬 جاري المعالجة السينمائية الحقيقية...";
       const overlayEl = document.getElementById('recordingOverlay');
       overlayEl.style.display = 'block';
-      overlayEl.innerText = "🎬 جاري رسم وتصدير الشرائح بكل تفاصيلها وتنسيقاتها الطبيعية..";
+      overlayEl.innerText = "🎬 جاري رسم وتصدير الشرائح بكافة الليرات والموسيقى والمؤثرات..";
 
       canvas.width = isVertical ? 400 : 800;
       canvas.height = isVertical ? 711 : 450;
@@ -1142,7 +1171,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 3000000 });
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 4000000 });
       } catch (e) { 
         mediaRecorder = new MediaRecorder(finalStream); 
       }
@@ -1187,12 +1216,11 @@
         
         progressBar.style.width = progressPercent + '%';
         
-        // رسم الإطار على الـ Canvas بدقة عالية مطابقة للاستوديو تماماً
         ctx.save();
         ctx.fillStyle = '#070a14';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // تأثيرات الكاميرا السينمائية أثناء التصدير
+        // حركات الكاميرا السينمائية
         if (camMotion === 'cam-zoom-in') {
           let scaleFactor = 1 + (frame % 100) * 0.0006;
           ctx.translate(canvas.width / 2, canvas.height / 2);
@@ -1228,56 +1256,96 @@
         ctx.textAlign = 'left';
         ctx.fillText(watermarkText, 25, 38);
 
-        // جلب عناصر ونصوص الشريحة الحالية
+        // النصوص والعناصر
         const activeSlideEl = slides[currentSlide];
         const titleText = activeSlideEl.querySelector('.slide-title') ? activeSlideEl.querySelector('.slide-title').innerText : '';
+        const badgeEl = activeSlideEl.querySelector('.default-badge');
+        const badgeText = badgeEl ? badgeEl.innerText : '';
         const descEl = activeSlideEl.querySelector('.slide-desc');
         const descText = descEl ? descEl.innerText : '';
+
+        // بادج الشريحة الفرعي
+        if (badgeText) {
+          ctx.fillStyle = 'rgba(16,185,129,0.2)';
+          ctx.strokeStyle = '#10b981';
+          ctx.beginPath();
+          ctx.roundRect(canvas.width / 2 - 110, 60, 220, 24, 12);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#34d399';
+          ctx.font = 'bold 10px Cairo, sans-serif';
+          ctx.fillText(badgeText, canvas.width / 2, 76);
+        }
 
         // رسم عنوان الشريحة الرئيسي
         ctx.textAlign = 'center';
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 20px Cairo, sans-serif';
-        ctx.fillText(titleText, canvas.width / 2, canvas.height / 2 - 40);
+        ctx.font = 'bold 19px Cairo, sans-serif';
+        ctx.fillText(titleText, canvas.width / 2, canvas.height / 2 - 35);
 
-        // رسم وصف الشريحة إن وجد
-        if (descText) {
+        // رسم وصف الشريحة أو محتوى خاص (مثل ROI أو الميزات)
+        if (currentSlide === 5) {
+          // شريحة حاسبة العائد ROI
+          ctx.fillStyle = 'rgba(16,185,129,0.15)';
+          ctx.strokeStyle = '#10b981';
+          ctx.beginPath();
+          ctx.roundRect(canvas.width / 2 - 200, canvas.height / 2 - 10, 400, 75, 8);
+          ctx.fill(); ctx.stroke();
+          ctx.fillStyle = '#38bdf8';
+          ctx.font = 'bold 11px Cairo, sans-serif';
+          ctx.fillText(`حجم المبيعات التقريبي: ${parseInt(currentRoiVal).toLocaleString()} ج`, canvas.width / 2, canvas.height / 2 + 15);
+          ctx.fillStyle = '#34d399';
+          ctx.font = 'bold 12px Cairo, sans-serif';
+          ctx.fillText(`💰 الأرباح الإضافية الموفرة سنوياً: ${Math.round(currentRoiVal * 0.35).toLocaleString()} جنيه`, canvas.width / 2, canvas.height / 2 + 45);
+        } else if (descText) {
           ctx.fillStyle = '#cbd5e1';
-          ctx.font = '13px Cairo, sans-serif';
-          ctx.fillText(descText, canvas.width / 2, canvas.height / 2);
+          ctx.font = '12px Cairo, sans-serif';
+          ctx.fillText(descText, canvas.width / 2, canvas.height / 2 + 5);
         }
 
-        // رسم شبكة الميزات (Feature Items) بدقة مطابقة للاستوديو
+        // رسم شبكة الميزات (Feature Items)
         const featureItems = activeSlideEl.querySelectorAll('.feature-item');
         if (featureItems.length > 0) {
-          let startY = canvas.height / 2 + 20;
+          let startY = canvas.height / 2 + 15;
           featureItems.forEach((item, idx) => {
             let col = idx % 2;
             let row = Math.floor(idx / 2);
-            let boxX = canvas.width / 2 - 190 + (col * 195);
-            let boxY = startY + (row * 32);
+            let boxX = canvas.width / 2 - 195 + (col * 200);
+            let boxY = startY + (row * 30);
 
             ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
             ctx.strokeStyle = 'rgba(59, 130, 246, 0.35)';
             ctx.beginPath();
-            ctx.roundRect(boxX, boxY, 185, 26, 6);
+            ctx.roundRect(boxX, boxY, 190, 24, 6);
             ctx.fill();
             ctx.stroke();
 
             ctx.fillStyle = '#f8fafc';
             ctx.font = 'bold 10px Cairo, sans-serif';
             ctx.textAlign = 'right';
-            ctx.fillText(item.innerText, boxX + 170, boxY + 17);
+            ctx.fillText(item.innerText, boxX + 175, boxY + 16);
           });
         }
 
-        // رقم الشريحة السفلي
+        // تسريبات الإضاءة Light Leaks إن كانت مفعلة
+        if (hasLightLeaks) {
+          ctx.fillStyle = 'rgba(245, 158, 11, 0.12)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // شاشة سينمائية Letterbox إن كانت مفعلة
+        if (isLetterbox) {
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(0, 0, canvas.width, canvas.height * 0.08);
+          ctx.fillRect(0, canvas.height * 0.92, canvas.width, canvas.height * 0.08);
+        }
+
+        // رقم الشريحة السفلي وشريط التقدم
         ctx.textAlign = 'center';
         ctx.fillStyle = '#10b981';
         ctx.font = 'bold 11px Cairo, sans-serif';
-        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 30);
+        ctx.fillText(`الشريحة ${currentSlide + 1} من ${totalSlidesCount}`, canvas.width / 2, canvas.height - 25);
 
-        // شريط التقدم السفلي
         ctx.fillStyle = 'rgba(59, 130, 246, 0.3)';
         ctx.fillRect(0, canvas.height - 5, canvas.width, 5);
         ctx.fillStyle = '#3b82f6';
@@ -1297,7 +1365,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Natural_Pro_${Date.now()}.webm`;
+      a.download = `GITI_Pro_Studio_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
