@@ -1,4 +1,4 @@
-const CACHE_NAME = 'omda-grills-v6'; // تم رفع الإصدار لتحديث الكاش وتفعيل أحدث التعديلات السحابية
+const CACHE_NAME = 'omda-grills-v7'; // تم رفع الإصدار لتضمين صفحة promo.html الجديدة وتحديث الكاش
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
@@ -8,6 +8,7 @@ const assetsToCache = [
   '/el-omda-app/branches.html',
   '/el-omda-app/kitchen-display.html',
   '/el-omda-app/privacy.html',
+  '/el-omda-app/promo.html', // تمت إضافة صفحة العروض والبرومو كود إلى الكاش
   '/el-omda-app/rewards.html',
   '/el-omda-app/style.css',
   '/el-omda-app/app.js',
@@ -19,7 +20,7 @@ const assetsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('جاري تحديث وتخزين ملفات تطبيق مشويات العمدة...');
+      console.log('جاري تحديث وتخزين ملفات التطبيق وتشمل صفحة البرومو...');
       return cache.addAll(assetsToCache);
     })
   );
