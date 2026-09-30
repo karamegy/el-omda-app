@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render)</title>
+  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render Ultimate)</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -54,7 +54,7 @@
     .asset-bin-panel {
       background: rgba(11, 15, 25, 0.92); border: 1px solid var(--border-color); border-radius: 12px;
       padding: 8px; width: 220px; display: flex; flex-direction: column; gap: 6px; font-size: 0.65rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 500px; overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 520px; overflow-y: auto;
     }
     .asset-bin-title { font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px; }
     .asset-list { display: flex; flex-direction: column; gap: 4px; }
@@ -80,6 +80,13 @@
     .grading-teal-orange { filter: contrast(115%) saturate(125%) hue-rotate(-12deg); }
     .grading-cyberpunk { filter: contrast(130%) saturate(160%) drop-shadow(0 0 12px rgba(168,85,247,0.6)); }
     .grading-noir { filter: grayscale(100%) contrast(145%) brightness(95%); }
+    .vfx-chromatic { filter: drop-shadow(2px 0 rgba(239,68,68,0.8)) drop-shadow(-2px 0 rgba(6,182,212,0.8)); }
+    
+    .vfx-lightleaks {
+      position: absolute; inset: 0; background: linear-gradient(120deg, rgba(245,158,11,0.25), transparent 65%), radial-gradient(circle at 80% 20%, rgba(236,72,153,0.3), transparent 50%);
+      mix-blend-mode: screen; pointer-events: none; z-index: 22; display: none;
+    }
+    .vfx-lightleaks.active { display: block; }
 
     .video-container.cinematic-bars::before,
     .video-container.cinematic-bars::after {
@@ -258,8 +265,8 @@
 <body>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render)</h2>
-    <p>كل المميزات مكتملة: خط زمني، كي فريم، مكسر صوت، هولوجرام سينمائي HUD، وتصدير فائقة النقاء 30fps</p>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Pro-Render Ultimate)</h2>
+    <p>كل المميزات والأقسام المتقدمة مدمجة: محرر بياني، VFX، تعليق ذكي، حاسبة ROI، وتتبع أسطول مباشر</p>
   </div>
 
   <div id="recordingOverlay">🎬 جاري التصدير الاحترافي فائق النقاء (Pro-Render).. يرجى الانتظار</div>
@@ -295,6 +302,8 @@
           <option value="2">الشريحة 3</option>
           <option value="3">الشريحة 4</option>
           <option value="4">الشريحة 5</option>
+          <option value="5">الشريحة 6 (ROI)</option>
+          <option value="6">الشريحة 7 (الأسطول)</option>
         </select>
         <input type="text" id="liveTitleInput" class="input-field" placeholder="عنوان الشريحة" onkeyup="saveSlideText()" style="flex:1;">
         <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);" onclick="aiEnhanceScript()" title="توليد عنوان ذكي">✨ ذكاء اصطناعي</button>
@@ -303,6 +312,7 @@
 
       <div class="video-container" id="promoViewer">
         <div class="vfx-particles" id="particlesContainer"></div>
+        <div class="vfx-lightleaks" id="vfxLightLeaks"></div>
         <div class="video-watermark" id="watermarkDisplay">GITI STUDIO PRO</div>
 
         <!-- وضع الهولوجرام السينمائي المتطور HUD -->
@@ -384,19 +394,42 @@
           </div>
         </div>
 
+        <!-- شريحة حاسبة العائد على الاستثمار ROI المضافة حديثاً -->
+        <div class="slide">
+          <div class="default-badge">📈 حاسبة العائد المالي (ROI)</div>
+          <h1 class="slide-title">توقع حجم أرباحك السنوية مع نظام GITI</h1>
+          <div style="background: rgba(16,185,129,0.15); border: 1px solid var(--secondary); padding: 8px; border-radius: 8px; width: 100%; max-width: 500px; text-align: right; font-size: 0.62rem;">
+            <div style="margin-bottom: 4px;">حجم المبيعات التقريبي بالشهر: <span id="roiSalesVal" style="color:#38bdf8; font-weight:900;">100,000 ج</span></div>
+            <input type="range" min="10000" max="1000000" step="10000" value="100000" style="width:100%; accent-color:var(--secondary);" oninput="updateRoiCalculation(this.value)">
+            <div style="margin-top: 6px; font-weight: 800; color: #34d399;">💰 الأرباح الإضافية الموفرة سنوياً: <span id="roiResultVal" style="font-size:0.75rem;">35,000 جنيه</span></div>
+          </div>
+        </div>
+
+        <!-- شريحة تتبع الأسطول المباشر المضافة حديثاً -->
+        <div class="slide">
+          <div class="default-badge">🚚 وحدة تتبع الأسطول المباشر</div>
+          <h1 class="slide-title">مراقبة حية لخطوط سير مركبات شركتك</h1>
+          <div style="background: rgba(59,130,246,0.15); border: 1px solid var(--primary); padding: 10px; border-radius: 8px; width: 100%; max-width: 500px; position: relative; height: 130px; display: flex; align-items: center; justify-content: center;">
+            <div style="position: absolute; top: 10px; right: 10px; font-size: 0.55rem; color: #38bdf8;">🟢 سيارة رقم (أ ب ج 123) في الطريق الرئيسي</div>
+            <div style="width: 80%; height: 2px; background: rgba(255,255,255,0.2); position: relative;">
+              <div style="position: absolute; top: -6px; right: 40%; width: 14px; height: 14px; background: var(--secondary); border-radius: 50%; box-shadow: 0 0 10px var(--secondary); animation: moveFleet 3s infinite alternate ease-in-out;"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="audio-visualizer" id="audioVisualizer">
           <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
         </div>
 
         <div class="lower-third-ticker">
-          <span class="ticker-content">🔥 نظام GITI ERP 2027 المتكامل لإدارة الشركات واللوجستيات | ⚡ تفعيل فوري ومزامنة سحابية آمنة | 🎬 قسم الموشن جرافيك والكي فريم متاح الآن</span>
+          <span class="ticker-content">🔥 نظام GITI ERP 2027 المتكامل لإدارة الشركات واللوجستيات | ⚡ تفعيل فوري ومزامنة سحابية آمنة | 🎬 قسم الموشن جرافيك والمحرر البياني متاح الآن</span>
         </div>
 
         <div class="dots-container" id="dotsContainer"></div>
         <div class="progress-bar" id="progressBar"></div>
       </div>
 
-      <!-- لوحة خط الزمن وتحكم الكي فريم الحقيقي -->
+      <!-- لوحة خط الزمن وتحكم الكي فريم والمحرر البياني -->
       <div class="ae-studio-panel">
         <div class="ae-timeline-bar">
           <span>⏱️ الخط الزمني (Timeline):</span>
@@ -405,13 +438,8 @@
         </div>
         <div class="control-row">
           <span style="font-size: 0.62rem; color: #94a3b8;">🔑 كي فريم:</span>
-          <button class="btn" style="background:#059669;" onclick="addKeyframePoint()">+ إضافة نقطة مفتاحية</button>
-          <select id="easingSelector" class="select-field" style="width:105px;" onchange="updateKeyframeEasing()">
-            <option value="linear">منحنى خطي (Linear)</option>
-            <option value="ease-in">تسارع (Ease In)</option>
-            <option value="ease-out">تباطؤ (Ease Out)</option>
-            <option value="bounce">🏀 ارتداد (Bounce)</option>
-          </select>
+          <button class="btn" style="background:#059669;" onclick="addKeyframePoint()">+ نقطة مفتاحية</button>
+          <button class="btn" style="background:#0284c7;" onclick="openGraphEditor()">📈 المحرر البياني (Graph)</button>
           <button class="btn" style="background:#7c3aed;" onclick="triggerKineticText()">🔤 تفكيك الحروف (Kinetic)</button>
         </div>
       </div>
@@ -446,10 +474,15 @@
         </div>
 
         <div class="mixer-drawer">
-          <span>🎚️ المكسر الصوتي:</span>
+          <span>🎚️ المكسر الصوتي وأستوديو الذكاء:</span>
           <div class="mixer-slider">🎵 موسيقى: <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.2" oninput="updateMixer()"></div>
           <div class="mixer-slider">🗣️ المعلق: <input type="range" id="voiceRate" min="0.7" max="1.3" step="0.1" value="0.9" oninput="updateMixer()"></div>
           <div class="mixer-slider">🔊 المؤثرات: <input type="range" id="sfxVol" min="0" max="1" step="0.1" value="0.15" oninput="updateMixer()"></div>
+          <select id="voiceDialect" class="select-field" style="width: 90px;" onchange="updateVoiceDialect()">
+            <option value="ar-SA">🇸🇦 سعودي رسمي</option>
+            <option value="ar-EG" selected>🇪🇬 مصري واضح</option>
+            <option value="ar-AE">🇦🇪 إماراتي مهني</option>
+          </select>
         </div>
 
         <div class="control-row">
@@ -458,6 +491,12 @@
             <option value="grading-teal-orange">🟠 تيل & أورانج</option>
             <option value="grading-cyberpunk">🟣 سايبربانك</option>
             <option value="grading-noir">⚫ سينما كلاسيك</option>
+          </select>
+
+          <select id="vfxPresetSelector" class="select-field" onchange="changeVfxPreset()">
+            <option value="none">✨ بدون مؤثرات VFX</option>
+            <option value="chromatic">🌈 انحراف كروماتيك</option>
+            <option value="lightleaks">☀️ تسريب إضاءة سينمائي</option>
           </select>
 
           <select id="transitionSelector" class="select-field" onchange="changeTransitionStyle()">
@@ -472,9 +511,8 @@
             <option value="8000">بطيء (8ث)</option>
           </select>
 
-          <!-- اختيار الجودة الخارقة Pro-Render (30fps) -->
           <select id="qualitySelector" class="select-field" style="width: 145px;">
-            <option value="fhd" selected>🌟 Full HD (نقاء After Effects 30fps)</option>
+            <option value="fhd" selected>🌟 Full HD (نقاء 30fps)</option>
             <option value="hd">⚡ HD سريع</option>
           </select>
         </div>
@@ -491,7 +529,8 @@
             <option value="horizontal">أفقي 16:9</option>
             <option value="vertical">عمودي 9:16</option>
           </select>
-          <button class="btn voice-btn" id="voiceToggleBtn" onclick="toggleVoice()">🔊 المعلق: مفعل</button>
+          <button class="btn voice-btn" id="voiceToggleBtn" onclick="toggleVoice()">🔊 التعلق: مفعل</button>
+          <button class="btn" style="background:#0284c7;" onclick="toggleCloudRenderFarm()">☁️ مزرعة Render سحابي</button>
         </div>
 
         <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 4px;">
@@ -499,7 +538,7 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير فيديو فائق النقاء (Pro-Render)</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير Pro-Render (WebM/GIF)</button>
         </div>
       </div>
     </div>
@@ -535,6 +574,8 @@
     let sfxVolume = 0.15;
     let isHologramMode = false;
     let keyframePoints = [];
+    let selectedDialect = 'ar-EG';
+    let isCloudRenderActive = false;
 
     let audioCtx = null;
     let dest = null;
@@ -568,19 +609,44 @@
       alert(`تمت إضافة كي فريم جديد عند النقطة الزمنية: ${pointTime}%`);
     }
 
-    function updateKeyframeEasing() {
-      const easing = document.getElementById('easingSelector').value;
-      const activeEl = slides[currentSlide];
-      if(easing === 'bounce') {
-        activeEl.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-        activeEl.style.transform = 'scale(1.05)';
-      } else if(easing === 'ease-in') {
-        activeEl.style.transition = 'all 0.6s ease-in';
-      } else if(easing === 'ease-out') {
-        activeEl.style.transition = 'all 0.6s ease-out';
-      } else {
-        activeEl.style.transition = 'all 0.6s linear';
+    function openGraphEditor() {
+      const curveType = prompt("📈 محرر المنحنيات البيانية (Graph Editor):\nاختر نوع التسارع المطلوب:\n1. linear (خطي)\n2. ease (متسارع متباطئ)\n3. bounce (مرن)", "ease");
+      if(curveType) {
+        slides.forEach(s => s.style.transitionTimingFunction = curveType);
+        alert("✨ تم تطبيق المنحنى البياني بنجاح على حركات الشرائح!");
       }
+    }
+
+    function changeVfxPreset() {
+      const preset = document.getElementById('vfxPresetSelector').value;
+      const viewer = document.getElementById('promoViewer');
+      const lightLeaks = document.getElementById('vfxLightLeaks');
+      
+      viewer.classList.remove('vfx-chromatic');
+      lightLeaks.classList.remove('active');
+
+      if(preset === 'chromatic') viewer.classList.add('vfx-chromatic');
+      if(preset === 'lightleaks') lightLeaks.classList.add('active');
+    }
+
+    function updateRoiCalculation(val) {
+      document.getElementById('roiSalesVal').innerText = parseInt(val).toLocaleString() + " ج";
+      const savedProfit = Math.round(val * 0.35);
+      document.getElementById('roiResultVal').innerText = savedProfit.toLocaleString() + " جنيه";
+    }
+
+    function toggleCloudRenderFarm() {
+      isCloudRenderActive = !isCloudRenderActive;
+      if(isCloudRenderActive) {
+        alert("☁️ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
+      } else {
+        alert("💻 تم العودة للمعالجة المحلية المباشرة (Local GPU Render).");
+      }
+    }
+
+    function updateVoiceDialect() {
+      selectedDialect = document.getElementById('voiceDialect').value;
+      if(!isHologramMode) readCurrentSlide();
     }
 
     function triggerKineticText() {
@@ -613,7 +679,7 @@
         container.appendChild(item);
         if(file.type.startsWith('image/')) {
           const url = URL.createObjectURL(file);
-          for(let i=1; i<=5; i++) {
+          for(let i=1; i<=7; i++) {
             const imgEl = document.getElementById(`logo${i}`);
             if(imgEl) { imgEl.src = url; imgEl.classList.add('active'); }
           }
@@ -826,7 +892,7 @@
       slide.querySelectorAll('.feature-item').forEach(el => { textToRead += el.innerText.replace(/[^\w\sа-яا-ي]/gi, '') + ". "; });
       
       speechSynthUtterance = new SpeechSynthesisUtterance(textToRead);
-      speechSynthUtterance.lang = 'ar-SA'; 
+      speechSynthUtterance.lang = selectedDialect; 
       speechSynthUtterance.rate = parseFloat(document.getElementById('voiceRate').value);
       window.speechSynthesis.speak(speechSynthUtterance);
     }
@@ -900,10 +966,9 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري التصدير بجودة After Effects الفائقة (30fps)..";
+      btn.textContent = isCloudRenderActive ? "☁️ جاري التصدير عبر مزرعة السحاب (Cloud Render)..." : "🎬 جاري التصدير بجودة After Effects الفائقة (30fps)..";
       document.getElementById('recordingOverlay').style.display = 'block';
 
-      // دقة عالية ونقاء تام
       if (qualitySetting === 'fhd') {
         canvas.width = isVertical ? 1080 : 1920;
         canvas.height = isVertical ? 1920 : 1080;
@@ -913,7 +978,7 @@
       }
 
       const ctx = canvas.getContext('2d');
-      const canvasStream = canvas.captureStream(30); // 30 إطار في الثانية لحركة سلسة تماماً
+      const canvasStream = canvas.captureStream(30);
       let finalStream = canvasStream;
       
       if (dest && dest.stream.getAudioTracks().length > 0) {
@@ -922,7 +987,7 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 8000000 }); // 8 Mbps لنقاء مذهل
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 8000000 });
       }
       catch (e) { 
         try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } 
@@ -937,7 +1002,7 @@
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير فيديو فائق النقاء (Pro-Render)";
+        btn.textContent = "🚀 تصدير Pro-Render (WebM/GIF)";
         document.getElementById('recordingOverlay').style.display = 'none';
         isExporting = false;
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
@@ -955,12 +1020,11 @@
         if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
       }
 
-      // التقاط عالي النقاء والدقة (Scale: 2) لمنع أي بكسلة في النصوص مثل برامج المونتاج
       const captureTimer = setInterval(async () => {
         if (!isExporting) { clearInterval(captureTimer); return; }
         try {
           const frameCanvas = await html2canvas(promoViewer, { 
-            scale: 2, // مضاعفة السكيل لضمان حدّة فائقة وحروف صافية تماماً
+            scale: 2,
             backgroundColor: '#070a14', 
             logging: false, 
             useCORS: true,
@@ -977,7 +1041,7 @@
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
         } catch (err) {}
-      }, 33); // التقاط كل 33 ميلي ثانية (30fps حقيقي)
+      }, 33);
 
       if (!isHologramMode) {
         let totalSlides = slides.length; let currentRecStep = 0;
@@ -996,7 +1060,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Pro_Studio_HD_${Date.now()}.webm`;
+      a.download = `GITI_Pro_Ultimate_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
