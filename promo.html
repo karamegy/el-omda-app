@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو السينما وهولوجرام الهندسية المرئية AI</title>
+  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك الاحترافية</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -17,7 +17,7 @@
       --secondary: #10b981;
       --accent: #8b5cf6;
       --bg-glow: rgba(59, 130, 246, 0.15);
-      --glass-bg: rgba(15, 23, 42, 0.85);
+      --glass-bg: rgba(15, 23, 42, 0.88);
       --border-color: rgba(59, 130, 246, 0.3);
     }
 
@@ -34,53 +34,63 @@
       align-items: center;
       justify-content: center;
       overflow-x: hidden;
-      padding: 10px;
+      padding: 8px;
       position: relative;
     }
 
     body::before {
-      content: '';
-      position: absolute;
-      width: 500px;
-      height: 500px;
-      background: var(--bg-glow);
-      filter: blur(120px);
-      border-radius: 50%;
-      z-index: 0;
-      transition: 0.5s;
+      content: ''; position: absolute; width: 450px; height: 450px;
+      background: var(--bg-glow); filter: blur(120px); border-radius: 50%; z-index: 0; transition: 0.5s;
     }
 
-    .studio-header { margin-bottom: 4px; text-align: center; z-index: 2; }
-    .studio-header h2 { font-size: 1.1rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 15px var(--bg-glow); }
-    .studio-header p { font-size: 0.68rem; color: #94a3b8; }
+    .studio-header { margin-bottom: 2px; text-align: center; z-index: 2; }
+    .studio-header h2 { font-size: 1.05rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 2px 15px var(--bg-glow); }
+    .studio-header p { font-size: 0.65rem; color: #94a3b8; }
 
-    /* الحاوية الأساسية للعرض */
+    .main-workspace {
+      display: flex; gap: 8px; width: 100%; max-width: 980px; z-index: 2; align-items: flex-start; justify-content: center; flex-wrap: wrap;
+    }
+
+    /* لوحة الأصول والوسائط الجانبية (Asset Bin) */
+    .asset-bin-panel {
+      background: rgba(11, 15, 25, 0.9); border: 1px solid var(--border-color); border-radius: 12px;
+      padding: 8px; width: 220px; display: flex; flex-direction: column; gap: 6px; font-size: 0.65rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 480px; overflow-y: auto;
+    }
+    .asset-bin-title { font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 4px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 4px; }
+    .asset-list { display: flex; flex-direction: column; gap: 4px; }
+    .asset-item { background: rgba(30, 41, 59, 0.7); padding: 4px 6px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.2s; }
+    .asset-item:hover { background: var(--primary); border-color: var(--primary); }
+
+    .center-stage { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 740px; min-width: 320px; }
+
     .video-container {
-      width: 100%; max-width: 740px; aspect-ratio: 16 / 9; background: #070a14; 
-      border: 2px solid var(--border-color); border-radius: 16px; 
+      width: 100%; aspect-ratio: 16 / 9; background: #070a14; 
+      border: 2px solid var(--border-color); border-radius: 14px; 
       position: relative; display: flex; align-items: center; justify-content: center; 
-      text-align: center; padding: 20px; z-index: 1; overflow: hidden;
-      box-shadow: 0 15px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,0,0,0.5);
+      text-align: center; padding: 15px; z-index: 1; overflow: hidden;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 25px rgba(0,0,0,0.5);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
     }
 
-    .video-container.ratio-vertical { max-width: 350px; aspect-ratio: 9 / 16; }
+    .video-container.ratio-vertical { max-width: 330px; aspect-ratio: 9 / 16; margin: 0 auto; }
 
-    /* تأثيرات التلوين السينمائي (LUTs) */
+    /* نظام الأقنعة (Masking & Mattes) */
+    .video-container.mask-circle { clip-path: circle(48% at 50% 50%); border: 3px solid var(--secondary); }
+    .video-container.mask-rect { clip-path: inset(10% 15% 10% 15% round 12px); border: 3px solid var(--accent); }
+
     .grading-teal-orange { filter: contrast(115%) saturate(125%) hue-rotate(-12deg); }
     .grading-cyberpunk { filter: contrast(130%) saturate(160%) drop-shadow(0 0 12px rgba(168,85,247,0.6)); }
     .grading-noir { filter: grayscale(100%) contrast(145%) brightness(95%); }
 
-    /* شرائط السينما الواسعة (Letterbox) */
     .video-container.cinematic-bars::before,
     .video-container.cinematic-bars::after {
-      content: ''; position: absolute; left: 0; width: 100%; height: 8%; background: #000; z-index: 25; pointer-events: none;
-      transition: 0.3s;
+      content: ''; position: absolute; left: 0; width: 100%; height: 8%; background: #000; z-index: 25; pointer-events: none; transition: 0.3s;
     }
     .video-container.cinematic-bars::before { top: 0; }
     .video-container.cinematic-bars::after { bottom: 0; }
 
-    /* جزيئات الغبار السينمائي */
     .vfx-particles {
       position: absolute; width: 100%; height: 100%; top: 0; left: 0; pointer-events: none; z-index: 4; overflow: hidden;
     }
@@ -94,7 +104,6 @@
       100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
     }
 
-    /* قسم الهولوجرام المتطور (Hologram Mode Styles) */
     .hologram-stage {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: radial-gradient(circle at 50% 85%, rgba(6, 182, 212, 0.25) 0%, rgba(2, 6, 23, 0.95) 70%);
@@ -103,126 +112,106 @@
     .hologram-stage.active { display: flex; }
     
     .hologram-screen-wrapper {
-      position: relative; width: 80%; max-height: 70%; display: flex; justify-content: center; align-items: center;
-      perspective: 1000px;
+      position: relative; width: 80%; max-height: 70%; display: flex; justify-content: center; align-items: center; perspective: 1000px;
     }
-
     .hologram-video-element {
-      width: 100%; max-height: 280px; object-fit: contain; border-radius: 8px;
-      /* تأثيرات الهولوجرام الفاخرة: إضاءة سيبرانية، خطوط مسح، وشفافية متوهجة */
+      width: 100%; max-height: 260px; object-fit: contain; border-radius: 8px;
       filter: drop-shadow(0 0 15px rgba(6, 182, 212, 0.8)) hue-rotate(180deg) brightness(1.2) contrast(130%);
-      opacity: 0.88;
-      border: 1px solid rgba(6, 182, 212, 0.6);
-      animation: hologramFlicker 3s infinite alternate;
+      opacity: 0.88; border: 1px solid rgba(6, 182, 212, 0.6); animation: hologramFlicker 3s infinite alternate;
     }
-
     @keyframes hologramFlicker {
       0% { opacity: 0.85; filter: drop-shadow(0 0 10px rgba(6,182,212,0.6)) hue-rotate(180deg) brightness(1.1); }
       50% { opacity: 0.95; filter: drop-shadow(0 0 22px rgba(6,182,212,0.9)) hue-rotate(190deg) brightness(1.3); }
       100% { opacity: 0.88; filter: drop-shadow(0 0 14px rgba(6,182,212,0.7)) hue-rotate(175deg) brightness(1.2); }
     }
-
-    /* خطوط مسح الهولوجرام (Scanlines Overlay) */
     .hologram-scanlines {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.15) 50%);
-      background-size: 100% 4px; z-index: 12;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(6, 182, 212, 0.15) 50%); background-size: 100% 4px; z-index: 12;
     }
-
-    /* قاعدة هولوجرام ضوئية أرضية ثلاثية الأبعاد */
     .hologram-base-platform {
-      position: absolute; bottom: 25px; width: 180px; height: 35px;
+      position: absolute; bottom: 20px; width: 160px; height: 30px;
       background: radial-gradient(ellipse at center, rgba(6, 182, 212, 0.8) 0%, transparent 70%);
-      border-radius: 50%; transform: rotateX(60deg);
-      box-shadow: 0 0 30px #06b6d4, inset 0 0 15px #ffffff;
-      animation: platformPulse 2s infinite alternate ease-in-out;
+      border-radius: 50%; transform: rotateX(60deg); box-shadow: 0 0 25px #06b6d4, inset 0 0 12px #ffffff;
     }
-    @keyframes platformPulse {
-      0% { width: 160px; opacity: 0.6; box-shadow: 0 0 20px #06b6d4; }
-      100% { width: 200px; opacity: 1; box-shadow: 0 0 45px #06b6d4, 0 0 15px #3b82f6; }
-    }
-
     .hologram-title {
-      position: absolute; top: 15px; font-size: 0.75rem; font-weight: 900; color: #67e8f9;
-      letter-spacing: 2px; text-transform: uppercase; text-shadow: 0 0 10px #06b6d4; z-index: 15;
+      position: absolute; top: 12px; font-size: 0.7rem; font-weight: 900; color: #67e8f9; letter-spacing: 2px; text-transform: uppercase; z-index: 15;
     }
 
-    /* موجات الصوت التفاعلية */
     .audio-visualizer {
-      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 3px; align-items: flex-end; height: 22px; z-index: 26; pointer-events: none;
+      position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 3px; align-items: flex-end; height: 18px; z-index: 26; pointer-events: none;
     }
-    .vis-bar {
-      width: 4px; background: var(--secondary); border-radius: 2px;
-      animation: pulseBar 0.8s infinite alternate ease-in-out;
-    }
+    .vis-bar { width: 3px; background: var(--secondary); border-radius: 2px; animation: pulseBar 0.8s infinite alternate ease-in-out; }
     .vis-bar:nth-child(2) { animation-delay: 0.2s; background: var(--primary); }
     .vis-bar:nth-child(3) { animation-delay: 0.4s; background: var(--accent); }
     .vis-bar:nth-child(4) { animation-delay: 0.1s; }
     .vis-bar:nth-child(5) { animation-delay: 0.5s; background: var(--primary); }
+    @keyframes pulseBar { 0% { height: 3px; opacity: 0.4; } 100% { height: 16px; opacity: 1; box-shadow: 0 0 6px var(--primary); } }
 
-    @keyframes pulseBar {
-      0% { height: 4px; opacity: 0.4; }
-      100% { height: 20px; opacity: 1; box-shadow: 0 0 8px var(--primary); }
-    }
-
-    /* شريط المعلومات السفلي المتحرك */
     .lower-third-ticker {
-      position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.9);
-      border-top: 1px solid var(--border-color); padding: 3px 10px; font-size: 0.6rem; font-weight: 700;
+      position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.92);
+      border-top: 1px solid var(--border-color); padding: 2px 8px; font-size: 0.58rem; font-weight: 700;
       color: #38bdf8; z-index: 28; display: flex; align-items: center; overflow: hidden; white-space: nowrap;
     }
     .ticker-content { display: inline-block; animation: tickerScroll 18s linear infinite; }
     @keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-    /* أنماط الشرائح القياسية */
-    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: translateY(15px) scale(0.96); transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; padding: 20px; z-index: 2; }
-    .slide.transition-zoom { transform: scale(0.7); filter: blur(5px); }
-    .slide.transition-glitch { transform: skewX(-20deg); filter: invert(20%); }
+    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: translateY(12px) scale(0.97); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; padding: 15px; z-index: 2; }
+    .slide.transition-zoom { transform: scale(0.7); filter: blur(4px); }
+    .slide.transition-glitch { transform: skewX(-15deg); filter: invert(15%); }
     .slide.active { opacity: 1; transform: translateY(0) scale(1); filter: none; pointer-events: auto; }
 
-    .custom-logo-img { max-height: 45px; margin-bottom: 4px; border-radius: 6px; display: none; }
+    .custom-logo-img { max-height: 40px; margin-bottom: 3px; border-radius: 6px; display: none; }
     .custom-logo-img.active { display: block; }
     .default-badge.hidden { display: none !important; }
-    .default-badge { display: inline-block; font-size: 0.65rem; font-weight: 900; margin-bottom: 4px; letter-spacing: 1px; text-transform: uppercase; background: var(--bg-glow); padding: 3px 10px; border-radius: 50px; border: 1px solid var(--border-color); color: var(--primary); }
+    .default-badge { display: inline-block; font-size: 0.6rem; font-weight: 900; margin-bottom: 3px; letter-spacing: 1px; text-transform: uppercase; background: var(--bg-glow); padding: 2px 8px; border-radius: 50px; border: 1px solid var(--border-color); color: var(--primary); }
     
-    h1 { font-size: 1.1rem; font-weight: 900; margin-bottom: 4px; color: #f8fafc; line-height: 1.3; }
-    p { font-size: 0.7rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 5px; max-width: 560px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+    h1 { font-size: 1.05rem; font-weight: 900; margin-bottom: 3px; color: #f8fafc; line-height: 1.3; }
+    p { font-size: 0.65rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 4px; max-width: 520px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.05); }
 
-    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; margin-top: 5px; width: 100%; max-width: 560px; }
-    .feature-item { background: rgba(30, 41, 59, 0.9); padding: 5px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-weight: 700; font-size: 0.6rem; display: flex; align-items: center; gap: 5px; text-align: right; }
+    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 4px; width: 100%; max-width: 520px; }
+    .feature-item { background: rgba(30, 41, 59, 0.9); padding: 4px 6px; border-radius: 5px; border: 1px solid var(--border-color); font-weight: 700; font-size: 0.58rem; display: flex; align-items: center; gap: 4px; text-align: right; }
 
-    .cta-content-box { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 5px; background: rgba(255,255,255,0.05); padding: 6px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
-    .qrcode-box { background: #ffffff; padding: 4px; border-radius: 6px; }
+    .cta-content-box { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px; background: rgba(255,255,255,0.04); padding: 5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+    .qrcode-box { background: #ffffff; padding: 3px; border-radius: 5px; }
 
-    .video-watermark { position: absolute; top: 12px; left: 12px; font-size: 0.58rem; font-weight: 700; color: rgba(255,255,255,0.35); z-index: 30; pointer-events: none; letter-spacing: 1px; }
+    .video-watermark { position: absolute; top: 10px; left: 10px; font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.35); z-index: 30; pointer-events: none; letter-spacing: 1px; }
 
-    .dots-container { position: absolute; bottom: 20px; display: flex; gap: 4px; z-index: 30; }
-    .dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: 0.3s; }
-    .dot.active { width: 14px; border-radius: 3px; background: var(--primary); }
+    .dots-container { position: absolute; bottom: 16px; display: flex; gap: 4px; z-index: 30; }
+    .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: 0.3s; }
+    .dot.active { width: 12px; border-radius: 3px; background: var(--primary); }
     .progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.1s linear; z-index: 30; }
 
-    /* لوحة التحكم والتحويل */
+    /* لوحات التحكم وإضافات After Effects المتقدمة */
+    .ae-studio-panel {
+      background: rgba(11, 15, 25, 0.95); border: 1px solid var(--border-color); border-radius: 10px;
+      padding: 6px 10px; width: 100%; display: flex; flex-direction: column; gap: 5px; z-index: 2;
+    }
+    .ae-timeline-bar {
+      display: flex; align-items: center; gap: 8px; background: rgba(2, 6, 23, 0.8); padding: 4px 8px; border-radius: 6px; font-size: 0.62rem;
+    }
+    .ae-timeline-slider { flex: 1; accent-color: var(--secondary); cursor: pointer; }
+    
     .studio-control-panel { 
-      margin-top: 8px; background: var(--glass-bg); backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color); border-radius: 14px; padding: 8px; 
-      display: flex; flex-direction: column; gap: 6px; max-width: 740px; width: 100%; z-index: 2; 
+      background: var(--glass-bg); backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color); border-radius: 12px; padding: 6px 8px; 
+      display: flex; flex-direction: column; gap: 5px; width: 100%; z-index: 2; 
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
-    .control-row { display: flex; gap: 5px; align-items: center; justify-content: center; flex-wrap: wrap; }
+    .control-row { display: flex; gap: 4px; align-items: center; justify-content: center; flex-wrap: wrap; }
     
     .btn { 
       background: rgba(30, 41, 59, 0.9); color: white; border: 1px solid var(--border-color); 
-      padding: 5px 10px; border-radius: 6px; font-weight: 700; font-size: 0.68rem; cursor: pointer; 
-      display: flex; align-items: center; gap: 4px; transition: 0.25s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      padding: 4px 8px; border-radius: 5px; font-weight: 700; font-size: 0.64rem; cursor: pointer; 
+      display: flex; align-items: center; gap: 3px; transition: 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    .btn:hover { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px var(--bg-glow); transform: translateY(-1px); }
+    .btn:hover { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 8px var(--bg-glow); transform: translateY(-1px); }
     
     .input-field, .select-field { 
       background: #0b0f19; border: 1px solid var(--border-color); color: #fff; 
-      padding: 4px 7px; border-radius: 6px; font-size: 0.68rem; width: 120px; outline: none; transition: 0.2s;
+      padding: 3px 6px; border-radius: 5px; font-size: 0.64rem; width: 110px; outline: none; transition: 0.2s;
     }
-    .input-field:focus, .select-field:focus { border-color: var(--primary); box-shadow: 0 0 8px var(--bg-glow); }
+    .input-field:focus, .select-field:focus { border-color: var(--primary); box-shadow: 0 0 6px var(--bg-glow); }
 
     .upload-btn-wrapper { position: relative; overflow: hidden; display: inline-block; }
     .upload-btn-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
@@ -230,253 +219,278 @@
     .voice-btn { background: linear-gradient(135deg, #8b5cf6, #6d28d9); border-color: #8b5cf6; }
     .voice-btn.muted { background: rgba(30, 41, 59, 0.9); color: #94a3b8; }
     
-    .export-ai-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; font-weight: 800; font-size: 0.72rem; padding: 6px 12px; box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4); }
-    .export-ai-btn:hover { background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 0 15px rgba(239, 68, 68, 0.6); }
+    .export-ai-btn { background: linear-gradient(135deg, #ef4444, #b91c1c); border: none; font-weight: 800; font-size: 0.68rem; padding: 5px 10px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4); }
+    .export-ai-btn:hover { background: linear-gradient(135deg, #f87171, #dc2626); box-shadow: 0 0 12px rgba(239, 68, 68, 0.6); }
     .export-ai-btn.loading { background: #64748b; pointer-events: none; }
 
     .hologram-mode-btn { background: linear-gradient(135deg, #06b6d4, #3b82f6); border: 1px solid #67e8f9; font-weight: 800; }
 
-    /* مكسر الصوت */
     .mixer-drawer {
-      background: rgba(11, 15, 25, 0.7); border: 1px solid rgba(255,255,255,0.06); padding: 5px 8px;
-      border-radius: 8px; width: 100%; display: flex; gap: 10px; align-items: center; justify-content: center; font-size: 0.65rem; flex-wrap: wrap;
+      background: rgba(11, 15, 25, 0.7); border: 1px solid rgba(255,255,255,0.05); padding: 4px 6px;
+      border-radius: 6px; width: 100%; display: flex; gap: 8px; align-items: center; justify-content: center; font-size: 0.62rem; flex-wrap: wrap;
     }
-    .mixer-slider { display: flex; align-items: center; gap: 4px; color: #94a3b8; }
-    .mixer-slider input[type=range] { width: 65px; accent-color: var(--primary); cursor: pointer; }
+    .mixer-slider { display: flex; align-items: center; gap: 3px; color: #94a3b8; }
+    .mixer-slider input[type=range] { width: 55px; accent-color: var(--primary); cursor: pointer; }
 
-    .editor-drawer { background: rgba(30, 41, 59, 0.6); padding: 5px 8px; border-radius: 8px; width: 100%; max-width: 740px; font-size: 0.68rem; display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+    .editor-drawer { background: rgba(30, 41, 59, 0.6); padding: 4px 6px; border-radius: 6px; width: 100%; font-size: 0.64rem; display: flex; gap: 5px; align-items: center; justify-content: space-between; }
     
     #recordingOverlay {
         display: none; position: fixed; top: 12px; left: 50%; transform: translateX(-50%);
-        background: rgba(239, 68, 68, 0.95); color: white; padding: 6px 15px; border-radius: 20px;
-        font-weight: bold; font-size: 0.72rem; z-index: 100000; box-shadow: 0 5px 20px rgba(0,0,0,0.6); text-align: center;
+        background: rgba(239, 68, 68, 0.95); color: white; padding: 5px 12px; border-radius: 20px;
+        font-weight: bold; font-size: 0.68rem; z-index: 100000; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-align: center;
     }
 
     #previewModal {
       display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.92); z-index: 1000000;
       justify-content: center; align-items: center; flex-direction: column; padding: 15px; backdrop-filter: blur(10px);
     }
-    #previewModal video { max-width: 100%; max-height: 70vh; border-radius: 12px; border: 2px solid var(--primary); margin-bottom: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
+    #previewModal video { max-width: 100%; max-height: 70vh; border-radius: 12px; border: 2px solid var(--primary); margin-bottom: 10px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
     #exportCanvas { display: none; }
   </style>
 </head>
 <body>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما وهولوجرام الهندسية المرئية AI</h2>
-    <p>مونتاج سينمائي متكامل، محول هولوجرام ثلاثي الأبعاد، وموجات صوتية تفاعلية</p>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك</h2>
+    <p>منصة مونتاج متكاملة، كي فريم حقيقي، قوالب MOGRT، أقنعة وأصول سحابية</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري التصدير والهندسة السينمائية الخارقة للفيديو.. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري المعالجة وتصدير الفيديو الاحترافي.. يرجى الانتظار</div>
 
-  <!-- لوحة تحرير النصوص ومساعد الذكاء الاصطناعي -->
-  <div class="editor-drawer" id="textEditorDrawer">
-    <span>✏ تحرير الشرائح:</span>
-    <select id="slideSelector" class="select-field" onchange="loadSlideText()" style="width: 90px;">
-      <option value="0">الشريحة 1</option>
-      <option value="1">الشريحة 2</option>
-      <option value="2">الشريحة 3</option>
-      <option value="3">الشريحة 4</option>
-      <option value="4">الشريحة 5</option>
-    </select>
-    <input type="text" id="liveTitleInput" class="input-field" placeholder="عنوان الشريحة" onkeyup="saveSlideText()" style="flex:1;">
-    <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);" onclick="aiEnhanceScript()" title="توليد عنوان تسويقي ذكي بالذكاء الاصطناعي">✨ توليد AI</button>
-    <input type="text" id="watermarkInput" class="input-field" placeholder="العلامة المائية" onkeyup="updateWatermark()" style="width: 80px;">
-  </div>
-
-  <div class="video-container" id="promoViewer">
-    <div class="dynamic-light-1"></div>
-    <div class="dynamic-light-2"></div>
-    
-    <!-- طبقة جزيئات الغبار السينمائي -->
-    <div class="vfx-particles" id="particlesContainer"></div>
-    <div class="video-watermark" id="watermarkDisplay">GITI HOLOGRAM 2027</div>
-
-    <!-- قسم عرض الهولوجرام الجديد (Hologram Stage) -->
-    <div class="hologram-stage" id="hologramStage">
-      <div class="hologram-title">🔮 مشروع العرض الهولوجرامي الذكي (3D Holo-View)</div>
-      <div class="hologram-screen-wrapper">
-        <div class="hologram-scanlines"></div>
-        <video id="hologramVideoPlayer" class="hologram-video-element" controls playsinline muted loop></video>
+  <div class="main-workspace">
+    <!-- لوحة الأصول والوسائط الجانبية (Asset Bin) -->
+    <div class="asset-bin-panel">
+      <div class="asset-bin-title">📁 لوحة الأصول والوسائط</div>
+      <div class="upload-btn-wrapper" style="width:100%;">
+        <button class="btn" style="width:100%; background: #3b82f6;">➕ إضافة عنصر للمشروع</button>
+        <input type="file" accept="image/*,video/*,audio/*" onchange="uploadAssetToBin(event)" />
       </div>
-      <div class="hologram-base-platform"></div>
-    </div>
-
-    <!-- الشرائح القياسية -->
-    <div class="slide active">
-      <div class="logo-wrapper">
-        <img src="" alt="Custom Logo" class="custom-logo-img" id="logo1">
-        <div class="default-badge">GITI ENTERPRISE ERP</div>
+      <div class="asset-list" id="assetListContainer">
+        <div class="asset-item"><span>🎵 موسيقى تكنولوجية</span> <span style="color:#10b981;">نشط</span></div>
+        <div class="asset-item"><span>🖼️ لوجو المؤسسة الرئيسي</span> <span style="color:#38bdf8;">جاهز</span></div>
       </div>
-      <h1 class="slide-title" id="title0">نظام الإدارة المالية والفواتير الذكي لشركتك</h1>
-      <p class="slide-desc" id="desc0"><span id="clientNameText">مرحباً بك،</span> ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك التجاري بكفاءة واحترافية.</p>
-    </div>
-
-    <div class="slide">
-      <div class="logo-wrapper">
-        <img src="" alt="Custom Logo" class="custom-logo-img" id="logo2">
-        <div class="default-badge">⚡ فواتير إلكترونية فورية</div>
-      </div>
-      <h1 class="slide-title" id="title1">إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
-      <div class="feature-grid">
-        <div class="feature-item">🧾 فواتير حية مباشرة ومطابقة</div>
-        <div class="feature-item">🖨️ طباعة حرارية معيارية سريعة</div>
-        <div class="feature-item">💬 إرسال فوري للفواتير عبر واتساب</div>
-        <div class="feature-item">🏷 حساب الضرائب والخصومات تلقائياً</div>
-      </div>
-    </div>
-
-    <div class="slide">
-      <div class="logo-wrapper">
-        <img src="" alt="Custom Logo" class="custom-logo-img" id="logo3">
-        <div class="default-badge" id="industryBadge">📦 المخازن وحسابات العملاء</div>
-      </div>
-      <h1 class="slide-title" id="title2">تحكم كامل في أصناف مخزنك وديون عملائك</h1>
-      <div class="feature-grid" id="industryFeatures">
-        <div class="feature-item">📦 تتبع المخزون وتنبيهات النفاذ</div>
-        <div class="feature-item">👥 دفاتر مديونيات وحسابات العملاء</div>
-        <div class="feature-item">💵 تسجيل الدفعات والسداد النقدي</div>
-        <div class="feature-item">📊 تقارير أرباح ومصروفات دقيقة</div>
-      </div>
-    </div>
-
-    <div class="slide">
-      <div class="logo-wrapper">
-        <img src="" alt="Custom Logo" class="custom-logo-img" id="logo4">
-        <div class="default-badge">☁️ مزامنة سحابية وأمان تامة</div>
-      </div>
-      <h1 class="slide-title" id="title3">بياناتك آمنة، متزامنة، وتعمل بدون إنترنت</h1>
-      <div class="feature-grid">
-        <div class="feature-item">☁️ مزامنة فورية عبر تقنيات سحابية</div>
-        <div class="feature-item">🔌 يعمل أوفلاين بالكامل (PWA)</div>
-        <div class="feature-item">💾 نسخ احتياطي واستيراد بيانات</div>
-        <div class="feature-item">🔒 حماية وتراخيص مستخدمين متقدمة</div>
-      </div>
-    </div>
-
-    <div class="slide">
-      <div class="logo-wrapper">
-        <img src="" alt="Custom Logo" class="custom-logo-img" id="logo5">
-        <div class="default-badge">🚀 ابدأ نشاطك اليوم</div>
-      </div>
-      <h1 class="slide-title" id="title4">جاهز لنقل عملك إلى المستوى التالي؟</h1>
-      <div class="cta-content-box">
-        <div>
-          <p class="slide-desc" style="margin-bottom: 3px;">الاشتراك السنوي الشامل: <strong>3500 جنيه</strong></p>
+      <div style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 4px; margin-top: 4px;">
+        <span style="font-weight:700; color:#cbd5e1;">⭐ قوالب MOGRT الجاهزة:</span>
+        <div style="display:flex; flex-direction:column; gap:3px; margin-top:3px;">
+          <button class="btn" style="font-size:0.58rem;" onclick="applyMOGRT('subscribe')">🔴 زر اشتراك يوتيوب متحرك</button>
+          <button class="btn" style="font-size:0.58rem;" onclick="applyMOGRT('lowerthird')">📰 شريط إخباري سفلي ذكي</button>
+          <button class="btn" style="font-size:0.58rem;" onclick="applyMOGRT('endcard')">🎬 شاشة نهاية سينمائية</button>
         </div>
-        <div class="qrcode-box" id="finalQrCode"></div>
       </div>
     </div>
 
-    <!-- موجات الصوت التفاعلية -->
-    <div class="audio-visualizer" id="audioVisualizer">
-      <div class="vis-bar"></div>
-      <div class="vis-bar"></div>
-      <div class="vis-bar"></div>
-      <div class="vis-bar"></div>
-      <div class="vis-bar"></div>
-    </div>
+    <div class="center-stage">
+      <div class="editor-drawer" id="textEditorDrawer">
+        <span>✏ تحرير الشرائح:</span>
+        <select id="slideSelector" class="select-field" onchange="loadSlideText()" style="width: 85px;">
+          <option value="0">الشريحة 1</option>
+          <option value="1">الشريحة 2</option>
+          <option value="2">الشريحة 3</option>
+          <option value="3">الشريحة 4</option>
+          <option value="4">الشريحة 5</option>
+        </select>
+        <input type="text" id="liveTitleInput" class="input-field" placeholder="عنوان الشريحة" onkeyup="saveSlideText()" style="flex:1;">
+        <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #8b5cf6);" onclick="aiEnhanceScript()" title="توليد عنوان ذكي">✨ ذكاء اصطناعي</button>
+        <input type="text" id="watermarkInput" class="input-field" placeholder="العلامة" onkeyup="updateWatermark()" style="width: 70px;">
+      </div>
 
-    <!-- شريط معلومات سفلي متحرك -->
-    <div class="lower-third-ticker">
-      <span class="ticker-content">🔥 نظام GITI ERP 2027 المتكامل لإدارة الشركات واللوجستيات | ⚡ تفعيل فوري ومزامنة سحابية آمنة | 🔮 قسم الهولوجرام السيبراني الجديد متاح الآن</span>
-    </div>
+      <div class="video-container" id="promoViewer">
+        <div class="vfx-particles" id="particlesContainer"></div>
+        <div class="video-watermark" id="watermarkDisplay">GITI STUDIO 2027</div>
 
-    <div class="dots-container" id="dotsContainer"></div>
-    <div class="progress-bar" id="progressBar"></div>
+        <div class="hologram-stage" id="hologramStage">
+          <div class="hologram-title">🔮 مشروع العرض الهولوجرامي الذكي (3D Holo-View)</div>
+          <div class="hologram-screen-wrapper">
+            <div class="hologram-scanlines"></div>
+            <video id="hologramVideoPlayer" class="hologram-video-element" controls playsinline muted loop></video>
+          </div>
+          <div class="hologram-base-platform"></div>
+        </div>
+
+        <div class="slide active">
+          <div class="logo-wrapper">
+            <img src="" alt="Custom Logo" class="custom-logo-img" id="logo1">
+            <div class="default-badge">GITI ENTERPRISE ERP</div>
+          </div>
+          <h1 class="slide-title" id="title0">نظام الإدارة المالية والفواتير الذكي لشركتك</h1>
+          <p class="slide-desc" id="desc0"><span id="clientNameText">مرحباً بك،</span> ودع الطرق التقليدية.. وادخل عصر الأتمتة السحابية المتكاملة لإدارة نشاطك بكفاءة عالية.</p>
+        </div>
+
+        <div class="slide">
+          <div class="logo-wrapper">
+            <img src="" alt="Custom Logo" class="custom-logo-img" id="logo2">
+            <div class="default-badge">⚡ فواتير إلكترونية فورية</div>
+          </div>
+          <h1 class="slide-title" id="title1">إصدار فواتير ذكية مع رمز الاستجابة السريع QR</h1>
+          <div class="feature-grid">
+            <div class="feature-item">🧾 فواتير حية مباشرة ومطابقة</div>
+            <div class="feature-item">🖨️ طباعة حرارية معيارية سريعة</div>
+            <div class="feature-item">💬 إرسال فوري للفواتير عبر واتساب</div>
+            <div class="feature-item">🏷 حساب الضرائب والخصومات تلقائياً</div>
+          </div>
+        </div>
+
+        <div class="slide">
+          <div class="logo-wrapper">
+            <img src="" alt="Custom Logo" class="custom-logo-img" id="logo3">
+            <div class="default-badge" id="industryBadge">📦 المخازن وحسابات العملاء</div>
+          </div>
+          <h1 class="slide-title" id="title2">تحكم كامل في أصناف مخزنك وديون عملائك</h1>
+          <div class="feature-grid" id="industryFeatures">
+            <div class="feature-item">📦 تتبع المخزون وتنبيهات النفاذ</div>
+            <div class="feature-item">👥 دفاتر مديونيات وحسابات العملاء</div>
+            <div class="feature-item">💵 تسجيل الدفعات والسداد النقدي</div>
+            <div class="feature-item">📊 تقارير أرباح ومصروفات دقيقة</div>
+          </div>
+        </div>
+
+        <div class="slide">
+          <div class="logo-wrapper">
+            <img src="" alt="Custom Logo" class="custom-logo-img" id="logo4">
+            <div class="default-badge">☁️ مزامنة سحابية وأمان تامة</div>
+          </div>
+          <h1 class="slide-title" id="title3">بياناتك آمنة، متزامنة، وتعمل بدون إنترنت</h1>
+          <div class="feature-grid">
+            <div class="feature-item">☁️ مزامنة فورية عبر تقنيات سحابية</div>
+            <div class="feature-item">🔌 يعمل أوفلاين بالكامل (PWA)</div>
+            <div class="feature-item">💾 نسخ احتياطي واستيراد بيانات</div>
+            <div class="feature-item">🔒 حماية وتراخيص مستخدمين متقدمة</div>
+          </div>
+        </div>
+
+        <div class="slide">
+          <div class="logo-wrapper">
+            <img src="" alt="Custom Logo" class="custom-logo-img" id="logo5">
+            <div class="default-badge">🚀 ابدأ نشاطك اليوم</div>
+          </div>
+          <h1 class="slide-title" id="title4">جاهز لنقل عملك إلى المستوى التالي؟</h1>
+          <div class="cta-content-box">
+            <div>
+              <p class="slide-desc" style="margin-bottom: 2px;">الاشتراك السنوي الشامل: <strong>3500 جنيه</strong></p>
+            </div>
+            <div class="qrcode-box" id="finalQrCode"></div>
+          </div>
+        </div>
+
+        <div class="audio-visualizer" id="audioVisualizer">
+          <div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div><div class="vis-bar"></div>
+        </div>
+
+        <div class="lower-third-ticker">
+          <span class="ticker-content">🔥 نظام GITI ERP 2027 المتكامل لإدارة الشركات واللوجستيات | ⚡ تفعيل فوري ومزامنة سحابية آمنة | 🎬 قسم الموشن جرافيك والكي فريم متاح الآن</span>
+        </div>
+
+        <div class="dots-container" id="dotsContainer"></div>
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- لوحة خط الزمن وتحكم الكي فريم الحقيقي -->
+      <div class="ae-studio-panel">
+        <div class="ae-timeline-bar">
+          <span>⏱️ الخط الزمني (Timeline):</span>
+          <input type="range" id="timelineScrubber" class="ae-timeline-slider" min="0" max="100" value="0" oninput="scrubTimeline(this.value)">
+          <span id="timeDisplay" style="font-family: monospace; color: #38bdf8;">00:00</span>
+        </div>
+        <div class="control-row">
+          <span style="font-size: 0.62rem; color: #94a3b8;">🔑 كي فريم:</span>
+          <button class="btn" style="background:#059669;" onclick="addKeyframePoint()">+ إضافة نقطة مفتاحية</button>
+          <select id="easingSelector" class="select-field" style="width:105px;" onchange="updateKeyframeEasing()">
+            <option value="linear">منحنى خطي (Linear)</option>
+            <option value="ease-in">تسارع (Ease In)</option>
+            <option value="ease-out">تباطؤ (Ease Out)</option>
+            <option value="bounce">🏀 ارتداد (Bounce)</option>
+          </select>
+          <button class="btn" style="background:#7c3aed;" onclick="triggerKineticText()">🔤 تفكيك الحروف (Kinetic)</button>
+        </div>
+      </div>
+
+      <!-- لوحة التحكم الإضافية الشاملة -->
+      <div class="studio-control-panel" id="controlPanel">
+        <div class="control-row">
+          <input type="text" id="clientNameInput" class="input-field" placeholder="اسم العميل" onkeyup="updatePersonalization()">
+          <select id="industrySelector" class="select-field" onchange="updateIndustry()">
+            <option value="general">عام (مخازن وفواتير)</option>
+            <option value="logistics">شركات شحن ولوجستيات</option>
+            <option value="supermarket">سوبر ماركت / تجزئة</option>
+          </select>
+          <select id="maskSelector" class="select-field" onchange="changeMaskStyle()" style="width: 100px;">
+            <option value="none">🔲 بدون قناع</option>
+            <option value="mask-circle">⭕ قناع دائري</option>
+            <option value="mask-rect">🔲 قناع مستطيل</option>
+          </select>
+        </div>
+
+        <div class="control-row" style="background: rgba(6, 182, 212, 0.08); padding: 4px; border-radius: 6px; border: 1px dashed rgba(6, 182, 212, 0.4);">
+          <button class="btn hologram-mode-btn" onclick="toggleHologramMode()" id="holoToggleBtn">🔮 وضع الهولوجرام 3D</button>
+          <div class="upload-btn-wrapper">
+            <button class="btn" style="background: #0891b2;">📼 رفع فيديو لهولوجرام</button>
+            <input type="file" accept="video/*" onchange="loadHologramVideoFile(event)" />
+          </div>
+          <select id="holoColorSelector" class="select-field" onchange="changeHologramColor()" style="width: 110px;">
+            <option value="cyan">🔵 سيان ساطع</option>
+            <option value="purple">🟣 نيون بنفسجي</option>
+            <option value="gold">🟡 ذهبي ملكي</option>
+          </select>
+        </div>
+
+        <div class="mixer-drawer">
+          <span>🎚️ المكسر الصوتي:</span>
+          <div class="mixer-slider">🎵 موسيقى: <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.2" oninput="updateMixer()"></div>
+          <div class="mixer-slider">🗣️ المعلق: <input type="range" id="voiceRate" min="0.7" max="1.3" step="0.1" value="0.9" oninput="updateMixer()"></div>
+          <div class="mixer-slider">🔊 المؤثرات: <input type="range" id="sfxVol" min="0" max="1" step="0.1" value="0.15" oninput="updateMixer()"></div>
+        </div>
+
+        <div class="control-row">
+          <select id="gradingSelector" class="select-field" onchange="changeColorGrading()">
+            <option value="none">🎬 تلوين قياسي</option>
+            <option value="grading-teal-orange">🟠 تيل & أورانج</option>
+            <option value="grading-cyberpunk">🟣 سايبربانك</option>
+            <option value="grading-noir">⚫ سينما كلاسيك</option>
+          </select>
+
+          <select id="transitionSelector" class="select-field" onchange="changeTransitionStyle()">
+            <option value="fade">⚡ انتقال سلس</option>
+            <option value="transition-zoom">🔍 زووم هندسي</option>
+            <option value="transition-glitch">⚡ جلوتش رقمي</option>
+          </select>
+
+          <select id="speedSelector" class="select-field" onchange="changeSlideSpeed()" style="width: 85px;">
+            <option value="4000">سريع (4ث)</option>
+            <option value="6000" selected>عادي (6ث)</option>
+            <option value="8000">بطيء (8ث)</option>
+          </select>
+        </div>
+
+        <div class="control-row">
+          <button class="btn" id="letterboxBtn" onclick="toggleLetterbox()">🎞 شاشة سينمائية</button>
+          <select id="themeSelector" class="select-field" onchange="changeTheme()" style="width: 85px;">
+            <option value="theme-blue">أزرق تكنولوجي</option>
+            <option value="theme-green">أخضر مالي</option>
+            <option value="theme-purple">نيون بنفسجي</option>
+            <option value="theme-gold">ذهبي فاخر</option>
+          </select>
+          <select id="ratioSelector" class="select-field" onchange="changeAspectRatio()" style="width: 85px;">
+            <option value="horizontal">أفقي 16:9</option>
+            <option value="vertical">عمودي 9:16</option>
+          </select>
+          <button class="btn voice-btn" id="voiceToggleBtn" onclick="toggleVoice()">🔊 المعلق: مفعل</button>
+        </div>
+
+        <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 4px;">
+          <button class="btn" onclick="prevSlide()">❮ السابق</button>
+          <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
+          <button class="btn" onclick="nextSlide()">التالي ❯</button>
+          <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير فيديو AI</button>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="studio-control-panel" id="controlPanel">
-    <div class="control-row">
-      <input type="text" id="clientNameInput" class="input-field" placeholder="اسم العميل" onkeyup="updatePersonalization()">
-      <select id="industrySelector" class="select-field" onchange="updateIndustry()">
-        <option value="general">عام (مخازن وفواتير)</option>
-        <option value="logistics">شركات شحن ولوجستيات</option>
-        <option value="supermarket">سوبر ماركت / تجزئة</option>
-      </select>
-      <div class="upload-btn-wrapper">
-        <button class="btn" style="background: #475569;">🖼️ رفع اللوجو</button>
-        <input type="file" accept="image/*" onchange="uploadLogo(event)" />
-      </div>
-    </div>
-
-    <!-- قسم أزرار محول الهولوجرام الذكي والتحكم -->
-    <div class="control-row" style="background: rgba(6, 182, 212, 0.1); padding: 6px; border-radius: 8px; border: 1px dashed rgba(6, 182, 212, 0.4);">
-      <button class="btn hologram-mode-btn" onclick="toggleHologramMode()" id="holoToggleBtn">🔮 تشغيل وضع الهولوجرام 3D</button>
-      <div class="upload-btn-wrapper">
-        <button class="btn" style="background: #0891b2;">📼 رفع فيديو لهولوجرام</button>
-        <input type="file" accept="video/*" onchange="loadHologramVideoFile(event)" />
-      </div>
-      <select id="holoColorSelector" class="select-field" onchange="changeHologramColor()" style="width: 125px;">
-        <option value="cyan">🔵 هولوجرام سيان فاقع</option>
-        <option value="purple">🟣 هولوجرام نيون بنفسجي</option>
-        <option value="gold">🟡 هولوجرام ذهبي ملكي</option>
-      </select>
-    </div>
-
-    <!-- المكسر الصوتي المتكامل -->
-    <div class="mixer-drawer">
-      <span>🎚️ المكسر الصوتي:</span>
-      <div class="mixer-slider">🎵 موسيقى: <input type="range" id="musicVol" min="0" max="1" step="0.1" value="0.2" oninput="updateMixer()"></div>
-      <div class="mixer-slider">🗣️ المعلق: <input type="range" id="voiceRate" min="0.7" max="1.3" step="0.1" value="0.9" oninput="updateMixer()"></div>
-      <div class="mixer-slider">🔊 المؤثرات: <input type="range" id="sfxVol" min="0" max="1" step="0.1" value="0.15" oninput="updateMixer()"></div>
-    </div>
-
-    <div class="control-row">
-      <select id="gradingSelector" class="select-field" onchange="changeColorGrading()">
-        <option value="none">🎬 تلوين عادي (Standard)</option>
-        <option value="grading-teal-orange">🟠 تيل & أورانج (هوليوود)</option>
-        <option value="grading-cyberpunk">🟣 سايبربانك نيون</option>
-        <option value="grading-noir">⚫ سينما كلاسيك (Noir)</option>
-      </select>
-
-      <select id="transitionSelector" class="select-field" onchange="changeTransitionStyle()">
-        <option value="fade">⚡ انتقال سلس (Fade)</option>
-        <option value="transition-zoom">🔍 زووم هندسي (Zoom)</option>
-        <option value="transition-glitch">⚡ جلوتش رقمي (Glitch)</option>
-      </select>
-
-      <select id="speedSelector" class="select-field" onchange="changeSlideSpeed()" style="width: 90px;">
-        <option value="4000">سريع (4ث)</option>
-        <option value="6000" selected>عادي (6ث)</option>
-        <option value="8000">بطيء (8ث)</option>
-      </select>
-    </div>
-
-    <div class="control-row">
-      <button class="btn" id="letterboxBtn" onclick="toggleLetterbox()">🎞 شاشة سينمائية</button>
-      <select id="themeSelector" class="select-field" onchange="changeTheme()" style="width: 90px;">
-        <option value="theme-blue">أزرق تكنولوجي</option>
-        <option value="theme-green">أخضر مالي</option>
-        <option value="theme-purple">نيون بنفسجي</option>
-        <option value="theme-gold">ذهبي فاخر</option>
-      </select>
-      <select id="ratioSelector" class="select-field" onchange="changeAspectRatio()" style="width: 90px;">
-        <option value="horizontal">أفقي 16:9</option>
-        <option value="vertical">عمودي 9:16</option>
-      </select>
-      <div class="upload-btn-wrapper">
-        <button class="btn" style="background: #334155;">🎵 رفع MP3</button>
-        <input type="file" accept="audio/*" onchange="uploadCustomAudio(event)" />
-      </div>
-      <button class="btn voice-btn" id="voiceToggleBtn" onclick="toggleVoice()">🔊 المعلق: مفعل</button>
-    </div>
-
-    <div class="control-row" style="border-top: 1px solid rgba(255,255,255,0.08); padding-top: 6px;">
-      <button class="btn" onclick="prevSlide()">❮ السابق</button>
-      <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
-      <button class="btn" onclick="nextSlide()">التالي ❯</button>
-      <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-      
-      <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير سينمائي AI</button>
-    </div>
-  </div>
-
-  <!-- نافذة المعاينة المنبثقة -->
   <div id="previewModal">
-    <h3 style="margin-bottom: 10px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بالذكاء الاصطناعي بنجاح!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بنجاح تام!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
-    <div style="display: flex; gap: 10px;">
+    <div style="display: flex; gap: 8px;">
       <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في جهازك</button>
       <button class="btn" style="background: #475569;" onclick="closePreviewModal()">إغلاق</button>
     </div>
@@ -502,6 +516,7 @@
     let currentTransition = 'fade';
     let sfxVolume = 0.15;
     let isHologramMode = false;
+    let keyframePoints = [];
 
     let audioCtx = null;
     let dest = null;
@@ -518,7 +533,6 @@
       } catch(e) {}
     }
 
-    // جزيئات الغبار البصري
     const particlesContainer = document.getElementById('particlesContainer');
     for(let i=0; i<15; i++) {
       const p = document.createElement('div');
@@ -529,6 +543,99 @@
       particlesContainer.appendChild(p);
     }
 
+    // دوال نظام الكي فريم الحقيقي والمنحنيات
+    function addKeyframePoint() {
+      const pointTime = document.getElementById('timelineScrubber').value;
+      keyframePoints.push({ time: pointTime, slide: currentSlide });
+      alert(`تمت إضافة كي فريم جديد عند النقطة الزمنية: ${pointTime}%`);
+    }
+
+    function updateKeyframeEasing() {
+      const easing = document.getElementById('easingSelector').value;
+      const activeEl = slides[currentSlide];
+      if(easing === 'bounce') {
+        activeEl.style.transition = 'all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+        activeEl.style.transform = 'scale(1.05)';
+      } else if(easing === 'ease-in') {
+        activeEl.style.transition = 'all 0.6s ease-in';
+      } else if(easing === 'ease-out') {
+        activeEl.style.transition = 'all 0.6s ease-out';
+      } else {
+        activeEl.style.transition = 'all 0.6s linear';
+      }
+    }
+
+    // متحكم الحروف الديناميكي (Kinetic Text)
+    function triggerKineticText() {
+      const activeTitle = slides[currentSlide].querySelector('.slide-title');
+      if(!activeTitle) return;
+      const text = activeTitle.innerText;
+      activeTitle.innerHTML = '';
+      text.split('').forEach((char, idx) => {
+        const span = document.createElement('span');
+        span.innerText = char === ' ' ? '\u00A0' : char;
+        span.style.display = 'inline-block';
+        span.style.opacity = '0';
+        span.style.transform = 'translateY(20px)';
+        span.style.transition = `all 0.4s ease ${idx * 0.03}s`;
+        activeTitle.appendChild(span);
+        setTimeout(() => {
+          span.style.opacity = '1';
+          span.style.transform = 'translateY(0)';
+        }, 50);
+      });
+    }
+
+    // إدارة الأصول والوسائط (Asset Bin)
+    function uploadAssetToBin(event) {
+      const file = event.target.files[0];
+      if(file) {
+        const container = document.getElementById('assetListContainer');
+        const item = document.createElement('div');
+        item.className = 'asset-item';
+        item.innerHTML = `<span>📁 ${file.name.substring(0,18)}</span> <span style="color:#10b981;">مرفق</span>`;
+        container.appendChild(item);
+        if(file.type.startsWith('image/')) {
+          const url = URL.createObjectURL(file);
+          for(let i=1; i<=5; i++) {
+            const imgEl = document.getElementById(`logo${i}`);
+            if(imgEl) { imgEl.src = url; imgEl.classList.add('active'); }
+          }
+        }
+      }
+    }
+
+    // قوالب الحركة الجاهزة (MOGRT Templates)
+    function applyMOGRT(type) {
+      const viewer = document.getElementById('promoViewer');
+      if(type === 'subscribe') {
+        const badge = document.createElement('div');
+        badge.style.cssText = "position:absolute; bottom:30px; right:30px; background:#ef4444; color:white; padding:5px 12px; border-radius:20px; font-size:0.6rem; font-weight:900; z-index:35; animation: bounce 1s infinite;";
+        badge.innerText = "🔴 اشتراك في القناة Now";
+        viewer.appendChild(badge);
+        setTimeout(() => badge.remove(), 4000);
+      } else if(type === 'lowerthird') {
+        alert("✨ تم تفعيل قالب الشريط الإخباري السفلي المتحرك بنجاح!");
+      } else if(type === 'endcard') {
+        showSlide(slides.length - 1);
+      }
+    }
+
+    // نظام الأقنعة (Masking)
+    function changeMaskStyle() {
+      const maskType = document.getElementById('maskSelector').value;
+      const viewer = document.getElementById('promoViewer');
+      viewer.className = 'video-container ' + (document.getElementById('ratioSelector').value === 'vertical' ? 'ratio-vertical ' : '') + maskType;
+    }
+
+    function scrubTimeline(val) {
+      const targetSlide = Math.floor((val / 100) * (slides.length - 1));
+      showSlide(targetSlide);
+      const minutes = Math.floor((val / 100) * (slideTime * slides.length / 1000) / 60);
+      const seconds = Math.floor(((val / 100) * (slideTime * slides.length / 1000)) % 60);
+      document.getElementById('timeDisplay').innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+    }
+
     function playWhooshSFX() {
       if(!audioCtx || isHologramMode) return;
       try {
@@ -537,20 +644,17 @@
         osc.type = 'sine';
         osc.frequency.setValueAtTime(350, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(70, audioCtx.currentTime + 0.3);
-        
         gain.gain.setValueAtTime(sfxVolume, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         if(dest) gain.connect(dest);
-
         osc.start();
         osc.stop(audioCtx.currentTime + 0.3);
       } catch(e) {}
     }
 
-    new QRCode(document.getElementById("finalQrCode"), { text: window.location.href, width: 50, height: 50, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
+    new QRCode(document.getElementById("finalQrCode"), { text: window.location.href, width: 45, height: 45, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.H });
 
     slides.forEach((_, index) => {
       const dot = document.createElement('div');
@@ -573,7 +677,6 @@
     }
     loadSlideText();
 
-    // تشغيل وإيقاف وضع الهولوجرام
     function toggleHologramMode() {
       isHologramMode = !isHologramMode;
       const stage = document.getElementById('hologramStage');
@@ -583,7 +686,7 @@
       if (isHologramMode) {
         stage.classList.add('active');
         btn.style.background = '#10b981';
-        btn.textContent = "🔮 إيقاف وضع الهولوجرام";
+        btn.textContent = "🔮 إيقاف الهولوجرام";
         textDrawer.style.opacity = '0.4';
         textDrawer.style.pointerEvents = 'none';
         slides.forEach(s => s.classList.remove('active'));
@@ -593,7 +696,7 @@
       } else {
         stage.classList.remove('active');
         btn.style.background = '';
-        btn.textContent = "🔮 تشغيل وضع الهولوجرام 3D";
+        btn.textContent = "🔮 وضع الهولوجرام 3D";
         textDrawer.style.opacity = '1';
         textDrawer.style.pointerEvents = 'auto';
         showSlide(currentSlide);
@@ -602,35 +705,23 @@
       }
     }
 
-    // رفع فيديو عادي وتحويله لهولوجرام
     function loadHologramVideoFile(event) {
       const file = event.target.files[0];
       if(file) {
         const url = URL.createObjectURL(file);
         const holoVid = document.getElementById('hologramVideoPlayer');
-        holoVid.src = url;
-        holoVid.load();
+        holoVid.src = url; holoVid.load();
         if(!isHologramMode) toggleHologramMode();
         holoVid.play().catch(e=>{});
       }
     }
 
-    // تغيير ألوان هولوجرام الإضاءة الفاخرة
     function changeHologramColor() {
       const colorType = document.getElementById('holoColorSelector').value;
       const holoVid = document.getElementById('hologramVideoPlayer');
-      const platform = document.querySelector('.hologram-base-platform');
-
-      if (colorType === 'cyan') {
-        holoVid.style.filter = 'drop-shadow(0 0 18px rgba(6,182,212,0.9)) hue-rotate(180deg) brightness(1.25)';
-        platform.style.boxShadow = '0 0 35px #06b6d4, inset 0 0 15px #ffffff';
-      } else if (colorType === 'purple') {
-        holoVid.style.filter = 'drop-shadow(0 0 18px rgba(168,85,247,0.9)) hue-rotate(290deg) brightness(1.25)';
-        platform.style.boxShadow = '0 0 35px #a855f7, inset 0 0 15px #ffffff';
-      } else if (colorType === 'gold') {
-        holoVid.style.filter = 'drop-shadow(0 0 18px rgba(245,158,11,0.9)) hue-rotate(40deg) brightness(1.3)';
-        platform.style.boxShadow = '0 0 35px #f59e0b, inset 0 0 15px #ffffff';
-      }
+      if (colorType === 'cyan') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(6,182,212,0.9)) hue-rotate(180deg) brightness(1.25)';
+      else if (colorType === 'purple') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(168,85,247,0.9)) hue-rotate(290deg) brightness(1.25)';
+      else if (colorType === 'gold') holoVid.style.filter = 'drop-shadow(0 0 18px rgba(245,158,11,0.9)) hue-rotate(40deg) brightness(1.3)';
     }
 
     const aiPhrases = [
@@ -643,24 +734,21 @@
     function aiEnhanceScript() {
       const idx = document.getElementById('slideSelector').value;
       const titleEl = slides[idx].querySelector('.slide-title');
-      if(titleEl) {
-        titleEl.innerText = aiPhrases[idx % aiPhrases.length];
-        loadSlideText();
-      }
+      if(titleEl) { titleEl.innerText = aiPhrases[idx % aiPhrases.length]; loadSlideText(); }
     }
 
     function updateWatermark() {
       const val = document.getElementById('watermarkInput').value.trim();
-      document.getElementById('watermarkDisplay').innerText = val || "GITI HOLOGRAM 2027";
+      document.getElementById('watermarkDisplay').innerText = val || "GITI STUDIO 2027";
     }
 
-    function changeTheme() {
-      document.body.className = document.getElementById('themeSelector').value;
-    }
+    function changeTheme() { document.body.className = document.getElementById('themeSelector').value; }
 
     function changeColorGrading() {
       const viewer = document.getElementById('promoViewer');
-      viewer.className = 'video-container ' + (document.getElementById('ratioSelector').value === 'vertical' ? 'ratio-vertical ' : '') + (viewer.classList.contains('cinematic-bars') ? 'cinematic-bars ' : '') + document.getElementById('gradingSelector').value;
+      const ratioClass = document.getElementById('ratioSelector').value === 'vertical' ? 'ratio-vertical ' : '';
+      const maskClass = document.getElementById('maskSelector').value !== 'none' ? document.getElementById('maskSelector').value + ' ' : '';
+      viewer.className = 'video-container ' + ratioClass + maskClass + document.getElementById('gradingSelector').value;
     }
 
     function changeTransitionStyle() {
@@ -679,11 +767,7 @@
     }
 
     function changeAspectRatio() {
-      const ratio = document.getElementById('ratioSelector').value;
-      const viewer = document.getElementById('promoViewer');
-      const isBars = viewer.classList.contains('cinematic-bars');
-      const grading = document.getElementById('gradingSelector').value;
-      viewer.className = 'video-container ' + (ratio === 'vertical' ? 'ratio-vertical ' : '') + (isBars ? 'cinematic-bars ' : '') + (grading !== 'none' ? grading : '');
+      changeColorGrading();
     }
 
     function updateMixer() {
@@ -691,21 +775,10 @@
       sfxVolume = parseFloat(document.getElementById('sfxVol').value);
     }
 
-    function uploadCustomAudio(event) {
-      const file = event.target.files[0];
-      if(file) {
-        const url = URL.createObjectURL(file);
-        activeMusic.pause(); activeMusic.src = url; activeMusic.load();
-        if(isPlaying) activeMusic.play().catch(e=>{});
-        if(audioCtx) initAudioContext();
-      }
-    }
-
     function updatePersonalization() {
       const clientName = document.getElementById('clientNameInput').value.trim();
       const greeting = clientName ? `أهلاً بك يا فريق ${clientName}،` : `مرحباً بك،`;
       document.getElementById('clientNameText').innerText = greeting;
-      if (currentSlide === 0 && !isPlaying && !isHologramMode) readCurrentSlide(); 
     }
 
     const industryData = {
@@ -722,32 +795,11 @@
       document.getElementById('industryFeatures').innerHTML = data.features.map(f => `<div class="feature-item">${f}</div>`).join('');
     }
 
-    function uploadLogo(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const imgSrc = e.target.result;
-          for (let i = 1; i <= 5; i++) {
-            const imgEl = document.getElementById(`logo${i}`);
-            imgEl.src = imgSrc; imgEl.classList.add('active');
-          }
-          document.querySelectorAll('.default-badge').forEach(badge => {
-            if(badge.innerText.includes('GITI') || badge.parentElement.querySelector('img')) badge.classList.add('hidden');
-          });
-        }
-        reader.readAsDataURL(file);
-      }
-    }
-
     function toggleVoice() {
       isVoiceEnabled = !isVoiceEnabled;
       const btn = document.getElementById('voiceToggleBtn');
-      if (isVoiceEnabled) {
-        btn.classList.remove('muted'); btn.textContent = '🔊 المعلق: مفعل'; if(!isHologramMode) readCurrentSlide();
-      } else {
-        btn.classList.add('muted'); btn.textContent = '🔈 المعلق: معطل'; window.speechSynthesis.cancel();
-      }
+      if (isVoiceEnabled) { btn.classList.remove('muted'); btn.textContent = '🔊 المعلق: مفعل'; if(!isHologramMode) readCurrentSlide(); }
+      else { btn.classList.add('muted'); btn.textContent = '🔈 المعلق: معطل'; window.speechSynthesis.cancel(); }
     }
 
     function readCurrentSlide() {
@@ -758,25 +810,21 @@
       const desc = slide.querySelector('.slide-desc') ? slide.querySelector('.slide-desc').innerText : '';
       let textToRead = title + ". " + desc + ". ";
       slide.querySelectorAll('.feature-item').forEach(el => { textToRead += el.innerText.replace(/[^\w\sа-яا-ي]/gi, '') + ". "; });
-      
       const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.lang = 'ar-SA'; 
-      utterance.rate = parseFloat(document.getElementById('voiceRate').value);
+      utterance.lang = 'ar-SA'; utterance.rate = parseFloat(document.getElementById('voiceRate').value);
       window.speechSynthesis.speak(utterance);
     }
 
     function showSlide(index) {
       if(isHologramMode) return;
       playWhooshSFX();
-      slides.forEach(s => {
-        s.classList.remove('active');
-        s.className = 'slide ' + (currentTransition !== 'fade' ? currentTransition : '');
-      });
+      slides.forEach(s => { s.classList.remove('active'); s.className = 'slide ' + (currentTransition !== 'fade' ? currentTransition : ''); });
       currentSlide = (index + slides.length) % slides.length;
       setTimeout(() => {
         slides[currentSlide].classList.add('active');
         loadSlideText();
         readCurrentSlide();
+        document.getElementById('timelineScrubber').value = (currentSlide / (slides.length - 1)) * 100;
         if(currentSlide === slides.length - 1 && !isExporting) {
           confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 100000 });
         }
@@ -802,7 +850,6 @@
       document.getElementById('playPauseBtn').textContent = isPlaying ? 'إيقاف مؤقت ⏸️' : 'تشغيل ▶';
       if(!audioCtx) initAudioContext();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      
       if (isPlaying) {
         startTime = Date.now() - (parseFloat(progressBar.style.width) / 100 * slideTime);
         if(!isHologramMode) readCurrentSlide();
@@ -818,87 +865,58 @@
     autoPlayInterval = setInterval(updateProgress, 50);
 
     document.body.addEventListener('click', () => {
-      if(!audioCtx) {
-        initAudioContext();
-        if(isPlaying && activeMusic) activeMusic.play().catch(e=>{});
-      }
+      if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // =========================================================================
-    // محرك التصدير والهندسة السينمائية
-    // =========================================================================
     async function startAIVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
       const canvas = document.getElementById('exportCanvas');
-      
       if (isExporting) return;
       isExporting = true;
-
       if(!audioCtx) initAudioContext();
       if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري المعالجة السينمائية...";
+      btn.textContent = "🎬 جاري المعالجة الاحترافية.. يرجى الانتظار";
       document.getElementById('recordingOverlay').style.display = 'block';
 
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
-      canvas.width = isVertical ? 720 : 1280;
-      canvas.height = isVertical ? 1280 : 720;
+      canvas.width = isVertical ? 1080 : 1920;
+      canvas.height = isVertical ? 1920 : 1080;
       const ctx = canvas.getContext('2d');
-
-      const canvasStream = canvas.captureStream(25);
+      const canvasStream = canvas.captureStream(30);
       let finalStream = canvasStream;
-
       if (dest && dest.stream.getAudioTracks().length > 0) {
-        const audioTrack = dest.stream.getAudioTracks()[0];
-        finalStream = new MediaStream([...canvasStream.getVideoTracks(), audioTrack]);
+        finalStream = new MediaStream([...canvasStream.getVideoTracks(), dest.stream.getAudioTracks()[0]]);
       }
 
       let mediaRecorder;
-      try {
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 2500000 });
-      } catch (e) {
-        try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); }
-        catch (err) { mediaRecorder = new MediaRecorder(finalStream); }
-      }
+      try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 5000000 }); }
+      catch (e) { try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } catch (err) { mediaRecorder = new MediaRecorder(finalStream); } }
 
       const chunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
-      
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: 'video/webm' });
         recordedBlobUrl = URL.createObjectURL(blob);
-        
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
-
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير سينمائي AI";
+        btn.textContent = "🚀 تصدير فيديو AI";
         document.getElementById('recordingOverlay').style.display = 'none';
         isExporting = false;
         cancelAnimationFrame(animationId);
-        if(!isHologramMode) {
-          restartPresentation();
-          isPlaying = true;
-          autoPlayInterval = setInterval(updateProgress, 50);
-        }
+        if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
       };
 
       mediaRecorder.start();
-      
       if (isHologramMode) {
         const holoVid = document.getElementById('hologramVideoPlayer');
-        holoVid.currentTime = 0;
-        holoVid.play().catch(e=>{});
+        holoVid.currentTime = 0; holoVid.play().catch(e=>{});
         if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
-        
-        // تسجيل فيديو الهولوجرام لفترة محددة (مثلاً 10 ثوانٍ أو حتى انتهاء الفيديو)
-        let recordDuration = holoVid.duration && !isNaN(holoVid.duration) ? holoVid.duration * 1000 : 10000;
-        setTimeout(() => {
-          if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-        }, recordDuration);
+        setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, holoVid.duration && !isNaN(holoVid.duration) ? holoVid.duration * 1000 : 10000);
       } else {
         restartPresentation();
         if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
@@ -908,35 +926,22 @@
       const recordFrames = async () => {
         if (!isExporting) return;
         try {
-          const frameCanvas = await html2canvas(promoViewer, {
-            scale: 1,
-            backgroundColor: '#070a14',
-            logging: false,
-            useCORS: true
-          });
+          const frameCanvas = await html2canvas(promoViewer, { scale: 1.5, backgroundColor: '#070a14', logging: false, useCORS: true });
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
         } catch (err) {}
-        if (isExporting) {
-          animationId = requestAnimationFrame(recordFrames);
-        }
+        if (isExporting) { animationId = requestAnimationFrame(recordFrames); }
       };
-
       recordFrames();
 
       if (!isHologramMode) {
-        let totalSlides = slides.length;
-        let currentRecStep = 0;
+        let totalSlides = slides.length; let currentRecStep = 0;
         const exportInterval = setInterval(() => {
           currentRecStep++;
           if (currentRecStep >= totalSlides) {
             clearInterval(exportInterval);
-            setTimeout(() => {
-              if (mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-            }, 1000);
-          } else {
-            nextSlide();
-          }
+            setTimeout(() => { if (mediaRecorder.state !== 'inactive') mediaRecorder.stop(); }, 1000);
+          } else { nextSlide(); }
         }, slideTime);
       }
     }
@@ -944,12 +949,9 @@
     function downloadFinalVideo() {
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = recordedBlobUrl;
-      a.download = `GITI_Hologram_Studio_${Date.now()}.webm`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      a.style.display = 'none'; a.href = recordedBlobUrl;
+      a.download = `GITI_Studio_PRO_${Date.now()}.webm`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
     function closePreviewModal() {
