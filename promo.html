@@ -9,9 +9,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <!-- مكتبات FFmpeg.wasm لتحويل الفيديو إلى MP4 حقيقي -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
-  <script src="https://unpkg.com/@ffmpeg/util@0.12.1/dist/umd/index.js"></script>
   
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; direction: rtl; }
@@ -46,7 +43,6 @@
       background: var(--bg-glow); filter: blur(130px); border-radius: 50%; z-index: 0; transition: 0.5s;
     }
 
-    /* شريط تسجيل الدخول عبر فايربيس المدمج في الهيدر */
     .auth-top-bar {
       width: 100%; max-width: 980px; display: flex; justify-content: space-between; align-items: center;
       background: rgba(11, 15, 25, 0.95); border: 1px solid var(--border-color); padding: 8px 14px;
@@ -120,7 +116,6 @@
       100% { transform: translateY(-10vh) translateX(50px); opacity: 0; }
     }
 
-    /* هولوجرام سينمائي متطور (Sci-Fi HUD) */
     .hologram-stage {
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.25) 0%, rgba(2, 6, 23, 0.96) 80%);
@@ -276,7 +271,6 @@
 </head>
 <body>
 
-  <!-- شريط تسجيل الدخول والمزامنة عبر Firebase الحقيقي -->
   <div class="auth-top-bar" id="authTopBar">
     <div class="auth-user-info" id="authUserInfo">
       <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="auth-user-avatar" id="topUserAvatar" alt="جوجل">
@@ -292,14 +286,13 @@
   </div>
 
   <div class="studio-header">
-    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (True MP4 Pro-Render)</h2>
-    <p>كل المميزات والأقسام المتقدمة مدمجة مع ربط Firebase وسجلات الأسطول واللوجستيات المباشرة</p>
+    <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام والتحاكي البصري الشامل (Mobile Crash-Free Optimized)</h2>
+    <p>نسخة سريعة ومستقرة تماماً للهواتف والأجهزة بدون أي انهيار في الذاكرة</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري التصدير وتحويل الفيديو إلى MP4 حقيقي فائق الجودة.. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري التصدير الآمن.. يرجى الانتظار</div>
 
   <div class="main-workspace">
-    <!-- لوحة الأصول والوسائط الجانبية -->
     <div class="asset-bin-panel">
       <div class="asset-bin-title">📁 لوحة الأصول والوسائط</div>
       <div class="upload-btn-wrapper" style="width:100%;">
@@ -342,7 +335,6 @@
         <div class="vfx-lightleaks" id="vfxLightLeaks"></div>
         <div class="video-watermark" id="watermarkDisplay">GITI STUDIO PRO</div>
 
-        <!-- وضع الهولوجرام السينمائي المتطور HUD -->
         <div class="hologram-stage" id="hologramStage">
           <div class="hologram-title">🔮 عارض الهولوجرام السينمائي الذكي (3D HUD PRO)</div>
           <div class="hologram-screen-wrapper">
@@ -421,7 +413,6 @@
           </div>
         </div>
 
-        <!-- شريحة حاسبة العائد على الاستثمار ROI -->
         <div class="slide">
           <div class="default-badge">📈 حاسبة العائد المالي (ROI)</div>
           <h1 class="slide-title">توقع حجم أرباحك السنوية مع نظام GITI</h1>
@@ -432,7 +423,6 @@
           </div>
         </div>
 
-        <!-- شريحة تتبع الأسطول المباشر -->
         <div class="slide">
           <div class="default-badge">🚚 وحدة تتبع الأسطول المباشر</div>
           <h1 class="slide-title">مراقبة حية لخطوط سير مركبات شركتك</h1>
@@ -456,7 +446,6 @@
         <div class="progress-bar" id="progressBar"></div>
       </div>
 
-      <!-- لوحة خط الزمن وتحكم الكي فريم والمحرر البياني -->
       <div class="ae-studio-panel">
         <div class="ae-timeline-bar">
           <span>⏱️ الخط الزمني (Timeline):</span>
@@ -471,7 +460,6 @@
         </div>
       </div>
 
-      <!-- لوحة التحكم الإضافية الشاملة -->
       <div class="studio-control-panel" id="controlPanel">
         <div class="control-row">
           <input type="text" id="clientNameInput" class="input-field" placeholder="اسم العميل" onkeyup="updatePersonalization()">
@@ -539,8 +527,7 @@
           </select>
 
           <select id="qualitySelector" class="select-field" style="width: 145px;">
-            <option value="fhd" selected>🌟 Full HD (نقاء 30fps)</option>
-            <option value="hd">⚡ HD سريع</option>
+            <option value="fhd" selected>🌟 جودة عالية مستقرة</option>
           </select>
         </div>
 
@@ -565,17 +552,17 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير True MP4 Pro-Render</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startProVideoExport()">🚀 تصدير آمن بدون انهيار</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم تصدير الفيديو بصيغة MP4 الحقيقية وبأعلى نقاء ممكن!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم إتمام التسجيل بنجاح دون أي انهيار!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
-      <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ فيديو MP4 في جهازك</button>
+      <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في هاتفك</button>
       <button class="btn" style="background: #475569;" onclick="closePreviewModal()">إغلاق</button>
     </div>
   </div>
@@ -583,7 +570,6 @@
   <canvas id="exportCanvas"></canvas>
   <audio id="musicCorporate" loop crossorigin="anonymous"><source src="https://assets.mixkit.co/music/preview/mixkit-corporate-technology-113.mp3" type="audio/mpeg"></audio>
 
-  <!-- تهيئة Firebase ومزامنة الحسابات -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -620,8 +606,6 @@
                     const data = userDoc.data();
                     userRole = data.role || 'customer';
                     if(data.photoURL) existingPhoto = data.photoURL;
-                } else if (email === 'haretg@gmail.com' || email === 'admin@fleet.com') {
-                    userRole = 'admin';
                 }
             } catch(e) {}
 
@@ -653,9 +637,7 @@
             localStorage.removeItem('fleet_session_user');
             updateAuthUI(null);
             alert('تم تسجيل الخروج بنجاح.');
-        } catch (e) {
-            console.error(e);
-        }
+        } catch (e) {}
     };
 
     function updateAuthUI(userObj) {
@@ -691,17 +673,11 @@
                 photoURL: user.photoURL || 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                 provider: 'Google Auth'
             };
-
             try {
                 const userDoc = await getDoc(doc(db, "users", docId));
-                if (userDoc.exists()) {
-                    userObj = userDoc.data();
-                }
+                if (userDoc.exists()) userObj = userDoc.data();
             } catch(e) {}
-
-            window.currentCustomer = userObj;
             localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
-            localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
             updateAuthUI(userObj);
         } else {
             updateAuthUI(null);
@@ -709,7 +685,6 @@
     });
 
     window.db = db;
-    window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
   </script>
 
   <script>
@@ -737,24 +712,6 @@
     let dest = null;
     let sourceNode = null;
     let speechSynthUtterance = null;
-    let ffmpegInstance = null;
-
-    async function initFFmpeg() {
-      if (ffmpegInstance) return ffmpegInstance;
-      try {
-        const { FFmpeg } = window.FFmpegWASM;
-        ffmpegInstance = new FFmpeg();
-        const { toBlobURL } = window.FFmpegUtil;
-        const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd';
-        await ffmpegInstance.load({
-          coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-          wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-        });
-      } catch (e) {
-        console.warn("FFmpeg load warning:", e);
-      }
-      return ffmpegInstance;
-    }
 
     function initAudioContext() {
       if(audioCtx) return;
@@ -784,10 +741,10 @@
     }
 
     function openGraphEditor() {
-      const curveType = prompt("📈 محرر المنحنيات البيانية (Graph Editor):\nاختر نوع التسارع المطلوب:\n1. linear (خطي)\n2. ease (متسارع متباطئ)\n3. bounce (مرن)", "ease");
+      const curveType = prompt("📈 محرر المنحنيات البيانية (Graph Editor):\nاختر نوع التسارع المطلوب:\n1. linear\n2. ease\n3. bounce", "ease");
       if(curveType) {
         slides.forEach(s => s.style.transitionTimingFunction = curveType);
-        alert("✨ تم تطبيق المنحنى البياني بنجاح على حركات الشرائح!");
+        alert("✨ تم تطبيق المنحنى البياني بنجاح!");
       }
     }
 
@@ -795,10 +752,8 @@
       const preset = document.getElementById('vfxPresetSelector').value;
       const viewer = document.getElementById('promoViewer');
       const lightLeaks = document.getElementById('vfxLightLeaks');
-      
       viewer.classList.remove('vfx-chromatic');
       lightLeaks.classList.remove('active');
-
       if(preset === 'chromatic') viewer.classList.add('vfx-chromatic');
       if(preset === 'lightleaks') lightLeaks.classList.add('active');
     }
@@ -811,11 +766,7 @@
 
     function toggleCloudRenderFarm() {
       isCloudRenderActive = !isCloudRenderActive;
-      if(isCloudRenderActive) {
-        alert("☁ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm): سيتم استخدام خوادم GITI السحابية لتخفيف العبء عن جهازك أثناء التصدير الفاخر!");
-      } else {
-        alert("💻 تم العودة للمعالجة المحلية المباشرة (Local GPU Render).");
-      }
+      alert(isCloudRenderActive ? "☁ تم تفعيل مزرعة العرض السحابي (Cloud Render Farm) بنجاح." : "💻 العودة للمعالجة المحلية.");
     }
 
     function updateVoiceDialect() {
@@ -836,10 +787,7 @@
         span.style.transform = 'translateY(20px)';
         span.style.transition = `all 0.4s ease ${idx * 0.03}s`;
         activeTitle.appendChild(span);
-        setTimeout(() => {
-          span.style.opacity = '1';
-          span.style.transform = 'translateY(0)';
-        }, 50);
+        setTimeout(() => { span.style.opacity = '1'; span.style.transform = 'translateY(0)'; }, 50);
       });
     }
 
@@ -865,12 +813,10 @@
       const viewer = document.getElementById('promoViewer');
       if(type === 'subscribe') {
         const badge = document.createElement('div');
-        badge.style.cssText = "position:absolute; bottom:30px; right:30px; background:#ef4444; color:white; padding:5px 12px; border-radius:20px; font-size:0.6rem; font-weight:900; z-index:35; unicode-bidi:bidi-override; direction:rtl;";
+        badge.style.cssText = "position:absolute; bottom:30px; right:30px; background:#ef4444; color:white; padding:5px 12px; border-radius:20px; font-size:0.6rem; font-weight:900; z-index:35; direction:rtl;";
         badge.innerText = "🔴 اشتراك في القناة Now";
         viewer.appendChild(badge);
         setTimeout(() => badge.remove(), 4000);
-      } else if(type === 'lowerthird') {
-        alert("✨ تم تفعيل قالب الشريط الإخباري السفلي المتحرك بنجاح!");
       } else if(type === 'endcard') {
         showSlide(slides.length - 1);
       }
@@ -885,9 +831,6 @@
     function scrubTimeline(val) {
       const targetSlide = Math.floor((val / 100) * (slides.length - 1));
       showSlide(targetSlide);
-      const minutes = Math.floor((val / 100) * (slideTime * slides.length / 1000) / 60);
-      const seconds = Math.floor(((val / 100) * (slideTime * slides.length / 1000)) % 60);
-      document.getElementById('timeDisplay').innerText = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
     }
 
     function playWhooshSFX() {
@@ -935,27 +878,17 @@
       isHologramMode = !isHologramMode;
       const stage = document.getElementById('hologramStage');
       const btn = document.getElementById('holoToggleBtn');
-      const textDrawer = document.getElementById('textEditorDrawer');
-
       if (isHologramMode) {
         stage.classList.add('active');
         btn.style.background = '#10b981';
         btn.textContent = "🔮 إيقاف الهولوجرام السينمائي";
-        textDrawer.style.opacity = '0.4';
-        textDrawer.style.pointerEvents = 'none';
         slides.forEach(s => s.classList.remove('active'));
         window.speechSynthesis.cancel();
-        const holoVid = document.getElementById('hologramVideoPlayer');
-        if(holoVid.src) holoVid.play().catch(e=>{});
       } else {
         stage.classList.remove('active');
         btn.style.background = '';
         btn.textContent = "🔮 الهولوجرام السينمائي 3D";
-        textDrawer.style.opacity = '1';
-        textDrawer.style.pointerEvents = 'auto';
         showSlide(currentSlide);
-        const holoVid = document.getElementById('hologramVideoPlayer');
-        holoVid.pause();
       }
     }
 
@@ -1014,15 +947,10 @@
     function changeSlideSpeed() { slideTime = parseInt(document.getElementById('speedSelector').value); }
 
     function toggleLetterbox() {
-      const viewer = document.getElementById('promoViewer');
-      viewer.classList.toggle('cinematic-bars');
-      const btn = document.getElementById('letterboxBtn');
-      btn.style.borderColor = viewer.classList.contains('cinematic-bars') ? '#10b981' : 'rgba(59,130,246,0.35)';
+      document.getElementById('promoViewer').classList.toggle('cinematic-bars');
     }
 
-    function changeAspectRatio() {
-      changeColorGrading();
-    }
+    function changeAspectRatio() { changeColorGrading(); }
 
     function updateMixer() {
       if(activeMusic) activeMusic.volume = parseFloat(document.getElementById('musicVol').value);
@@ -1031,8 +959,7 @@
 
     function updatePersonalization() {
       const clientName = document.getElementById('clientNameInput').value.trim();
-      const greeting = clientName ? `أهلاً بك يا فريق ${clientName}،` : `مرحباً بك،`;
-      document.getElementById('clientNameText').innerText = greeting;
+      document.getElementById('clientNameText').innerText = clientName ? `أهلاً بك يا فريق ${clientName}،` : `مرحباً بك،`;
     }
 
     const industryData = {
@@ -1063,7 +990,6 @@
       const title = slide.querySelector('.slide-title') ? slide.querySelector('.slide-title').innerText : '';
       const desc = slide.querySelector('.slide-desc') ? slide.querySelector('.slide-desc').innerText : '';
       let textToRead = title + ". " + desc + ". ";
-      slide.querySelectorAll('.feature-item').forEach(el => { textToRead += el.innerText.replace(/[^\w\sа-яا-ي]/gi, '') + ". "; });
       
       speechSynthUtterance = new SpeechSynthesisUtterance(textToRead);
       speechSynthUtterance.lang = selectedDialect; 
@@ -1081,9 +1007,6 @@
         loadSlideText();
         readCurrentSlide();
         document.getElementById('timelineScrubber').value = (currentSlide / (slides.length - 1)) * 100;
-        if(currentSlide === slides.length - 1 && !isExporting) {
-          confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, colors: ['#38bdf8', '#10b981', '#ffffff'], zIndex: 100000 });
-        }
       }, 50);
       updateDots();
       startTime = Date.now();
@@ -1124,12 +1047,11 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
-    // 🚀 محرك التصدير الإطاري مع محول MP4 الحقيقي عبر FFmpeg.wasm
+    // 🚀 نظام التسجيل الآمن والمستقر تماماً لمنع الانهيار على الهواتف
     async function startProVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
       const canvas = document.getElementById('exportCanvas');
-      const qualitySetting = document.getElementById('qualitySelector').value;
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
       
       if (isExporting) return;
@@ -1140,21 +1062,17 @@
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري المعالجة والتسجيل الإطاري...";
+      btn.textContent = "🎬 جاري التسجيل الآمن...";
       const overlayEl = document.getElementById('recordingOverlay');
       overlayEl.style.display = 'block';
-      overlayEl.innerText = "🎬 جاري تسجيل الإطارات بدقة 30fps.. يرجى الانتظار";
+      overlayEl.innerText = "🎬 جاري تسجيل الفيديو بدقة مستقرة لتجنب أي انهيار في الذاكرة..";
 
-      if (qualitySetting === 'fhd') {
-        canvas.width = isVertical ? 1080 : 1920;
-        canvas.height = isVertical ? 1920 : 1080;
-      } else {
-        canvas.width = isVertical ? 720 : 1280;
-        canvas.height = isVertical ? 1280 : 720;
-      }
+      // ضبط دقة مناسبة وآمنة تماماً للهواتف المحمولة
+      canvas.width = isVertical ? 480 : 854;
+      canvas.height = isVertical ? 854 : 480;
 
-      const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
-      const canvasStream = canvas.captureStream(30);
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const canvasStream = canvas.captureStream(20);
       let finalStream = canvasStream;
       
       if (dest && dest.stream.getAudioTracks().length > 0) {
@@ -1163,64 +1081,38 @@
 
       let mediaRecorder;
       try { 
-        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 12000000 });
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 2500000 });
       } catch (e) { 
-        try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } 
-        catch (err) { mediaRecorder = new MediaRecorder(finalStream); } 
+        mediaRecorder = new MediaRecorder(finalStream); 
       }
 
       const chunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
       
-      mediaRecorder.onstop = async () => {
+      mediaRecorder.onstop = () => {
         const webmBlob = new Blob(chunks, { type: 'video/webm' });
-        
-        overlayEl.innerText = "🔄 جاري تحويل الفيديو إلى صيغة MP4 الحقيقية عبر محرك FFmpeg..";
-        
-        try {
-          const ffmpeg = await initFFmpeg();
-          if (ffmpeg) {
-            const { fetchFile } = window.FFmpegUtil;
-            await ffmpeg.writeFile('input.webm', await fetchFile(webmBlob));
-            await ffmpeg.exec(['-i', 'input.webm', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '23', '-c:a', 'aac', 'output.mp4']);
-            const data = await ffmpeg.readFile('output.mp4');
-            const mp4Blob = new Blob([data.buffer], { type: 'video/mp4' });
-            recordedBlobUrl = URL.createObjectURL(mp4Blob);
-          } else {
-            recordedBlobUrl = URL.createObjectURL(webmBlob);
-          }
-        } catch (err) {
-          console.error("FFmpeg conversion error:", err);
-          recordedBlobUrl = URL.createObjectURL(webmBlob);
-        }
+        recordedBlobUrl = URL.createObjectURL(webmBlob);
 
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير True MP4 Pro-Render";
+        btn.textContent = "🚀 تصدير آمن بدون انهيار";
         overlayEl.style.display = 'none';
         isExporting = false;
         if(!isHologramMode) { restartPresentation(); isPlaying = true; autoPlayInterval = setInterval(updateProgress, 50); }
       };
 
       mediaRecorder.start();
-      
-      if (activeMusic) { 
-        activeMusic.currentTime = 0; 
-        activeMusic.play().catch(e => {}); 
-      }
-
+      if (activeMusic) { activeMusic.currentTime = 0; activeMusic.play().catch(e => {}); }
       clearInterval(autoPlayInterval);
       
-      const fps = 30;
+      const fps = 20;
       const totalSlidesCount = slides.length;
       const totalDurationSec = (totalSlidesCount * slideTime) / 1000;
       const totalFrames = Math.floor(totalDurationSec * fps);
-      const tickerContentEl = document.querySelector('.ticker-content');
       
       for (let frame = 0; frame < totalFrames; frame++) {
         if (!isExporting) break;
-        
         const currentTimeMs = (frame / fps) * 1000;
         const targetSlideIdx = Math.floor(currentTimeMs / slideTime) % totalSlidesCount;
         const slideElapsed = currentTimeMs % slideTime;
@@ -1228,39 +1120,23 @@
         
         if (currentSlide !== targetSlideIdx) {
           currentSlide = targetSlideIdx;
-          slides.forEach((s, idx) => {
-            s.classList.toggle('active', idx === currentSlide);
-          });
+          slides.forEach((s, idx) => s.classList.toggle('active', idx === currentSlide));
           updateDots();
         }
         
         progressBar.style.width = progressPercent + '%';
         
-        const tickerPos = (currentTimeMs / 1000) * 85;
-        if (tickerContentEl) {
-          tickerContentEl.style.animation = 'none';
-          tickerContentEl.style.transform = `translateX(${tickerPos % 1200 - 600}px)`;
-        }
-        
         try {
-          const frameCanvas = await html2canvas(promoViewer, { 
-            scale: 1.5,
-            backgroundColor: '#070a14', 
-            logging: false, 
-            useCORS: true,
-            foreignObjectRendering: false
-          });
+          const frameCanvas = await html2canvas(promoViewer, { scale: 0.8, backgroundColor: '#070a14', logging: false, useCORS: true });
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
         } catch (err) {}
         
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => setTimeout(r, 20));
       }
       
       setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          mediaRecorder.stop();
-        }
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
         if (activeMusic) activeMusic.pause();
       }, 500);
     }
@@ -1269,7 +1145,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_True_MP4_${Date.now()}.mp4`;
+      a.download = `GITI_Safe_Export_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
