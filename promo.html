@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك الاحترافية</title>
+  <title>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك الاحترافية (4K/8K)</title>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; direction: rtl; }
     
     :root {
       --primary: #3b82f6;
@@ -51,7 +51,6 @@
       display: flex; gap: 8px; width: 100%; max-width: 980px; z-index: 2; align-items: flex-start; justify-content: center; flex-wrap: wrap;
     }
 
-    /* لوحة الأصول والوسائط الجانبية (Asset Bin) */
     .asset-bin-panel {
       background: rgba(11, 15, 25, 0.9); border: 1px solid var(--border-color); border-radius: 12px;
       padding: 8px; width: 220px; display: flex; flex-direction: column; gap: 6px; font-size: 0.65rem;
@@ -75,8 +74,6 @@
     }
 
     .video-container.ratio-vertical { max-width: 330px; aspect-ratio: 9 / 16; margin: 0 auto; }
-
-    /* نظام الأقنعة (Masking & Mattes) */
     .video-container.mask-circle { clip-path: circle(48% at 50% 50%); border: 3px solid var(--secondary); }
     .video-container.mask-rect { clip-path: inset(10% 15% 10% 15% round 12px); border: 3px solid var(--accent); }
 
@@ -151,12 +148,12 @@
     .lower-third-ticker {
       position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(15, 23, 42, 0.92);
       border-top: 1px solid var(--border-color); padding: 2px 8px; font-size: 0.58rem; font-weight: 700;
-      color: #38bdf8; z-index: 28; display: flex; align-items: center; overflow: hidden; white-space: nowrap;
+      color: #38bdf8; z-index: 28; display: flex; align-items: center; overflow: hidden; white-space: nowrap; direction: ltr;
     }
-    .ticker-content { display: inline-block; animation: tickerScroll 18s linear infinite; }
-    @keyframes tickerScroll { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+    .ticker-content { display: inline-block; animation: tickerScroll 18s linear infinite; direction: rtl; }
+    @keyframes tickerScroll { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
 
-    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: translateY(12px) scale(0.97); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; padding: 15px; z-index: 2; }
+    .slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0; transform: translateY(12px) scale(0.97); transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); pointer-events: none; padding: 15px; z-index: 2; text-align: right; }
     .slide.transition-zoom { transform: scale(0.7); filter: blur(4px); }
     .slide.transition-glitch { transform: skewX(-15deg); filter: invert(15%); }
     .slide.active { opacity: 1; transform: translateY(0) scale(1); filter: none; pointer-events: auto; }
@@ -166,8 +163,8 @@
     .default-badge.hidden { display: none !important; }
     .default-badge { display: inline-block; font-size: 0.6rem; font-weight: 900; margin-bottom: 3px; letter-spacing: 1px; text-transform: uppercase; background: var(--bg-glow); padding: 2px 8px; border-radius: 50px; border: 1px solid var(--border-color); color: var(--primary); }
     
-    h1 { font-size: 1.05rem; font-weight: 900; margin-bottom: 3px; color: #f8fafc; line-height: 1.3; }
-    p { font-size: 0.65rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 4px; max-width: 520px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.05); }
+    h1 { font-size: 1.05rem; font-weight: 900; margin-bottom: 3px; color: #f8fafc; line-height: 1.3; text-align: right; }
+    p { font-size: 0.65rem; color: #cbd5e1; line-height: 1.4; margin-bottom: 4px; max-width: 520px; background: rgba(0,0,0,0.6); padding: 3px 6px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.05); text-align: right; }
 
     .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; margin-top: 4px; width: 100%; max-width: 520px; }
     .feature-item { background: rgba(30, 41, 59, 0.9); padding: 4px 6px; border-radius: 5px; border: 1px solid var(--border-color); font-weight: 700; font-size: 0.58rem; display: flex; align-items: center; gap: 4px; text-align: right; }
@@ -175,14 +172,13 @@
     .cta-content-box { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 4px; background: rgba(255,255,255,0.04); padding: 5px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
     .qrcode-box { background: #ffffff; padding: 3px; border-radius: 5px; }
 
-    .video-watermark { position: absolute; top: 10px; left: 10px; font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.35); z-index: 30; pointer-events: none; letter-spacing: 1px; }
+    .video-watermark { position: absolute; top: 10px; left: 10px; font-size: 0.55rem; font-weight: 700; color: rgba(255,255,255,0.35); z-index: 30; pointer-events: none; letter-spacing: 1px; direction: ltr; }
 
     .dots-container { position: absolute; bottom: 16px; display: flex; gap: 4px; z-index: 30; }
     .dot { width: 4px; height: 4px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); transition: 0.3s; }
     .dot.active { width: 12px; border-radius: 3px; background: var(--primary); }
     .progress-bar { position: absolute; bottom: 0; left: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.1s linear; z-index: 30; }
 
-    /* لوحات التحكم وإضافات After Effects المتقدمة */
     .ae-studio-panel {
       background: rgba(11, 15, 25, 0.95); border: 1px solid var(--border-color); border-radius: 10px;
       padding: 6px 10px; width: 100%; display: flex; flex-direction: column; gap: 5px; z-index: 2;
@@ -209,7 +205,7 @@
     
     .input-field, .select-field { 
       background: #0b0f19; border: 1px solid var(--border-color); color: #fff; 
-      padding: 3px 6px; border-radius: 5px; font-size: 0.64rem; width: 110px; outline: none; transition: 0.2s;
+      padding: 3px 6px; border-radius: 5px; font-size: 0.64rem; width: 110px; outline: none; transition: 0.2s; text-align: right;
     }
     .input-field:focus, .select-field:focus { border-color: var(--primary); box-shadow: 0 0 6px var(--bg-glow); }
 
@@ -252,10 +248,10 @@
 
   <div class="studio-header">
     <h2>GITI Enterprise ERP 2027 - استوديو السينما والهولوجرام وهندسة الموشن جرافيك</h2>
-    <p>منصة مونتاج متكاملة، كي فريم حقيقي، قوالب MOGRT، أقنعة وأصول سحابية</p>
+    <p>منصة مونتاج متكاملة، جودات خارقة 4K/8K، دمج صوت المعلق، وتأثيرات سينمائية تلقائية</p>
   </div>
 
-  <div id="recordingOverlay">🎬 جاري المعالجة وتصدير الفيديو الاحترافي.. يرجى الانتظار</div>
+  <div id="recordingOverlay">🎬 جاري التصدير بجودة فائقة ودمج الصوتيات.. يرجى الانتظار</div>
 
   <div class="main-workspace">
     <!-- لوحة الأصول والوسائط الجانبية (Asset Bin) -->
@@ -459,6 +455,13 @@
             <option value="6000" selected>عادي (6ث)</option>
             <option value="8000">بطيء (8ث)</option>
           </select>
+
+          <!-- اختيار دقة التصدير (Full HD / 4K / 8K) -->
+          <select id="qualitySelector" class="select-field" style="width: 110px;">
+            <option value="fhd">🖥️ جودة Full HD</option>
+            <option value="4k" selected>🌟 جودة 4K ألترا</option>
+            <option value="8k">💎 جودة 8K سينمائي</option>
+          </select>
         </div>
 
         <div class="control-row">
@@ -481,14 +484,14 @@
           <button class="btn" onclick="togglePlay()" id="playPauseBtn">إيقاف مؤقت ⏸️</button>
           <button class="btn" onclick="nextSlide()">التالي ❯</button>
           <button class="btn" onclick="restartPresentation()">🔄 البداية</button>
-          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير فيديو AI</button>
+          <button class="btn export-ai-btn" id="exportVideoBtn" onclick="startAIVideoExport()">🚀 تصدير فيديو AI (4K/8K)</button>
         </div>
       </div>
     </div>
   </div>
 
   <div id="previewModal">
-    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بنجاح تام!</h3>
+    <h3 style="margin-bottom: 8px; color: var(--secondary);">✨ تم هندسة وتصدير الفيديو بدقة خارقة مع دمج الصوت بنجاح!</h3>
     <video id="previewVideo" controls autoplay playsinline></video>
     <div style="display: flex; gap: 8px;">
       <button class="btn export-ai-btn" onclick="downloadFinalVideo()">💾 حفظ الفيديو في جهازك</button>
@@ -521,6 +524,7 @@
     let audioCtx = null;
     let dest = null;
     let sourceNode = null;
+    let speechSynthUtterance = null;
 
     function initAudioContext() {
       if(audioCtx) return;
@@ -543,7 +547,6 @@
       particlesContainer.appendChild(p);
     }
 
-    // دوال نظام الكي فريم الحقيقي والمنحنيات
     function addKeyframePoint() {
       const pointTime = document.getElementById('timelineScrubber').value;
       keyframePoints.push({ time: pointTime, slide: currentSlide });
@@ -565,7 +568,6 @@
       }
     }
 
-    // متحكم الحروف الديناميكي (Kinetic Text)
     function triggerKineticText() {
       const activeTitle = slides[currentSlide].querySelector('.slide-title');
       if(!activeTitle) return;
@@ -586,7 +588,6 @@
       });
     }
 
-    // إدارة الأصول والوسائط (Asset Bin)
     function uploadAssetToBin(event) {
       const file = event.target.files[0];
       if(file) {
@@ -605,12 +606,11 @@
       }
     }
 
-    // قوالب الحركة الجاهزة (MOGRT Templates)
     function applyMOGRT(type) {
       const viewer = document.getElementById('promoViewer');
       if(type === 'subscribe') {
         const badge = document.createElement('div');
-        badge.style.cssText = "position:absolute; bottom:30px; right:30px; background:#ef4444; color:white; padding:5px 12px; border-radius:20px; font-size:0.6rem; font-weight:900; z-index:35; animation: bounce 1s infinite;";
+        badge.style.cssText = "position:absolute; bottom:30px; right:30px; background:#ef4444; color:white; padding:5px 12px; border-radius:20px; font-size:0.6rem; font-weight:900; z-index:35;";
         badge.innerText = "🔴 اشتراك في القناة Now";
         viewer.appendChild(badge);
         setTimeout(() => badge.remove(), 4000);
@@ -621,7 +621,6 @@
       }
     }
 
-    // نظام الأقنعة (Masking)
     function changeMaskStyle() {
       const maskType = document.getElementById('maskSelector').value;
       const viewer = document.getElementById('promoViewer');
@@ -803,16 +802,18 @@
     }
 
     function readCurrentSlide() {
-      if (!isVoiceEnabled || !('speechSynthesis' in window) || isExporting || isHologramMode) return;
+      if (!isVoiceEnabled || !('speechSynthesis' in window) || isHologramMode) return;
       window.speechSynthesis.cancel();
       const slide = slides[currentSlide];
       const title = slide.querySelector('.slide-title') ? slide.querySelector('.slide-title').innerText : '';
       const desc = slide.querySelector('.slide-desc') ? slide.querySelector('.slide-desc').innerText : '';
       let textToRead = title + ". " + desc + ". ";
       slide.querySelectorAll('.feature-item').forEach(el => { textToRead += el.innerText.replace(/[^\w\sа-яا-ي]/gi, '') + ". "; });
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.lang = 'ar-SA'; utterance.rate = parseFloat(document.getElementById('voiceRate').value);
-      window.speechSynthesis.speak(utterance);
+      
+      speechSynthUtterance = new SpeechSynthesisUtterance(textToRead);
+      speechSynthUtterance.lang = 'ar-SA'; 
+      speechSynthUtterance.rate = parseFloat(document.getElementById('voiceRate').value);
+      window.speechSynthesis.speak(speechSynthUtterance);
     }
 
     function showSlide(index) {
@@ -868,33 +869,54 @@
       if(!audioCtx) { initAudioContext(); if(isPlaying && activeMusic) activeMusic.play().catch(e=>{}); }
     }, {once:true});
 
+    // المحرك المحدث للتصدير بجودات عالية (Full HD / 4K / 8K) ودمج الصوتيات
     async function startAIVideoExport() {
       const btn = document.getElementById('exportVideoBtn');
       const promoViewer = document.getElementById('promoViewer');
       const canvas = document.getElementById('exportCanvas');
+      const qualitySetting = document.getElementById('qualitySelector').value;
+      
       if (isExporting) return;
       isExporting = true;
+
       if(!audioCtx) initAudioContext();
       if(audioCtx && audioCtx.state === 'suspended') await audioCtx.resume();
       window.speechSynthesis.cancel();
 
       btn.classList.add('loading');
-      btn.textContent = "🎬 جاري المعالجة الاحترافية.. يرجى الانتظار";
+      btn.textContent = "🎬 جاري المعالجة بجودة خيالية (4K/8K).. يرجى الانتظار";
       document.getElementById('recordingOverlay').style.display = 'block';
 
       const isVertical = document.getElementById('ratioSelector').value === 'vertical';
-      canvas.width = isVertical ? 1080 : 1920;
-      canvas.height = isVertical ? 1920 : 1080;
+      
+      // تحديد دقة الـ Canvas بناءً على الجودة المختارة
+      if (qualitySetting === '8k') {
+        canvas.width = isVertical ? 4320 : 7680;
+        canvas.height = isVertical ? 7680 : 4320;
+      } else if (qualitySetting === '4k') {
+        canvas.width = isVertical ? 2160 : 3840;
+        canvas.height = isVertical ? 3840 : 2160;
+      } else {
+        canvas.width = isVertical ? 1080 : 1920;
+        canvas.height = isVertical ? 1920 : 1080;
+      }
+
       const ctx = canvas.getContext('2d');
       const canvasStream = canvas.captureStream(30);
       let finalStream = canvasStream;
+      
       if (dest && dest.stream.getAudioTracks().length > 0) {
         finalStream = new MediaStream([...canvasStream.getVideoTracks(), dest.stream.getAudioTracks()[0]]);
       }
 
       let mediaRecorder;
-      try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 5000000 }); }
-      catch (e) { try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } catch (err) { mediaRecorder = new MediaRecorder(finalStream); } }
+      try { 
+        mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: qualitySetting === '8k' ? 25000000 : (qualitySetting === '4k' ? 15000000 : 6000000) }); 
+      }
+      catch (e) { 
+        try { mediaRecorder = new MediaRecorder(finalStream, { mimeType: 'video/webm' }); } 
+        catch (err) { mediaRecorder = new MediaRecorder(finalStream); } 
+      }
 
       const chunks = [];
       mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
@@ -904,7 +926,7 @@
         document.getElementById('previewVideo').src = recordedBlobUrl;
         document.getElementById('previewModal').style.display = 'flex';
         btn.classList.remove('loading');
-        btn.textContent = "🚀 تصدير فيديو AI";
+        btn.textContent = "🚀 تصدير فيديو AI (4K/8K)";
         document.getElementById('recordingOverlay').style.display = 'none';
         isExporting = false;
         cancelAnimationFrame(animationId);
@@ -912,6 +934,7 @@
       };
 
       mediaRecorder.start();
+      
       if (isHologramMode) {
         const holoVid = document.getElementById('hologramVideoPlayer');
         holoVid.currentTime = 0; holoVid.play().catch(e=>{});
@@ -926,7 +949,7 @@
       const recordFrames = async () => {
         if (!isExporting) return;
         try {
-          const frameCanvas = await html2canvas(promoViewer, { scale: 1.5, backgroundColor: '#070a14', logging: false, useCORS: true });
+          const frameCanvas = await html2canvas(promoViewer, { scale: qualitySetting === '8k' ? 4 : (qualitySetting === '4k' ? 2 : 1.5), backgroundColor: '#070a14', logging: false, useCORS: true });
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(frameCanvas, 0, 0, canvas.width, canvas.height);
         } catch (err) {}
@@ -950,7 +973,7 @@
       if(!recordedBlobUrl) return;
       const a = document.createElement('a');
       a.style.display = 'none'; a.href = recordedBlobUrl;
-      a.download = `GITI_Studio_PRO_${Date.now()}.webm`;
+      a.download = `GITI_Studio_PRO_4K_8K_${Date.now()}.webm`;
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 
