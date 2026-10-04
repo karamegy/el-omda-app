@@ -109,13 +109,13 @@ let markersGroup = {
     orders: {}
 };
 
-let storeLocation = [29.9600, 31.2100]; // موقع المركز الرئيسي (شبرا منت)
+let storeLocation = [29.9600, 31.2100];
 let activeFilter = 'all';
 let watchGpsId = null;
 let isPickingLocation = null;
 
 // ==========================================
-// تهيئة التطبيق عند الفتح
+// تهيئة التطبيق الذكية عند الفتح
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     checkSavedUserSession();
@@ -124,11 +124,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     initHeroSlider();
     initRealtimeCloudSync();
 
-    // تشغيل الخريطة تلقائياً إذا كانت الخريطة موجودة في الصفحة
+    // 1. تشغيل الخريطة تلقائياً إذا كانت صفحة الخريطة مفتوحة
     if (document.getElementById('leafletMap')) {
         checkUserPermissions();
         initLeafletMap();
         initRealtimeMapData();
+    }
+
+    // 2. تشغيل لوحة التجهيز (KDS) تلقائياً إذا كانت الشاشة مفتوحة
+    if (document.getElementById('kitchen-orders-grid')) {
+        if (checkKitchenAccessSecurity()) {
+            loadKitchenOrdersFromLocal();
+            initRealtimeKitchenSync();
+        }
     }
 });
 
@@ -1363,4 +1371,174 @@ function getStatusLabelMap(st) {
     if(st === 'delivery') return 'مع الطيار 🛵';
     if(st === 'done') return 'تم التسليم ✅';
     return st || 'نشط';
+}
+
+// ==========================================
+// وظائف لوحة تجهيز الطلبات والشحنات (KDS)
+// ==========================================
+function checkKitchenAccessSecurity() {
+    const savedUserStr = localStorage.getItem('allaf_logged_user') || 
+                         localStorage.getItem('fleet_logged_user') || 
+                         localStorage.getItem('fleet_session_user') || 
+                         localStorage.getItem('fleet_current_cust') || '{}';
+    
+    let loggedUser = {};
+    try { loggedUser = JSON.parse(savedUserStr); } catch(e){}
+
+    const role = (loggedUser.role || '').toLowerCase();
+    const email = (loggedUser.email || '').toLowerCase();
+    const phone = loggedUser.phone || '';
+
+    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone.includes('01144730305'));
+    const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'driver' || role === 'manager';
+
+    const avatarEl = document.getElementById('nav-user-avatar');
+    if (avatarEl && loggedUser.photoURL) avatarEl.src = loggedUser.photoURL;
+
+    const adminLink = document.getElementById('adminPanelLink');
+    if (isMaster || role === 'admin' || role === 'manager') {
+        if (adminLink) adminLink.style.display = 'inline-flex';
+    }
+
+    if (!isAuthorizedStaff) {
+        alert("🚫 عذراً! هذه الشاشة مخصصة لفريق العمل والمشرفين ومسؤولي التجهيز فقط.");
+        window.location.href = 'index.html';
+        return false;
+    }
+
+    const badge = document.getElementById('userRoleBadge');
+    if(badge) {
+        badge.innerText = `مرحباً بك يا ${loggedUser.name || 'موظف التجهيز'} (${role || 'مشرف'}) 👑`;
+    }
+    return true;
+}
+
+function loadKitchenOrdersFromLocal() {
+    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    renderKitchenGrid(allOrders);
+}
+
+function initRealtimeKitchenSync() {
+    if (window.db && window.firebaseModules) {
+        const { collection, onSnapshot } = window.firebaseModules;
+        onSnapshot(collection(window.db, "orders"), (snapshot) => {
+            let cloudOrders = [];
+            snapshot.forEach(docSnap => cloudOrders.push(docSnap.data()));
+            if (cloudOrders.length > 0) {
+                localStorage.setItem('fleet_orders', JSON.stringify(cloudOrders));
+                renderKitchenGrid(cloudOrders);
+            }
+        }, (error) => {
+            console.error("Realtime sync error:", error);
+            syncActiveOrdersSmart();
+        });
+    } else {
+        setTimeout(initRealtimeKitchenSync, 1000);
+    }
+}
+
+async function syncActiveOrdersSmart() {
+    const grid = document.getElementById('kitchen-orders-grid');
+    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    
+    if (allOrders.length === 0 && grid) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري جلب الشحنات والطلبات من السحابة...</p>';
+    }
+
+    if (window.db && window.firebaseModules) {
+        try {
+            const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "orders"));
+            allOrders = [];
+            querySnapshot.forEach((docSnap) => {
+                allOrders.push(docSnap.data());
+            });
+            if(allOrders.length > 0) {
+                localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
+            }
+            renderKitchenGrid(allOrders);
+        } catch (e) {
+            console.error("Cloud sync error:", e);
+            loadKitchenOrdersFromLocal();
+        }
+    }
+}
+
+async function syncAllActiveOrdersWithGetDoc() {
+    await syncActiveOrdersSmart();
+    alert("✓ تم تحديث لوحة العمليات والتجهيز بنجاح!");
+}
+
+function renderKitchenGrid(allOrders) {
+    const grid = document.getElementById('kitchen-orders-grid');
+    if(!grid) return;
+
+    let activeOrders = allOrders.filter(o => o.status !== 'done');
+
+    if(activeOrders.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.2rem;">لا توجد طلبات جديدة قيد الانتظار أو التجهيز حالياً. 🌾🚀</p>';
+        return;
+    }
+
+    let htmlContent = '';
+    activeOrders.forEach((order) => {
+        let itemsList = (order.items || []).map(i => `
+            <li style="margin-bottom: 6px; border-bottom: 1px dashed #44403c; padding-bottom: 4px; display: flex; justify-content: space-between;">
+                <span>🌾 ${i.name}</span>
+                <strong style="color: #fde047;">x${i.qty} شكارة</strong>
+            </li>
+        `).join('');
+        
+        let isCooking = order.status === 'cooking';
+        let isDelivery = order.status === 'delivery';
+
+        htmlContent += `
+            <div style="background: #292524; border: 2px solid ${isCooking ? '#f59e0b' : (isDelivery ? '#0284c7' : '#b45309')}; border-radius: 12px; padding: 18px; box-shadow: 0 8px 20px rgba(0,0,0,0.5);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #44403c; padding-bottom: 8px;">
+                    <strong style="color: #fde047; font-size: 1.1rem;">${order.id}</strong>
+                    <span style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; background: ${isCooking ? '#f59e0b' : (isDelivery ? '#0284c7' : '#78350f')}; color: #fff; font-weight: bold;">
+                        ${getStatusLabelMap(order.status)}
+                    </span>
+                </div>
+                <p style="margin-bottom: 6px; font-size: 0.9rem; color: #f5f5f4;">👤 <strong>العميل / المزرعة:</strong> ${order.name || 'عميل'} (${order.phone || order.clientPhone || ''})</p>
+                <p style="margin-bottom: 12px; font-size: 0.9rem; color: #f5f5f4;">📍 <strong>العنوان:</strong> ${order.address || 'استلام من الفرع'}</p>
+                
+                <div style="background: #1c1917; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #44403c;">
+                    <strong style="font-size: 0.85rem; color: #fbbf24; display: block; margin-bottom: 8px;">الأصناف المطلوبة والتجهيز:</strong>
+                    <ul style="list-style: none; padding: 0; font-size: 0.88rem; margin: 0;">${itemsList}</ul>
+                    <div style="margin-top: 10px; text-align: left; color: #16a34a; font-weight: bold; font-size: 0.95rem;">
+                        الإجمالي: ${order.total || 0} جنيه
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button onclick="setKitchenStatus('${order.id}', 'cooking')" class="btn-primary" style="flex: 1; background: #d97706; padding: 8px; font-size: 0.85rem;">قيد التجهيز 📦</button>
+                    <button onclick="setKitchenStatus('${order.id}', 'delivery')" class="btn-primary" style="flex: 1; background: #0284c7; padding: 8px; font-size: 0.85rem;">مع السائق 🛵</button>
+                    <button onclick="setKitchenStatus('${order.id}', 'done')" class="btn-primary" style="flex: 1; background: #16a34a; padding: 8px; font-size: 0.85rem;">تم التسليم ✅</button>
+                </div>
+            </div>
+        `;
+    });
+    grid.innerHTML = htmlContent;
+}
+
+async function setKitchenStatus(orderId, newStatus) {
+    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    let order = allOrders.find(o => String(o.id) === String(orderId));
+    
+    if(order) {
+        order.status = newStatus;
+        localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
+        renderKitchenGrid(allOrders);
+
+        if (window.db && window.firebaseModules) {
+            try {
+                await window.firebaseModules.updateDoc(
+                    window.firebaseModules.doc(window.db, "orders", String(orderId)), 
+                    { status: newStatus }
+                );
+            } catch (e) {
+                console.error("Cloud status update error:", e);
+            }
+        }
+    }
 }
