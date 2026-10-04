@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تنزيل icon1-512.png - تطبيق العلاف</title>
+    <title>أداة تحويل وتنزيل أيقونة العلاف icon1-512.png</title>
     <style>
         body {
             display: flex;
@@ -18,212 +18,110 @@
             padding: 20px;
             box-sizing: border-box;
         }
-        .preview-title {
-            color: #fde047;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
-            text-align: center;
-            font-weight: bold;
-        }
-        .preview-box {
-            width: 340px;
-            height: 340px;
+        .container-box {
             background: #1c1917;
-            border: 3px solid #b45309;
-            border-radius: 28px;
-            padding: 10px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+            border: 2px solid #b45309;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            max-width: 420px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .preview-card {
+            width: 256px;
+            height: 256px;
+            margin: 20px auto;
+            border-radius: 40px;
+            overflow: hidden;
+            border: 3px solid #fde047;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+            background: #292524;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        .preview-box svg {
+        .preview-card img {
             width: 100%;
             height: 100%;
+            object-fit: cover;
+        }
+        .file-input-btn {
+            background: #292524;
+            border: 1px dashed #b45309;
+            padding: 12px;
+            border-radius: 10px;
+            color: #fde047;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            font-weight: bold;
         }
         .btn-download {
-            margin-top: 25px;
-            padding: 15px 35px;
-            font-size: 18px;
+            width: 100%;
+            padding: 14px;
+            font-size: 17px;
             background: linear-gradient(135deg, #b45309, #d97706);
             color: #fff;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 4px 20px rgba(217, 119, 6, 0.5);
-            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
         }
         .btn-download:hover {
             background: linear-gradient(135deg, #d97706, #f59e0b);
-            transform: translateY(-2px);
         }
     </style>
 </head>
 <body>
 
-    <h3 class="preview-title">🌾 لوجو العلاف المطور والشامل (512x512) 🌾</h3>
+    <div class="container-box">
+        <h3 style="color: #fde047; margin-top: 0;">🖼️ صانع أيقونة التطبيق الرسمية (512x512)</h3>
+        <p style="font-size: 0.85rem; color: #a8a29e;">اختر صورة اللوجو الواقعي لتأطيرها وتحويلها فوراً إلى `icon1-512.png`</p>
 
-    <div id="svgContainer" class="preview-box">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-          <defs>
-            <!-- التدرجات اللونية الطبيعية -->
-            <radialGradient id="bgGrad" cx="50%" cy="45%" r="60%">
-              <stop offset="0%" stop-color="#3a1c09"/>
-              <stop offset="70%" stop-color="#180d05"/>
-              <stop offset="100%" stop-color="#090402"/>
-            </radialGradient>
-            
-            <linearGradient id="goldBanner" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#fffbeb"/>
-              <stop offset="25%" stop-color="#fde047"/>
-              <stop offset="60%" stop-color="#d97706"/>
-              <stop offset="100%" stop-color="#78350f"/>
-            </linearGradient>
+        <label class="file-input-btn">
+            📁 اضغط هنا لاختيار صورة اللوجو من جهازك
+            <input type="file" id="imageUploader" accept="image/*" style="display: none;" onchange="loadImage(event)">
+        </label>
 
-            <linearGradient id="sackGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stop-color="#d97706"/>
-              <stop offset="50%" stop-color="#b45309"/>
-              <stop offset="100%" stop-color="#78350f"/>
-            </linearGradient>
+        <div class="preview-card">
+            <img id="logoPreview" src="https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=500" alt="معاينة اللوجو">
+        </div>
 
-            <filter id="shadowDepth" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000" flood-opacity="0.8"/>
-            </filter>
-          </defs>
-
-          <!-- الخلفية والإطار الملكي الخشبي والذهبي -->
-          <rect width="512" height="512" rx="100" fill="url(#bgGrad)"/>
-          <circle cx="256" cy="240" r="225" fill="none" stroke="url(#goldBanner)" stroke-width="8" filter="url(#shadowDepth)"/>
-          <circle cx="256" cy="240" r="212" fill="none" stroke="#fef08a" stroke-width="2" stroke-dasharray="8 5" opacity="0.6"/>
-
-          <!-- 1. سنابل القمح والحبوب في أعلى اللوجو -->
-          <g filter="url(#shadowDepth)">
-            <!-- سنبلة وسطى -->
-            <path d="M 256 160 L 256 30" stroke="#fde047" stroke-width="4" stroke-linecap="round"/>
-            <path d="M 256 40 Q 240 25 235 35 Q 256 50 256 50 Q 272 25 277 35 Q 256 50 256 50" fill="#fde047"/>
-            <path d="M 256 70 Q 235 55 230 65 Q 256 80 256 80 Q 277 55 282 65 Q 256 80 256 80" fill="#fde047"/>
-            <path d="M 256 100 Q 230 85 225 95 Q 256 110 256 110 Q 282 85 287 95 Q 256 110 256 110" fill="#fde047"/>
-            <!-- سنابل مائلة يميناً ويساراً -->
-            <path d="M 230 150 Q 170 90 140 50 M 165 70 L 145 55 M 185 90 L 165 75" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
-            <path d="M 282 150 Q 342 90 372 50 M 347 70 L 367 55 M 327 90 L 347 75" stroke="#fde047" stroke-width="3" stroke-linecap="round"/>
-          </g>
-
-          <!-- 2. الحيوانات والأعلاف (المزرعة المتكاملة) -->
-          <g filter="url(#shadowDepth)">
-            
-            <!-- أ) الخيل الأصيل (أعلى اليسار) -->
-            <g transform="translate(85, 100)">
-              <path d="M 50 15 C 30 10, 10 35, 5 55 C 0 75, 15 85, 30 85 C 50 85, 60 65, 65 45 C 70 25, 65 15, 50 15 Z" fill="#b45309" stroke="#fde047" stroke-width="2"/>
-              <!-- غرة الخيل والأذن -->
-              <path d="M 15 25 Q 5 45 10 65 Q 25 50 35 45 Z" fill="#78350f"/>
-              <polygon points="45,10 55,25 40,20" fill="#fde047"/>
-              <circle cx="38" cy="38" r="3" fill="#fff"/>
-              <text x="3" y="105" font-family="Tahoma" font-weight="bold" font-size="14" fill="#fde047">خيل</text>
-            </g>
-
-            <!-- ب) البقرة الحلوب (أعلى اليمين) -->
-            <g transform="translate(330, 100)">
-              <!-- قرون ووجه البقرة -->
-              <path d="M 10 20 Q -10 5 0 0 Q 15 10 15 25 Z" fill="#fde047"/>
-              <path d="M 60 20 Q 80 5 70 0 Q 55 10 55 25 Z" fill="#fde047"/>
-              <path d="M 12 25 Q 35 15 58 25 C 70 50, 60 85, 35 85 C 10 85, 0 50, 12 25 Z" fill="#fff" stroke="#fde047" stroke-width="2"/>
-              <ellipse cx="35" cy="68" rx="18" ry="12" fill="#fbcfe8"/>
-              <circle cx="25" cy="40" r="4" fill="#000"/>
-              <circle cx="45" cy="40" r="4" fill="#000"/>
-              <!-- بقعة بقرة -->
-              <path d="M 15 30 Q 25 20 28 35 Q 20 45 15 30 Z" fill="#1c1917"/>
-              <text x="18" y="105" font-family="Tahoma" font-weight="bold" font-size="14" fill="#fde047">أبقار</text>
-            </g>
-
-            <!-- ج) الخروف / الأغنام (أسفل اليسار) -->
-            <g transform="translate(90, 230)">
-              <!-- صوف الخروف -->
-              <circle cx="25" cy="30" r="16" fill="#f5f5f4"/>
-              <circle cx="42" cy="22" r="15" fill="#f5f5f4"/>
-              <circle cx="18" cy="45" r="14" fill="#f5f5f4"/>
-              <circle cx="38" cy="48" r="16" fill="#f5f5f4"/>
-              <!-- رأس الخروف -->
-              <path d="M 40 25 C 40 45, 58 45, 58 25 Z" fill="#44403c"/>
-              <circle cx="48" cy="28" r="2" fill="#fff"/>
-              <text x="12" y="80" font-family="Tahoma" font-weight="bold" font-size="14" fill="#fde047">أغنام</text>
-            </g>
-
-            <!-- د) الماعز (أسفل اليمين) -->
-            <g transform="translate(335, 230)">
-              <!-- قرون الماعز الملتوية -->
-              <path d="M 20 20 Q 5 -5 0 10 Q 15 20 20 30 Z" fill="#fde047"/>
-              <path d="M 40 20 Q 55 -5 60 10 Q 45 20 40 30 Z" fill="#fde047"/>
-              <!-- رأس ولحية الماعز -->
-              <path d="M 18 25 L 42 25 L 36 60 L 24 60 Z" fill="#a16207" stroke="#fde047" stroke-width="1.5"/>
-              <polygon points="27,60 33,75 30,60" fill="#fef08a"/>
-              <circle cx="26" cy="35" r="3" fill="#fff"/>
-              <circle cx="34" cy="35" r="3" fill="#fff"/>
-              <text x="12" y="80" font-family="Tahoma" font-weight="bold" font-size="14" fill="#fde047">ماعز</text>
-            </g>
-
-            <!-- هـ) شيكارة الخيش والحبوب الممتلئة (المركز الرئيسي) -->
-            <g transform="translate(200, 200)">
-              <!-- شكارة خيش واقعية -->
-              <path d="M 15 45 C 15 25, 97 25, 97 45 C 107 85, 92 125, 56 125 C 20 125, 5 85, 15 45 Z" fill="url(#sackGrad)" stroke="#fde047" stroke-width="3"/>
-              <!-- ربطة الشكارة والأعلى المفتوح -->
-              <path d="M 22 30 C 35 38, 77 38, 90 30 C 97 18, 15 18, 22 30 Z" fill="#78350f" stroke="#fde047" stroke-width="2"/>
-              <rect x="42" y="32" width="28" height="8" rx="3" fill="#fde047"/>
-              
-              <!-- حبوب الذرة والقمح الذهبية الخارجة من الشكارة -->
-              <ellipse cx="40" cy="20" rx="7" ry="5" fill="#fde047"/>
-              <ellipse cx="56" cy="14" rx="8" ry="6" fill="#fde047"/>
-              <ellipse cx="72" cy="20" rx="7" ry="5" fill="#fde047"/>
-              <circle cx="48" cy="24" r="4" fill="#fef08a"/>
-              <circle cx="64" cy="24" r="4" fill="#fef08a"/>
-
-              <!-- خياطة وتفاصيل شيكارة العلاف -->
-              <path d="M 30 65 L 82 65 M 25 85 L 87 85" stroke="#78350f" stroke-width="2" stroke-dasharray="4 3"/>
-              <text x="35" y="78" font-family="Tahoma" font-weight="bold" font-size="13" fill="#fde047">علف ممتاز</text>
-            </g>
-
-          </g>
-
-          <!-- 3. الوشاح الذهبي الأسفل باسم التطبيق -->
-          <g filter="url(#shadowDepth)">
-            <!-- خلفية الشريط/اللافتة -->
-            <path d="M 70 385 L 140 400 L 372 400 L 442 385 L 422 450 L 372 440 L 140 440 L 90 450 Z" fill="#78350f" stroke="url(#goldBanner)" stroke-width="3"/>
-            <path d="M 120 395 L 392 395 L 382 435 L 130 435 Z" fill="url(#goldBanner)"/>
-
-            <!-- اسم المتجر والخدمة -->
-            <text x="256" y="426" text-anchor="middle" font-family="'Segoe UI', 'Cairo', sans-serif" font-weight="900" font-size="34" fill="#1c1917">العلاف</text>
-            <text x="256" y="475" text-anchor="middle" font-family="'Segoe UI', 'Cairo', sans-serif" font-weight="bold" font-size="16" fill="#fde047" letter-spacing="1">تجارة الأعلاف والحبوب والمستلزمات</text>
-          </g>
-        </svg>
+        <button class="btn-download" onclick="generateAndDownload()">تنزيل الصورة icon1-512.png 🚀</button>
     </div>
 
-    <button class="btn-download" onclick="downloadPNG()">تنزيل الصورة icon1-512.png 🚀</button>
-
     <script>
-        function downloadPNG() {
-            const svgElement = document.querySelector('svg');
-            const svgString = new XMLSerializer().serializeToString(svgElement);
-            const img = new Image();
-            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-
-            img.onload = function () {
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, 512, 512);
-                
-                const pngUrl = canvas.toDataURL('image/png');
-                const downloadLink = document.createElement('a');
-                downloadLink.href = pngUrl;
-                downloadLink.download = 'icon1-512.png';
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-                URL.revokeObjectURL(url);
+        function loadImage(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const output = document.getElementById('logoPreview');
+                output.src = reader.result;
             };
-            img.src = url;
+            if(event.target.files[0]) {
+                reader.readAsDataURL(event.target.files[0]);
+            }
+        }
+
+        function generateAndDownload() {
+            const img = document.getElementById('logoPreview');
+            const canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+
+            // رسم خلفية وأيقونة بمقاس 512x512 دقيق
+            ctx.drawImage(img, 0, 0, 512, 512);
+
+            const pngUrl = canvas.toDataURL('image/png');
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'icon1-512.png';
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
         }
     </script>
 </body>
