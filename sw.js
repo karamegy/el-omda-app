@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v14'; // تم تحديث الاسم ورقم الإصدار لتطبيق العلاف
+const CACHE_NAME = 'allaf-feeds-v15'; // تم تحديث الاسم ورقم الإصدار لتطبيق العلاف
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
