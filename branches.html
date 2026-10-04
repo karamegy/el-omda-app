@@ -3,86 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مراكز الأسطول ومواقع الخدمة | الأسطول اللوجستي وإدارة الشحنات</title>
+    <title>مراكز الأسطول ومواقع الخدمة | العلاف لتجارة وتوريد الأعلاف</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
 </head>
-<body class="p-3 sm:p-6 space-y-4">
+<body>
+
+    <!-- الشريط الإعلاني العلوي المتحرك -->
+    <div class="ticker-container">
+        <span class="ticker-label"><i class="fa-solid fa-bullhorn"></i> تنبيه هام</span>
+        <div class="ticker-content">
+            <marquee behavior="scroll" direction="right" scrollamount="5">
+                📍 جميع مراكز ونقاط التوزيع تعمل على مدار 24 ساعة لتغطية طلبات الأعلاف وتوريد المزارع والشحنات بكفاءة عالية!
+            </marquee>
+        </div>
+    </div>
 
     <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم المستخدم -->
-    <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f);">
+    <header class="main-header">
         <div class="logo-container">
-            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md overflow-hidden border-2 border-amber-500" style="width: 48px; height: 48px; border-radius: 10px;">
-                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+            <div class="logo-icon-box" style="overflow: hidden; width: 48px; height: 48px; border-radius: 50%;">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'">
             </div>
             <div>
-                <h1 style="font-size: 1.1rem;">مراكز الأسطول اللوجستي 👑</h1>
-                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.75rem; color: #fde047; font-weight: bold;">مراكز التشغيل ومواقع الخدمة 📍</span>
-                    <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
+                <h1>مراكز ومواقع التشغيل 🌾</h1>
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 2px;">
+                    <span class="header-badge">فروع التوزيع ونقاط الخدمة 📍</span>
+                    <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 6px;">زائر</span>
                 </div>
             </div>
         </div>
         <nav class="nav-links">
-            <a href="index.html" class="nav-btn"><i class="fa-solid fa-boxes-stacked"></i> الخدمات والمنيو</a>
-            <a href="Map.html" class="nav-btn" style="background-color: #16a34a;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
-            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-lock"></i> لوحة التحكم</a>
+            <a href="index.html" class="nav-btn"><i class="fa-solid fa-wheat-awn"></i> الخدمات والمنتجات</a>
+            <a href="Map.html" class="nav-btn" style="background-color: var(--accent-green);"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="display: none;"><i class="fa-solid fa-lock"></i> لوحة التحكم</a>
         </nav>
     </header>
 
-    <main class="container" style="max-width: 1000px; margin: 20px auto;">
-        <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px;">
-            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">📍 مراكز الأسطول ومواقع التشغيل اللوجستية</h2>
-            <p style="font-size: 0.95rem; color: #fef3c7;">نقاط انطلاق مركزية وفروع لتغطية كافة طلبات التوصيل والشحنات بكفاءة تامة!</p>
+    <main class="container">
+        <!-- البانر الترحيبي -->
+        <div class="hero-banner">
+            <div style="text-align: center; padding: 10px;">
+                <h2 style="font-size: 1.4rem; color: #fef3c7; margin-bottom: 6px;">📍 مراكز ونقاط التوزيع اللوجستية</h2>
+                <p style="font-size: 0.9rem; color: #fef08a;">فروع التوريد المباشر ومقرات الشحن لخدمة المزارع والمربين في كافة المحافظات!</p>
+            </div>
         </div>
 
-        <div class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
-            <!-- المركز الرئيسي -->
-            <div class="corporate-card" style="padding: 25px; background: #fff; border-radius: 14px; border: 2px solid #b45309; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+        <!-- شبكة الفروع ومراكز التشغيل -->
+        <div id="branches-grid" class="menu-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+            
+            <!-- المركز الرئيسي - شبرا منت -->
+            <div class="menu-card" style="padding: 20px; border: 2px solid var(--primary-dark);">
                 <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <div style="background: #b45309; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                    <div style="background: var(--primary-dark); color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
                         <i class="fa-solid fa-crown"></i>
                     </div>
                     <div>
-                        <h3 style="color: #78350f; margin: 0; font-size: 1.15rem;">المركز الرئيسي (شبرا منت)</h3>
-                        <span style="font-size: 0.8rem; color: #16a34a; font-weight: bold;">المركز الأساسي للعمليات</span>
+                        <h3 style="color: var(--secondary-color); margin: 0; font-size: 1.15rem;">المركز الرئيسي (شبرا منت)</h3>
+                        <span style="font-size: 0.8rem; color: var(--accent-green); font-weight: bold;">المقر الرئيسي وتوريد الجملة</span>
                     </div>
                 </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; color: #57534e; font-size: 0.9rem; margin-bottom: 20px;">
-                    <p>📍 <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</p>
-                    <p>📞 <strong>الهاتف:</strong> <span class="mono-font font-bold text-amber-800">01144730305</span></p>
-                    <p>⏰ <strong>مواعيد العمل:</strong> 24 ساعة طوال أيام الأسبوع</p>
+                <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text-dark); font-size: 0.9rem; margin-bottom: 20px;">
+                    <p><i class="fa-solid fa-location-dot text-amber-700"></i> <strong>العنوان:</strong> شبرا منت، الجيزة، مصر</p>
+                    <p><i class="fa-solid fa-phone text-amber-700"></i> <strong>الهاتف:</strong> <a href="tel:01144730305" style="color: var(--primary-dark); font-weight: bold; text-decoration: none;">01144730305</a></p>
+                    <p><i class="fa-solid fa-clock text-amber-700"></i> <strong>مواعيد العمل:</strong> 24 ساعة طوال أيام الأسبوع</p>
+                    <p><i class="fa-solid fa-boxes-packing text-amber-700"></i> <strong>الخدمات المتاحة:</strong> تحميل مباشر، خلطات مخصصة، توريد كميات كبرى للمزارع.</p>
                 </div>
-                <a href="https://maps.google.com/?q=Shabramant,Giza" target="_blank" class="btn-primary" style="text-align: center; display: block; text-decoration: none; padding: 12px; border-radius: 8px; background-color: #b45309; font-weight: bold; color: white;">
-                    <i class="fa-solid fa-directions"></i> توجيه عبر خرائط جوجل 🚗
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <a href="https://maps.google.com/?q=Shabramant,Giza" target="_blank" class="btn-primary" style="text-align: center; text-decoration: none;">
+                        <i class="fa-solid fa-directions"></i> توجيه عبر خرائط جوجل 🚗
+                    </a>
+                    <a href="https://wa.me/201144730305?text=السلام%20عليكم،%20أستفسر%20عن%20توريد%20أعلاف%20من%20الفرع%20الرئيسي" target="_blank" class="btn-whatsapp" style="text-align: center; text-decoration: none;">
+                        <i class="fa-brands fa-whatsapp"></i> تواصل مع الفرع واتساب
+                    </a>
+                </div>
+            </div>
+
+            <!-- خدمة أسطول التوصيل والتوزيع الشامل -->
+            <div class="menu-card" style="padding: 20px; border: 2px solid #0284c7;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                    <div style="background: #0284c7; color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                        <i class="fa-solid fa-truck-fast"></i>
+                    </div>
+                    <div>
+                        <h3 style="color: #0369a1; margin: 0; font-size: 1.15rem;">أسطول الشحن والتوصيل المباشر</h3>
+                        <span style="font-size: 0.8rem; color: #0284c7; font-weight: bold;">خدمة نقل وشحن لمختلف المحافظات</span>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 10px; color: var(--text-dark); font-size: 0.9rem; margin-bottom: 20px;">
+                    <p><i class="fa-solid fa-map-location text-sky-700"></i> <strong>نطاق التغطية:</strong> شبرا منت، الهرم، فيصل، القاهرة الكبرى والجيزة والمحافظات المجاورة.</p>
+                    <p><i class="fa-solid fa-truck-ramp-box text-sky-700"></i> <strong>وسائل النقل:</strong> سيارات نقل مجهزة وشاحنات نقل ثقيل لتلبية كافة الأحجام.</p>
+                    <p><i class="fa-solid fa-shield-halved text-sky-700"></i> <strong>الأمان والسرعة:</strong> تتبع حي لحظي للشحنات وسرعة تسليم مع توثيق التحصيل.</p>
+                </div>
+                <a href="index.html" class="btn-gps" style="text-align: center; text-decoration: none; display: block; padding: 12px;">
+                    <i class="fa-solid fa-wheat-awn"></i> تصفح المنتجات واطلب الشحنة الآن 🛒
                 </a>
             </div>
 
-            <!-- خدمة أسطول التوصيل -->
-            <div class="corporate-card" style="padding: 25px; background: #fff; border-radius: 14px; border: 2px solid #0284c7; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-                    <div style="background: #0284c7; color: white; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
-                        <i class="fa-solid fa-motorcycle"></i>
-                    </div>
-                    <div>
-                        <h3 style="color: #0369a1; margin: 0; font-size: 1.15rem;">خدمة أسطول التوصيل والشحن</h3>
-                        <span style="font-size: 0.8rem; color: #0284c7; font-weight: bold;">يغطي كافة أنحاء القاهرة الكبرى والجيزة</span>
-                    </div>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 8px; color: #57534e; font-size: 0.9rem; margin-bottom: 20px;">
-                    <p>📍 <strong>نطاق التغطية:</strong> شبرا منت، الهرم، وفيصل وباقي المحافظات.</p>
-                    <p>🛵 <strong>الأسطول:</strong> مناديب دليفري مزودين بتتبع GPS حي لحظي.</p>
-                    <p>⚡ <strong>كفاءة التشغيل:</strong> سرعة فائقة وأمان تام في تحصيل الأموال (COD).</p>
-                </div>
-                <a href="index.html" class="btn-secondary" style="text-align: center; display: block; text-decoration: none; padding: 12px; border-radius: 8px; background-color: #0284c7; color: white; font-weight: bold;">
-                    <i class="fa-solid fa-boxes-stacked"></i> تصفح الخدمات واطلب الآن 🛒
-                </a>
-            </div>
         </div>
     </main>
 
-    <!-- إعداد وتهيئة Firebase السحابية ومزامنة البروفايل -->
+    <!-- إعداد وتهيئة Firebase السحابية ومزامنة البروفايل والحساب -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -114,25 +136,69 @@
             getDoc
         };
 
-        // مزامنة وعرض بيانات البروفايل والحساب الحالي عند تحميل صفحة الفروع
+        // مزامنة وعرض بيانات المستخدم في الهيدر
         document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('fleet_session_user') || localStorage.getItem('fleet_current_cust') || '{}');
+            const savedUserStr = localStorage.getItem('allaf_logged_user') || 
+                                 localStorage.getItem('fleet_logged_user') || 
+                                 localStorage.getItem('fleet_session_user') || 
+                                 localStorage.getItem('fleet_current_cust');
             
+            let user = null;
+            try { user = savedUserStr ? JSON.parse(savedUserStr) : null; } catch(e){}
+
             const avatarEl = document.getElementById('nav-user-avatar');
             const nameEl = document.getElementById('nav-username-display');
+            const adminLink = document.getElementById('adminPanelLink');
 
-            if (sessionUser && (sessionUser.name || sessionUser.email)) {
-                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
-                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
+            if (user && (user.name || user.email || user.phone)) {
+                if (nameEl) nameEl.innerText = user.name || user.phone || user.email;
+                if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+
+                // إظهار رابط لوحة التحكم للمشرفين
+                if (user.role === 'admin' || user.role === 'manager' || (user.phone && user.phone.includes('01144730305'))) {
+                    if (adminLink) adminLink.style.display = 'inline-flex';
+                }
             } else {
                 if (nameEl) nameEl.innerText = 'زائر';
             }
+
+            // استعلام اختياري لجلب أي فروع إضافية مضافة من لوحة التحكم بـ Firebase
+            if (db) {
+                onSnapshot(collection(db, "branches"), (snapshot) => {
+                    const grid = document.getElementById('branches-grid');
+                    snapshot.forEach(docSnap => {
+                        const b = docSnap.data();
+                        if (b && b.name) {
+                            const bCard = document.createElement('div');
+                            bCard.className = 'menu-card';
+                            bCard.style.padding = '20px';
+                            bCard.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+                                    <div style="background: var(--primary-color); color: white; width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+                                        <i class="fa-solid fa-store"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="color: var(--secondary-color); margin: 0; font-size: 1.15rem;">${b.name}</h3>
+                                        <span style="font-size: 0.8rem; color: var(--accent-green); font-weight: bold;">${b.subTitle || 'فرع معتمد'}</span>
+                                    </div>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem; margin-bottom: 15px;">
+                                    <p>📍 <strong>العنوان:</strong> ${b.address || 'غير محدد'}</p>
+                                    <p>📞 <strong>الهاتف:</strong> ${b.phone || 'غير محدد'}</p>
+                                </div>
+                                ${b.mapUrl ? `<a href="${b.mapUrl}" target="_blank" class="btn-primary" style="text-align: center; text-decoration: none; display: block;">توجيه الخريطة 🚗</a>` : ''}
+                            `;
+                            grid.appendChild(bCard);
+                        }
+                    });
+                });
+            }
         });
         
-        console.log("🏢🚀 تم ربط صفحة الفروع ومراكز الأسطول بقاعدة بيانات Firebase ومزامنة الحساب بنجاح تام!");
+        console.log("🏢🚀 تم ربط صفحة الفروع بنجاح وتحديث النظام بكفاءة كاملة!");
     </script>
 
-    <!-- ربط السكربت العام للتحقق من الصلاحيات -->
+    <!-- ربط السكربت العام للتطبيق -->
     <script src="app.js"></script>
 </body>
 </html>
