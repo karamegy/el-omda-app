@@ -90,10 +90,29 @@ let pointsDB = {};
 let activeDiscount = 0;
 let customerLat = null;
 let customerLng = null;
-let storeCoords = [29.980, 31.130];
+let storeCoords = [29.9600, 31.2100];
 
 let currentSliderIndex = 0;
 let sliderInterval = null;
+
+// ==========================================
+// متناغيرات ومحرك الخريطة
+// ==========================================
+let map;
+let mapTileLayers = {};
+let currentTileLayer;
+let routingControl = null;
+
+let markersGroup = {
+    branches: {},
+    drivers: {},
+    orders: {}
+};
+
+let storeLocation = [29.9600, 31.2100]; // موقع المركز الرئيسي (شبرا منت)
+let activeFilter = 'all';
+let watchGpsId = null;
+let isPickingLocation = null;
 
 // ==========================================
 // تهيئة التطبيق عند الفتح
@@ -104,11 +123,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
     initHeroSlider();
     initRealtimeCloudSync();
+
+    // تشغيل الخريطة تلقائياً إذا كانت الخريطة موجودة في الصفحة
+    if (document.getElementById('leafletMap')) {
+        checkUserPermissions();
+        initLeafletMap();
+        initRealtimeMapData();
+    }
 });
 
 function checkSavedUserSession() {
     try {
-        const saved = localStorage.getItem('allaf_logged_user');
+        const saved = localStorage.getItem('allaf_logged_user') || 
+                      localStorage.getItem('fleet_logged_user') || 
+                      localStorage.getItem('fleet_session_user') || 
+                      localStorage.getItem('fleet_current_cust');
         if (saved) {
             currentCustomer = JSON.parse(saved);
             loadCustomerDashboard();
@@ -359,7 +388,6 @@ async function submitOrder() {
         return;
     }
 
-    // طلب تسجيل الدخول إن لم يكن العميل مسجلاً
     if (!currentCustomer) {
         openAuthPrompt();
         return;
@@ -397,7 +425,6 @@ async function submitOrder() {
         } catch (e) { console.error(e); }
     }
 
-    // حساب نقاط الولاء
     let earnedPoints = Math.floor(total / 20);
     pointsDB[phone] = (pointsDB[phone] || 0) + earnedPoints;
 
@@ -459,7 +486,6 @@ function loadCustomerDashboard() {
     let pts = currentCustomer.phone && pointsDB[currentCustomer.phone] ? pointsDB[currentCustomer.phone] : 15;
     if (pointsEl) pointsEl.innerText = pts;
 
-    // عرض قسم الطلبات كافتراضي
     switchCustomerSubTab('orders');
 }
 
@@ -495,7 +521,7 @@ function renderCustomerOrders() {
     }
 
     myOrders.forEach(order => {
-        let itemsHtml = order.items.map(i => `• ${i.name} (x${i.qty})`).join('<br>');
+        let itemsHtml = (order.items || []).map(i => `• ${i.name} (x${i.qty})`).join('<br>');
         list.innerHTML += `
             <div class="order-card">
                 <div class="card-head-row">
@@ -538,7 +564,7 @@ function renderCustomerInvoices() {
                 <div class="card-details">
                     <p>🌾 <strong>بيان الفاتورة:</strong> ${inv.details || 'توريد أعلاف وحبوب'}</p>
                     <p>💰 <strong>المبلغ الكلي:</strong> ${inv.totalAmount} جنيه | <strong>المدفوع:</strong> ${inv.paidAmount} ج</p>
-                    <p class="balance-due">⚠️️ <strong>المتبقي:</strong> ${inv.totalAmount - inv.paidAmount} جنيه</p>
+                    <p class="balance-due">⚠ <strong>المتبقي:</strong> ${inv.totalAmount - inv.paidAmount} جنيه</p>
                 </div>
                 <button onclick="showInvoiceDetails('${inv.id}')" class="btn-primary btn-sm mt-10">
                     <i class="fa-solid fa-eye"></i> عرض وطباعة الفاتورة التفصيلية
@@ -677,9 +703,6 @@ function printInvoiceModal() {
     window.print();
 }
 
-// ==========================================
-// نوافذ التنبيهات
-// ==========================================
 function openAuthPrompt() {
     const modal = document.getElementById('authPromptModal');
     if (modal) modal.classList.remove('hidden');
@@ -688,30 +711,6 @@ function openAuthPrompt() {
 function closeAuthPrompt() {
     const modal = document.getElementById('authPromptModal');
     if (modal) modal.classList.add('hidden');
-}
-
-function loginByPhoneQuick() {
-    const phoneInput = document.getElementById('quick-phone-input');
-    if (!phoneInput) return;
-    const phone = phoneInput.value.trim();
-
-    if (!phone || phone.length < 10) {
-        alert('أدخل رقم هاتف صحيح من 10 أرقام على الأقل!');
-        return;
-    }
-
-    const userObj = {
-        name: 'عميل العلاف (' + phone.slice(-4) + ')',
-        email: phone + '@allaf.com',
-        phone: phone,
-        role: 'customer',
-        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'
-    };
-
-    currentCustomer = userObj;
-    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-    loadCustomerDashboard();
-    alert(`أهلاً بك يا ${userObj.name}! تم تسجيل الدخول بنجاح.`);
 }
 
 function showToastNotification(msg) {
@@ -758,41 +757,6 @@ function updateSliderContent() {
     if (imgEl) imgEl.src = prod.image;
 }
 
-function nextSliderItem() {
-    currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
-    updateSliderContent();
-}
-
-function prevSliderItem() {
-    currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
-    updateSliderContent();
-}
-
-function sliderAddToCart() {
-    const prod = menuProducts[currentSliderIndex];
-    if (prod) addToCart(prod.id);
-}
-
-function fetchCustomerGpsLocation() {
-    const statusEl = document.getElementById('customer-gps-status');
-    if (!navigator.geolocation) {
-        alert("متصفحك لا يدعم GPS.");
-        return;
-    }
-    if(statusEl) statusEl.innerText = "⏳ جاري تحديد موقع المزرعة عبر الأقمار الصناعية...";
-
-    navigator.geolocation.getCurrentPosition(pos => {
-        customerLat = pos.coords.latitude;
-        customerLng = pos.coords.longitude;
-        if(statusEl) statusEl.innerText = `✓ تم تثبيت موقع المزرعة بنجاح! (${customerLat.toFixed(4)}, ${customerLng.toFixed(4)})`;
-    }, () => {
-        if(statusEl) statusEl.innerText = "❌ تعذر جلب الموقع. يرجى تفعيل الـ GPS.";
-    });
-}
-
-// ==========================================
-// M مزامنة البيانات مع Firebase Firestore
-// ==========================================
 function initRealtimeCloudSync() {
     if (window.db && window.firebaseModules) {
         const { collection, onSnapshot } = window.firebaseModules;
@@ -829,4 +793,574 @@ function initRealtimeCloudSync() {
     } else {
         setTimeout(initRealtimeCloudSync, 1000);
     }
+}
+
+// ==========================================
+// وظائف الخريطة والتتبع الحي (Map.html)
+// ==========================================
+function checkUserPermissions() {
+    const savedUserStr = localStorage.getItem('allaf_logged_user') || 
+                         localStorage.getItem('fleet_logged_user') || 
+                         localStorage.getItem('fleet_session_user') || 
+                         localStorage.getItem('fleet_current_cust') || '{}';
+    let user = {};
+    try { user = JSON.parse(savedUserStr); } catch(e){}
+
+    const avatarEl = document.getElementById('nav-user-avatar');
+    const nameEl = document.getElementById('nav-username-display');
+    const badge = document.getElementById('userRoleBadge');
+    const adminLink = document.getElementById('adminPanelLink');
+
+    if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+    if (nameEl) nameEl.innerText = user.name || user.phone || user.email || 'زائر';
+
+    const role = (user.role || '').toLowerCase();
+    const email = (user.email || '').toLowerCase();
+    const phone = user.phone || '';
+    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone.includes('01144730305'));
+
+    if (isMaster || role === 'admin' || role === 'manager') {
+        if(badge) badge.innerText = `المدير العام / المشرف 👑`;
+        if(adminLink) adminLink.style.display = 'inline-flex';
+        const tabD = document.getElementById('tabDrivers');
+        const tabB = document.getElementById('tabBranches');
+        const autoD = document.getElementById('autoDispatchBtn');
+        if(tabD) tabD.style.display = 'block';
+        if(tabB) tabB.style.display = 'block';
+        if(autoD) autoD.style.display = 'block';
+    } else if (role === 'driver' || role === 'worker') {
+        if(badge) badge.innerText = `كابتن الأسطول 🛵`;
+        const tabD = document.getElementById('tabDrivers');
+        if(tabD) tabD.style.display = 'block';
+    } else {
+        if(badge) badge.innerText = `عميل العلاف 🌾`;
+    }
+}
+
+function initLeafletMap() {
+    if (typeof L === 'undefined') return;
+
+    mapTileLayers = {
+        street: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }),
+        topo: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© OpenTopoMap' }),
+        satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 18, attribution: '© Esri WorldImagery' })
+    };
+
+    map = L.map('leafletMap', {
+        center: storeLocation,
+        zoom: 13,
+        layers: [mapTileLayers.street]
+    });
+    currentTileLayer = mapTileLayers.street;
+
+    addBranchMarker({
+        id: 'main',
+        name: 'المركز الرئيسي (شبرا منت)',
+        phone: '01144730305',
+        lat: storeLocation[0],
+        lng: storeLocation[1]
+    });
+
+    map.on('click', (e) => {
+        if (isPickingLocation === 'driver') {
+            const dLat = document.getElementById('driver-lat');
+            const dLng = document.getElementById('driver-lng');
+            if(dLat) dLat.value = e.latlng.lat.toFixed(6);
+            if(dLng) dLng.value = e.latlng.lng.toFixed(6);
+            alert("✓ تم تحديد موقع الطيار من الخريطة!");
+            isPickingLocation = null;
+        } else if (isPickingLocation === 'branch') {
+            const bLat = document.getElementById('branch-lat');
+            const bLng = document.getElementById('branch-lng');
+            if(bLat) bLat.value = e.latlng.lat.toFixed(6);
+            if(bLng) bLng.value = e.latlng.lng.toFixed(6);
+            alert("✓ تم تحديد موقع المركز من الخريطة!");
+            isPickingLocation = null;
+        }
+    });
+}
+
+function switchLayer(layerName) {
+    if (!mapTileLayers[layerName]) return;
+    map.removeLayer(currentTileLayer);
+    currentTileLayer = mapTileLayers[layerName];
+    map.addLayer(currentTileLayer);
+}
+
+function initRealtimeMapData() {
+    if (window.db && window.firebaseModules) {
+        const { collection, onSnapshot } = window.firebaseModules;
+
+        onSnapshot(collection(window.db, "orders"), (snapshot) => {
+            let orders = [];
+            snapshot.forEach(docSnap => orders.push(docSnap.data()));
+            renderOrdersOnMapAndList(orders);
+        });
+
+        onSnapshot(collection(window.db, "drivers"), (snapshot) => {
+            let drivers = [];
+            snapshot.forEach(docSnap => drivers.push(docSnap.data()));
+            renderDriversOnMapAndList(drivers);
+        });
+
+        onSnapshot(collection(window.db, "branches"), (snapshot) => {
+            let branches = [];
+            snapshot.forEach(docSnap => branches.push(docSnap.data()));
+            branches.forEach(addBranchMarker);
+        });
+    } else {
+        let localOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+        renderOrdersOnMapAndList(localOrders);
+    }
+}
+
+function renderOrdersOnMapAndList(orders) {
+    const listEl = document.getElementById('live-orders-list');
+    if(listEl) listEl.innerHTML = '';
+
+    Object.values(markersGroup.orders).forEach(m => map.removeLayer(m));
+    markersGroup.orders = {};
+
+    let filtered = activeFilter === 'all' ? orders : orders.filter(o => o.status === activeFilter);
+
+    if (filtered.length === 0 && listEl) {
+        listEl.innerHTML = '<p class="text-xs text-slate-500 text-center py-4">لا توجد شحنات مطابقة.</p>';
+        return;
+    }
+
+    filtered.forEach(order => {
+        let lat = order.lat || (storeLocation[0] + (Math.random() - 0.5) * 0.04);
+        let lng = order.lng || (storeLocation[1] + (Math.random() - 0.5) * 0.04);
+
+        let color = order.status === 'cooking' ? '#f59e0b' : (order.status === 'delivery' ? '#0284c7' : (order.status === 'done' ? '#16a34a' : '#78350f'));
+
+        let customIcon = L.divIcon({
+            className: 'custom-order-marker',
+            html: `<div style="background:${color}; color:white; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 3px 8px rgba(0,0,0,0.3); font-size:12px;"><i class="fa-solid fa-box"></i></div>`,
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        });
+
+        let marker = L.marker([lat, lng], { icon: customIcon }).addTo(map);
+        marker.bindPopup(`
+            <div style="font-family:'Cairo',sans-serif; text-align:right;">
+                <strong style="color:${color};">📦 شحنة: ${order.id}</strong><br>
+                👤 العميل: ${order.name || 'عميل'}<br>
+                📞 الهاتف: ${order.phone || order.clientPhone || 'غير مدخل'}<br>
+                📍 العنوان: ${order.address || ''}<br>
+                💰 الإجمالي: ${order.total || 0} جنيه<br>
+                <button onclick="drawRouteToOrder(${lat}, ${lng}, '${order.address || ''}')" style="background:#b45309; color:white; border:none; padding:4px 8px; border-radius:4px; margin-top:6px; font-size:11px; cursor:pointer;">
+                    🗺️ رسم مسار التوصيل
+                </button>
+            </div>
+        `);
+
+        markersGroup.orders[order.id] = marker;
+
+        if (listEl) {
+            listEl.innerHTML += `
+                <div class="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1 hover:border-amber-500 transition">
+                    <div class="flex justify-between font-bold">
+                        <span>${order.id}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] text-white" style="background:${color}">${getStatusLabelMap(order.status)}</span>
+                    </div>
+                    <div class="text-slate-600">👤 ${order.name || 'عميل'} | 📞 ${order.phone || order.clientPhone || ''}</div>
+                    <div class="text-slate-500 text-[11px] truncate">📍 ${order.address || 'عنوان استلام'}</div>
+                    <div class="flex gap-1 pt-1">
+                        <button onclick="focusOrderMarker('${order.id}')" class="flex-1 bg-amber-100 text-amber-800 py-1 rounded text-[10px] font-bold">🎯 تحديد بالخريطة</button>
+                        <button onclick="openCallModal('${order.name}', '${order.phone || order.clientPhone}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold"><i class="fa-solid fa-phone"></i> اتصال</button>
+                    </div>
+                </div>
+            `;
+        }
+    });
+}
+
+function addBranchMarker(branch) {
+    if (!branch.lat || !branch.lng) return;
+    if (markersGroup.branches[branch.id]) map.removeLayer(markersGroup.branches[branch.id]);
+
+    let branchIcon = L.divIcon({
+        className: 'custom-branch-marker',
+        html: `<div style="background:#78350f; color:white; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:3px solid #fde047; box-shadow:0 4px 10px rgba(0,0,0,0.4); font-size:14px;"><i class="fa-solid fa-crown"></i></div>`,
+        iconSize: [36, 36],
+        iconAnchor: [18, 18]
+    });
+
+    let marker = L.marker([branch.lat, branch.lng], { icon: branchIcon }).addTo(map);
+    marker.bindPopup(`
+        <div style="font-family:'Cairo',sans-serif; text-align:right;">
+            <strong style="color:#78350f;">🏰 ${branch.name || 'مركز الأسطول'}</strong><br>
+            📞 ${branch.phone || '01144730305'}<br>
+            📍 ${branch.address || 'شبرا منت'}
+        </div>
+    `);
+    markersGroup.branches[branch.id] = marker;
+}
+
+function renderDriversOnMapAndList(drivers) {
+    const listEl = document.getElementById('drivers-list-container');
+    const selectEl = document.getElementById('portal-driver-select');
+
+    if(listEl) listEl.innerHTML = '';
+    if(selectEl) selectEl.innerHTML = '<option value="">-- اختر طيار للبث --</option>';
+
+    const countEl = document.getElementById('statDriversCount');
+    if(countEl) countEl.innerText = `${drivers.length} طيار`;
+
+    Object.values(markersGroup.drivers).forEach(m => map.removeLayer(m));
+    markersGroup.drivers = {};
+
+    drivers.forEach(driver => {
+        if (selectEl) selectEl.innerHTML += `<option value="${driver.id}">${driver.name} (${driver.phone})</option>`;
+
+        if (driver.lat && driver.lng) {
+            let driverIcon = L.divIcon({
+                className: 'custom-driver-marker',
+                html: `<div style="background:#16a34a; color:white; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid white; box-shadow:0 3px 8px rgba(0,0,0,0.3); font-size:13px;"><i class="fa-solid fa-motorcycle"></i></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
+            });
+
+            let marker = L.marker([driver.lat, driver.lng], { icon: driverIcon }).addTo(map);
+            marker.bindPopup(`
+                <div style="font-family:'Cairo',sans-serif; text-align:right;">
+                    <strong style="color:#16a34a;">🛵 الكابتن: ${driver.name}</strong><br>
+                    📞 ${driver.phone}<br>
+                    ⚡ الحالة: متصل وفي الخدمة
+                </div>
+            `);
+            markersGroup.drivers[driver.id] = marker;
+        }
+
+        if (listEl) {
+            listEl.innerHTML += `
+                <div class="p-2 bg-emerald-50 rounded-lg border border-emerald-200 text-xs flex justify-between items-center">
+                    <div>
+                        <strong class="text-emerald-900">${driver.name}</strong>
+                        <div class="text-slate-500 text-[10px]">📞 ${driver.phone}</div>
+                    </div>
+                    <button onclick="openCallModal('${driver.name}', '${driver.phone}')" class="bg-emerald-600 text-white px-2 py-1 rounded text-[10px] font-bold"><i class="fa-solid fa-phone"></i> اتصال</button>
+                </div>
+            `;
+        }
+    });
+}
+
+function switchSidebarTab(tabName, btn) {
+    document.querySelectorAll('.sidebar-tab').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+
+    ['orders', 'drivers', 'branches', 'portal'].forEach(t => {
+        const el = document.getElementById('tab-content-' + t);
+        if (el) el.style.display = (t === tabName) ? 'block' : 'none';
+    });
+}
+
+function filterOrders(status, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    activeFilter = status;
+
+    let localOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+    renderOrdersOnMapAndList(localOrders);
+}
+
+async function searchCustomLocation() {
+    const queryEl = document.getElementById('customSearchInput');
+    if(!queryEl) return;
+    const queryText = queryEl.value.trim();
+    if (!queryText) return;
+
+    try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryText)}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            map.setView([lat, lon], 15);
+            L.popup().setLatLng([lat, lon]).setContent(`📍 ${data[0].display_name}`).openOn(map);
+        } else {
+            alert("لم يتم العثور على موقع بهذا الاسم.");
+        }
+    } catch (e) {
+        alert("تعذر إجراء البحث الجغرافي حالياً.");
+    }
+}
+
+function searchAndCalculateRoute() {
+    const destEl = document.getElementById('routeEndInput');
+    if(!destEl) return;
+    const dest = destEl.value.trim();
+    if(!dest) { alert("أدخل وجهة التوصيل أولاً!"); return; }
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dest)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.length > 0) {
+                drawRouteToOrder(parseFloat(data[0].lat), parseFloat(data[0].lon), dest);
+            } else {
+                alert("تعذر العثور على الوجهة أدخل اسم منطقة معروف مثل (الهرم، فيصل، شبرا منت).");
+            }
+        });
+}
+
+function drawRouteToOrder(destLat, destLng, addressTitle) {
+    if (routingControl) map.removeControl(routingControl);
+
+    routingControl = L.Routing.control({
+        waypoints: [
+            L.latLng(storeLocation[0], storeLocation[1]),
+            L.latLng(destLat, destLng)
+        ],
+        routeWhileDragging: false,
+        createMarker: function() { return null; }
+    }).addTo(map);
+
+    routingControl.on('routesfound', function(e) {
+        const routes = e.routes;
+        const summary = routes[0].summary;
+        const minutes = Math.round(summary.totalTime / 60);
+        const km = (summary.totalDistance / 1000).toFixed(1);
+
+        const etaEl = document.getElementById('liveEtaDisplay');
+        const clearBtn = document.getElementById('clearRouteBtn');
+
+        if(etaEl) etaEl.innerText = `${minutes} دقيقة (${km} كم)`;
+        if(clearBtn) clearBtn.classList.remove('hidden');
+
+        L.popup()
+            .setLatLng([destLat, destLng])
+            .setContent(`<b>📍 الوجهة: ${addressTitle || 'طلب عميل'}</b><br>⏱️ المستغرق المتوقع: ${minutes} دقيقة<br>📏 المسافة: ${km} كم`)
+            .openOn(map);
+    });
+}
+
+function clearActiveRoute() {
+    if (routingControl) {
+        map.removeControl(routingControl);
+        routingControl = null;
+    }
+    const etaEl = document.getElementById('liveEtaDisplay');
+    const clearBtn = document.getElementById('clearRouteBtn');
+    if(etaEl) etaEl.innerText = '-- دقيقة';
+    if(clearBtn) clearBtn.classList.add('hidden');
+}
+
+function trackCustomerOrder() {
+    const inputEl = document.getElementById('customerTrackInput');
+    const resEl = document.getElementById('customerTrackResult');
+    if(!inputEl || !resEl) return;
+
+    const val = inputEl.value.trim();
+    if(!val) return;
+
+    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+    let match = allOrders.find(o => String(o.id).includes(val) || String(o.phone).includes(val));
+
+    if (match) {
+        resEl.innerHTML = `<span class="text-emerald-700 font-bold">✓ تم العثور على الطلب (${match.id}): الحالة: ${getStatusLabelMap(match.status)}</span>`;
+        focusOrderMarker(match.id);
+    } else {
+        resEl.innerHTML = `<span class="text-red-600 font-bold">❌ لم يتم العثور على شحنة مطابقة للبيانات المدخلة.</span>`;
+    }
+}
+
+function focusOrderMarker(orderId) {
+    const m = markersGroup.orders[orderId];
+    if (m) {
+        map.setView(m.getLatLng(), 16);
+        m.openPopup();
+    }
+}
+
+async function addNewDriverWithLocation() {
+    const name = document.getElementById('driver-name').value.trim();
+    const phone = document.getElementById('driver-phone').value.trim();
+    const lat = parseFloat(document.getElementById('driver-lat').value);
+    const lng = parseFloat(document.getElementById('driver-lng').value);
+
+    if (!name || !phone || isNaN(lat) || isNaN(lng)) {
+        alert("يرجى إدخال اسم ورقم هاتف وموقع الطيار كاملاً!");
+        return;
+    }
+
+    const driverData = {
+        id: 'DRV-' + Date.now(),
+        name: name,
+        phone: phone,
+        lat: lat,
+        lng: lng,
+        status: 'online'
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "drivers", driverData.id), driverData);
+    }
+    alert("✓ تم إضافة الطيار بنجاح للأسطول!");
+    document.getElementById('driver-name').value = '';
+    document.getElementById('driver-phone').value = '';
+}
+
+async function saveMainRestaurantLocation() {
+    const name = document.getElementById('branch-name').value.trim();
+    const phone = document.getElementById('branch-phone').value.trim();
+    const address = document.getElementById('branch-address').value.trim();
+    const lat = parseFloat(document.getElementById('branch-lat').value);
+    const lng = parseFloat(document.getElementById('branch-lng').value);
+
+    if (isNaN(lat) || isNaN(lng)) {
+        alert("أدخل إحداثيات الموقع بشكل صحيح!");
+        return;
+    }
+
+    storeLocation = [lat, lng];
+    const branchData = {
+        id: 'MAIN_BRANCH',
+        name: name,
+        phone: phone,
+        address: address,
+        lat: lat,
+        lng: lng
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "branches", branchData.id), branchData);
+    }
+
+    addBranchMarker(branchData);
+    map.setView(storeLocation, 14);
+    alert("👑 تم تثبيت موقع مركز الأسطول الرئيسي بنجاح!");
+}
+
+function toggleGpsTracking() {
+    const driverId = document.getElementById('portal-driver-select').value;
+    const statusBox = document.getElementById('gps-status-box');
+    const toggleBtn = document.getElementById('gps-toggle-btn');
+
+    if (!driverId) {
+        alert("من فضلك اختر اسم السائق أولاً للبدء!");
+        return;
+    }
+
+    if (watchGpsId) {
+        navigator.geolocation.clearWatch(watchGpsId);
+        watchGpsId = null;
+        if(statusBox) {
+            statusBox.innerText = "الوضع: متوقف";
+            statusBox.className = "text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold border border-sky-200";
+        }
+        if(toggleBtn) {
+            toggleBtn.innerText = "بدء بث الموقع الحي 🛰️";
+            toggleBtn.className = "btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer";
+        }
+    } else {
+        if (!navigator.geolocation) {
+            alert("متصفحك لا يدعم خاصية تحديد الموقع GPS.");
+            return;
+        }
+
+        watchGpsId = navigator.geolocation.watchPosition(async (pos) => {
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            if(statusBox) {
+                statusBox.innerText = `🛰️ يبث مباشرة: (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+                statusBox.className = "text-[11px] bg-emerald-50 p-2 rounded-lg text-emerald-800 text-center font-mono font-bold border border-emerald-300";
+            }
+
+            if (window.db && window.firebaseModules) {
+                await window.firebaseModules.updateDoc(
+                    window.firebaseModules.doc(window.db, "drivers", driverId),
+                    { lat: lat, lng: lng }
+                );
+            }
+        }, () => {
+            alert("تعذر الحصول على موقع GPS، تأكد من تفعيل الموقع في جهازك.");
+        }, { enableHighAccuracy: true });
+
+        if(toggleBtn) {
+            toggleBtn.innerText = "إيقاف البث الحي 🛑";
+            toggleBtn.className = "btn-primary w-full text-xs py-2 bg-red-600 hover:bg-red-700 cursor-pointer";
+        }
+    }
+}
+
+function fetchGpsForDriver() {
+    navigator.geolocation.getCurrentPosition(p => {
+        const dLat = document.getElementById('driver-lat');
+        const dLng = document.getElementById('driver-lng');
+        if(dLat) dLat.value = p.coords.latitude.toFixed(6);
+        if(dLng) dLng.value = p.coords.longitude.toFixed(6);
+    });
+}
+
+function fetchGpsForBranch() {
+    navigator.geolocation.getCurrentPosition(p => {
+        const bLat = document.getElementById('branch-lat');
+        const bLng = document.getElementById('branch-lng');
+        if(bLat) bLat.value = p.coords.latitude.toFixed(6);
+        if(bLng) bLng.value = p.coords.longitude.toFixed(6);
+    });
+}
+
+function enableDriverPickMode() {
+    isPickingLocation = 'driver';
+    alert("انقر الآن على أي نقطة بالخريطة لتحديد موقع الطيار!");
+}
+
+function enableBranchPickMode() {
+    isPickingLocation = 'branch';
+    alert("انقر الآن على أي نقطة بالخريطة لتحديد موقع المركز!");
+}
+
+function panToRestaurant() { if(map) map.setView(storeLocation, 15); }
+function panToUser() {
+    navigator.geolocation.getCurrentPosition(p => {
+        if(map) map.setView([p.coords.latitude, p.coords.longitude], 15);
+    });
+}
+function resetMapView() {
+    let all = [...Object.values(markersGroup.orders), ...Object.values(markersGroup.drivers), ...Object.values(markersGroup.branches)];
+    if (all.length > 0 && map) {
+        let group = L.featureGroup(all);
+        map.fitBounds(group.getBounds().pad(0.2));
+    }
+}
+
+function toggleTouchPanel() {
+    const content = document.getElementById('touchPanelContent');
+    if (content) content.classList.toggle('hidden');
+}
+
+function openCallModal(name, phone) {
+    const info = document.getElementById('callOrderInfo');
+    const num = document.getElementById('callPhoneDisplay');
+    const pBtn = document.getElementById('directPhoneCallBtn');
+    const wBtn = document.getElementById('directWhatsappCallBtn');
+
+    if(info) info.innerText = `جاري التواصل مع: ${name || 'عميل'}`;
+    if(num) num.innerText = phone || '01144730305';
+    if(pBtn) pBtn.href = `tel:${phone || '01144730305'}`;
+    if(wBtn) wBtn.href = `https://wa.me/2${phone || '01144730305'}`;
+    
+    const modal = document.getElementById('callModal');
+    if(modal) modal.classList.remove('hidden');
+}
+
+function closeCallModal() {
+    const modal = document.getElementById('callModal');
+    if(modal) modal.classList.add('hidden');
+}
+
+function autoDispatchOrders() {
+    alert("جاري توزيع الطلبات آلياً على أقرب الطيارين في الأسطول...");
+}
+
+function getStatusLabelMap(st) {
+    if(st === 'pending') return 'قيد المراجعة ⏳';
+    if(st === 'cooking') return 'قيد التجهيز 📦';
+    if(st === 'delivery') return 'مع الطيار 🛵';
+    if(st === 'done') return 'تم التسليم ✅';
+    return st || 'نشط';
 }
