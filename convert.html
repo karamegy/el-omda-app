@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>أداة تحويل وتنزيل أيقونة العلاف icon1-512.png</title>
+    <meta name="theme-color" content="#b45309">
     <style>
         body {
             display: flex;
@@ -57,6 +58,7 @@
             margin-bottom: 15px;
             box-sizing: border-box;
             font-weight: bold;
+            display: block;
         }
         .btn-download {
             width: 100%;
@@ -69,17 +71,29 @@
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+            margin-bottom: 10px;
         }
         .btn-download:hover {
             background: linear-gradient(135deg, #d97706, #f59e0b);
+        }
+        .nav-back {
+            display: inline-block;
+            margin-top: 15px;
+            color: #fde047;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .nav-back:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
 <body>
 
     <div class="container-box">
-        <h3 style="color: #fde047; margin-top: 0;">🖼️ صانع أيقونة التطبيق الرسمية (512x512)</h3>
-        <p style="font-size: 0.85rem; color: #a8a29e;">اختر صورة اللوجو الواقعي لتأطيرها وتحويلها فوراً إلى `icon1-512.png`</p>
+        <h3 style="color: #fde047; margin-top: 0;">🖼️ صانع أيقونة تطبيق العلاف (512x512)</h3>
+        <p style="font-size: 0.85rem; color: #a8a29e;">اختر صورة اللوجو لتأطيرها وتحويلها فوراً إلى <code>icon1-512.png</code> متوافقة مع النظام السحابي الجديد</p>
 
         <label class="file-input-btn">
             📁 اضغط هنا لاختيار صورة اللوجو من جهازك
@@ -91,7 +105,34 @@
         </div>
 
         <button class="btn-download" onclick="generateAndDownload()">تنزيل الصورة icon1-512.png 🚀</button>
+        <a href="index.html" class="nav-back">← العودة إلى المتجر الرئيسي 🌾</a>
     </div>
+
+    <!-- إعداد وتهيئة Firebase السحابية ومزامنة الحساب (مشروع alaf-93848) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
+            authDomain: "alaf-93848.firebaseapp.com",
+            projectId: "alaf-93848",
+            storageBucket: "alaf-93848.firebasestorage.app",
+            messagingSenderId: "984757380320",
+            appId: "1:984757380320:web:247065b2434c002c445c85",
+            measurementId: "G-ESV2GNSQZ4"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.auth = getAuth(app);
+        window.googleProvider = new GoogleAuthProvider();
+        window.signInWithPopup = signInWithPopup;
+        window.firebaseModules = { doc, getDoc, setDoc };
+
+        console.log("🛠️🚀 تم ربط أداة تحويل الأيقونات ببيانات فايربيس السحابية بنجاح!");
+    </script>
 
     <script>
         function loadImage(event) {
