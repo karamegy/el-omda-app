@@ -6,7 +6,7 @@ import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebas
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// Your web app's Firebase configuration
+// إعدادات فايربيس الخاصة بتطبيق العلاف
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
   authDomain: "alaf-93848.firebaseapp.com",
@@ -17,7 +17,7 @@ const firebaseConfig = {
   measurementId: "G-ESV2GNSQZ4"
 };
 
-// Initialize Firebase
+// تهيئة فايربيس
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
@@ -204,10 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function checkSavedUserSession() {
     try {
-        const saved = localStorage.getItem('allaf_logged_user') || 
-                      localStorage.getItem('fleet_logged_user') || 
-                      localStorage.getItem('fleet_session_user') || 
-                      localStorage.getItem('fleet_current_cust');
+        const saved = localStorage.getItem('allaf_logged_user');
         if (saved) {
             currentCustomer = JSON.parse(saved);
             loadCustomerDashboard();
@@ -908,10 +905,7 @@ function initRealtimeCloudSync() {
 // وظائف الخريطة والتتبع الحي (Map.html)
 // ==========================================
 function checkUserPermissions() {
-    const savedUserStr = localStorage.getItem('allaf_logged_user') || 
-                         localStorage.getItem('fleet_logged_user') || 
-                         localStorage.getItem('fleet_session_user') || 
-                         localStorage.getItem('fleet_current_cust') || '{}';
+    const savedUserStr = localStorage.getItem('allaf_logged_user') || '{}';
     let user = {};
     try { user = JSON.parse(savedUserStr); } catch(e){}
 
@@ -1018,7 +1012,7 @@ function initRealtimeMapData() {
             branches.forEach(addBranchMarker);
         });
     } else {
-        let localOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+        let localOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
         renderOrdersOnMapAndList(localOrders);
     }
 }
@@ -1171,7 +1165,7 @@ function filterOrders(status, btn) {
     if(btn) btn.classList.add('active');
     activeFilter = status;
 
-    let localOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+    let localOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
     renderOrdersOnMapAndList(localOrders);
 }
 
@@ -1264,7 +1258,7 @@ function trackCustomerOrder() {
     const val = inputEl.value.trim();
     if(!val) return;
 
-    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || '[]');
+    let allOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
     let match = allOrders.find(o => String(o.id).includes(val) || String(o.phone).includes(val));
 
     if (match) {
@@ -1478,11 +1472,7 @@ function getStatusLabelMap(st) {
 // وظائف لوحة تجهيز الطلبات والشحنات (KDS)
 // ==========================================
 function checkKitchenAccessSecurity() {
-    const savedUserStr = localStorage.getItem('allaf_logged_user') || 
-                         localStorage.getItem('fleet_logged_user') || 
-                         localStorage.getItem('fleet_session_user') || 
-                         localStorage.getItem('fleet_current_cust') || '{}';
-    
+    const savedUserStr = localStorage.getItem('allaf_logged_user') || '{}';
     let loggedUser = {};
     try { loggedUser = JSON.parse(savedUserStr); } catch(e){}
 
@@ -1515,7 +1505,7 @@ function checkKitchenAccessSecurity() {
 }
 
 function loadKitchenOrdersFromLocal() {
-    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    let allOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
     renderKitchenGrid(allOrders);
 }
 
@@ -1526,7 +1516,7 @@ function initRealtimeKitchenSync() {
             let cloudOrders = [];
             snapshot.forEach(docSnap => cloudOrders.push(docSnap.data()));
             if (cloudOrders.length > 0) {
-                localStorage.setItem('fleet_orders', JSON.stringify(cloudOrders));
+                localStorage.setItem('allaf_orders', JSON.stringify(cloudOrders));
                 renderKitchenGrid(cloudOrders);
             }
         }, (error) => {
@@ -1540,7 +1530,7 @@ function initRealtimeKitchenSync() {
 
 async function syncActiveOrdersSmart() {
     const grid = document.getElementById('kitchen-orders-grid');
-    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    let allOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
     
     if (allOrders.length === 0 && grid) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: #a8a29e; padding: 40px; font-size: 1.1rem;">⏳ جاري جلب الشحنات والطلبات من السحابة...</p>';
@@ -1554,7 +1544,7 @@ async function syncActiveOrdersSmart() {
                 allOrders.push(docSnap.data());
             });
             if(allOrders.length > 0) {
-                localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
+                localStorage.setItem('allaf_orders', JSON.stringify(allOrders));
             }
             renderKitchenGrid(allOrders);
         } catch (e) {
@@ -1623,12 +1613,12 @@ function renderKitchenGrid(allOrders) {
 }
 
 async function setKitchenStatus(orderId, newStatus) {
-    let allOrders = JSON.parse(localStorage.getItem('fleet_orders') || localStorage.getItem('omda_orders') || '[]');
+    let allOrders = JSON.parse(localStorage.getItem('allaf_orders') || '[]');
     let order = allOrders.find(o => String(o.id) === String(orderId));
     
     if(order) {
         order.status = newStatus;
-        localStorage.setItem('fleet_orders', JSON.stringify(allOrders));
+        localStorage.setItem('allaf_orders', JSON.stringify(allOrders));
         renderKitchenGrid(allOrders);
 
         if (window.db && window.firebaseModules) {
@@ -2285,7 +2275,7 @@ async function initProductDetailsPage() {
     let product = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => String(p.id) === String(productId));
 
     if (!product) {
-        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || localStorage.getItem('omda_custom_products') || '[]');
+        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || '[]');
         product = localProducts.find(p => String(p.id) === String(productId));
     }
 
@@ -2345,7 +2335,7 @@ async function addSpecificProductToCart(id) {
     let prod = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => String(p.id) === String(id));
     
     if(!prod) {
-        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || localStorage.getItem('omda_custom_products') || '[]');
+        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || '[]');
         prod = localProducts.find(p => String(p.id) === String(id));
     }
 
@@ -2376,16 +2366,12 @@ async function addSpecificProductToCart(id) {
 // وظائف صفحة المكافآت ونقاط الولاء (rewards.html)
 // ==========================================
 async function initRewardsPage() {
-    let customer = JSON.parse(
-        localStorage.getItem('allaf_logged_user') || 
-        localStorage.getItem('fleet_current_cust') || 
-        localStorage.getItem('omda_current_cust') || 'null'
-    );
+    let customer = JSON.parse(localStorage.getItem('allaf_logged_user') || 'null');
     
-    userRewardIdentifier = customer ? (customer.phone || customer.email) : (localStorage.getItem('allaf_user_phone') || localStorage.getItem('fleet_user_phone'));
+    userRewardIdentifier = customer ? (customer.phone || customer.email) : localStorage.getItem('allaf_user_phone');
 
     if (!userRewardIdentifier) {
-        let loggedUser = JSON.parse(localStorage.getItem('allaf_logged_user') || localStorage.getItem('fleet_logged_user') || 'null');
+        let loggedUser = JSON.parse(localStorage.getItem('allaf_logged_user') || 'null');
         if (loggedUser) {
             userRewardIdentifier = loggedUser.phone || loggedUser.email;
         }
@@ -2404,7 +2390,7 @@ async function initRewardsPage() {
     }
 
     if (userRewardPoints === 0) {
-        let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || localStorage.getItem('fleet_points') || '{}');
+        let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || '{}');
         if (userRewardIdentifier && pointsDB[userRewardIdentifier]) {
             userRewardPoints = pointsDB[userRewardIdentifier];
         } else {
@@ -2431,7 +2417,7 @@ async function redeemReward(cost, rewardName) {
     const pointsEl = document.getElementById('user-reward-points');
     if (pointsEl) pointsEl.innerText = userRewardPoints + ' نقطة';
 
-    let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || localStorage.getItem('fleet_points') || '{}');
+    let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || '{}');
     let identifierKey = userRewardIdentifier || (currentCustomer ? currentCustomer.phone : 'guest');
     pointsDB[identifierKey] = userRewardPoints;
     localStorage.setItem('allaf_points', JSON.stringify(pointsDB));
