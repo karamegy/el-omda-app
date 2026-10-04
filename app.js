@@ -165,10 +165,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     initHeroSlider();
     initRealtimeCloudSync();
 
+    // معالجة نتيجة تسجيل الدخول عبر Redirect وتخزين بيانات المستخدم سحابياً
     try {
         const redirectResult = await getRedirectResult(window.auth);
         if (redirectResult && redirectResult.user) {
-            console.log("✓ تم تسجيل الدخول بنجاح عبر إعادة التوجيه:", redirectResult.user.email);
+            const user = redirectResult.user;
+            const email = user.email.toLowerCase();
+
+            let userRole = 'customer';
+            const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+            if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                userRole = 'admin';
+            }
+
+            if (window.db && window.firebaseModules) {
+                try {
+                    const userDoc = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "users", docId));
+                    if (userDoc.exists() && userRole !== 'admin') {
+                        userRole = userDoc.data().role || 'customer';
+                    }
+                } catch(e) {}
+            }
+
+            const userObj = {
+                name: user.displayName || 'إدارة العلاف',
+                email: email,
+                phone: user.phoneNumber || '01000000000',
+                role: userRole,
+                photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                provider: 'Google Auth',
+                date: new Date().toLocaleString('ar-EG')
+            };
+
+            if (window.db && window.firebaseModules) {
+                await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", docId), userObj, { merge: true });
+            }
+
+            localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+            currentCustomer = userObj;
+            loadCustomerDashboard();
+            alert("✓ تم تسجيل الدخول بنجاح عبر Google!");
         }
     } catch (err) {
         console.error("Redirect auth error:", err);
@@ -1683,50 +1720,15 @@ function loadAdminDashboard() {
     renderMenuItemsManage();
 }
 
+// تعديل دالة تسجيل الدخول عبر جوجل لتستخدم Redirect وتجنب internal-error على الموبايل
 async function adminLoginWithGoogle() {
-    if (!window.auth || !window.googleProvider || !window.signInWithPopup) {
+    if (!window.auth || !window.googleProvider || !window.signInWithRedirect) {
         alert("جاري تحميل برمجيات المصادقة السحابية... يرجى الانتظار ثانية والاعادة.");
         return;
     }
 
     try {
-        const result = await window.signInWithPopup(window.auth, window.googleProvider);
-        const user = result.user;
-        const email = user.email.toLowerCase();
-
-        let userRole = 'customer';
-        const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-        if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-            userRole = 'admin';
-        }
-
-        if (window.db && window.firebaseModules) {
-            try {
-                const userDoc = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "users", docId));
-                if (userDoc.exists() && userRole !== 'admin') {
-                    userRole = userDoc.data().role || 'customer';
-                }
-            } catch(e) {}
-        }
-
-        const userObj = {
-            name: user.displayName || 'إدارة العلاف',
-            email: email,
-            phone: user.phoneNumber || '01000000000',
-            role: userRole,
-            photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-            provider: 'Google Auth',
-            date: new Date().toLocaleString('ar-EG')
-        };
-
-        if (window.db && window.firebaseModules) {
-            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", docId), userObj, { merge: true });
-        }
-
-        localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-        window.currentCustomer = userObj;
-        loadAdminDashboard();
+        await window.signInWithRedirect(window.auth, window.googleProvider);
     } catch (error) {
         alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
     }
