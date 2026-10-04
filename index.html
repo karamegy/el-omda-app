@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <!-- تحديث رابط المينيفست برقم إصدار لمنع تداخل التخزين المؤقت -->
-    <link rel="manifest" href="manifest.json?v=2.0">
+    <link rel="manifest" href="manifest.json?v=2.2">
     <meta name="theme-color" content="#d97706">
 </head>
 <body>
@@ -280,6 +280,27 @@
                       .replace(/>/g, "&gt;")
                       .replace(/"/g, "&quot;")
                       .replace(/'/g, "&#039;");
+        }
+
+        // دالة تحديد موقع المزرعة عبر GPS للعميل
+        function fetchCustomerGpsLocation() {
+            const statusBox = document.getElementById('customer-gps-status');
+            if (!navigator.geolocation) {
+                alert("متصفحك لا يدعم تحديد الموقع الجغرافي.");
+                return;
+            }
+            if (statusBox) statusBox.innerText = "⏳ جاري تحديد موقع المزرعة عبر الأقمار الصناعية...";
+            
+            navigator.geolocation.getCurrentPosition((pos) => {
+                window.customerLat = pos.coords.latitude;
+                window.customerLng = pos.coords.longitude;
+                if (statusBox) {
+                    statusBox.innerHTML = `✅ تم تثبيت الموقع بنجاح: (${window.customerLat.toFixed(4)}, ${window.customerLng.toFixed(4)})`;
+                    statusBox.style.color = "#16a34a";
+                }
+            }, () => {
+                if (statusBox) statusBox.innerText = "❌ تعذر تحديد الموقع، تأكد من تفعيل الـ GPS.";
+            }, { enableHighAccuracy: true });
         }
 
         // مراقبة المحاولات المشبوهة وحظر حقن السكربتات
