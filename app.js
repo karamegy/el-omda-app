@@ -3,8 +3,20 @@
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
-import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { 
+    getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+    getAuth, 
+    GoogleAuthProvider, 
+    signInWithPopup, 
+    signInWithRedirect, 
+    getRedirectResult, 
+    signOut, 
+    setPersistence, 
+    browserLocalPersistence, 
+    onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // إعدادات فايربيس الخاصة بتطبيق العلاف
 const firebaseConfig = {
@@ -31,6 +43,16 @@ window.signInWithRedirect = signInWithRedirect;
 window.firebaseModules = {
     collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
 };
+
+// تثبيت الجلسة محلياً لمنع الخروج التلقائي وحل مشكلة متصفحات الموبايل (Storage Partitioning)
+setPersistence(window.auth, browserLocalPersistence).catch(console.error);
+
+// مراقبة واستعادة جلسة المستخدم تلقائياً بدون تعارض
+onAuthStateChanged(window.auth, async (user) => {
+    if (user) {
+        await handleSuccessfulAuthUser(user, false);
+    }
+});
 
 // ==========================================
 // بيانات أعلاف العلاف والحبوب الأساسية
@@ -156,7 +178,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول المعرفة بـ window (حل جذري للأزرار)
+// دوال المصادقة وتسجيل الدخول المعرفة بـ window (حل أخطاء الموبايل)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -164,15 +186,20 @@ window.loginWithGoogle = async function() {
         return;
     }
     try {
-        await signInWithRedirect(window.auth, window.googleProvider);
+        await setPersistence(window.auth, browserLocalPersistence);
+        const result = await signInWithPopup(window.auth, window.googleProvider);
+        if (result && result.user) {
+            await handleSuccessfulAuthUser(result.user, true);
+        }
     } catch (error) {
-        try {
-            const result = await signInWithPopup(window.auth, window.googleProvider);
-            if (result && result.user) {
-                await handleSuccessfulAuthUser(result.user);
+        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+            try {
+                await signInWithRedirect(window.auth, window.googleProvider);
+            } catch (err) {
+                alert("حدث خطأ أثناء إعادة التوجيه: " + err.message);
             }
-        } catch (err) {
-            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + err.message);
+        } else {
+            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
         }
     }
 };
@@ -234,8 +261,10 @@ window.customerLogout = async function() {
     } catch (e) {}
 };
 
-async function handleSuccessfulAuthUser(user) {
-    const email = user.email.toLowerCase();
+async function handleSuccessfulAuthUser(user, showAlert = false) {
+    const email = user.email ? user.email.toLowerCase() : '';
+    if (!email) return;
+
     let userRole = 'customer';
     const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
@@ -255,9 +284,9 @@ async function handleSuccessfulAuthUser(user) {
     }
 
     const userObj = {
-        name: user.displayName || 'إدارة العلاف',
+        name: user.displayName || 'عميل العلاف المميز',
         email: email,
-        phone: user.phoneNumber || '01144730305',
+        phone: user.phoneNumber || 'غير مدخل',
         role: userRole,
         photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
         provider: 'Google Auth',
@@ -265,17 +294,22 @@ async function handleSuccessfulAuthUser(user) {
     };
 
     if (window.db && window.firebaseModules) {
-        await window.firebaseModules.setDoc(
-            window.firebaseModules.doc(window.db, "users", docId), 
-            userObj, 
-            { merge: true }
-        );
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", docId), 
+                userObj, 
+                { merge: true }
+            );
+        } catch (e) {}
     }
 
     localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
     currentCustomer = userObj;
     loadCustomerDashboard();
-    alert(`✓ تم تسجيل الدخول بنجاح يا ${userObj.name} عبر Google! 🌾`);
+    
+    if (showAlert) {
+        alert(`✓ تم تسجيل الدخول بنجاح يا ${userObj.name} عبر Google! 🌾`);
+    }
 }
 
 // ==========================================
@@ -291,7 +325,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const redirectResult = await getRedirectResult(window.auth);
         if (redirectResult && redirectResult.user) {
-            await handleSuccessfulAuthUser(redirectResult.user);
+            await handleSuccessfulAuthUser(redirectResult.user, true);
         }
     } catch (err) {
         console.error("Redirect auth error:", err);
