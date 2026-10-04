@@ -3,127 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الأعلاف والحبوب - متجر متكامل</title>
+    <title>منصة الأعلاف والحبوب - المتجر المتكامل</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- ربط الـ PWA Manifest -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2c5e3b">
+    <meta name="theme-color" content="#1e3d2f">
 </head>
 <body>
-    <!-- شريط التنقل العلوي -->
-    <header class="navbar">
-        <div class="logo">
-            <h2><i class="fa-solid fa-seedling"></i> منصة الأعلاف والحبوب</h2>
-        </div>
-        <div class="search-bar">
-            <input type="text" id="searchInput" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
-            <button><i class="fa-solid fa-search"></i></button>
-        </div>
-        <div class="nav-actions">
-            <button id="cartBtn"><i class="fa-solid fa-shopping-cart"></i> السلة (<span id="cartCount">0</span>)</button>
-            <button id="profileBtn"><i class="fa-solid fa-user"></i> حسابي</button>
-            <button id="adminBtn" style="display:none;"><i class="fa-solid fa-gauge"></i> لوحة التحكم</button>
-            <button id="authBtn">تسجيل الدخول</button>
+
+    <!-- الشريط العلوي الاحترافي -->
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-area" onclick="switchSection('productsSection')" style="cursor: pointer;">
+                <i class="fa-solid fa-wheat-awn"></i>
+                <h1>منصة العمدة</h1>
+            </div>
+            
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
+                <button><i class="fa-solid fa-search"></i></button>
+            </div>
+
+            <div class="user-actions">
+                <button id="cartBtn" class="action-btn">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <span>السلة</span>
+                    <span class="badge" id="cartCount">0</span>
+                </button>
+                <button id="profileBtn" class="action-btn" style="display:none;">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <span>حسابي</span>
+                </button>
+                <button id="adminBtn" class="action-btn admin-badge" style="display:none;">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>لوحة التحكم</span>
+                </button>
+                <button id="authBtn" class="btn-login-main">
+                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+                </button>
+            </div>
         </div>
     </header>
 
-    <!-- شريط الأقسام السريع -->
-    <nav class="categories-bar">
-        <button class="cat-btn active" data-cat="all">كل المنتجات</button>
-        <button class="cat-btn" data-cat="concentrates">أعلاف مركزة</button>
-        <button class="cat-btn" data-cat="grains">حبوب وبقوليات</button>
-        <button class="cat-btn" data-cat="supplements">مكملات وفيتامينات</button>
-        <button class="cat-btn" data-cat="veterinary">أدوية بيطرية</button>
+    <!-- شريط التصنيفات والأقسام -->
+    <nav class="categories-nav">
+        <div class="cat-container" id="categoriesContainer">
+            <button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>
+            <button class="cat-chip" data-cat="concentrates"><i class="fa-solid fa-boxes-stacked"></i> أعلاف مركزة</button>
+            <button class="cat-chip" data-cat="grains"><i class="fa-solid fa-seedling"></i> حبوب وبقوليات</button>
+            <button class="cat-chip" data-cat="supplements"><i class="fa-solid fa-pills"></i> مكملات وفيتامينات</button>
+            <button class="cat-chip" data-cat="veterinary"><i class="fa-solid fa-kit-medical"></i> أدوية بيطرية</button>
+        </div>
     </nav>
 
     <!-- المحتوى الرئيسي -->
-    <main class="main-container">
-        <!-- قسم المنتجات -->
-        <section id="productsSection" class="view-section active">
+    <main class="app-main">
+        
+        <!-- قسم عرض المنتجات (الواجهة الرئيسية) -->
+        <section id="productsSection" class="app-section active">
             <div class="hero-banner">
-                <h1>أفضل الأعلاف والحبوب لثروتك الحيوانية</h1>
-                <p>جودة عالية، توصيل سريع، وأسعار منافسة للمزارع والتجار.</p>
+                <div class="hero-content">
+                    <h2>اجعل مشروعك الحيواني في صدارة الإنتاج</h2>
+                    <p>أجود أنواع الأعلاف والحبوب المعتمدة لتوفير أقصى تغذية وأعلى أرباح.</p>
+                </div>
             </div>
+            
+            <div class="section-title">
+                <h3>المنتجات المميزة</h3>
+                <span>تصفح أقوى العروض والمنتجات</span>
+            </div>
+
             <div id="productsGrid" class="products-grid">
-                <!-- يتم تعبئتها ديناميكياً عبر الجافاسكريبت -->
+                <!-- يتم تعبئتها ديناميكياً -->
             </div>
         </section>
 
-        <!-- لوحة التحكم للمدير -->
-        <section id="adminSection" class="view-section" style="display:none;">
-            <h2>لوحة تحكم المدير</h2>
+        <!-- لوحة تحكم المدير الشاملة -->
+        <section id="adminSection" class="app-section" style="display:none;">
+            <div class="admin-header">
+                <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل</h2>
+                <p>إدارة كاملة للمنتجات، الطلبات، وحسابات العملاء.</p>
+            </div>
+
             <div class="admin-tabs">
-                <button onclick="switchAdminTab('products')" class="active">إدارة المنتجات</button>
-                <button onclick="switchAdminTab('orders')">إدارة الطلبات والشحنات</button>
-                <button onclick="switchAdminTab('users')">إدارة العملاء وكشوفات الحساب</button>
+                <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> إدارة المنتجات</button>
+                <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> إدارة الطلبات والشحنات</button>
+                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء وكشوفات الحساب</button>
             </div>
-            <div id="adminProductsTab" class="admin-tab-content">
-                <h3>إضافة منتج جديد</h3>
-                <form id="addProductForm">
-                    <input type="text" id="prodName" placeholder="اسم المنتج" required>
-                    <input type="number" id="prodPrice" placeholder="السعر (ر.س/جنيه)" required>
-                    <select id="prodCategory">
-                        <option value="concentrates">أعلاف مركزة</option>
-                        <option value="grains">حبوب وبقوليات</option>
-                        <option value="supplements">مكملات وفيتامينات</option>
-                        <option value="veterinary">أدوية بيطرية</option>
-                    </select>
-                    <input type="text" id="prodImage" placeholder="رابط صورة المنتج" required>
-                    <button type="submit" class="btn-primary">حفظ ونشر المنتج</button>
-                </form>
+
+            <!-- تبويب المنتجات -->
+            <div id="adminProductsTab" class="admin-panel active">
+                <div class="form-card">
+                    <h3>إضافة منتج جديد للمتجر</h3>
+                    <form id="addProductForm">
+                        <div class="input-group">
+                            <label>اسم المنتج</label>
+                            <input type="text" id="prodName" placeholder="مثال: علف تسمين ممتاز 50كغ" required>
+                        </div>
+                        <div class="input-group">
+                            <label>السعر (ر.س / جنيه)</label>
+                            <input type="number" id="prodPrice" placeholder="0.00" required>
+                        </div>
+                        <div class="input-group">
+                            <label>القسم</label>
+                            <select id="prodCategory">
+                                <option value="concentrates">أعلاف مركزة</option>
+                                <option value="grains">حبوب وبقوليات</option>
+                                <option value="supplements">مكملات وفيتامينات</option>
+                                <option value="veterinary">أدوية بيطرية</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>رابط الصورة (URL)</label>
+                            <input type="text" id="prodImage" placeholder="https://example.com/image.jpg" required>
+                        </div>
+                        <button type="submit" class="btn-submit">نشر المنتج الآن</button>
+                    </form>
+                </div>
             </div>
-            <div id="adminOrdersTab" class="admin-tab-content" style="display:none;">
-                <h3>طلبات العملاء الحالية</h3>
-                <div id="adminOrdersList"></div>
+
+            <!-- تبويب الطلبات -->
+            <div id="adminOrdersTab" class="admin-panel" style="display:none;">
+                <h3>طلبات الشراء الواردة وتتبع الشحنات</h3>
+                <div id="adminOrdersList" class="data-list"></div>
             </div>
-            <div id="adminUsersTab" class="admin-tab-content" style="display:none;">
-                <h3>حسابات العملاء وكشف الحساب</h3>
-                <div id="adminUsersList"></div>
+
+            <!-- تبويب العملاء -->
+            <div id="adminUsersTab" class="admin-panel" style="display:none;">
+                <h3>قائمة العملاء المسجلين وكشوف الحساب</h3>
+                <div id="adminUsersList" class="data-list"></div>
             </div>
         </section>
 
-        <!-- بروفايل العميل والطلبات -->
-        <section id="profileSection" class="view-section" style="display:none;">
-            <h2>حساب العميل وتتبع الشحنات</h2>
-            <div class="profile-info">
-                <p><strong>البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
-                <p><strong>رقم الهاتف:</strong> <span id="userPhoneDisplay"></span></p>
+        <!-- بروفايل العميل -->
+        <section id="profileSection" class="app-section" style="display:none;">
+            <div class="profile-card-header">
+                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي ومتابعة الطلبات</h2>
+                <div class="user-info-box">
+                    <p><strong>البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
+                    <p><strong>نوع الحساب:</strong> <span id="userRoleDisplay">عميل معتمد</span></p>
+                </div>
             </div>
-            <h3>الفواتير وكشف الحساب</h3>
-            <div id="userInvoicesList"></div>
-            <h3>تتبع الشحنات الحالية</h3>
-            <div id="userShipmentsList"></div>
+
+            <div class="profile-grid">
+                <div class="profile-box">
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> فواتير المشتريات</h3>
+                    <div id="userInvoicesList"></div>
+                </div>
+                <div class="profile-box">
+                    <h3><i class="fa-solid fa-shipping-fast"></i> حالة تتبع الشحنات</h3>
+                    <div id="userShipmentsList"></div>
+                </div>
+            </div>
         </section>
+
     </main>
 
-    <!-- نافذة سلة المشتريات المنبثقة -->
-    <div id="cartModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>سلة المشتريات</h2>
-            <div id="cartItemsList"></div>
-            <div class="cart-total">
-                <h3>المجموع الكلي: <span id="cartTotalPrice">0</span> ر.س</h3>
-                <button id="checkoutBtn" class="btn-primary">إتمام الشراء وإصدار الفاتورة</button>
+    <!-- نافذة سلة المشتريات -->
+    <div id="cartModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-cart-shopping"></i> سلة المشتريات</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body" id="cartItemsList">
+                <!-- عناصر السلة -->
+            </div>
+            <div class="modal-footer">
+                <div class="total-row">
+                    <span>المجموع الإجمالي:</span>
+                    <strong><span id="cartTotalPrice">0</span> ر.س</strong>
+                </div>
+                <button id="checkoutBtn" class="btn-checkout">إتمام الطلب وإصدار الفاتورة</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة تسجيل الدخول -->
-    <div id="authModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <span class="close-auth-modal">&times;</span>
-            <h2>تسجيل الدخول / إنشاء حساب</h2>
-            <form id="loginForm">
-                <input type="email" id="loginEmail" placeholder="البريد الإلكتروني" required>
-                <input type="password" id="loginPassword" placeholder="كلمة المرور" required>
-                <button type="submit" class="btn-primary">دخول</button>
-            </form>
+    <!-- نافذة تسجيل الدخول العصرية -->
+    <div id="authModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container auth-container">
+            <div class="modal-header">
+                <h3>تسجيل الدخول إلى حسابك</h3>
+                <span class="close-auth-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>البريد الإلكتروني</label>
+                        <input type="email5" id="loginEmail" placeholder="name@example.com" required>
+                    </div>
+                    <div class="input-group">
+                        <label>كلمة المرور</label>
+                        <input type="password" id="loginPassword" placeholder="********" required>
+                    </div>
+                    <button type="submit" class="btn-submit">تسجيل الدخول</button>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- ملفات الجافاسكريبت والـ Firebase -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
