@@ -1,20 +1,24 @@
 {
-  "name": "كبابجي ومشويات العمدة",
-  "short_name": "مشويات العمدة",
+  "name": "تطبيق العلاف - تجارة وتوريد الأعلاف والحبوب",
+  "short_name": "تطبيق العلاف 🌾",
+  "description": "منصة طلب وتوريد أعلاف الدواجن والمواشي والخلطات المخصصة للمزارع",
   "start_url": "./index.html",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#1c1917",
   "theme_color": "#b45309",
   "icons": [
     {
       "src": "icon1-512.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "icon1-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
