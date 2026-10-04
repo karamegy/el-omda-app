@@ -192,7 +192,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول
+// دوال المصادقة وتسجيل الدخول (تم التحديث لضمان الاستقرار الفوري)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -201,23 +201,22 @@ window.loginWithGoogle = async function() {
     }
     try {
         await setPersistence(window.auth, browserLocalPersistence);
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        if (isMobile) {
-            await signInWithRedirect(window.auth, window.googleProvider);
-        } else {
+        // محاولة استخدام Popup أولاً لتجاوز مشاكل التوجيه وتأمين الدخول السريع
+        try {
             const result = await signInWithPopup(window.auth, window.googleProvider);
             if (result && result.user) {
                 await handleSuccessfulAuthUser(result.user, true);
+                return;
             }
+        } catch (popupErr) {
+            console.log("Popup blocked or failed, falling back to redirect:", popupErr);
+            // لو الـ Popup تم حظره، يتم التحويل تلقائياً إلى الـ Redirect كبديل آمن
+            await signInWithRedirect(window.auth, window.googleProvider);
         }
     } catch (error) {
         console.error("Google Auth Error:", error);
-        try {
-            await signInWithRedirect(window.auth, window.googleProvider);
-        } catch (err) {
-            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + err.message);
-        }
+        alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
     }
 };
 
@@ -285,7 +284,6 @@ async function handleSuccessfulAuthUser(user, showAlert = false) {
     if (!email) return;
 
     let userRole = 'customer';
-    // فرض صلاحية الأدمن فوراً على البريد المطلوب
     if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
         userRole = 'admin';
     }
@@ -1410,6 +1408,10 @@ function searchAndCalculateRoute() {
 }
 
 function drawRouteToOrder(destLat, destLng, addressTitle) {
+    if (typeof L.Routing === 'undefined') {
+        alert("مكتبة مسارات الخريطة غير محملة.");
+        return;
+    }
     if (routingControl) map.removeControl(routingControl);
 
     routingControl = L.Routing.control({
