@@ -97,7 +97,7 @@ let currentSliderIndex = 0;
 let sliderInterval = null;
 
 // ==========================================
-// متناغيرات ومحرك الخريطة
+// متغيرات ومحرك الخريطة
 // ==========================================
 let map;
 let mapTileLayers = {};
@@ -497,6 +497,17 @@ function sendWhatsAppOrder() {
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('unified-login-box');
     const dashBox = document.getElementById('customer-dashboard');
+    const adminNavBtn = document.getElementById('adminNavBtn');
+
+    // التحكم الفوري في إظهار زر لوحة الإدارة في الهيدر
+    if (adminNavBtn) {
+        if (currentCustomer && (currentCustomer.role === 'admin' || currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com')) {
+            adminNavBtn.classList.remove('hidden');
+        } else {
+            adminNavBtn.classList.add('hidden');
+        }
+    }
+
     if (!dashBox) return;
 
     if (!currentCustomer) {
@@ -878,7 +889,7 @@ function checkUserPermissions() {
     const role = (user.role || '').toLowerCase();
     const email = (user.email || '').toLowerCase();
     const phone = user.phone || '';
-    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone.includes('01144730305'));
+    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@allaf.com' || phone.includes('01144730305'));
 
     if (isMaster || role === 'admin' || role === 'manager') {
         if(badge) badge.innerText = `المدير العام / المشرف 👑`;
@@ -1442,7 +1453,7 @@ function checkKitchenAccessSecurity() {
     const email = (loggedUser.email || '').toLowerCase();
     const phone = loggedUser.phone || '';
 
-    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@fleet.com' || phone.includes('01144730305'));
+    const isMaster = (email === 'haretg@gmail.com' || email === 'admin@allaf.com' || phone.includes('01144730305'));
     const isAuthorizedStaff = isMaster || role === 'admin' || role === 'worker' || role === 'accountant' || role === 'driver' || role === 'manager';
 
     const avatarEl = document.getElementById('nav-user-avatar');
@@ -1660,13 +1671,16 @@ async function adminLoginWithGoogle() {
         let userRole = 'customer';
         const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
+        // منح صلاحية الأدمن الماستر
+        if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+            userRole = 'admin';
+        }
+
         if (window.db && window.firebaseModules) {
             try {
                 const userDoc = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "users", docId));
-                if (userDoc.exists()) {
+                if (userDoc.exists() && userRole !== 'admin') {
                     userRole = userDoc.data().role || 'customer';
-                } else if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                    userRole = 'admin';
                 }
             } catch(e) {}
         }
