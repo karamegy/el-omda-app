@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
@@ -15,6 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 let currentUser = null;
@@ -45,14 +47,15 @@ const checkoutBtn = document.getElementById('checkoutBtn');
 const searchInput = document.getElementById('searchInput');
 const saveLocationBtn = document.getElementById('saveLocationBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
+const invoiceModal = document.getElementById('invoiceModal');
+const closeInvoiceModalBtn = document.getElementById('closeInvoiceModalBtn');
+const trackInvoiceBtn = document.getElementById('trackInvoiceBtn');
 
-// البحث التفاعلي
 searchInput.addEventListener('input', (e) => {
     const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
     renderProducts(activeCat, e.target.value);
 });
 
-// فتح وإغلاق النوافذ
 authBtn.addEventListener('click', () => {
     if (currentUser) {
         signOut(auth).then(() => { location.reload(); });
@@ -63,6 +66,8 @@ authBtn.addEventListener('click', () => {
 closeAuthModal.addEventListener('click', () => authModal.style.display = 'none');
 cartBtn.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
 closeModal.addEventListener('click', () => cartModal.style.display = 'none');
+document.querySelector('.close-invoice-modal').addEventListener('click', () => invoiceModal.style.display = 'none');
+closeInvoiceModalBtn.addEventListener('click', () => invoiceModal.style.display = 'none');
 
 profileBtn.addEventListener('click', () => {
     switchSection('profileSection');
@@ -81,12 +86,10 @@ function switchSection(sectionId) {
     document.getElementById(sectionId).style.display = 'block';
 }
 
-// تسجيل الدخول باستخدام حساب جوجل
 googleLoginBtn.addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
-        
         const userRef = doc(db, "users", user.email);
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
@@ -104,7 +107,6 @@ googleLoginBtn.addEventListener('click', async () => {
     }
 });
 
-// مراقبة حالة المستخدم وصلاحيات المدير المطلقة
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -147,7 +149,6 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// تحميل الأقسام ديناميكياً
 async function loadCategories() {
     try {
         const querySnapshot = await getDocs(collection(db, "categories"));
@@ -157,7 +158,6 @@ async function loadCategories() {
         });
 
         if (allCategoriesCache.length === 0) {
-            // أقسام افتراضية أولية إذا كانت القاعدة فارغة
             allCategoriesCache = [
                 { id: 'concentrates', name: 'أعلاف مركزة', icon: 'fa-solid fa-boxes-stacked' },
                 { id: 'grains', name: 'حبوب وبقوليات', icon: 'fa-solid fa-seedling' },
@@ -168,7 +168,6 @@ async function loadCategories() {
 
         const catContainer = document.getElementById('categoriesContainer');
         catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
-        
         const prodCategorySelect = document.getElementById('prodCategory');
         if (prodCategorySelect) prodCategorySelect.innerHTML = '';
 
@@ -179,7 +178,6 @@ async function loadCategories() {
             }
         });
 
-        // ربط الأحداث للأقسام الجديدة
         document.querySelectorAll('.cat-chip').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
@@ -187,16 +185,14 @@ async function loadCategories() {
                 renderProducts(e.currentTarget.dataset.cat, searchInput.value);
             });
         });
-
     } catch (e) {
         console.error("Error loading categories:", e);
     }
 }
 
-// تحميل المنتجات
 async function loadProducts() {
     await loadCategories();
-    productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات...</p>';
+    productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات والمنشورات...</p>';
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         allProductsCache = [];
@@ -206,8 +202,8 @@ async function loadProducts() {
         
         if (allProductsCache.length === 0) {
             allProductsCache = [
-                { id: '1', name: 'علاف تسمين عالي البروتين (50 كجم)', price: '250', category: 'concentrates', image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80' },
-                { id: '2', name: 'ذرة صفراء مستوردة صافية (50 كجم)', price: '180', category: 'grains', image: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80' }
+                { id: '1', name: 'علاف تسمين عالي البروتين (50 كجم)', price: '250', category: 'concentrates', mediaUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80', mediaType: 'image' },
+                { id: '2', name: 'ذرة صفراء مستوردة صافية (50 كجم)', price: '180', category: 'grains', mediaUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80', mediaType: 'image' }
             ];
         }
         renderProducts('all', '');
@@ -225,14 +221,19 @@ function renderProducts(category, searchTerm) {
     });
 
     if (filtered.length === 0) {
-        productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">لا توجد منتجات مطابقة.</p>';
+        productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">لا توجد منتجات أو منشورات مطابقة.</p>';
         return;
     }
 
     filtered.forEach(prod => {
+        let mediaHtml = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" alt="${prod.name}">`;
+        if (prod.mediaType === 'video') {
+            mediaHtml = `<video src="${prod.mediaUrl}" controls style="width:100%; height:180px; object-fit:cover;"></video>`;
+        }
+
         productsGrid.innerHTML += `
             <div class="product-card">
-                <img src="${prod.image}" alt="${prod.name}">
+                ${mediaHtml}
                 <div class="product-info">
                     <h3>${prod.name}</h3>
                     <p class="product-price">${prod.price} ج.م</p>
@@ -284,17 +285,19 @@ checkoutBtn.addEventListener('click', async () => {
         alert('السلة فارغة!');
         return;
     }
+    const paymentType = document.getElementById('paymentTypeSelect').value;
     try {
-        await addDoc(collection(db, "orders"), {
+        const orderRef = await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
             items: cart,
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
             status: 'قيد المراجعة والشحن (أسطول العمدة)',
+            paymentType: paymentType,
             lat: selectedLat,
             lng: selectedLng,
             date: new Date().toLocaleDateString('ar-EG')
         });
-        alert('تم إرسال الطلب بنجاح وتحديد موقع الشحنة على الخريطة!');
+        alert(`تم إرسال الطلب وإصدار الفاتورة برقم: #${orderRef.id.slice(0,6)} بنجاح!`);
         cart = [];
         cartModal.style.display = 'none';
         updateCartUI();
@@ -303,41 +306,55 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات للأدمن (إضافة / تعديل / حذف)
+// رفع المنتجات مع دعم الوسائط (صور/فيديو)
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
-    const prodData = {
-        name: document.getElementById('prodName').value,
-        price: document.getElementById('prodPrice').value,
-        category: document.getElementById('prodCategory').value,
-        image: document.getElementById('prodImage').value
-    };
+    const fileInput = document.getElementById('prodFile');
+    
+    let mediaUrl = document.getElementById('editProductId').dataset.oldUrl || '';
+    let mediaType = document.getElementById('editProductId').dataset.oldType || 'image';
 
     try {
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+            await uploadBytes(fileRef, file);
+            mediaUrl = await getDownloadURL(fileRef);
+            mediaType = file.type.startsWith('video') ? 'video' : 'image';
+        }
+
+        const prodData = {
+            name: document.getElementById('prodName').value,
+            price: document.getElementById('prodPrice').value,
+            category: document.getElementById('prodCategory').value,
+            mediaUrl: mediaUrl,
+            mediaType: mediaType
+        };
+
         if (editId) {
             await updateDoc(doc(db, "products", editId), prodData);
-            alert('تم تحديث المنتج بنجاح!');
+            alert('تم تحديث المنتج/المنشور بنجاح!');
             document.getElementById('editProductId').value = '';
-            document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد للمتجر';
+            document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
             document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
             cancelEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "products"), prodData);
-            alert('تم إضافة المنتج بنجاح للقاعدة!');
+            alert('تم إضافة ونشر المنتج بنجاح للقاعدة!');
         }
         addProductForm.reset();
         loadProducts();
         loadAdminProductsList();
     } catch (err) {
-        alert('خطأ: ' + err.message);
+        alert('خطأ في الرفع: ' + err.message);
     }
 });
 
 cancelEditBtn.addEventListener('click', () => {
     addProductForm.reset();
     document.getElementById('editProductId').value = '';
-    document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد للمتجر';
+    document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
     document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
     cancelEditBtn.style.display = 'none';
 });
@@ -354,10 +371,10 @@ async function loadAdminProductsList() {
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <strong>${p.name}</strong> - <span style="color:#d4a373">${p.price} ج.م</span> (${p.category})
+                        <strong>${p.name}</strong> - <span style="color:#d4a373">${p.price} ج.م</span> (${p.category}) [${p.mediaType || 'image'}]
                     </div>
                     <div>
-                        <button onclick='editProduct("${id}", ${JSON.stringify(p.name)}, "${p.price}", "${p.category}", "${p.image}")' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-left:5px;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='editProduct("${id}", ${JSON.stringify(p.name)}, "${p.price}", "${p.category}", "${p.mediaUrl || ''}", "${p.mediaType || 'image'}")' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-left:5px;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick='deleteProduct("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
@@ -367,20 +384,21 @@ async function loadAdminProductsList() {
     }
 }
 
-window.editProduct = function(id, name, price, category, image) {
+window.editProduct = function(id, name, price, category, mediaUrl, mediaType) {
     document.getElementById('editProductId').value = id;
+    document.getElementById('editProductId').dataset.oldUrl = mediaUrl;
+    document.getElementById('editProductId').dataset.oldType = mediaType;
     document.getElementById('prodName').value = name;
     document.getElementById('prodPrice').value = price;
     document.getElementById('prodCategory').value = category;
-    document.getElementById('prodImage').value = image;
-    document.getElementById('productFormTitle').textContent = 'تعديل بيانات المنتج';
+    document.getElementById('productFormTitle').textContent = 'تعديل المنشور أو المنتج';
     document.getElementById('saveProductBtn').textContent = 'حفظ التعديلات';
     cancelEditBtn.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 window.deleteProduct = async function(id) {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج نهائياً؟')) {
+    if (confirm('هل أنت متأكد من حذف هذا المنتج أو المنشور نهائياً؟')) {
         try {
             await deleteDoc(doc(db, "products", id));
             alert('تم الحذف بنجاح');
@@ -389,10 +407,9 @@ window.deleteProduct = async function(id) {
         } catch (e) {
             alert('خطأ أثناء الحذف: ' + e.message);
         }
+    }
 };
-}
 
-// إضافة قسم جديد للأدمن
 addCategoryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const catId = document.getElementById('catIdInput').value.trim();
@@ -400,11 +417,8 @@ addCategoryForm.addEventListener('submit', async (e) => {
     const catIcon = document.getElementById('catIconInput').value.trim();
 
     try {
-        await setDoc(doc(db, "categories", catId), {
-            name: catName,
-            icon: catIcon
-        });
-        alert('تم إضافة القسم الجديد بنجاح!');
+        await setDoc(doc(db, "categories", catId), { name: catName, icon: catIcon });
+        alert('تم إضافة القسم وتحديث التوجيه بنجاح!');
         addCategoryForm.reset();
         loadCategories();
         loadCategoriesForAdmin();
@@ -424,7 +438,7 @@ async function loadCategoriesForAdmin() {
             const id = docSnap.id;
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><i class="${c.icon || 'fa-solid fa-wheat-awn'}"></i> <strong>${c.name}</strong> (معرف: ${id})</div>
+                    <div><i class="${c.icon || 'fa-solid fa-wheat-awn'}"></i> <strong>${c.name}</strong> (معرف التوجيه: ${id})</div>
                     <button onclick='deleteCategory("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف القسم</button>
                 </div>`;
         });
@@ -446,6 +460,7 @@ window.deleteCategory = async function(id) {
     }
 };
 
+// بروفايل العميل وعرض المعاملات والفواتير مع إمكانية المعاينة والطباعة A3
 async function loadUserProfile() {
     if (!currentUser) return;
     document.getElementById('userEmailDisplay').textContent = currentUser.email;
@@ -463,12 +478,100 @@ async function loadUserProfile() {
     let invoicesHtml = '';
     
     querySnapshot.forEach((docSnap) => {
+        const orderId = docSnap.id;
         const order = docSnap.data();
-        invoicesHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">رقم الطلب: #${docSnap.id.slice(0,6)} | الإجمالي: <strong>${order.total} ج.م</strong> | الحالة: <span style="color:green">${order.status}</span></div>`;
+        invoicesHtml += `
+            <div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #1e3d2f;">
+                رقم الفاتورة: <strong>#${orderId.slice(0,6)}</strong> | الإجمالي: <strong>${order.total} ج.م</strong><br>
+                نوع الدفع: <span style="color:#d4a373; font-weight:bold;">${order.paymentType || 'مدفوع'}</span> | الحالة: <span style="color:green">${order.status}</span><br>
+                <div style="margin-top:8px;">
+                    <button onclick='previewInvoice("${orderId}", ${JSON.stringify(order)})' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;"><i class="fa-solid fa-eye"></i> معاينة وطباعة الفاتورة (A3)</button>
+                </div>
+            </div>`;
     });
     
-    document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
+    document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير أو معاملات سابقة</p>';
 }
+
+// تتبع الشحنة برقم الفاتورة
+trackInvoiceBtn.addEventListener('click', async () => {
+    const invId = document.getElementById('trackInvoiceInput').value.trim();
+    const resultBox = document.getElementById('trackResultBox');
+    if (!invId) {
+        alert('الرجاء إدخال رقم الفاتورة أو الطلب');
+        return;
+    }
+    resultBox.innerHTML = 'جاري البحث عن الشحنة...';
+    try {
+        const querySnapshot = await getDocs(collection(db, "orders"));
+        let found = null;
+        querySnapshot.forEach(docSnap => {
+            if (docSnap.id.includes(invId)) {
+                found = { id: docSnap.id, ...docSnap.data() };
+            }
+        });
+
+        if (found) {
+            resultBox.innerHTML = `
+                <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
+                    <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
+                    <p><strong>حالة الشحنة والأسطول:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
+                    <p><strong>المبلغ الإجمالي:</strong> ${found.total} ج.م</p>
+                    <p><strong>تاريخ الطلب:</strong> ${found.date}</p>
+                </div>`;
+        } else {
+            resultBox.innerHTML = '<p style="color:red;">لم يتم العثور على شحنة بهذا الرقم، تأكد من صحة رقم الفاتورة.</p>';
+        }
+    } catch (err) {
+        resultBox.innerHTML = '<p style="color:red;">حدث خطأ أثناء البحث.</p>';
+    }
+});
+
+// نافذة معاينة وطباعة الفاتورة A3 / قياسي
+window.previewInvoice = function(orderId, order) {
+    const content = document.getElementById('printableInvoiceContent');
+    let itemsHtml = '';
+    if (order.items) {
+        order.items.forEach(item => {
+            itemsHtml += `<tr><td style="padding:8px; border:1px solid #ddd;">${item.name}</td><td style="padding:8px; border:1px solid #ddd;">1</td><td style="padding:8px; border:1px solid #ddd;">${item.price} ج.م</td></tr>`;
+        });
+    }
+
+    content.innerHTML = `
+        <div style="text-align:center; margin-bottom:20px;">
+            <h2 style="color:#1e3d2f; margin-bottom:5px;">منصة العمدة للأعلاف والحبوب</h2>
+            <p style="font-size:0.9rem; color:#666;">فاتورة مبيعات ومعاملات رسمية (جاهزة للطباعة A3)</p>
+            <hr style="border:1px solid #ddd; margin-top:10px;">
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:0.9rem;">
+            <div><strong>رقم الفاتورة:</strong> #${orderId}</div>
+            <div><strong>التاريخ:</strong> ${order.date || '---'}</div>
+        </div>
+        <div style="margin-bottom:15px; font-size:0.9rem;">
+            <strong>العميل:</strong> ${order.userEmail}<br>
+            <strong>طريقة الدفع:</strong> ${order.paymentType || 'مدفوع'}
+        </div>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px; font-size:0.9rem;">
+            <thead>
+                <tr style="background:#1e3d2f; color:#fff;">
+                    <th style="padding:8px; border:1px solid #ddd; text-align:right;">اسم المنتج</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:right;">الكمية</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:right;">السعر الإجمالي</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${itemsHtml}
+            </tbody>
+        </table>
+        <div style="text-align:left; font-size:1.1rem; font-weight:bold;">
+            المجموع النهائي: <span style="color:#1e3d2f;">${order.total} ج.م</span>
+        </div>
+        <div style="margin-top:30px; text-align:center; font-size:0.85rem; color:#777;">
+            شكراً لتعاملكم مع منصة العمدة - جميع الحقوق محفوظة
+        </div>
+    `;
+    invoiceModal.style.display = 'flex';
+};
 
 function initUserMap() {
     if (userMap) {
@@ -534,9 +637,10 @@ async function loadAllOrders() {
         const id = docSnap.id;
         list.innerHTML += `
             <div class="data-item">
-                الطلب #${id.slice(0,6)} | العميل: ${o.userEmail} | المجموع: <strong>${o.total} ج.م</strong> | الحالة: <span style="color:#2c5e3b">${o.status}</span>
+                طلب #${id.slice(0,6)} | العميل: ${o.userEmail} | الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType || 'مدفوع'})<br>
+                الحالة والأسطول: <span style="color:#2c5e3b">${o.status}</span>
                 <div style="margin-top:8px;">
-                    <button onclick='updateOrderStatus("${id}", "جاري التوصيل عبر أسطول العمدة")' style="background:#1e3d2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">تعيين للأسطول وجاري التوصيل</button>
+                    <button onclick='updateOrderStatus("${id}", "جاري التوصيل عبر أسطول سيارات العمدة")' style="background:#1e3d2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">تعيين لسيارات الأسطول وجاري التوصيل</button>
                     <button onclick='updateOrderStatus("${id}", "تم التسليم بنجاح")' style="background:green; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:5px;">تم التسليم</button>
                 </div>
             </div>`;
@@ -546,7 +650,7 @@ async function loadAllOrders() {
 window.updateOrderStatus = async function(orderId, newStatus) {
     try {
         await updateDoc(doc(db, "orders", orderId), { status: newStatus });
-        alert('تم تحديث حالة الطلب بنجاح');
+        alert('تم تحديث حالة الشحنة والأسطول بنجاح');
         loadAllOrders();
     } catch (e) {
         alert('خطأ: ' + e.message);
@@ -596,7 +700,7 @@ async function initAdminMap() {
         const order = docSnap.data();
         if (order.lat && order.lng) {
             L.marker([order.lat, order.lng]).addTo(adminMap)
-                .bindPopup(`<b>عميل:</b> ${order.userEmail}<br><b>المبلغ:</b> ${order.total} ج.م<br><b>الحالة:</b> ${order.status}`);
+                .bindPopup(`<b>أسطول/عميل:</b> ${order.userEmail}<br><b>المبلغ:</b> ${order.total} ج.م<br><b>الحالة:</b> ${order.status}`);
         }
     });
 }
