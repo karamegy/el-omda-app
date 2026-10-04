@@ -2491,3 +2491,39 @@ window.addCustomMixToCart = addCustomMixToCart;
 window.submitOrder = submitOrder;
 window.sendWhatsAppOrder = sendWhatsAppOrder;
 window.switchCustomerSubTab = switchCustomerSubTab;
+// ==========================================
+// دوال تحكم البانر المتحرك (Hero Slider) الناقصة
+// ==========================================
+function prevSliderItem() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
+    updateSliderContent();
+}
+
+function nextSliderItem() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
+    updateSliderContent();
+}
+
+function sliderAddToCart() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    const prod = menuProducts[currentSliderIndex];
+    if (prod) {
+        addToCart(prod.id);
+    }
+}
+
+function sliderClickAction() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    const prod = menuProducts[currentSliderIndex];
+    if (prod) {
+        window.location.href = `product.html?id=${prod.id}`;
+    }
+}
+
+// ربط الدوال بالنطاق العام لتعمل مع HTML
+window.prevSliderItem = prevSliderItem;
+window.nextSliderItem = nextSliderItem;
+window.sliderAddToCart = sliderAddToCart;
+window.sliderClickAction = sliderClickAction;
