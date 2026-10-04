@@ -23,12 +23,103 @@ body {
     color: var(--text-dark);
     direction: rtl;
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
 }
 
+/* ==========================================
+   تأثيرات الخلفية الخفيفة (دخان، إضاءة، ورق/رعد، لوجو متحرك)
+   ========================================== */
+
+/* طبقة الإضاءة التفاعلية (Lighting Glow) */
+body::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(212,163,115,0.08) 0%, rgba(30,61,47,0.03) 50%, transparent 70%);
+    z-index: -3;
+    pointer-events: none;
+    animation: lightPulse 8s ease-in-out infinite alternate;
+}
+
+@keyframes lightPulse {
+    0% { transform: scale(1); opacity: 0.6; }
+    100% { transform: scale(1.1); opacity: 1; }
+}
+
+/* تأثير وميض الرعد الخفيف (Lightning) */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    opacity: 0;
+    z-index: -1;
+    pointer-events: none;
+    animation: lightningFlash 12s infinite;
+}
+
+@keyframes lightningFlash {
+    0%, 92%, 96%, 100% { opacity: 0; }
+    93%, 97% { opacity: 1; }
+    94% { opacity: 0.3; }
+}
+
+/* تأثير الدخان الخفيف المتحرك في الخلفية */
+.smoke-bg {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.03"><filter id="blur"><feGaussianBlur stdDeviation="20"/></filter><circle cx="200" cy="200" r="100" fill="%231e3d2f" filter="url(%23blur)"/></svg>');
+    z-index: -2;
+    pointer-events: none;
+    animation: smokeDrift 20s linear infinite;
+}
+
+@keyframes smokeDrift {
+    0% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+    100% { transform: translateY(0) scale(1); }
+}
+
+/* لوجو المؤسسة المتحرك في الخلفية (Watermark) */
+.bg-logo-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 350px;
+    height: 350px;
+    opacity: 0.035;
+    background-image: url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'); /* بديل بصري خفيف معبر عن مؤسسة الإخلاص والأعلاف الطبيعية[span_1](start_span)[span_1](end_span) */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    z-index: -4;
+    pointer-events: none;
+    animation: logoFloat 10s ease-in-out infinite alternate;
+}
+
+@keyframes logoFloat {
+    0% { transform: translate(-50%, -52%) rotate(0deg) scale(1); }
+    100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
+}
+
+/* ==========================================
+   تصميم الشريط العلوي (محدث ليكون متجاوباً تماماً بدون تداخل)
+   ========================================== */
 .main-header {
     background: var(--primary);
     color: var(--white);
-    padding: 1rem 2rem;
+    padding: 0.8rem 1rem;
     box-shadow: 0 2px 10px rgba(0,0,0,0.15);
     position: sticky;
     top: 0;
@@ -41,7 +132,8 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    flex-wrap: wrap; /* يمنع التداخل ويسمح بالالتفاف بسلاسة على الشاشات الصغيرة */
+    gap: 12px;
 }
 
 .logo-area {
@@ -51,18 +143,20 @@ body {
 }
 
 .logo-area i {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--accent);
 }
 
 .logo-area h1 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     font-weight: 900;
+    white-space: nowrap;
 }
 
 .search-box {
     flex: 1;
-    max-width: 500px;
+    min-width: 200px;
+    max-width: 380px;
     display: flex;
     background: var(--white);
     border-radius: 50px;
@@ -72,38 +166,41 @@ body {
 .search-box input {
     flex: 1;
     border: none;
-    padding: 12px 20px;
+    padding: 10px 15px;
     outline: none;
     background: transparent;
+    font-size: 0.85rem;
 }
 
 .search-box button {
     background: var(--accent);
     border: none;
-    padding: 0 20px;
+    padding: 0 15px;
     color: var(--white);
     cursor: pointer;
 }
 
 .user-actions {
     display: flex;
-    gap: 10px;
+    gap: 6px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .action-btn, .btn-login-main {
     background: rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.2);
     color: var(--white);
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 50px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     transition: 0.3s;
+    white-space: nowrap;
 }
 
 .action-btn:hover, .btn-login-main:hover {
@@ -119,14 +216,17 @@ body {
 .action-btn .badge {
     background: #e63946;
     color: var(--white);
-    font-size: 0.75rem;
-    padding: 2px 6px;
+    font-size: 0.65rem;
+    padding: 2px 5px;
     border-radius: 50%;
 }
 
+/* ==========================================
+   أقسام المتجر والعناصر
+   ========================================== */
 .categories-nav {
     background: var(--white);
-    padding: 12px 2rem;
+    padding: 10px 1.5rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.03);
     overflow-x: auto;
 }
@@ -135,19 +235,20 @@ body {
     max-width: 1300px;
     margin: 0 auto;
     display: flex;
-    gap: 12px;
+    gap: 10px;
 }
 
 .cat-chip {
     background: #f0f4f1;
     border: 1px solid #dcdede;
-    padding: 8px 18px;
+    padding: 6px 15px;
     border-radius: 30px;
     cursor: pointer;
     font-weight: 600;
+    font-size: 0.85rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     transition: 0.3s;
     white-space: nowrap;
 }
@@ -160,40 +261,47 @@ body {
 
 .app-main {
     max-width: 1300px;
-    margin: 30px auto;
-    padding: 0 20px;
+    margin: 25px auto;
+    padding: 0 15px;
 }
 
 .hero-banner {
-    background: linear-gradient(135deg, rgba(30,61,47,0.9), rgba(44,94,59,0.8)), url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1200&q=80');
+    background: linear-gradient(135deg, rgba(30,61,47,0.92), rgba(44,94,59,0.85)), url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=1200&q=80');
     background-size: cover;
     background-position: center;
     border-radius: var(--radius);
-    padding: 40px;
+    padding: 30px;
     color: var(--white);
-    margin-bottom: 30px;
+    margin-bottom: 25px;
     box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
 }
 
 .hero-content h2 {
-    font-size: 2rem;
-    margin-bottom: 10px;
+    font-size: 1.75rem;
+    margin-bottom: 8px;
     font-weight: 900;
 }
 
+.hero-content p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
 .section-title {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .section-title h3 {
-    font-size: 1.5rem;
+    font-size: 1.3rem;
     color: var(--primary);
 }
 
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 25px;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
 }
 
 .product-card {
@@ -207,25 +315,29 @@ body {
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
 }
 
 .product-card img {
     width: 100%;
-    height: 200px;
+    height: 180px;
     object-fit: cover;
 }
 
 .product-info {
-    padding: 20px;
+    padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     flex: 1;
 }
 
+.product-info h3 {
+    font-size: 1rem;
+}
+
 .product-price {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 900;
     color: var(--primary);
 }
@@ -234,7 +346,7 @@ body {
     background: var(--primary);
     color: var(--white);
     border: none;
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
@@ -246,7 +358,7 @@ body {
     color: #444;
     border: 1px solid #ddd;
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
@@ -264,7 +376,7 @@ body {
 
 .btn-google i {
     color: #4285F4;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 .modal-overlay {
@@ -285,7 +397,7 @@ body {
     background: var(--white);
     border-radius: var(--radius);
     width: 90%;
-    max-width: 500px;
+    max-width: 480px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     overflow: hidden;
 }
@@ -293,26 +405,26 @@ body {
 .modal-header {
     background: var(--primary);
     color: var(--white);
-    padding: 15px 20px;
+    padding: 12px 18px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
 .close-modal, .close-auth-modal {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     cursor: pointer;
     color: var(--white);
 }
 
 .modal-body {
-    padding: 20px;
+    padding: 18px;
     max-height: 60vh;
     overflow-y: auto;
 }
 
 .modal-footer {
-    padding: 15px 20px;
+    padding: 12px 18px;
     background: #f9f9f9;
     border-top: 1px solid var(--border-color);
 }
@@ -320,15 +432,15 @@ body {
 .total-row {
     display: flex;
     justify-content: space-between;
-    font-size: 1.1rem;
-    margin-bottom: 15px;
+    font-size: 1rem;
+    margin-bottom: 12px;
 }
 
 .btn-checkout {
     background: var(--accent);
     color: var(--white);
     border: none;
-    padding: 12px;
+    padding: 10px;
     width: 100%;
     border-radius: 8px;
     font-weight: 700;
@@ -336,28 +448,29 @@ body {
 }
 
 .admin-header {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .admin-header h2 {
     color: var(--primary);
-    font-size: 1.8rem;
+    font-size: 1.5rem;
 }
 
 .admin-tabs {
     display: flex;
-    gap: 12px;
-    margin-bottom: 25px;
+    gap: 10px;
+    margin-bottom: 20px;
     flex-wrap: wrap;
 }
 
 .tab-btn {
-    padding: 12px 20px;
+    padding: 10px 16px;
     border: 1px solid var(--border-color);
     background: var(--white);
     border-radius: 8px;
     cursor: pointer;
     font-weight: 700;
+    font-size: 0.85rem;
     transition: 0.3s;
 }
 
@@ -369,40 +482,42 @@ body {
 
 .form-card {
     background: var(--white);
-    padding: 25px;
+    padding: 20px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
 
 .form-card h3 {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
     color: var(--primary);
 }
 
 .input-group {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 }
 
 .input-group label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 5px;
     font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .input-group input, .input-group select {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     outline: none;
     background: #fafafa;
+    font-size: 0.9rem;
 }
 
 .btn-submit {
     background: var(--primary);
     color: var(--white);
     border: none;
-    padding: 12px;
+    padding: 10px;
     width: 100%;
     border-radius: 8px;
     font-weight: 700;
@@ -412,29 +527,30 @@ body {
 .data-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
 .data-item {
     background: var(--white);
-    padding: 15px 20px;
+    padding: 12px 16px;
     border-radius: 8px;
     box-shadow: var(--shadow);
     border-right: 4px solid var(--primary);
+    font-size: 0.9rem;
 }
 
 .profile-card-header {
     background: var(--white);
-    padding: 25px;
+    padding: 20px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    margin-bottom: 25px;
+    margin-bottom: 20px;
 }
 
 .profile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 25px;
+    gap: 20px;
 }
 
 @media(max-width: 768px) {
@@ -445,12 +561,12 @@ body {
 
 .profile-box {
     background: var(--white);
-    padding: 20px;
+    padding: 18px;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
 }
 
 .profile-box h3 {
-    margin-bottom: 15px;
+    margin-bottom: 12px;
     color: var(--primary);
 }
