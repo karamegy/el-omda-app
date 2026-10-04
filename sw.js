@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v20'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
+const CACHE_NAME = 'allaf-feeds-v21'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
 const assetsToCache = [
   './',
   './index.html',
