@@ -407,7 +407,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
@@ -428,6 +428,35 @@
         window.googleProvider = googleProvider;
         window.signInWithPopup = signInWithPopup;
         window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc };
+
+        // التعديل الرئيسي: المتابعة التلقائية لعملية تسجيل الدخول وإظهار لوحة التحكم للأدمن
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const email = user.email.toLowerCase();
+                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+                const isAdminEmail = (email === 'haretg@gmail.com' || email === 'admin@allaf.com');
+
+                let userObj = { 
+                    name: user.displayName || 'إدارة العلاف', 
+                    email: email, 
+                    phone: user.phoneNumber || '01000000000',
+                    photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                    role: isAdminEmail ? 'admin' : 'customer'
+                };
+
+                try {
+                    const userDoc = await getDoc(doc(db, "users", docId));
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        userObj = { ...data, role: isAdminEmail ? 'admin' : (data.role || 'customer') };
+                    }
+                } catch(e) {}
+
+                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+                window.currentCustomer = userObj;
+                if (typeof loadAdminDashboard === 'function') loadAdminDashboard();
+            }
+        });
     </script>
 
     <!-- ملف الجافاسكربت الشامل للتطبيق -->
