@@ -1,3 +1,34 @@
+// استيراد مكتبات فايربيس المطلوبة (حسب إعدادات مشروعك alaf-93848)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
+  authDomain: "alaf-93848.firebaseapp.com",
+  projectId: "alaf-93848",
+  storageBucket: "alaf-93848.firebasestorage.app",
+  messagingSenderId: "984757380320",
+  appId: "1:984757380320:web:247065b2434c002c445c85",
+  measurementId: "G-ESV2GNSQZ4"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+// ربط النطاق العام ليعمل مع باقي وظائف التطبيق (قاعدة البيانات والمصادقة)
+window.db = getFirestore(app);
+window.auth = getAuth(app);
+window.googleProvider = new GoogleAuthProvider();
+window.signInWithPopup = signInWithPopup;
+
+window.firebaseModules = {
+    collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
+};
+
 // ==========================================
 // بيانات أعلاف العلاف والحبوب الأساسية
 // ==========================================
@@ -499,7 +530,6 @@ function loadCustomerDashboard() {
     const dashBox = document.getElementById('customer-dashboard');
     const adminNavBtn = document.getElementById('adminNavBtn');
 
-    // التحكم الفوري في إظهار زر لوحة الإدارة في الهيدر
     if (adminNavBtn) {
         if (currentCustomer && (currentCustomer.role === 'admin' || currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com')) {
             adminNavBtn.classList.remove('hidden');
@@ -1432,7 +1462,7 @@ function autoDispatchOrders() {
 function getStatusLabelMap(st) {
     if(st === 'pending') return 'قيد المراجعة ⏳';
     if(st === 'cooking') return 'قيد التجهيز 📦';
-    if(st === 'delivery') return 'مع الطيار 🛵';
+    if(st === 'delivery') return 'مع السائق 🛵';
     if(st === 'done') return 'تم التسليم ✅';
     return st || 'نشط';
 }
@@ -1671,7 +1701,6 @@ async function adminLoginWithGoogle() {
         let userRole = 'customer';
         const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
-        // منح صلاحية الأدمن الماستر
         if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
             userRole = 'admin';
         }
@@ -2316,7 +2345,7 @@ async function addSpecificProductToCart(id) {
 
     if (!prod && window.db && window.firebaseModules) {
         try {
-            const docSnap = await window.firebaseModules.getDoc(window.db, "products", String(id));
+            const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(id)));
             if (docSnap.exists()) {
                 prod = docSnap.data();
             }
@@ -2373,7 +2402,7 @@ async function initRewardsPage() {
         if (userRewardIdentifier && pointsDB[userRewardIdentifier]) {
             userRewardPoints = pointsDB[userRewardIdentifier];
         } else {
-            userRewardPoints = 15; // نقاط ترحيبية افتراضية
+            userRewardPoints = 15; 
         }
     }
 
@@ -2396,13 +2425,11 @@ async function redeemReward(cost, rewardName) {
     const pointsEl = document.getElementById('user-reward-points');
     if (pointsEl) pointsEl.innerText = userRewardPoints + ' نقطة';
 
-    // 1. تحديث محلياً
     let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || localStorage.getItem('fleet_points') || '{}');
     let identifierKey = userRewardIdentifier || (currentCustomer ? currentCustomer.phone : 'guest');
     pointsDB[identifierKey] = userRewardPoints;
     localStorage.setItem('allaf_points', JSON.stringify(pointsDB));
 
-    // 2. تحديث سحابياً عبر Firebase
     if (window.db && window.firebaseModules && userRewardIdentifier) {
         try {
             const docRef = window.firebaseModules.doc(window.db, "users", String(userRewardIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
