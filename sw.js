@@ -1,12 +1,14 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v5';
+const CACHE_NAME = 'el-omda-exclusive-cache-v7';
 const urlsToCache = [
-  '/el-omda-app/',
-  '/el-omda-app/index.html',
-  '/el-omda-app/style.css',
-  '/el-omda-app/app.js'
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './icon1-192.png',
+  './icon1-512.png'
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الخاصة بتطبيق العمدة فقط
+// تثبيت الـ Service Worker وتخزين الملفات الخاصة بتطبيق العمدة
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -18,7 +20,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// التعامل مع الطلبات لجلب الملفات من الكاش الخاص أو الشبكة
+// التعامل مع الطلبات لجلب الملفات من الكاش أو الشبكة
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request)
@@ -28,7 +30,7 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// تفعيل وتحديث الكاش وحذف النسخ القديمة الخاصة بالتطبيق حصراً
+// تفعيل وتحديث الكاش وحذف النسخ القديمة
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
