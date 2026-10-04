@@ -1,8 +1,8 @@
-// استيراد مكتبات فايربيس المطلوبة (حسب إعدادات مشروعك alaf-93848)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics.js";
-import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+// استيراد مكتبات فايربيس الموحدة بالإصدار 10.12.0 لتجنب أي تضارب في المتصفح
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -24,6 +24,7 @@ window.db = getFirestore(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
 window.signInWithPopup = signInWithPopup;
+window.signInWithRedirect = signInWithRedirect;
 
 window.firebaseModules = {
     collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
@@ -66,7 +67,7 @@ const defaultProducts = [
         category: "livestock", 
         price: 710, 
         weight: "شكارة 50 كجم", 
-        desc: "مخصص للأبقار والجاموس الأبقار الحلابة لزيادة إنتاج اللبن ونسبة الدسم بفاعلية عالية.", 
+        desc: "مخصص للأبقار والجاموس الحلابة لزيادة إنتاج اللبن ونسبة الدسم بفاعلية عالية.", 
         image: "https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?w=500" 
     },
     { 
@@ -93,7 +94,7 @@ const defaultProducts = [
         category: "grains", 
         price: 420, 
         weight: "شكارة 40 كجم", 
-        desc: "ردة قمح ناعمة طازجة ومفيدة جداً للهضم وتغذية المواشي والمواشي الحلابة.", 
+        desc: "ردة قمح ناعمة طازجة ومفيدة جداً للهضم وتغذية المواشي والحيوانات الحلابة.", 
         image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500" 
     },
     { 
@@ -161,6 +162,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
     initHeroSlider();
     initRealtimeCloudSync();
+
+    // التحقق من نتيجة إعادة التوجيه للمصادقة على الهواتف
+    try {
+        const redirectResult = await getRedirectResult(window.auth);
+        if (redirectResult && redirectResult.user) {
+            console.log("✓ تم تسجيل الدخول بنجاح عبر إعادة التوجيه:", redirectResult.user.email);
+        }
+    } catch (err) {
+        console.error("Redirect auth error:", err);
+    }
 
     // 1. تشغيل الخريطة تلقائياً إذا كانت صفحة الخريطة مفتوحة
     if (document.getElementById('leafletMap')) {
@@ -1353,7 +1364,7 @@ function toggleGpsTracking() {
             statusBox.className = "text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold border border-sky-200";
         }
         if(toggleBtn) {
-            toggleBtn.innerText = "بدء بث الموقع الحي 🛰️";
+            toggleBtn.innerText = "بدء بث الموقع الحي 🛰️️";
             toggleBtn.className = "btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer";
         }
     } else {
