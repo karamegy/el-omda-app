@@ -47,26 +47,216 @@ window.firebaseModules = {
 // تثبيت الجلسة محلياً لمنع الخروج التلقائي وحل مشكلة متصفحات الموبايل (Storage Partitioning)
 setPersistence(window.auth, browserLocalPersistence).catch(console.error);
 
-// مراقبة واستعادة جلسة المستخدم تلقائياً بدون تعارض أو طرد
-onAuthStateChanged(window.auth, async (user) => {
-    if (user) {
-        await handleSuccessfulAuthUser(user, false);
-    } else {
-        // حماية الجلسة محلياً لتفادي تأخير استجابة فايربيس الكاش
-        const saved = localStorage.getItem('allaf_logged_user');
-        if (saved && !currentCustomer) {
-            try {
-                currentCustomer = JSON.parse(saved);
-                if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
-                    currentCustomer.role = 'admin';
-                }
-                if (typeof loadCustomerDashboard === 'function') {
-                    loadCustomerDashboard();
-                }
-            } catch(e) {}
+// ==========================================
+// دالة تسجيل الدخول عبر جوجل (محسنة لتتجاوز حظر الموبايل)
+// ==========================================
+window.loginWithGoogle = async function() {
+    if (!window.auth || !window.googleProvider) {
+        alert("جاري تهيئة خدمات فايربيس... يرجى الانتظار ثانية.");
+        return;
+    }
+    try {
+        await setPersistence(window.auth, browserLocalPersistence);
+        
+        // التحقق من نوع الجهاز (هاتف محمول أم كمبيوتر)
+        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobileDevice) {
+            // استخدام Redirect للموبايل لتجنب حظر الـ Popups
+            await signInWithRedirect(window.auth, window.googleProvider);
+        } else {
+            // استخدام Popup لأجهزة الكمبيوتر
+            const result = await signInWithPopup(window.auth, window.googleProvider);
+            if (result && result.user) {
+                await handleSuccessfulAuthUser(result.user, true);
+            }
+        }
+    } catch (error) {
+        console.error("Google Auth Error:", error);
+        try {
+            await signInWithRedirect(window.auth, window.googleProvider);
+        } catch (redirectError) {
+            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + redirectError.message);
         }
     }
+};
+
+window.loginByPhoneQuick = async function() {
+    const phoneInput = document.getElementById('quick-phone-input');
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    
+    if (!phone || phone.length < 10) {
+        alert('من فضلك أدخل رقم هاتف صحيح ومكون من 10 أرقام على الأقل!');
+        return;
+    }
+
+    const userObj = {
+        name: 'عميل العلاف (هاتف)',
+        email: phone + '@allaf.local',
+        phone: phone,
+        role: 'customer',
+        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        provider: 'Phone Quick Auth',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    const docId = 'phone_' + phone.replace(/[^a-zA-Z0-9]/g, '_');
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", docId), 
+                userObj, 
+                { merge: true }
+            );
+        } catch (e) {}
+    }
+
+    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+    currentCustomer = userObj;
+    loadCustomerDashboard();
+    alert(`✓ أهلاً بك يا صاحب الرقم ${phone} في تطبيق العلاف 🌾`);
+};
+
+window.customerLogout = async function() {
+    try {
+        if (window.auth) {
+            await signOut(window.auth);
+        }
+        localStorage.removeItem('allaf_logged_user');
+        currentCustomer = null;
+        
+        const dash = document.getElementById('customer-dashboard');
+        const loginBox = document.getElementById('unified-login-box');
+        if (dash) dash.classList.add('hidden');
+        if (loginBox) loginBox.style.display = 'block';
+        
+        const adminNavBtn = document.getElementById('adminNavBtn');
+        const adminPanelLink = document.getElementById('adminPanelLink');
+        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        if (adminPanelLink) adminPanelLink.style.display = 'none';
+        
+        alert('تم تسجيل الخروج بنجاح.');
+    } catch (e) {}
+};
+
+async function handleSuccessfulAuthUser(user, showAlert = false) {
+    const email = user.email ? user.email.toLowerCase() : '';
+    if (!email) return;
+
+    let userRole = 'customer';
+    if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+        userRole = 'admin';
+    }
+
+    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+    if (window.db && window.firebaseModules && userRole !== 'admin') {
+        try {
+            const userDoc = await window.firebaseModules.getDoc(
+                window.firebaseModules.doc(window.db, "users", docId)
+            );
+            if (userDoc.exists()) {
+                userRole = userDoc.data().role || 'customer';
+                if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                    userRole = 'admin';
+                }
+            }
+        } catch(e) {}
+    }
+
+    const userObj = {
+        name: user.displayName || 'عميل العلاف المميز',
+        email: email,
+        phone: user.phoneNumber || 'غير مدخل',
+        role: userRole,
+        photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        provider: 'Google Auth',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", docId), 
+                userObj, 
+                { merge: true }
+            );
+        } catch (e) {}
+    }
+
+    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+    currentCustomer = userObj;
+    loadCustomerDashboard();
+    
+    if (showAlert) {
+        alert(`✓ تم تسجيل الدخول بنجاح يا ${userObj.name} عبر Google! 🌾`);
+    }
+}
+
+// ==========================================
+// تهيئة التطبيق الذكية عند الفتح
+// ==========================================
+document.addEventListener('DOMContentLoaded', async () => {
+    checkSavedUserSession();
+    
+    // التحقق من نتيجة التوجيه (مهم جداً لعمل الدخول على الموبايل عبر Redirect)
+    if (window.auth) {
+        try {
+            const redirectResult = await getRedirectResult(window.auth);
+            if (redirectResult && redirectResult.user) {
+                await handleSuccessfulAuthUser(redirectResult.user, true);
+            }
+        } catch (err) {
+            console.error("Redirect auth error:", err);
+        }
+    }
+
+    renderMenu();
+    updateCartUI();
+    initHeroSlider();
+    initRealtimeCloudSync();
+
+    if (document.getElementById('leafletMap')) {
+        checkUserPermissions();
+        initLeafletMap();
+        initRealtimeMapData();
+    }
+
+    if (document.getElementById('kitchen-orders-grid')) {
+        if (checkKitchenAccessSecurity()) {
+            loadKitchenOrdersFromLocal();
+            initRealtimeKitchenSync();
+        }
+    }
+
+    if (document.getElementById('admin-dashboard')) {
+        if (localStorage.getItem('allaf_logged_user')) {
+            loadAdminDashboard();
+        }
+    }
+
+    if (document.getElementById('product-detail-container')) {
+        initProductDetailsPage();
+    }
+
+    if (document.getElementById('user-reward-points')) {
+        initRewardsPage();
+    }
 });
+
+function checkSavedUserSession() {
+    try {
+        const saved = localStorage.getItem('allaf_logged_user');
+        if (saved) {
+            currentCustomer = JSON.parse(saved);
+            if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
+                currentCustomer.role = 'admin';
+            }
+            loadCustomerDashboard();
+        }
+    } catch (e) {}
+}
 
 // ==========================================
 // بيانات أعلاف العلاف والحبوب الأساسية
@@ -190,208 +380,6 @@ let isPickingLocation = null;
 // ==========================================
 let userRewardPoints = 0;
 let userRewardIdentifier = '';
-
-// ==========================================
-// دوال المصادقة وتسجيل الدخول (تم التحديث لضمان الاستقرار الفوري)
-// ==========================================
-window.loginWithGoogle = async function() {
-    if (!window.auth || !window.googleProvider) {
-        alert("جاري تهيئة خدمات فايربيس... يرجى الانتظار ثانية.");
-        return;
-    }
-    try {
-        await setPersistence(window.auth, browserLocalPersistence);
-        
-        // محاولة استخدام Popup أولاً لتجاوز مشاكل التوجيه وتأمين الدخول السريع
-        try {
-            const result = await signInWithPopup(window.auth, window.googleProvider);
-            if (result && result.user) {
-                await handleSuccessfulAuthUser(result.user, true);
-                return;
-            }
-        } catch (popupErr) {
-            console.log("Popup blocked or failed, falling back to redirect:", popupErr);
-            // لو الـ Popup تم حظره، يتم التحويل تلقائياً إلى الـ Redirect كبديل آمن
-            await signInWithRedirect(window.auth, window.googleProvider);
-        }
-    } catch (error) {
-        console.error("Google Auth Error:", error);
-        alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
-    }
-};
-
-window.loginByPhoneQuick = async function() {
-    const phoneInput = document.getElementById('quick-phone-input');
-    const phone = phoneInput ? phoneInput.value.trim() : '';
-    
-    if (!phone || phone.length < 10) {
-        alert('من فضلك أدخل رقم هاتف صحيح ومكون من 10 أرقام على الأقل!');
-        return;
-    }
-
-    const userObj = {
-        name: 'عميل العلاف (هاتف)',
-        email: phone + '@allaf.local',
-        phone: phone,
-        role: 'customer',
-        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-        provider: 'Phone Quick Auth',
-        date: new Date().toLocaleString('ar-EG')
-    };
-
-    const docId = 'phone_' + phone.replace(/[^a-zA-Z0-9]/g, '_');
-
-    if (window.db && window.firebaseModules) {
-        try {
-            await window.firebaseModules.setDoc(
-                window.firebaseModules.doc(window.db, "users", docId), 
-                userObj, 
-                { merge: true }
-            );
-        } catch (e) {}
-    }
-
-    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-    currentCustomer = userObj;
-    loadCustomerDashboard();
-    alert(`✓ أهلاً بك يا صاحب الرقم ${phone} في تطبيق العلاف 🌾`);
-};
-
-window.customerLogout = async function() {
-    try {
-        if (window.auth) {
-            await signOut(window.auth);
-        }
-        localStorage.removeItem('allaf_logged_user');
-        currentCustomer = null;
-        
-        const dash = document.getElementById('customer-dashboard');
-        const loginBox = document.getElementById('unified-login-box');
-        if (dash) dash.classList.add('hidden');
-        if (loginBox) loginBox.style.display = 'block';
-        
-        const adminNavBtn = document.getElementById('adminNavBtn');
-        const adminPanelLink = document.getElementById('adminPanelLink');
-        if (adminNavBtn) adminNavBtn.classList.add('hidden');
-        if (adminPanelLink) adminPanelLink.style.display = 'none';
-        
-        alert('تم تسجيل الخروج بنجاح.');
-    } catch (e) {}
-};
-
-async function handleSuccessfulAuthUser(user, showAlert = false) {
-    const email = user.email ? user.email.toLowerCase() : '';
-    if (!email) return;
-
-    let userRole = 'customer';
-    if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-        userRole = 'admin';
-    }
-
-    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-    if (window.db && window.firebaseModules && userRole !== 'admin') {
-        try {
-            const userDoc = await window.firebaseModules.getDoc(
-                window.firebaseModules.doc(window.db, "users", docId)
-            );
-            if (userDoc.exists()) {
-                userRole = userDoc.data().role || 'customer';
-                if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                    userRole = 'admin';
-                }
-            }
-        } catch(e) {}
-    }
-
-    const userObj = {
-        name: user.displayName || 'عميل العلاف المميز',
-        email: email,
-        phone: user.phoneNumber || 'غير مدخل',
-        role: userRole,
-        photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-        provider: 'Google Auth',
-        date: new Date().toLocaleString('ar-EG')
-    };
-
-    if (window.db && window.firebaseModules) {
-        try {
-            await window.firebaseModules.setDoc(
-                window.firebaseModules.doc(window.db, "users", docId), 
-                userObj, 
-                { merge: true }
-            );
-        } catch (e) {}
-    }
-
-    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-    currentCustomer = userObj;
-    loadCustomerDashboard();
-    
-    if (showAlert) {
-        alert(`✓ تم تسجيل الدخول بنجاح يا ${userObj.name} عبر Google! 🌾`);
-    }
-}
-
-// ==========================================
-// تهيئة التطبيق الذكية عند الفتح
-// ==========================================
-document.addEventListener('DOMContentLoaded', async () => {
-    checkSavedUserSession();
-    renderMenu();
-    updateCartUI();
-    initHeroSlider();
-    initRealtimeCloudSync();
-
-    try {
-        const redirectResult = await getRedirectResult(window.auth);
-        if (redirectResult && redirectResult.user) {
-            await handleSuccessfulAuthUser(redirectResult.user, true);
-        }
-    } catch (err) {
-        console.error("Redirect auth error:", err);
-    }
-
-    if (document.getElementById('leafletMap')) {
-        checkUserPermissions();
-        initLeafletMap();
-        initRealtimeMapData();
-    }
-
-    if (document.getElementById('kitchen-orders-grid')) {
-        if (checkKitchenAccessSecurity()) {
-            loadKitchenOrdersFromLocal();
-            initRealtimeKitchenSync();
-        }
-    }
-
-    if (document.getElementById('admin-dashboard')) {
-        if (localStorage.getItem('allaf_logged_user')) {
-            loadAdminDashboard();
-        }
-    }
-
-    if (document.getElementById('product-detail-container')) {
-        initProductDetailsPage();
-    }
-
-    if (document.getElementById('user-reward-points')) {
-        initRewardsPage();
-    }
-});
-
-function checkSavedUserSession() {
-    try {
-        const saved = localStorage.getItem('allaf_logged_user');
-        if (saved) {
-            currentCustomer = JSON.parse(saved);
-            if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
-                currentCustomer.role = 'admin';
-            }
-            loadCustomerDashboard();
-        }
-    } catch (e) {}
-}
 
 // ==========================================
 // التنقل بين الأقسام الرئيسية
