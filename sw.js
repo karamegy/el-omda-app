@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v25'; // تحديث رقم الاصدار لتفريغ الكاش القديم
+const CACHE_NAME = 'allaf-feeds-v26'; // تحديث رقم الإصدار لتفريغ الكاش القديم
 const assetsToCache = [
   './',
   './index.html',
@@ -21,7 +21,7 @@ const assetsToCache = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      console.log('🌾 جاري تحديث وتخزين ملفات تطبيق العلاف لتجارة وتوريد الأعلاف...');
+      console.log('🌾 جاري تحديث وتخزين ملفات تطبيق العلاف...');
       return cache.addAll(assetsToCache);
     })
   );
@@ -45,7 +45,7 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// جلب الملفات مع معالجة ذكية لضمان عدم ضياع بيانات مصادقة جوجل
+// جلب الملفات مع معالجة ذكية لضمان عمل الـ PWA ومعاملات البحث بسلاسة
 self.addEventListener('fetch', event => {
   const reqUrl = new URL(event.request.url);
 
@@ -57,17 +57,17 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 2. إذا كان الطلب عبارة عن إعادة توجيه من جوجل أو صفحة تنقل، استخدم Network-First لضمان وصول الرموز
+  // 2. إذا كان الطلب عبارة عن إعادة توجيه من جوجل أو صفحة تنقل
   if (event.request.mode === 'navigate' || reqUrl.search.includes('code=') || reqUrl.search.includes('state=')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match('./index.html'))
+      fetch(event.request).catch(() => caches.match('./index.html', { ignoreSearch: true }))
     );
     return;
   }
 
-  // 3. باقي الملفات الثابتة تسحب من الكاش مع التحديث العادي
+  // 3. باقي الملفات الثابتة تسحب من الكاش مع تجاهل معاملات البحث لضمان عدم فشل الـ start_url والـ IDs
   event.respondWith(
-    caches.match(event.request).then(response => {
+    caches.match(event.request, { ignoreSearch: true }).then(response => {
       return response || fetch(event.request);
     })
   );
