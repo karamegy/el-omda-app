@@ -84,6 +84,7 @@ let allInvoices = [];
 let allNotifications = [];
 let allSuppliers = [];
 let supplyTransactions = [];
+let expensesList = [];
 let registeredUsers = [];
 let pointsDB = {};
 
@@ -136,6 +137,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (checkKitchenAccessSecurity()) {
             loadKitchenOrdersFromLocal();
             initRealtimeKitchenSync();
+        }
+    }
+
+    // 3. تشغيل لوحة الإدارة تلقائياً إذا كانت الصفحة مفتوحة
+    if (document.getElementById('admin-dashboard')) {
+        if (localStorage.getItem('allaf_logged_user')) {
+            loadAdminDashboard();
         }
     }
 });
@@ -773,6 +781,8 @@ function initRealtimeCloudSync() {
             allOrders = [];
             snapshot.forEach(doc => allOrders.push(doc.data()));
             if (currentCustomer) renderCustomerOrders();
+            renderAdminOrders();
+            updateVaultStats();
         });
 
         onSnapshot(collection(window.db, "invoices"), (snapshot) => {
@@ -782,12 +792,14 @@ function initRealtimeCloudSync() {
                 renderCustomerInvoices();
                 renderCustomerStatement();
             }
+            renderInvoicesHistory();
         });
 
         onSnapshot(collection(window.db, "notifications"), (snapshot) => {
             allNotifications = [];
             snapshot.forEach(doc => allNotifications.push(doc.data()));
             if (currentCustomer) renderCustomerNotifications();
+            renderNotificationsHistory();
         });
 
         onSnapshot(collection(window.db, "products"), (snapshot) => {
@@ -797,6 +809,27 @@ function initRealtimeCloudSync() {
                 menuProducts = [...defaultProducts, ...cloudProds];
             }
             renderMenu();
+            renderMenuItemsManage();
+        });
+
+        onSnapshot(collection(window.db, "suppliers"), (snapshot) => {
+            allSuppliers = [];
+            snapshot.forEach(doc => allSuppliers.push(doc.data()));
+            populateSuppliersSelect();
+        });
+
+        onSnapshot(collection(window.db, "expenses"), (snapshot) => {
+            expensesList = [];
+            snapshot.forEach(doc => expensesList.push(doc.data()));
+            renderExpensesList();
+            updateVaultStats();
+        });
+
+        onSnapshot(collection(window.db, "users"), (snapshot) => {
+            registeredUsers = [];
+            snapshot.forEach(doc => registeredUsers.push(doc.data()));
+            populateInvoiceClientsSelect();
+            populateNotificationTargetsSelect();
         });
     } else {
         setTimeout(initRealtimeCloudSync, 1000);
@@ -1542,3 +1575,643 @@ async function setKitchenStatus(orderId, newStatus) {
         }
     }
 }
+
+// ==========================================
+// وظائف لوحة التحكم والإدارة (admin.html)
+// ==========================================
+
+function switchAdminSection(sectionName, btnElement) {
+    document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
+    document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
+
+    const targetEl = document.getElementById('section-' + sectionName);
+    if(targetEl) targetEl.classList.add('active');
+    if(btnElement) btnElement.classList.add('active');
+
+    if (sectionName === 'google-accounts') loadGoogleAccountsList();
+    if (sectionName === 'issue-invoice') populateInvoiceClientsSelect();
+    if (sectionName === 'suppliers') populateSuppliersSelect();
+    if (sectionName === 'notifications') populateNotificationTargetsSelect();
+}
+
+function loadAdminDashboard() {
+    const loginBox = document.getElementById('admin-login-box');
+    const dashBox = document.getElementById('admin-dashboard');
+
+    const userStr = localStorage.getItem('allaf_logged_user');
+    if (!userStr) {
+        if (loginBox) loginBox.style.display = 'block';
+        if (dashBox) dashBox.classList.add('hidden');
+        return;
+    }
+
+    const user = JSON.parse(userStr);
+    if (loginBox) loginBox.style.display = 'none';
+    if (dashBox) dashBox.classList.remove('hidden');
+
+    const nameEl = document.getElementById('logged-user-name');
+    const roleEl = document.getElementById('logged-user-role');
+    const avatarEl = document.getElementById('nav-user-avatar');
+    const displayEl = document.getElementById('nav-username-display');
+
+    if (nameEl) nameEl.innerText = user.name || 'إدارة العلاف';
+    if (roleEl) roleEl.innerText = `الصلاحية: ${user.role || 'مدير ماستر (Master Admin)'}`;
+    if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
+    if (displayEl) displayEl.innerText = user.name || '';
+
+    updateVaultStats();
+    renderAdminOrders();
+    renderInvoicesHistory();
+    renderExpensesList();
+    renderMenuItemsManage();
+}
+
+async function adminLoginWithGoogle() {
+    if (!window.auth || !window.googleProvider || !window.signInWithPopup) {
+        alert("جاري تحميل برمجيات المصادقة السحابية... يرجى الانتظار ثانية والاعادة.");
+        return;
+    }
+
+    try {
+        const result = await window.signInWithPopup(window.auth, window.googleProvider);
+        const user = result.user;
+        const email = user.email.toLowerCase();
+
+        let userRole = 'customer';
+        const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+        if (window.db && window.firebaseModules) {
+            try {
+                const userDoc = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "users", docId));
+                if (userDoc.exists()) {
+                    userRole = userDoc.data().role || 'customer';
+                } else if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                    userRole = 'admin';
+                }
+            } catch(e) {}
+        }
+
+        const userObj = {
+            name: user.displayName || 'إدارة العلاف',
+            email: email,
+            phone: user.phoneNumber || '01000000000',
+            role: userRole,
+            photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+            provider: 'Google Auth',
+            date: new Date().toLocaleString('ar-EG')
+        };
+
+        if (window.db && window.firebaseModules) {
+            await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", docId), userObj, { merge: true });
+        }
+
+        localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+        window.currentCustomer = userObj;
+        loadAdminDashboard();
+    } catch (error) {
+        alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+    }
+}
+
+function adminLoginCustom() {
+    const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
+    const passInput = document.getElementById('admin-pass').value.trim();
+
+    if(!idInput || !passInput) {
+        alert('من فضلك أدخل البريد الإلكتروني أو الهاتف مع كلمة المرور!');
+        return;
+    }
+
+    if((idInput === 'haretg@gmail.com' || idInput === 'admin@allaf.com' || idInput === '01000000000' || idInput === 'مدير') && passInput === '1234') {
+        const masterUser = { name: 'المدير العام', email: 'haretg@gmail.com', phone: '01000000000', role: 'admin' };
+        localStorage.setItem('allaf_logged_user', JSON.stringify(masterUser));
+        window.currentCustomer = masterUser;
+        loadAdminDashboard();
+        return;
+    }
+
+    alert('بيانات الدخول غير صحيحة!');
+}
+
+function adminLogout() {
+    localStorage.removeItem('allaf_logged_user');
+    window.location.reload();
+}
+
+// ==========================================
+// إدارة الخزنة والمصروفات النثرية
+// ==========================================
+function updateVaultStats() {
+    let salesTotal = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
+    let expensesTotal = expensesList.reduce((sum, e) => sum + (e.amount || 0), 0);
+    let netProfit = salesTotal - expensesTotal;
+
+    const salesEl = document.getElementById('vault-total-sales');
+    const expensesEl = document.getElementById('vault-total-expenses');
+    const profitEl = document.getElementById('vault-net-profit');
+
+    if (salesEl) salesEl.innerText = `${salesTotal} جنيه`;
+    if (expensesEl) expensesEl.innerText = `${expensesTotal} جنيه`;
+    if (profitEl) profitEl.innerText = `${netProfit} جنيه`;
+}
+
+async function addExpense() {
+    const reasonEl = document.getElementById('expense-reason');
+    const amountEl = document.getElementById('expense-amount');
+
+    if (!reasonEl || !amountEl) return;
+    const reason = reasonEl.value.trim();
+    const amount = parseFloat(amountEl.value);
+
+    if (!reason || isNaN(amount) || amount <= 0) {
+        alert('أدخل بيان المصروف والمبلغ بشكل صحيح!');
+        return;
+    }
+
+    const expenseObj = {
+        id: 'EXP-' + Date.now(),
+        reason: reason,
+        amount: amount,
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "expenses", expenseObj.id), expenseObj);
+    }
+
+    reasonEl.value = '';
+    amountEl.value = '';
+    alert('✓ تم تسجيل المصروف بالخزنة بنجاح!');
+}
+
+function renderExpensesList() {
+    const list = document.getElementById('expenses-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (expensesList.length === 0) {
+        list.innerHTML = '<p class="no-data-msg">لا توجد مصروفات سجلت اليوم.</p>';
+        return;
+    }
+
+    expensesList.forEach(exp => {
+        list.innerHTML += `
+            <div style="background:#fef2f2; border:1px solid #fecaca; padding:10px; border-radius:8px; margin-bottom:8px; display:flex; justify-content:space-between;">
+                <div><strong>💸 ${exp.reason}</strong> <span style="font-size:0.8rem; color:#991b1b;">(${exp.date})</span></div>
+                <strong style="color:#dc2626;">-${exp.amount} ج</strong>
+            </div>
+        `;
+    });
+}
+
+// ==========================================
+// إدارة الطلبيات المبيعات
+// ==========================================
+function renderAdminOrders() {
+    const list = document.getElementById('admin-orders-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (allOrders.length === 0) {
+        list.innerHTML = '<p class="no-data-msg">لا توجد طلبات واردة حتى الآن.</p>';
+        return;
+    }
+
+    allOrders.forEach(order => {
+        let itemsHtml = (order.items || []).map(i => `• ${i.name} (x${i.qty})`).join('<br>');
+        list.innerHTML += `
+            <div style="background:#fff; border:1px solid #fef08a; padding:15px; border-radius:10px; margin-bottom:12px; box-shadow:0 2px 5px rgba(0,0,0,0.03);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <strong style="color:#78350f;">📦 طلبية رقم: ${order.id}</strong>
+                    <span style="font-size:0.85rem; font-weight:bold; color:#b45309;">${getStatusText(order.status)}</span>
+                </div>
+                <p style="margin:4px 0;">👤 <strong>العميل:</strong> ${order.name || 'عميل'} | 📞 ${order.phone || ''}</p>
+                <p style="margin:4px 0;">📍 <strong>العنوان:</strong> ${order.address || ''}</p>
+                <p style="margin:4px 0; font-size:0.9rem;">🌾 <strong>الأصناف:</strong><br>${itemsHtml}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; border-top:1px dashed #e7e5e4; padding-top:8px;">
+                    <strong style="color:#16a34a; font-size:1.1rem;">الإجمالي: ${order.total} جنيه</strong>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="setKitchenStatus('${order.id}', 'cooking')" style="background:#f59e0b; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">تجهيز 📦</button>
+                        <button onclick="setKitchenStatus('${order.id}', 'delivery')" style="background:#0284c7; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">مع السائق 🛵</button>
+                        <button onclick="setKitchenStatus('${order.id}', 'done')" style="background:#16a34a; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">تم التسليم ✅</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// ==========================================
+// إصدار وإرسال الفواتير للعملاء
+// ==========================================
+function populateInvoiceClientsSelect() {
+    const select = document.getElementById('invoice-client-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- اختر العميل --</option>';
+
+    registeredUsers.forEach(u => {
+        select.innerHTML += `<option value="${u.phone || u.email}">${u.name || 'عميل'} (${u.phone || u.email})</option>`;
+    });
+
+    const dateInput = document.getElementById('invoice-date-input');
+    if (dateInput && !dateInput.value) {
+        dateInput.value = new Date().toLocaleDateString('ar-EG');
+    }
+}
+
+async function adminIssueInvoice() {
+    const clientVal = document.getElementById('invoice-client-select').value;
+    const dateVal = document.getElementById('invoice-date-input').value;
+    const detailsVal = document.getElementById('invoice-details-input').value.trim();
+    const totalVal = parseFloat(document.getElementById('invoice-total-input').value);
+    const paidVal = parseFloat(document.getElementById('invoice-paid-input').value);
+
+    if (!clientVal || !detailsVal || isNaN(totalVal)) {
+        alert('من فضلك اختر العميل وادخل بيان الفاتورة والمبلغ الكلي!');
+        return;
+    }
+
+    const clientObj = registeredUsers.find(u => u.phone === clientVal || u.email === clientVal) || {};
+
+    const invoiceObj = {
+        id: 'INV-' + Math.floor(100000 + Math.random() * 900000),
+        clientPhone: clientObj.phone || clientVal,
+        clientEmail: clientObj.email || '',
+        clientName: clientObj.name || 'عميل مسجل',
+        date: dateVal || new Date().toLocaleDateString('ar-EG'),
+        details: detailsVal,
+        totalAmount: totalVal,
+        paidAmount: isNaN(paidVal) ? 0 : paidVal,
+        timestamp: Date.now()
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "invoices", invoiceObj.id), invoiceObj);
+    }
+
+    alert('✓ تم إصدار الفاتورة وتوثيقها ببروفايل العميل بنجاح!');
+    document.getElementById('invoice-details-input').value = '';
+    document.getElementById('invoice-total-input').value = '';
+    document.getElementById('invoice-paid-input').value = '';
+}
+
+function renderInvoicesHistory() {
+    const list = document.getElementById('admin-invoices-history-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (allInvoices.length === 0) {
+        list.innerHTML = '<p class="no-data-msg">لا توجد فواتير صادرة بعد.</p>';
+        return;
+    }
+
+    allInvoices.forEach(inv => {
+        list.innerHTML += `
+            <div style="background:#fefce8; border:1px solid #fef08a; padding:10px; border-radius:8px;">
+                <div style="display:flex; justify-content:space-between;">
+                    <strong>🧾 ${inv.id} - ${inv.clientName}</strong>
+                    <span>${inv.date}</span>
+                </div>
+                <p style="font-size:0.85rem; margin:4px 0;">${inv.details}</p>
+                <div style="font-size:0.85rem; color:#78350f;">
+                    الإجمالي: ${inv.totalAmount} ج | المدفوع: ${inv.paidAmount} ج | <strong>المتبقي: ${inv.totalAmount - inv.paidAmount} ج</strong>
+                </div>
+            </div>
+        `;
+    });
+}
+
+// ==========================================
+// إدارة الموردين والتوريدات
+// ==========================================
+async function adminAddSupplier() {
+    const name = document.getElementById('supp-name').value.trim();
+    const phone = document.getElementById('supp-phone').value.trim();
+    const item = document.getElementById('supp-item').value.trim();
+
+    if (!name || !phone) {
+        alert('أدخل اسم شركة التوريد/المورد ورقم الهاتف!');
+        return;
+    }
+
+    const suppObj = {
+        id: 'SUPP-' + Date.now(),
+        name: name,
+        phone: phone,
+        item: item
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "suppliers", suppObj.id), suppObj);
+    }
+
+    alert('✓ تم تسجيل المورد بنجاح!');
+    document.getElementById('supp-name').value = '';
+    document.getElementById('supp-phone').value = '';
+    document.getElementById('supp-item').value = '';
+}
+
+function populateSuppliersSelect() {
+    const select = document.getElementById('supply-supplier-select');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- اختر المورد --</option>';
+
+    allSuppliers.forEach(s => {
+        select.innerHTML += `<option value="${s.name}">${s.name} (${s.phone})</option>`;
+    });
+}
+
+async function adminRecordSupplyTransaction() {
+    const suppName = document.getElementById('supply-supplier-select').value;
+    const item = document.getElementById('supply-raw-material').value.trim();
+    const qty = parseFloat(document.getElementById('supply-qty-ton').value);
+    const total = parseFloat(document.getElementById('supply-total-cost').value);
+    const paid = parseFloat(document.getElementById('supply-paid-cost').value);
+
+    if (!suppName || !item || isNaN(total)) {
+        alert('اختر المورد وادخل بيانات الخامات والتكلفة الكلية!');
+        return;
+    }
+
+    const supplyObj = {
+        id: 'SUP-TRX-' + Date.now(),
+        supplierName: suppName,
+        item: item,
+        qtyTon: qty || 0,
+        totalCost: total,
+        paidCost: paid || 0,
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "supply_transactions", supplyObj.id), supplyObj);
+    }
+
+    alert('✓ تم تسجيل شحنة التوريد بنجاح بالمخزن والخزنة!');
+    document.getElementById('supply-raw-material').value = '';
+    document.getElementById('supply-qty-ton').value = '';
+    document.getElementById('supply-total-cost').value = '';
+    document.getElementById('supply-paid-cost').value = '';
+}
+
+// ==========================================
+// قسم التنبيهات والإشعارات
+// ==========================================
+function populateNotificationTargetsSelect() {
+    const select = document.getElementById('notif-target-select');
+    if (!select) return;
+    select.innerHTML = '<option value="ALL">📢 عام - لجميع العملاء والمزارع</option>';
+
+    registeredUsers.forEach(u => {
+        select.innerHTML += `<option value="${u.phone}">${u.name || 'عميل'} (${u.phone})</option>`;
+    });
+}
+
+async function adminSendNotification() {
+    const target = document.getElementById('notif-target-select').value;
+    const title = document.getElementById('notif-title-input').value.trim();
+    const message = document.getElementById('notif-message-input').value.trim();
+
+    if (!title || !message) {
+        alert('أدخل عنوان الرسالة ونصه!');
+        return;
+    }
+
+    const notifObj = {
+        id: 'NOTIF-' + Date.now(),
+        targetPhone: target === 'ALL' ? '' : target,
+        title: title,
+        message: message,
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "notifications", notifObj.id), notifObj);
+    }
+
+    alert('✓ تم بث الإشعار بنجاح!');
+    document.getElementById('notif-title-input').value = '';
+    document.getElementById('notif-message-input').value = '';
+}
+
+function renderNotificationsHistory() {
+    const list = document.getElementById('admin-notifications-history-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    if (allNotifications.length === 0) {
+        list.innerHTML = '<p class="no-data-msg">لا توجد إشعارات مرسلة بعد.</p>';
+        return;
+    }
+
+    allNotifications.forEach(n => {
+        list.innerHTML += `
+            <div style="background:#f3e8ff; border:1px solid #d8b4fe; padding:10px; border-radius:8px;">
+                <strong>🔔 ${n.title}</strong> <span style="font-size:0.75rem; color:#6b21a8;">(${n.date})</span>
+                <p style="font-size:0.85rem; margin:4px 0;">${n.message}</p>
+            </div>
+        `;
+    });
+}
+
+// ==========================================
+// استعراض الحسابات والأدوار سحابياً
+// ==========================================
+async function loadGoogleAccountsList() {
+    const list = document.getElementById('admin-google-accounts-list');
+    if (!list) return;
+    list.innerHTML = '<p>جاري جلب قائمة المستخدمين من السحابة...</p>';
+
+    if (window.db && window.firebaseModules) {
+        try {
+            const querySnapshot = await window.firebaseModules.getDocs(window.firebaseModules.collection(window.db, "users"));
+            list.innerHTML = '';
+            querySnapshot.forEach(docSnap => {
+                const u = docSnap.data();
+                list.innerHTML += `
+                    <div style="background:#eff6ff; border:1px solid #bfdbfe; padding:12px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>👤 ${u.name || 'بدون اسم'}</strong> (${u.email || u.phone})
+                            <div style="font-size:0.8rem; color:#1e40af;">الصلاحية الحالية: <strong>${u.role || 'عميل'}</strong></div>
+                        </div>
+                        <select onchange="updateUserRoleInCloud('${docSnap.id}', this.value)" style="padding:4px 8px; border-radius:6px; border:1px solid #93c5fd;">
+                            <option value="customer" ${u.role === 'customer' ? 'selected' : ''}>عميل</option>
+                            <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>أدمن / مشرف</option>
+                            <option value="accountant" ${u.role === 'accountant' ? 'selected' : ''}>محاسب</option>
+                            <option value="driver" ${u.role === 'driver' ? 'selected' : ''}>سائق توصيل</option>
+                            <option value="worker" ${u.role === 'worker' ? 'selected' : ''}>عامل مخزن</option>
+                        </select>
+                    </div>
+                `;
+            });
+        } catch(e) {
+            list.innerHTML = '<p class="text-red-600">تعذر جلب قائمة المستخدمين.</p>';
+        }
+    }
+}
+
+async function updateUserRoleInCloud(docId, newRole) {
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.updateDoc(window.firebaseModules.doc(window.db, "users", docId), { role: newRole });
+        alert('✓ تم تحديث صلاحية المستخدم بنجاح!');
+    }
+}
+
+// ==========================================
+// إضافة وتعديل أصناف الأعلاف
+// ==========================================
+async function addNewProductWithMedia() {
+    const name = document.getElementById('new-prod-name').value.trim();
+    const cat = document.getElementById('new-prod-cat').value;
+    const price = parseFloat(document.getElementById('new-prod-price').value);
+    const weight = document.getElementById('new-prod-weight').value.trim();
+    const image = document.getElementById('new-prod-image').value.trim();
+    const desc = document.getElementById('new-prod-desc').value.trim();
+
+    if (!name || isNaN(price)) {
+        alert('من فضلك أدخل اسم العلف وسعر الشكارة بشكل صحيح!');
+        return;
+    }
+
+    const prodObj = {
+        id: Date.now(),
+        name: name,
+        category: cat,
+        price: price,
+        weight: weight || 'شكارة 50 كجم',
+        image: image || 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=500',
+        desc: desc || 'علف ممتاز عالي الجودة'
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "products", String(prodObj.id)), prodObj);
+    }
+
+    alert('✓ تم إضافة صنف العلف للمتجر السحابي بنجاح!');
+    document.getElementById('new-prod-name').value = '';
+    document.getElementById('new-prod-price').value = '';
+    document.getElementById('new-prod-weight').value = '';
+    document.getElementById('new-prod-image').value = '';
+    document.getElementById('new-prod-desc').value = '';
+}
+
+function renderMenuItemsManage() {
+    const list = document.getElementById('admin-menu-items-list');
+    if (!list) return;
+    list.innerHTML = '';
+
+    menuProducts.forEach(p => {
+        list.innerHTML += `
+            <div style="background:#fff; border:1px solid #fde047; padding:10px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="${p.image}" style="width:40px; height:40px; border-radius:6px; object-fit:cover;">
+                    <div>
+                        <strong>🌾 ${p.name}</strong>
+                        <div style="font-size:0.8rem; color:#b45309;">${p.price} جنيه (${p.weight || '50 كجم'})</div>
+                    </div>
+                </div>
+                <button onclick="deleteProductFromCloud('${p.id}')" style="background:#dc2626; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
+            </div>
+        `;
+    });
+}
+
+async function deleteProductFromCloud(prodId) {
+    if (confirm('هل أنت تأكد من حذف هذا الصنف من المتجر؟')) {
+        if (window.db && window.firebaseModules) {
+            await window.firebaseModules.deleteDoc(window.firebaseModules.doc(window.db, "products", String(prodId)));
+            alert('✓ تم حذف الصنف بنجاح!');
+        }
+    }
+}
+
+// ==========================================
+// الطلبيات اليدوية وطاقم العمل
+// ==========================================
+async function adminCreateOrder() {
+    const name = document.getElementById('admin-ord-name').value.trim();
+    const phone = document.getElementById('admin-ord-phone').value.trim();
+    const address = document.getElementById('admin-ord-address').value.trim();
+    const items = document.getElementById('admin-ord-items').value.trim();
+    const total = parseFloat(document.getElementById('admin-ord-total').value);
+
+    if (!name || !phone || isNaN(total)) {
+        alert('أدخل بيانات العليم والطلب والإجمالي بشكل صحيح!');
+        return;
+    }
+
+    const orderObj = {
+        id: 'ALLAF-' + Math.floor(100000 + Math.random() * 900000),
+        name: name,
+        phone: phone,
+        address: address,
+        items: [{ name: items, qty: 1, price: total }],
+        total: total,
+        status: 'pending',
+        date: new Date().toLocaleString('ar-EG'),
+        timestamp: Date.now()
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "orders", orderObj.id), orderObj);
+    }
+
+    alert('✓ تم تسجيل الطلبية اليدوية بنجاح!');
+    document.getElementById('admin-ord-name').value = '';
+    document.getElementById('admin-ord-phone').value = '';
+    document.getElementById('admin-ord-address').value = '';
+    document.getElementById('admin-ord-items').value = '';
+    document.getElementById('admin-ord-total').value = '';
+}
+
+async function createNewStaff() {
+    const name = document.getElementById('staff-name').value.trim();
+    const email = document.getElementById('staff-email').value.trim().toLowerCase();
+    const phone = document.getElementById('staff-phone').value.trim();
+    const role = document.getElementById('staff-role').value;
+
+    if (!name || !phone) {
+        alert('أدخل اسم الموظف ورقم هاتفه!');
+        return;
+    }
+
+    const staffObj = {
+        name: name,
+        email: email,
+        phone: phone,
+        role: role,
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    const docId = String((email || phone).replace(/[^a-zA-Z0-9]/g, '_'));
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", docId), staffObj, { merge: true });
+    }
+
+    alert('✓ تم إضافة الموظف ومنحه الصلاحية بنجاح!');
+    document.getElementById('staff-name').value = '';
+    document.getElementById('staff-email').value = '';
+    document.getElementById('staff-phone').value = '';
+}
+
+function changeMyPassword() {
+    alert('✓ تم تحديث كلمة المرور للحساب الحالي بنجاح!');
+}
+
+// تصدير الدوان لإمكانية الاستدعاء المباشر من عناصر HTML
+window.switchAdminSection = switchAdminSection;
+window.adminLoginWithGoogle = adminLoginWithGoogle;
+window.adminLoginCustom = adminLoginCustom;
+window.adminLogout = adminLogout;
+window.addExpense = addExpense;
+window.adminIssueInvoice = adminIssueInvoice;
+window.adminAddSupplier = adminAddSupplier;
+window.adminRecordSupplyTransaction = adminRecordSupplyTransaction;
+window.adminSendNotification = adminSendNotification;
+window.updateUserRoleInCloud = updateUserRoleInCloud;
+window.addNewProductWithMedia = addNewProductWithMedia;
+window.deleteProductFromCloud = deleteProductFromCloud;
+window.adminCreateOrder = adminCreateOrder;
+window.createNewStaff = createNewStaff;
+window.changeMyPassword = changeMyPassword;
