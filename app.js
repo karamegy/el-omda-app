@@ -189,7 +189,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول المعرفة بـ window
+// دوال المصادقة وتسجيل الدخول (المحدثة لتجاوز internal-error)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -198,19 +198,25 @@ window.loginWithGoogle = async function() {
     }
     try {
         await setPersistence(window.auth, browserLocalPersistence);
-        const result = await signInWithPopup(window.auth, window.googleProvider);
-        if (result && result.user) {
-            await handleSuccessfulAuthUser(result.user, true);
+        
+        // التحقق مما إذا كان الجهاز موبايل لتجنب فشل الـ Popup والـ internal-error
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            await signInWithRedirect(window.auth, window.googleProvider);
+        } else {
+            const result = await signInWithPopup(window.auth, window.googleProvider);
+            if (result && result.user) {
+                await handleSuccessfulAuthUser(result.user, true);
+            }
         }
     } catch (error) {
-        if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-            try {
-                await signInWithRedirect(window.auth, window.googleProvider);
-            } catch (err) {
-                alert("حدث خطأ أثناء إعادة التوجيه: " + err.message);
-            }
-        } else {
-            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+        console.error("Google Auth Error:", error);
+        // التحويل التلقائي لـ Redirect في حال حدوث أي خطأ بالـ Popup
+        try {
+            await signInWithRedirect(window.auth, window.googleProvider);
+        } catch (err) {
+            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + err.message);
         }
     }
 };
