@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v16'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
+const CACHE_NAME = 'allaf-feeds-v17'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
 const assetsToCache = [
   './',
   './index.html',
@@ -13,7 +13,8 @@ const assetsToCache = [
   './style.css',
   './app.js',
   './manifest.json',
-  './icon1-512.png'
+  './icon1-512.png',
+   './icon1-192.png',
 ];
 
 // تثبيت السيرفر ووركر وتخزين ملفات تطبيق العلاف
