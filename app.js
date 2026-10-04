@@ -1,10 +1,10 @@
 // ==========================================
-// استيراد مكتبات فايربيس الموحدة بالإصدار 10.12.0 لتجنب أي تضارب في المتصفح
+// استيراد مكتبات فايربيس الموحدة بالإصدار 10.12.0
 // ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // إعدادات فايربيس الخاصة بتطبيق العلاف
 const firebaseConfig = {
@@ -21,7 +21,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-// ربط النطاق العام ليعمل مع باقي وظائف التطبيق (قاعدة البيانات والمصادقة)
+// ربط النطاق العام ليعمل مع باقي وظائف التطبيق
 window.db = getFirestore(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
@@ -156,6 +156,129 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
+// دوال المصادقة وتسجيل الدخول المعرفة بـ window (حل جذري للأزرار)
+// ==========================================
+window.loginWithGoogle = async function() {
+    if (!window.auth || !window.googleProvider) {
+        alert("جاري تهيئة خدمات فايربيس... يرجى الانتظار ثانية.");
+        return;
+    }
+    try {
+        await signInWithRedirect(window.auth, window.googleProvider);
+    } catch (error) {
+        try {
+            const result = await signInWithPopup(window.auth, window.googleProvider);
+            if (result && result.user) {
+                await handleSuccessfulAuthUser(result.user);
+            }
+        } catch (err) {
+            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + err.message);
+        }
+    }
+};
+
+window.loginByPhoneQuick = async function() {
+    const phoneInput = document.getElementById('quick-phone-input');
+    const phone = phoneInput ? phoneInput.value.trim() : '';
+    
+    if (!phone || phone.length < 10) {
+        alert('من فضلك أدخل رقم هاتف صحيح ومكون من 10 أرقام على الأقل!');
+        return;
+    }
+
+    const userObj = {
+        name: 'عميل العلاف (هاتف)',
+        email: phone + '@allaf.local',
+        phone: phone,
+        role: 'customer',
+        photoURL: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        provider: 'Phone Quick Auth',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    const docId = 'phone_' + phone.replace(/[^a-zA-Z0-9]/g, '_');
+
+    if (window.db && window.firebaseModules) {
+        try {
+            await window.firebaseModules.setDoc(
+                window.firebaseModules.doc(window.db, "users", docId), 
+                userObj, 
+                { merge: true }
+            );
+        } catch (e) {}
+    }
+
+    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+    currentCustomer = userObj;
+    loadCustomerDashboard();
+    alert(`✓ أهلاً بك يا صاحب الرقم ${phone} في تطبيق العلاف 🌾`);
+};
+
+window.customerLogout = async function() {
+    try {
+        if (window.auth) {
+            await signOut(window.auth);
+        }
+        localStorage.removeItem('allaf_logged_user');
+        currentCustomer = null;
+        
+        const dash = document.getElementById('customer-dashboard');
+        const loginBox = document.getElementById('unified-login-box');
+        if (dash) dash.classList.add('hidden');
+        if (loginBox) loginBox.style.display = 'block';
+        
+        const adminNavBtn = document.getElementById('adminNavBtn');
+        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        
+        alert('تم تسجيل الخروج بنجاح.');
+    } catch (e) {}
+};
+
+async function handleSuccessfulAuthUser(user) {
+    const email = user.email.toLowerCase();
+    let userRole = 'customer';
+    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+    if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+        userRole = 'admin';
+    }
+
+    if (window.db && window.firebaseModules) {
+        try {
+            const userDoc = await window.firebaseModules.getDoc(
+                window.firebaseModules.doc(window.db, "users", docId)
+            );
+            if (userDoc.exists() && userRole !== 'admin') {
+                userRole = userDoc.data().role || 'customer';
+            }
+        } catch(e) {}
+    }
+
+    const userObj = {
+        name: user.displayName || 'إدارة العلاف',
+        email: email,
+        phone: user.phoneNumber || '01144730305',
+        role: userRole,
+        photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+        provider: 'Google Auth',
+        date: new Date().toLocaleString('ar-EG')
+    };
+
+    if (window.db && window.firebaseModules) {
+        await window.firebaseModules.setDoc(
+            window.firebaseModules.doc(window.db, "users", docId), 
+            userObj, 
+            { merge: true }
+        );
+    }
+
+    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+    currentCustomer = userObj;
+    loadCustomerDashboard();
+    alert(`✓ تم تسجيل الدخول بنجاح يا ${userObj.name} عبر Google! 🌾`);
+}
+
+// ==========================================
 // تهيئة التطبيق الذكية عند الفتح
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -165,47 +288,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initHeroSlider();
     initRealtimeCloudSync();
 
-    // معالجة نتيجة تسجيل الدخول عبر Redirect وتخزين بيانات المستخدم سحابياً
     try {
         const redirectResult = await getRedirectResult(window.auth);
         if (redirectResult && redirectResult.user) {
-            const user = redirectResult.user;
-            const email = user.email.toLowerCase();
-
-            let userRole = 'customer';
-            const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-            if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                userRole = 'admin';
-            }
-
-            if (window.db && window.firebaseModules) {
-                try {
-                    const userDoc = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "users", docId));
-                    if (userDoc.exists() && userRole !== 'admin') {
-                        userRole = userDoc.data().role || 'customer';
-                    }
-                } catch(e) {}
-            }
-
-            const userObj = {
-                name: user.displayName || 'إدارة العلاف',
-                email: email,
-                phone: user.phoneNumber || '01000000000',
-                role: userRole,
-                photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-                provider: 'Google Auth',
-                date: new Date().toLocaleString('ar-EG')
-            };
-
-            if (window.db && window.firebaseModules) {
-                await window.firebaseModules.setDoc(window.firebaseModules.doc(window.db, "users", docId), userObj, { merge: true });
-            }
-
-            localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-            currentCustomer = userObj;
-            loadCustomerDashboard();
-            alert("✓ تم تسجيل الدخول بنجاح عبر Google!");
+            await handleSuccessfulAuthUser(redirectResult.user);
         }
     } catch (err) {
         console.error("Redirect auth error:", err);
@@ -1557,7 +1643,6 @@ function initRealtimeKitchenSync() {
                 renderKitchenGrid(cloudOrders);
             }
         }, (error) => {
-            console.error("Realtime sync error:", error);
             syncActiveOrdersSmart();
         });
     } else {
@@ -1585,7 +1670,6 @@ async function syncActiveOrdersSmart() {
             }
             renderKitchenGrid(allOrders);
         } catch (e) {
-            console.error("Cloud sync error:", e);
             loadKitchenOrdersFromLocal();
         }
     }
@@ -1664,9 +1748,7 @@ async function setKitchenStatus(orderId, newStatus) {
                     window.firebaseModules.doc(window.db, "orders", String(orderId)), 
                     { status: newStatus }
                 );
-            } catch (e) {
-                console.error("Cloud status update error:", e);
-            }
+            } catch (e) {}
         }
     }
 }
@@ -1720,18 +1802,8 @@ function loadAdminDashboard() {
     renderMenuItemsManage();
 }
 
-// تعديل دالة تسجيل الدخول عبر جوجل لتستخدم Redirect وتجنب internal-error على الموبايل
 async function adminLoginWithGoogle() {
-    if (!window.auth || !window.googleProvider || !window.signInWithRedirect) {
-        alert("جاري تحميل برمجيات المصادقة السحابية... يرجى الانتظار ثانية والاعادة.");
-        return;
-    }
-
-    try {
-        await window.signInWithRedirect(window.auth, window.googleProvider);
-    } catch (error) {
-        alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
-    }
+    await window.loginWithGoogle();
 }
 
 function adminLoginCustom() {
@@ -2287,9 +2359,7 @@ async function initProductDetailsPage() {
             if (docSnap.exists()) {
                 product = docSnap.data();
             }
-        } catch (e) {
-            console.error("Error fetching product from cloud:", e);
-        }
+        } catch (e) {}
     }
 
     const container = document.getElementById('product-detail-container');
@@ -2369,7 +2439,6 @@ async function addSpecificProductToCart(id) {
 // ==========================================
 async function initRewardsPage() {
     let customer = JSON.parse(localStorage.getItem('allaf_logged_user') || 'null');
-    
     userRewardIdentifier = customer ? (customer.phone || customer.email) : localStorage.getItem('allaf_user_phone');
 
     if (!userRewardIdentifier) {
@@ -2386,9 +2455,7 @@ async function initRewardsPage() {
             if (docSnap.exists() && docSnap.data().points !== undefined) {
                 userRewardPoints = docSnap.data().points;
             }
-        } catch (e) {
-            console.error("Cloud points fetch error:", e);
-        }
+        } catch (e) {}
     }
 
     if (userRewardPoints === 0) {
@@ -2428,15 +2495,44 @@ async function redeemReward(cost, rewardName) {
         try {
             const docRef = window.firebaseModules.doc(window.db, "users", String(userRewardIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
             await window.firebaseModules.setDoc(docRef, { points: userRewardPoints }, { merge: true });
-        } catch (e) {
-            console.error("Cloud points update error:", e);
-        }
+        } catch (e) {}
     }
 
     alert(`🎉 مبروك! تم استبدال النقاط بنجاح والحصول على (${rewardName}). يرجى إبراز هذه الرسالة لمسؤول التوريدات أو إرسالها عبر الواتساب عند الطلب! 🌾`);
 }
 
-// تصدير الدوال لاستدعائها المباشر
+// ==========================================
+// دوال تحكم البانر المتحرك (Hero Slider)
+// ==========================================
+function prevSliderItem() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
+    updateSliderContent();
+}
+
+function nextSliderItem() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
+    updateSliderContent();
+}
+
+function sliderAddToCart() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    const prod = menuProducts[currentSliderIndex];
+    if (prod) {
+        addToCart(prod.id);
+    }
+}
+
+function sliderClickAction() {
+    if (!menuProducts || menuProducts.length === 0) return;
+    const prod = menuProducts[currentSliderIndex];
+    if (prod) {
+        window.location.href = `product.html?id=${prod.id}`;
+    }
+}
+
+// ربط جميع الدوال الحيوية بالنافذة العامة لضمان الاستجابة التامة بالأزرار
 window.switchAdminSection = switchAdminSection;
 window.adminLoginWithGoogle = adminLoginWithGoogle;
 window.adminLoginCustom = adminLoginCustom;
@@ -2473,36 +2569,6 @@ window.addCustomMixToCart = addCustomMixToCart;
 window.submitOrder = submitOrder;
 window.sendWhatsAppOrder = sendWhatsAppOrder;
 window.switchCustomerSubTab = switchCustomerSubTab;
-
-// دوال تحكم البانر المتحرك (Hero Slider)
-function prevSliderItem() {
-    if (!menuProducts || menuProducts.length === 0) return;
-    currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
-    updateSliderContent();
-}
-
-function nextSliderItem() {
-    if (!menuProducts || menuProducts.length === 0) return;
-    currentSliderIndex = (currentSliderIndex + 1) % menuProducts.length;
-    updateSliderContent();
-}
-
-function sliderAddToCart() {
-    if (!menuProducts || menuProducts.length === 0) return;
-    const prod = menuProducts[currentSliderIndex];
-    if (prod) {
-        addToCart(prod.id);
-    }
-}
-
-function sliderClickAction() {
-    if (!menuProducts || menuProducts.length === 0) return;
-    const prod = menuProducts[currentSliderIndex];
-    if (prod) {
-        window.location.href = `product.html?id=${prod.id}`;
-    }
-}
-
 window.prevSliderItem = prevSliderItem;
 window.nextSliderItem = nextSliderItem;
 window.sliderAddToCart = sliderAddToCart;
