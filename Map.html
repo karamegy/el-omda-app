@@ -3,69 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>خريطة التتبع الحي والأسطول والمكالمات | الأسطول اللوجستي</title>
+    <title>خريطة التتبع الحي والأسطول والاتصال المباشر | العلاف لتجارة وتوريد الأعلاف</title>
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#b45309">
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet CSS -->
+
+    <!-- Leaflet CSS & Plugins -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Leaflet Routing Machine CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
-    <!-- Leaflet Geocoder CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.css" />
     
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- الملف الموحد للتنسيقات -->
     <link rel="stylesheet" href="style.css">
+
+    <style>
+        .sidebar-tabs {
+            display: flex;
+            gap: 4px;
+            background: #f5f5f4;
+            padding: 4px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        .sidebar-tab {
+            flex: 1;
+            padding: 6px 10px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #57534e;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .sidebar-tab.active {
+            background: var(--primary-color, #d97706);
+            color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .filter-bar {
+            display: flex;
+            gap: 4px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .filter-btn {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #f5f5f4;
+            border: 1px solid #e7e5e4;
+            color: #44403c;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .filter-btn.active {
+            background: #78350f;
+            color: #fff;
+            border-color: #78350f;
+        }
+        .touch-control-panel {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid #fde047;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 220px;
+        }
+        .touch-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 5px 8px;
+            border-radius: 6px;
+            background: #fff;
+            border: 1px solid #e7e5e4;
+            color: #292524;
+            width: 100%;
+            cursor: pointer;
+        }
+        .touch-btn:hover {
+            background: #fefce8;
+        }
+        .leaflet-routing-container {
+            display: none !important;
+        }
+    </style>
 </head>
 <body class="p-3 sm:p-6 space-y-4">
 
-    <!-- الهيدر العلوي مع مزامنة صورة البروفايل واسم المستخدم الحقيقي -->
-    <header class="corporate-card p-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white shadow-sm">
-        <div class="flex items-center gap-3">
-            <div class="w-12 h-12 bg-amber-700 rounded-xl flex items-center justify-center text-white text-xl shadow-md overflow-hidden border-2 border-amber-600">
-                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+    <!-- الشريط الإعلاني العلوي -->
+    <div class="ticker-container">
+        <span class="ticker-label"><i class="fa-solid fa-satellite-dish"></i> التتبع الحي</span>
+        <div class="ticker-content">
+            <marquee behavior="scroll" direction="right" scrollamount="5">
+                🗺️ نظام الملاحة والتتبع المباشر لأسطول نقل الأعلاف، متابعة حية لمواقع الطيارين والشحنات لحظة بلحظة.
+            </marquee>
+        </div>
+    </div>
+
+    <!-- الهيدر العلوي الموحد -->
+    <header class="main-header" style="border-radius: 12px;">
+        <div class="logo-container">
+            <div class="logo-icon-box" style="overflow: hidden; width: 48px; height: 48px; border-radius: 50%;">
+                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200'">
             </div>
             <div>
-                <h1 class="font-black text-slate-900 text-base sm:text-lg">الأسطول اللوجستي // نظام التتبع والاتصال الحي 👑</h1>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span id="userRoleBadge" class="text-xs text-amber-700 font-bold">جاري التحقق من الصلاحيات...</span>
-                    <span id="nav-username-display" class="text-xs text-slate-600 font-bold bg-slate-100 px-2 py-0.5 rounded-md"></span>
+                <h1 style="font-size: 1.2rem; color: #fef08a; margin: 0;">نظام التتبع الحي والأسطول 👑</h1>
+                <div class="flex items-center gap-2 flex-wrap mt-1">
+                    <span id="userRoleBadge" class="header-badge" style="color: #fde047; font-weight: bold;">جاري التحقق من الصلاحيات...</span>
+                    <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.15); padding: 2px 8px; border-radius: 6px;">زائر</span>
                 </div>
             </div>
         </div>
-        <div class="flex items-center gap-2">
-            <a href="admin.html" id="adminPanelLink" class="nav-link bg-slate-100 hover:bg-slate-200"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
-            <a href="index.html" class="nav-link bg-amber-50 text-amber-800 hover:bg-amber-100"><i class="fa-solid fa-boxes-stacked"></i> الخدمات والمنيو</a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-btn"><i class="fa-solid fa-wheat-awn"></i> الخدمات والمنتجات</a>
+            <a href="branches.html" class="nav-btn"><i class="fa-solid fa-store"></i> الفروع ومراكز التشغيل</a>
+            <a href="kitchen-display.html" class="nav-btn" style="background: #78350f;"><i class="fa-solid fa-box"></i> شاشة التجهيز KDS</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="display: none;"><i class="fa-solid fa-gauge"></i> لوحة التحكم</a>
         </div>
     </header>
 
     <!-- إحصائيات سريعة للأداء -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600">
-            <div><span class="text-slate-500">مركز العمليات</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">الرئيسي</h4></div>
+        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-amber-600 bg-white shadow-sm rounded-xl">
+            <div><span class="text-slate-500">مركز العمليات</span><h4 class="text-base font-black text-amber-700 mono-font" id="statBranchesCount">الرئيسي (شبرا منت)</h4></div>
             <i class="fa-solid fa-headset text-amber-600 text-xl"></i>
         </div>
-        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600">
+        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-emerald-600 bg-white shadow-sm rounded-xl">
             <div><span class="text-slate-500">الأسطول والطيارين</span><h4 class="text-base font-black text-emerald-600 mono-font" id="statDriversCount">0 طيار</h4></div>
             <i class="fa-solid fa-motorcycle text-emerald-600 text-xl"></i>
         </div>
-        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-blue-600">
+        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-blue-600 bg-white shadow-sm rounded-xl">
             <div><span class="text-slate-500">متوسط وقت الوصول (ETA)</span><h4 class="text-base font-black text-blue-600 mono-font" id="liveEtaDisplay">-- دقيقة</h4></div>
             <i class="fa-solid fa-clock text-blue-600 text-xl"></i>
         </div>
-        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-purple-600">
-            <div><span class="text-slate-500">حالة الاتصال الآمن</span><h4 class="text-xs font-black text-purple-600 mono-font">WebRTC نشط 📞</h4></div>
-            <i class="fa-solid fa-headset text-purple-600 text-xl"></i>
+        <div class="corporate-card p-3 flex items-center justify-between border-r-4 border-r-purple-600 bg-white shadow-sm rounded-xl">
+            <div><span class="text-slate-500">الاتصال المباشر</span><h4 class="text-xs font-black text-purple-600 mono-font">تواصل حي 📞</h4></div>
+            <i class="fa-solid fa-phone-volume text-purple-600 text-xl"></i>
         </div>
     </div>
 
     <!-- شريط أدوات البحث وملاحة المسارات -->
-    <div class="corporate-card p-4 space-y-3 text-xs">
+    <div class="corporate-card p-4 space-y-3 text-xs bg-white shadow-sm rounded-xl">
         <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-2 flex-1 min-w-[260px]">
                 <span class="font-bold text-slate-700 whitespace-nowrap"><i class="fa-solid fa-magnifying-glass ml-1 text-amber-700"></i> البحث الجغرافي:</span>
@@ -82,8 +178,8 @@
 
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200">
             <span class="font-bold text-amber-800 whitespace-nowrap"><i class="fa-solid fa-route ml-1"></i> ملاحة مسار الشحن والتوصيل:</span>
-            <input type="text" id="routeStartInput" placeholder="نقطة الانطلاق (مركز الأسطول)" class="corporate-input flex-1 min-w-[180px]" value="مركز الأسطول اللوجستي الرئيسي" readonly>
-            <input type="text" id="routeEndInput" placeholder="وجهة التوصيل (مثال: فيصل، الهرم، مدينة نصر)" class="corporate-input flex-1 min-w-[180px]">
+            <input type="text" id="routeStartInput" placeholder="نقطة الانطلاق" class="corporate-input flex-1 min-w-[180px]" value="المركز الرئيسي (شبرا منت)" readonly>
+            <input type="text" id="routeEndInput" placeholder="وجهة التوصيل (مثال: الهرم، فيصل، المزرعة)" class="corporate-input flex-1 min-w-[180px]">
             <button onclick="searchAndCalculateRoute()" class="btn-primary py-2 px-4 text-xs cursor-pointer bg-amber-700 hover:bg-amber-800">
                 <i class="fa-solid fa-location-arrow ml-1"></i> رسم المسار و حساب ETA
             </button>
@@ -96,27 +192,26 @@
     <!-- التخطيط الرئيسي (القائمة الجانبية + الخريطة التفاعلية) -->
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
         
-        <!-- القائمة الجانبية لإدارة الطلبات والشحنات والطيارين -->
-        <div class="corporate-card p-4 lg:col-span-1 space-y-3 max-h-[72vh] overflow-y-auto">
+        <!-- القائمة الجانبية -->
+        <div class="corporate-card p-4 lg:col-span-1 space-y-3 max-h-[72vh] overflow-y-auto bg-white shadow-sm rounded-xl">
             <div class="sidebar-tabs" id="sidebarTabsContainer">
                 <button onclick="switchSidebarTab('orders', this)" class="sidebar-tab active"><i class="fa-solid fa-box"></i> الشحنات</button>
-                <button id="tabDrivers" onclick="switchSidebarTab('drivers', this)" class="sidebar-tab"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
-                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab"><i class="fa-solid fa-store"></i> المراكز</button>
+                <button id="tabDrivers" onclick="switchSidebarTab('drivers', this)" class="sidebar-tab" style="display:none;"><i class="fa-solid fa-motorcycle"></i> الأسطول</button>
+                <button id="tabBranches" onclick="switchSidebarTab('branches', this)" class="sidebar-tab" style="display:none;"><i class="fa-solid fa-store"></i> المراكز</button>
                 <button id="tabPortal" onclick="switchSidebarTab('portal', this)" class="sidebar-tab"><i class="fa-solid fa-satellite-dish"></i> السائق</button>
             </div>
 
             <!-- تبويب الشحنات وتتبع العميل -->
             <div id="tab-content-orders">
                 <div class="flex justify-between items-center mb-2">
-                    <h3 style="color: var(--primary);" class="font-bold text-xs"><i class="fa-solid fa-truck-fast"></i> تتبع الشحنات والطلبات</h3>
+                    <h3 class="font-bold text-xs text-amber-900"><i class="fa-solid fa-truck-fast"></i> تتبع الشحنات والطلبات</h3>
                     <button id="autoDispatchBtn" onclick="autoDispatchOrders()" class="btn-primary" style="padding: 4px 8px; font-size: 0.65rem; background: #16a34a; display:none;"><i class="fa-solid fa-wand-magic-sparkles"></i> توزيع آلي</button>
                 </div>
                 
-                <!-- صندوق تتبع العميل برقم الهاتف أو الفاتورة -->
                 <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mb-3 space-y-2">
-                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-map-location-dot ml-1"></i> تتبع شحنتك برقم الهاتف أو الفاتورة:</h4>
+                    <h4 class="text-xs font-bold text-amber-900"><i class="fa-solid fa-map-location-dot ml-1"></i> تتبع شحنتك برقم الهاتف أو رقم الطلب:</h4>
                     <div class="flex gap-1">
-                        <input type="text" id="customerTrackInput" placeholder="أدخل رقم الهاتف أو رقم الفاتورة (مثل FLEET-...)" class="corporate-input text-xs">
+                        <input type="text" id="customerTrackInput" placeholder="أدخل رقم الهاتف أو رقم الطلب (ALLAF-...)" class="corporate-input text-xs">
                         <button onclick="trackCustomerOrder()" class="btn-primary text-xs py-1.5 px-3 bg-amber-700 hover:bg-amber-800 whitespace-nowrap">تتبع 🔍</button>
                     </div>
                     <div id="customerTrackResult" class="text-[11px] text-slate-700 mt-2"></div>
@@ -132,9 +227,9 @@
                 <div id="live-orders-list" class="space-y-2 mt-2"></div>
             </div>
 
-            <!-- تبويب إدارة الطيارين والأسطول (للإدارة فقط) -->
+            <!-- تبويب إدارة الطيارين والأسطول -->
             <div id="tab-content-drivers" style="display: none;" class="space-y-3">
-                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار دليفري جديد بالموقع</h3>
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-user-plus"></i> إضافة طيار جديد للأسطول</h3>
                 <div class="space-y-2">
                     <input type="text" id="driver-name" placeholder="اسم الكابتن / الطيار" class="corporate-input">
                     <input type="text" id="driver-phone" placeholder="رقم الهاتف" class="corporate-input">
@@ -155,16 +250,16 @@
                 <div id="drivers-list-container" class="space-y-2 mt-3"></div>
             </div>
 
-            <!-- تبويب إدارة وإضافة مركز الأسطول الرئيسي (للإدارة فقط) -->
+            <!-- تبويب إدارة وإضافة مركز الأسطول الرئيسي -->
             <div id="tab-content-branches" style="display: none;" class="space-y-3">
-                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-shop"></i> ضبط موقع مركز الأسطول الرئيسي</h3>
+                <h3 class="text-amber-800 font-bold text-xs"><i class="fa-solid fa-shop"></i> ضبط موقع المركز الرئيسي</h3>
                 <div class="space-y-2">
-                    <input type="text" id="branch-name" placeholder="اسم مركز الأسطول" class="corporate-input" value="مركز الأسطول اللوجستي الرئيسي">
+                    <input type="text" id="branch-name" placeholder="اسم المركز" class="corporate-input" value="المركز الرئيسي (شبرا منت)">
                     <input type="text" id="branch-phone" placeholder="هاتف المركز" class="corporate-input" value="01144730305">
-                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input" value="القاهرة / الجيزة، مصر">
+                    <input type="text" id="branch-address" placeholder="العنوان بالتفصيل" class="corporate-input" value="شبرا منت، الجيزة، مصر">
                     <div class="grid grid-cols-2 gap-2">
-                        <input type="number" step="any" id="branch-lat" placeholder="خط العرض Lat" class="corporate-input mono-font">
-                        <input type="number" step="any" id="branch-lng" placeholder="خط الطول Lng" class="corporate-input mono-font">
+                        <input type="number" step="any" id="branch-lat" placeholder="خط العرض Lat" class="corporate-input mono-font" value="29.9600">
+                        <input type="number" step="any" id="branch-lng" placeholder="خط الطول Lng" class="corporate-input mono-font" value="31.2100">
                     </div>
                     <div class="flex gap-1">
                         <button type="button" onclick="fetchGpsForBranch()" class="flex-1 bg-amber-50 text-amber-800 py-1.5 rounded-lg text-[11px] font-bold border border-amber-200 cursor-pointer">
@@ -174,72 +269,64 @@
                             <i class="fa-solid fa-map-pin"></i> حدد من الخريطة
                         </button>
                     </div>
-                    <button onclick="saveMainRestaurantLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وتثبيت مركز الأسطول 👑</button>
+                    <button onclick="saveMainRestaurantLocation()" class="btn-primary w-full text-xs py-2 bg-amber-700 hover:bg-amber-800 cursor-pointer">حفظ وتثبيت المركز 👑</button>
                 </div>
                 <div id="branches-list-container" class="space-y-2 mt-3"></div>
             </div>
 
-            <!-- تبويب بوابة السائق (بث GPS الحي) -->
+            <!-- تبويب بوابة السائق -->
             <div id="tab-content-portal" style="display: none;" class="space-y-3">
                 <h3 class="text-purple-700 font-bold text-xs"><i class="fa-solid fa-satellite-dish"></i> البث الحي لموقع السائق (GPS Tracker)</h3>
                 <p class="text-[11px] text-slate-500">اختر اسمك كطيار لبث موقعك الجغرافي الحي على الخريطة تلقائياً:</p>
                 <select id="portal-driver-select" class="corporate-input"></select>
                 <button onclick="toggleGpsTracking()" id="gps-toggle-btn" class="btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer">بدء بث الموقع الحي 🛰️</button>
-                <div id="gps-status-box" class="text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold">الوضع: متوقف</div>
+                <div id="gps-status-box" class="text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold border border-sky-200">الوضع: متوقف</div>
             </div>
         </div>
 
         <!-- الخريطة التفاعلية الكبرى -->
-        <div class="corporate-card p-3 lg:col-span-3 relative overflow-hidden">
-            <!-- لوحة التحكم اللمسية العائمة والتدوير الحر -->
+        <div class="corporate-card p-3 lg:col-span-3 relative overflow-hidden bg-white shadow-sm rounded-xl">
             <div id="touchControlPanel" class="touch-control-panel">
                 <div class="flex items-center justify-between pb-1 border-b border-slate-200 cursor-pointer" onclick="toggleTouchPanel()">
-                    <span class="text-[10px] font-bold text-amber-800 font-mono">تدوير الخريطة والتحكم</span>
+                    <span class="text-[10px] font-bold text-amber-800 font-mono">التحكم بالخريطة</span>
                     <i id="panelToggleIcon" class="fa-solid fa-chevron-down text-xs text-slate-500"></i>
                 </div>
-                <div class="panel-content flex flex-col gap-1.5 pt-1">
-                    <div class="flex items-center gap-1">
-                        <button onclick="rotateMap(-30)" class="touch-btn flex-1 justify-center" title="تدوير يساراً"><i class="fa-solid fa-rotate-left text-amber-700"></i> -30°</button>
-                        <button onclick="rotateMap(30)" class="touch-btn flex-1 justify-center" title="تدوير يميناً"><i class="fa-solid fa-rotate-right text-amber-700"></i> +30°</button>
-                        <button onclick="resetMapRotation()" class="touch-btn flex-1 justify-center bg-amber-50 text-amber-900" title="إعادة للشمال 0°">
-                            <i id="compassNeedle" class="fa-solid fa-compass text-amber-700 transition-transform duration-300"></i> 0°
-                        </button>
-                    </div>
-                    <button onclick="panToRestaurant()" class="touch-btn"><i class="fa-solid fa-headset text-amber-700"></i> التركيز على مركز الأسطول</button>
+                <div id="touchPanelContent" class="panel-content flex flex-col gap-1.5 pt-1">
+                    <button onclick="panToRestaurant()" class="touch-btn"><i class="fa-solid fa-headset text-amber-700"></i> التركيز على المركز الرئيسي</button>
                     <button onclick="panToUser()" class="touch-btn"><i class="fa-solid fa-crosshairs text-emerald-600"></i> موقعي الحالي GPS</button>
-                    <button onclick="resetMapView()" class="touch-btn"><i class="fa-solid fa-arrows-to-eye text-slate-600"></i> احتواء كافة الشحنات</button>
+                    <button onclick="resetMapView()" class="touch-btn"><i class="fa-solid fa-arrows-to-eye text-slate-600"></i> احتواء كافة النقاط</button>
                 </div>
             </div>
 
-            <div id="leafletMap" style="height: 650px; width: 100%; border-radius: 12px;"></div>
+            <div id="leafletMap" style="height: 650px; width: 100%; border-radius: 12px; z-index: 1;"></div>
         </div>
     </div>
 
-    <!-- نافذة الاتصال الصوتي والمرئي (WebRTC Modal) -->
+    <!-- نافذة الاتصال المباشر -->
     <div id="callModal" class="hidden fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center p-4">
-        <div class="corporate-card bg-white w-full max-w-md p-5 space-y-4 text-center shadow-2xl border-2 border-amber-600">
-            <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل صاحب الشحنة</h3>
-            <div id="callOrderInfo" class="text-xs text-slate-600">جاري الاتصال...</div>
+        <div class="corporate-card bg-white w-full max-w-md p-5 space-y-4 text-center shadow-2xl border-2 border-amber-600 rounded-2xl">
+            <h3 id="callStatusTitle" class="text-base font-black text-amber-900">📞 اتصال مباشر مع العميل / المزرعة</h3>
+            <div id="callOrderInfo" class="text-xs text-slate-600">جاري إعداد الاتصال...</div>
             
-            <div class="grid grid-cols-2 gap-2 bg-black rounded-xl overflow-hidden relative aspect-video">
-                <video id="remoteVideo" autoplay playsinline class="w-full h-full object-cover bg-slate-900"></video>
-                <video id="localVideo" autoplay playsinline muted class="w-24 h-20 object-cover absolute bottom-2 left-2 rounded-lg border-2 border-white shadow-md"></video>
+            <div class="p-6 bg-amber-50 rounded-xl border border-amber-200 flex flex-col items-center gap-3">
+                <i class="fa-solid fa-headset text-4xl text-amber-700 animate-bounce"></i>
+                <div id="callPhoneDisplay" class="font-bold text-lg text-amber-900 mono-font">01144730305</div>
             </div>
 
             <div class="flex justify-center gap-3 pt-2">
-                <button onclick="answerIncomingCall()" id="answerCallBtn" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-phone ml-1"></i> رد</button>
-                <button onclick="endWebRtcCall()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl text-xs font-bold cursor-pointer"><i class="fa-solid fa-phone-slash ml-1"></i> إنهاء المكالمة</button>
+                <a id="directPhoneCallBtn" href="#" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl text-xs font-bold text-decoration-none inline-flex items-center gap-2"><i class="fa-solid fa-phone"></i> اتصال هاتفي</a>
+                <a id="directWhatsappCallBtn" href="#" target="_blank" class="bg-green-500 hover:bg-green-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold text-decoration-none inline-flex items-center gap-2"><i class="fa-brands fa-whatsapp"></i> واتساب</a>
+                <button onclick="closeCallModal()" class="bg-slate-500 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer">إغلاق</button>
             </div>
         </div>
     </div>
 
     <!-- Leaflet JS & Plugins -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
-    <!-- إعداد وتهيئة Firebase وسکریبت مزامنة البروفايل الموحد -->
+    <!-- تهيئة Firebase السحابية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -270,26 +357,9 @@
             where,
             getDoc
         };
-
-        // استخدام المفتاح الموحد fleet_logged_user المتطابق مع app.js
-        document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('fleet_logged_user') || '{}');
-            
-            const avatarEl = document.getElementById('nav-user-avatar');
-            const nameEl = document.getElementById('nav-username-display');
-
-            if (sessionUser && (sessionUser.name || sessionUser.email)) {
-                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
-                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
-            } else {
-                if (nameEl) nameEl.innerText = 'زائر / غير مسجل';
-            }
-        });
-        
-        console.log("🗺️🚀 تم تفعيل خريطة التتبع الحي للأسطول اللوجستي ومزامنة الحساب الموحد بنجاح تام!");
     </script>
 
-    <!-- ربط ملف الـ JavaScript المشترك -->
+    <!-- الملف الموحد والشامل لكل وظائف التطبيق والخريطة -->
     <script src="app.js"></script>
 </body>
 </html>
