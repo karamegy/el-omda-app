@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تفاصيل العلف والمنتج | العلاف لتجارة وتوريد الأعلاف والحبوب 🌾</title>
+    <!-- سياسات الأمان وحماية المتصفح ضد الهجمات (Content Security Policy) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.gstatic.com https://*.googleapis.com https://cdnjs.cloudflare.com https://images.unsplash.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://images.unsplash.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com;">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
@@ -19,7 +21,7 @@
             <div>
                 <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">العلاف للتجارة والتوريدات 🌾</h1>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">تفاصيل العلف والحبوب 🌾</span>
+                    <span style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">تفاصيل العلف والحبوب 🌾 (آمن 🛡️)</span>
                     <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
                 </div>
             </div>
@@ -37,25 +39,41 @@
         </div>
     </main>
 
-    <!-- إعداد وتهيئة Firebase السحابية ومزامنة الحساب -->
+    <!-- نظام الحماية ضد الاختراق والسكربتات الخبيثة -->
+    <script>
+        function sanitizeInput(str) {
+            if (typeof str !== 'string') return str;
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+    </script>
+
+    <!-- إعداد وتهيئة Firebase السحابية الآمنة ومزامنة الحساب (مشروع alaf-93848) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyDTIxdIHfDaEH2wn7dEE9qMnsOlXtlSCI0",
-            authDomain: "omda-a750f.firebaseapp.com",
-            projectId: "omda-a750f",
-            storageBucket: "omda-a750f.firebasestorage.app",
-            messagingSenderId: "1078714497381",
-            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
-            measurementId: "G-P763CFS7GG"
+            apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
+            authDomain: "alaf-93848.firebaseapp.com",
+            projectId: "alaf-93848",
+            storageBucket: "alaf-93848.firebasestorage.app",
+            messagingSenderId: "984757380320",
+            appId: "1:984757380320:web:247065b2434c002c445c85",
+            measurementId: "G-ESV2GNSQZ4"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
         window.db = db;
+        window.auth = getAuth(app);
+        window.googleProvider = new GoogleAuthProvider();
+        window.signInWithPopup = signInWithPopup;
         window.firebaseModules = { 
             collection, 
             getDocs, 
@@ -81,12 +99,14 @@
             const nameEl = document.getElementById('nav-username-display');
 
             if (sessionUser && (sessionUser.name || sessionUser.email)) {
-                if (nameEl) nameEl.innerText = sessionUser.name || sessionUser.email;
+                if (nameEl) nameEl.innerText = sanitizeInput(sessionUser.name || sessionUser.email);
                 if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
             } else {
                 if (nameEl) nameEl.innerText = 'زائر';
             }
         });
+
+        console.log("🛡️🚀 تم تحديث صفحة تفاصيل المنتج (product.html) وربطها بنجاح مع مشروع فايربيس الجديد alaf-93848!");
     </script>
 
     <!-- ملف الجافاسكربت الشامل للتطبيق -->
