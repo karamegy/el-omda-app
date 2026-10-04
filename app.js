@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
@@ -15,16 +15,23 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
 
 let currentUser = null;
 let cart = [];
 let allProductsCache = [];
+let userMap = null;
+let adminMap = null;
+let userMarker = null;
+let selectedLat = 30.0444; // افتراضي القاهرة / شبرامنت
+let selectedLng = 31.2357;
 
 // DOM Elements
 const authBtn = document.getElementById('authBtn');
 const authModal = document.getElementById('authModal');
 const closeAuthModal = document.querySelector('.close-auth-modal');
 const loginForm = document.getElementById('loginForm');
+const googleLoginBtn = document.getElementById('googleLoginBtn');
 const adminBtn = document.getElementById('adminBtn');
 const profileBtn = document.getElementById('profileBtn');
 const cartBtn = document.getElementById('cartBtn');
@@ -34,8 +41,9 @@ const productsGrid = document.getElementById('productsGrid');
 const addProductForm = document.getElementById('addProductForm');
 const checkoutBtn = document.getElementById('checkoutBtn');
 const searchInput = document.getElementById('searchInput');
+const saveLocationBtn = document.getElementById('saveLocationBtn');
 
-// التنقل بين الأقسام والتصنيفات
+// الأقسام والبحث
 document.querySelectorAll('.cat-chip').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
@@ -64,6 +72,7 @@ closeModal.addEventListener('click', () => cartModal.style.display = 'none');
 profileBtn.addEventListener('click', () => {
     switchSection('profileSection');
     loadUserProfile();
+    setTimeout(() => { initUserMap(); }, 300);
 });
 
 adminBtn.addEventListener('click', () => {
@@ -74,6 +83,30 @@ function switchSection(sectionId) {
     document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
     document.getElementById(sectionId).style.display = 'block';
 }
+
+// تسجيل الدخول باستخدام حساب جوجل
+googleLoginBtn.addEventListener('click', async () => {
+    try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        // حفظ بيانات المستخدم في فايربيز إن لم يكن موجوداً
+        const userRef = doc(db, "users", user.email);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                email: user.email,
+                name: user.displayName || 'عميل جوجل',
+                phone: user.phoneNumber || '',
+                col: user.email === "haretg@gmail.com" ? "admin" : "customer"
+            });
+        }
+        alert('تم تسجيل الدخول بحساب جوجل بنجاح!');
+        authModal.style.display = 'none';
+    } catch (error) {
+        alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
+    }
+});
 
 // مراقبة حالة المستخدم وصلاحيات المدير
 onAuthStateChanged(auth, async (user) => {
@@ -170,7 +203,7 @@ function updateCartUI() {
     const totalSpan = document.getElementById('cartTotalPrice');
     list.innerHTML = '';
     let total = 0;
-    cart.forEach((item, index) => {
+    cart.forEach((item) => {
         total += Number(item.price);
         list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;"><span>${item.name}</span> <strong>${item.price} ر.س</strong></div>`;
     });
@@ -178,6 +211,7 @@ function updateCartUI() {
     document.getElementById('cartCount').textContent = cart.length;
 }
 
+// إتمام الطلب وحفظ موقع الخريطة مع الطلب
 checkoutBtn.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -189,10 +223,12 @@ checkoutBtn.addEventListener('click', async () => {
             userEmail: currentUser.email,
             items: cart,
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
-            status: 'قيد المراجعة والتجهيز والشحن',
+            status: 'قيد المراجعة والشحن',
+            lat: selectedLat,
+            lng: selectedLng,
             date: new Date().toLocaleDateString('ar-EG')
         });
-        alert('تم إرسال الطلب بنجاح وإنشاء الفاتورة!');
+        alert('تم إرسال الطلب بنجاح وتحديد موقع الشحنة على الخريطة!');
         cart = [];
         cartModal.style.display = 'none';
     } catch (err) {
@@ -224,18 +260,45 @@ async function loadUserProfile() {
     const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
     const querySnapshot = await getDocs(q);
     let invoicesHtml = '';
-    let shipmentsHtml = '';
     
     querySnapshot.forEach((docSnap) => {
         const order = docSnap.data();
-        invoicesHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">رقم الطلب: #${docSnap.id.slice(0,6)} | الإجمالي: <strong>${order.total} ر.س</strong></div>`;
-        shipmentsHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">الحالة: <span style="color:var(--primary); font-weight:700;">${order.status}</span></div>`;
+        invoicesHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">رقم الطلب: #${docSnap.id.slice(0,6)} | الإجمالي: <strong>${order.total} ر.س</strong> | الحالة: <span style="color:green">${order.status}</span></div>`;
     });
     
     document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
-    document.getElementById('userShipmentsList').innerHTML = shipmentsHtml || '<p>لا توجد شحنات نشطة</p>';
 }
 
+// تهيئة خريطة العميل في البروفايل لاختيار موقع التوصيل
+function initUserMap() {
+    if (userMap) {
+        userMap.invalidateSize();
+        return;
+    }
+    userMap = L.map('userMap').setView([30.0444, 31.2357], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(userMap);
+
+    userMarker = L.marker([30.0444, 31.2357], { draggable: true }).addTo(userMap);
+    userMarker.on('dragend', function (e) {
+        const pos = userMarker.getLatLng();
+        selectedLat = pos.lat;
+        selectedLng = pos.lng;
+    });
+
+    userMap.on('click', function(e) {
+        userMarker.setLatLng(e.latlng);
+        selectedLat = e.latlng.lat;
+        selectedLng = e.latlng.lng;
+    });
+}
+
+saveLocationBtn.addEventListener('click', () => {
+    alert('تم حفظ موقع التوصيل المختار بنجاح لاستخدامه عند الطلب!');
+});
+
+// التبديل بين تبويبات الإدارة
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -247,6 +310,10 @@ window.switchAdminTab = function(tabName) {
         document.getElementById('adminOrdersTab').style.display = 'block';
         document.getElementById('tabOrdBtn').classList.add('active');
         loadAllOrders();
+    } else if (tabName === 'map') {
+        document.getElementById('adminMapTab').style.display = 'block';
+        document.getElementById('tabMapBtn').classList.add('active');
+        setTimeout(() => { initAdminMap(); }, 300);
     } else if (tabName === 'users') {
         document.getElementById('adminUsersTab').style.display = 'block';
         document.getElementById('tabUserBtn').classList.add('active');
@@ -271,6 +338,27 @@ async function loadAllUsers() {
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
         list.innerHTML += `<div class="data-item">الاسم: ${u.name || 'غير محدد'} | البريد: ${u.email} | الصلاحية: <strong>${u.col}</strong></div>`;
+    });
+}
+
+// تهيئة خريطة الإدارة لعرض مواقع الشحنات لجميع العملاء
+async function initAdminMap() {
+    if (adminMap) {
+        adminMap.invalidateSize();
+        return;
+    }
+    adminMap = L.map('adminMap').setView([30.0444, 31.2357], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(adminMap);
+
+    const snapshot = await getDocs(collection(db, "orders"));
+    snapshot.forEach(docSnap => {
+        const order = docSnap.data();
+        if (order.lat && order.lng) {
+            L.marker([order.lat, order.lng]).addTo(adminMap)
+                .bindPopup(`<b>عميل:</b> ${order.userEmail}<br><b>المبلغ:</b> ${order.total} ر.س<br><b>الحالة:</b> ${order.status}`);
+        }
     });
 }
 
