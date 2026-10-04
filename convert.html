@@ -1,15 +1,113 @@
 <!DOCTYPE html>
-<html lang="ar">
-<head><meta charset="UTF-8"><title>تنزيل icon1-512.png</title></head>
-<body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; background:#333;">
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تنزيل icon1-512.png</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #1c1917;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #fff;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .preview-box {
+            width: 280px;
+            height: 280px;
+            background: #292524;
+            border: 2px solid #b45309;
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-box svg {
+            width: 100%;
+            height: 100%;
+        }
+        .btn-download {
+            margin-top: 25px;
+            padding: 14px 28px;
+            font-size: 18px;
+            background: linear-gradient(135deg, #b45309, #d97706);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+        }
+        .btn-download:active {
+            transform: scale(0.98);
+        }
+    </style>
+</head>
+<body>
 
-    <div id="svgContainer">
-        <!-- ضع كود الـ SVG أعلاه هنا -->
+    <h3 style="color: #fde047; margin-bottom: 15px;">معاينة لوجو تطبيق العلاف (512x512)</h3>
+
+    <!-- حاوية اللوجو مدمج بها كود الـ SVG مباشرة -->
+    <div id="svgContainer" class="preview-box">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+          <defs>
+            <radialGradient id="bgGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#78350f"/>
+              <stop offset="100%" stop-color="#1c1917"/>
+            </radialGradient>
+            
+            <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fde047"/>
+              <stop offset="50%" stop-color="#d97706"/>
+              <stop offset="100%" stop-color="#b45309"/>
+            </linearGradient>
+
+            <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="8" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+            </filter>
+          </defs>
+
+          <rect width="512" height="512" rx="110" fill="url(#bgGradient)"/>
+          <circle cx="256" cy="256" r="230" fill="none" stroke="url(#goldGradient)" stroke-width="12" filter="url(#shadow)"/>
+          <circle cx="256" cy="256" r="215" fill="none" stroke="#fef08a" stroke-width="2" stroke-dasharray="8 6" opacity="0.6"/>
+
+          <g filter="url(#shadow)" transform="translate(0, -15)">
+            <path d="M 180 260 C 180 200, 332 200, 332 260 C 340 330, 320 370, 256 370 C 192 370, 172 330, 180 260 Z" fill="#b45309" stroke="#fde047" stroke-width="4"/>
+            <path d="M 195 215 C 220 225, 292 225, 317 215 C 325 200, 187 200, 195 215 Z" fill="#78350f" stroke="#fde047" stroke-width="3"/>
+            <rect x="230" y="215" width="52" height="12" rx="4" fill="#fde047"/>
+
+            <path d="M 220 210 Q 170 140 140 110" stroke="#fde047" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <circle cx="140" cy="110" r="10" fill="#fde047"/>
+            <circle cx="158" cy="128" r="9" fill="#fde047"/>
+            <circle cx="178" cy="150" r="9" fill="#fde047"/>
+            
+            <path d="M 292 210 Q 342 140 372 110" stroke="#fde047" stroke-width="6" stroke-linecap="round" fill="none"/>
+            <circle cx="372" cy="110" r="10" fill="#fde047"/>
+            <circle cx="354" cy="128" r="9" fill="#fde047"/>
+            <circle cx="334" cy="150" r="9" fill="#fde047"/>
+
+            <path d="M 256 210 L 256 80" stroke="#fde047" stroke-width="7" stroke-linecap="round" fill="none"/>
+            <ellipse cx="256" cy="75" rx="9" ry="14" fill="#fde047"/>
+            <ellipse cx="242" cy="100" rx="8" ry="12" fill="#fde047" transform="rotate(-20 242 100)"/>
+            <ellipse cx="270" cy="100" rx="8" ry="12" fill="#fde047" transform="rotate(20 270 100)"/>
+            <ellipse cx="242" cy="130" rx="8" ry="12" fill="#fde047" transform="rotate(-20 242 130)"/>
+            <ellipse cx="270" cy="130" rx="8" ry="12" fill="#fde047" transform="rotate(20 270 130)"/>
+          </g>
+
+          <text x="256" y="430" text-anchor="middle" font-family="'Segoe UI', 'Cairo', sans-serif" font-weight="900" font-size="52" fill="url(#goldGradient)" filter="url(#shadow)">العلاف</text>
+          <text x="256" y="465" text-anchor="middle" font-family="'Segoe UI', 'Cairo', sans-serif" font-weight="bold" font-size="20" fill="#fef08a" letter-spacing="2">الأعلاف والحبوب</text>
+        </svg>
     </div>
 
-    <button onclick="downloadPNG()" style="margin-top:20px; padding:12px 24px; font-size:18px; background:#d97706; color:#fff; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">
-        تنزيل الصورة icon1-512.png 🚀
-    </button>
+    <button class="btn-download" onclick="downloadPNG()">تنزيل الصورة icon1-512.png 🚀</button>
 
     <script>
         function downloadPNG() {
@@ -33,6 +131,7 @@
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(url);
             };
             img.src = url;
         }
