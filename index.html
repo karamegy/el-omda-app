@@ -22,7 +22,7 @@
         </div>
     </div>
 
-    <!-- الهيدر وشريط التنقل الرئيسي -->
+    <!-- الهيدر وشريط التنقل الرئيسي بتصميم أبيض متطور -->
     <header class="main-header">
         <div class="logo-container">
             <div class="logo-icon-box" style="overflow: hidden; width: 48px; height: 48px; border-radius: 50%;">
@@ -40,8 +40,8 @@
             <button onclick="switchTab('offers')" class="nav-btn"><i class="fa-solid fa-tags"></i> باقات التوريد</button>
             <button onclick="switchTab('cart')" class="nav-btn"><i class="fa-solid fa-cart-shopping"></i> سلة الزائر (<span id="cart-count">0</span>)</button>
             <button onclick="switchTab('customer')" class="nav-btn"><i class="fa-solid fa-user"></i> حسابي وفواتيري</button>
-            <a href="Map.html" class="nav-btn" style="background-color: var(--accent-green); text-decoration: none;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
-            <a href="branches.html" class="nav-btn" style="background-color: #0284c7; text-decoration: none;"><i class="fa-solid fa-store"></i> الفروع 📍</a>
+            <a href="Map.html" class="nav-btn" style="background-color: #10b981; color: white; text-decoration: none;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
+            <a href="branches.html" class="nav-btn" style="background-color: #0284c7; color: white; text-decoration: none;"><i class="fa-solid fa-store"></i> الفروع 📍</a>
             <button id="adminNavBtn" onclick="window.location.href='admin.html'" class="nav-btn admin-btn hidden"><i class="fa-solid fa-user-gear"></i> لوحة الإدارة</button>
         </nav>
     </header>
@@ -67,7 +67,7 @@
                     <p id="slider-prod-desc">تركيزات بروتين متوازنة مع فيتامينات كاملة لزيادة الوزن والصحة العامة...</p>
                     <div class="slider-action-bar">
                         <div id="slider-prod-price" class="slider-price">0 جنيه</div>
-                        <button type="button" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary add-cart-slider-btn">
+                        <button type="button" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary add-cart-slider-btn" style="width: auto; padding: 10px 20px;">
                             <i class="fa-solid fa-cart-plus"></i> إضافة لسلة الزائر
                         </button>
                     </div>
@@ -90,34 +90,32 @@
 
         <!-- 2. تصميم خلطة علف مخصصة -->
         <section id="tab-custom-mix" class="tab-content">
-            <div class="banner">
-                <h2>⚖ صمم خلطة العلف الخاصة بمزرعتك</h2>
-                <p>اختر مكونات العلف والنسب المطلوبة وسيقوم مصنع العلاف بتجهيزها وتعبئتها وشحنها لمزرعتك مباشرة!</p>
-            </div>
-            <div class="cart-container max-w-600">
-                <div class="checkout-form">
-                    <label class="form-label">اختر المكون الأساسي للخلطة:</label>
+            <div class="cart-container" style="max-width: 850px; margin-bottom: 20px;">
+                <h2 style="margin-bottom: 8px;">⚖ صمم خلطة العلف الخاصة بمزرعتك</h2>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 20px;">اختر مكونات العلف والنسب المطلوبة وسيقوم مصنع العلاف بتجهيزها وتعبئتها وشحنها لمزرعتك مباشرة!</p>
+                <div class="checkout-form" style="margin-bottom: 0;">
+                    <label class="form-label" style="display: block; font-weight: 700; margin-bottom: 8px;">اختر المكون الأساسي للخلطة:</label>
                     <select id="custom-base-grain">
                         <option value="650">ذرة صفراء مجروشة ناعم / خشن (شكارة 50 كجم) - 650 ج</option>
                         <option value="850">كسب صويا 44% بروتين (شكارة 50 كجم) - 850 ج</option>
                         <option value="420">ردة ناعمة عالية الجودة (شكارة 40 كجم) - 420 ج</option>
                     </select>
 
-                    <label class="form-label">طبيعة الاستخدام والهضم:</label>
+                    <label class="form-label" style="display: block; font-weight: 700; margin-bottom: 8px;">طبيعة الاستخدام والهضم:</label>
                     <select id="custom-feed-type">
                         <option value="بادئ تسمين سريع">بادئ تسمين سريع (عالي البروتين)</option>
                         <option value="علف مدر للبن للمواشي">علف مدر للبن ومغذي للمواشي والأغنام</option>
                         <option value="علف متوازن خالي من السموم">علف متوازن مع مضاد سموم فطرية</option>
                     </select>
 
-                    <label class="form-label">المكملات والإضافات الغذائية الحصرية:</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" id="ext-minerals" value="90"> ثنائي فسفات الصوديوم وأملاح (+90 ج)</label>
-                        <label><input type="checkbox" id="ext-toxin" value="120"> مضاد سموم بيولوجي ومحفز نمو (+120 ج)</label>
-                        <label><input type="checkbox" id="ext-vitamins" value="70"> مجموعة فيتامينات أ د3 هـ (+70 ج)</label>
+                    <label class="form-label" style="display: block; font-weight: 700; margin-bottom: 8px;">المكملات والإضافات الغذائية الحصرية:</label>
+                    <div class="checkbox-group" style="background: #f8fafc; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="ext-minerals" value="90"> ثنائي فسفات الصوديوم وأملاح (+90 ج)</label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="ext-toxin" value="120"> مضاد سموم بيولوجي ومحفز نمو (+120 ج)</label>
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;"><input type="checkbox" id="ext-vitamins" value="70"> مجموعة فيتامينات أ د3 هـ (+70 ج)</label>
                     </div>
 
-                    <textarea id="custom-mix-notes" placeholder="أدخل أي ملاحظات حول نسبة البروتين المطلوبة أو اسم المزرعة..."></textarea>
+                    <textarea id="custom-mix-notes" placeholder="أدخل أي ملاحظات حول نسبة البروتين المطلوبة أو اسم المزرعة..." style="resize: vertical; min-height: 100px;"></textarea>
                     <button onclick="addCustomMixToCart()" class="btn-primary">إضافة الخلطة الخاصة لسلة الزائر 🚀</button>
                 </div>
             </div>
@@ -125,38 +123,38 @@
 
         <!-- 3. باقات التوريد للمزارع والشركات -->
         <section id="tab-offers" class="tab-content">
-            <div class="banner banner-dark-amber">
-                <h2>🔥 باقات وعقود توريد الأعلاف للمزارع والشركات 🔥</h2>
-                <p>تخصيص كميات توريد شهرية للأعلاف والحبوب بأسعار الجملة وتوفير سيارات نقل مخصصة للمزارع!</p>
+            <div class="cart-container" style="max-width: 1280px; margin-bottom: 25px; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-color: #fde68a;">
+                <h2 style="color: #b45309; margin-bottom: 8px;">🔥 باقات وعقود توريد الأعلاف للمزارع والشركات 🔥</h2>
+                <p style="color: #92400e; font-size: 0.95rem;">تخصيص كميات توريد شهرية للأعلاف والحبوب بأسعار الجملة وتوفير سيارات نقل مخصصة للمزارع!</p>
             </div>
             <div id="offers-grid" class="menu-grid"></div>
         </section>
 
         <!-- 4. سلة الزائر الشاملة -->
         <section id="tab-cart" class="tab-content">
-            <h2>🛒 سلة مشتريات الزائر</h2>
             <div class="cart-container">
+                <h2>🛒 سلة مشتريات الزائر</h2>
                 <div id="cart-items-list" class="cart-items"></div>
                 <div class="cart-summary">
-                    <div class="promo-box">
-                        <input type="text" id="promo-input" placeholder="أدخل كود الخصم (مثل ALLAF2026)">
-                        <button onclick="applyPromoCode()" class="btn-secondary">تطبيق الكود</button>
+                    <div class="promo-box" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="promo-input" placeholder="أدخل كود الخصم (مثل ALLAF2026)" style="margin-bottom: 0; flex: 1;">
+                        <button onclick="applyPromoCode()" class="btn-secondary" style="background: #e2e8f0; border: none; padding: 0 20px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: var(--text-main);">تطبيق</button>
                     </div>
-                    <h3>إجمالي الطلبية: <span id="cart-total">0</span> جنيه <span id="discount-note" class="discount-note"></span></h3>
+                    <h3 style="font-size: 1.2rem; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">إجمالي الطلبية: <span id="cart-total" style="color: var(--primary);">0</span> جنيه <span id="discount-note" class="discount-note" style="color: var(--accent-green); font-size: 0.9rem; font-weight: 600;"></span></h3>
                     
-                    <div class="checkout-form mt-15">
+                    <div class="checkout-form" style="margin-bottom: 0;">
                         <input type="text" id="order-name" placeholder="اسمك الكامل أو اسم المزرعة/الشركة">
                         <input type="text" id="order-phone" placeholder="رقم الهاتف (للتواصل ومتابعة الفاتورة)">
-                        <textarea id="order-address" placeholder="عنوان المزرعة أو المخزن للتوصيل بالتفصيل"></textarea>
+                        <textarea id="order-address" placeholder="عنوان المزرعة أو المخزن للتوصيل بالتفصيل" style="resize: vertical; min-height: 80px;"></textarea>
                         
                         <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-gps">
                             <i class="fa-solid fa-location-crosshairs"></i> تحديد وتثبيت موقع المزرعة عبر GPS 📍
                         </button>
-                        <div id="customer-gps-status" class="gps-status-box"></div>
+                        <div id="customer-gps-status" class="gps-status-box" style="text-align: center; font-size: 0.85rem; margin-bottom: 15px; font-weight: 600;"></div>
 
-                        <div class="checkout-btns">
-                            <button onclick="submitOrder()" class="btn-primary flex-1">إرسال الطلبية وحفظ الفاتورة 🚚</button>
-                            <button onclick="sendWhatsAppOrder()" class="btn-whatsapp flex-1"><i class="fa-brands fa-whatsapp"></i> طلب سريع عبر واتساب 💬</button>
+                        <div class="checkout-btns" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                            <button onclick="submitOrder()" class="btn-primary" style="flex: 1; min-width: 220px;">إرسال الطلبية وحفظ الفاتورة 🚚</button>
+                            <button onclick="sendWhatsAppOrder()" class="btn-whatsapp" style="flex: 1; min-width: 220px;"><i class="fa-brands fa-whatsapp"></i> طلب سريع عبر واتساب 💬</button>
                         </div>
                     </div>
                 </div>
@@ -165,21 +163,20 @@
 
         <!-- 5. بروفايل العميل الشامل (مشتريات - فواتير - كشف حساب - إشعارات) -->
         <section id="tab-customer" class="tab-content">
-            <h2>👤 بروفايل العميل وفواتير الحساب</h2>
             
             <!-- نافذة تسجيل الدخول/إنشاء الحساب للزائر -->
             <div id="unified-login-box" class="customer-login-box">
-                <i class="fa-solid fa-shield-halved text-amber-600 text-4xl mb-10"></i>
-                <h3>بوابة العلاف الآمنة (حماية ضد الاختراق)</h3>
-                <p>سجل الدخول بحسابك المعتمد لتأمين طلباتك، استلام الفواتير المباشرة من الإدارة، ومتابعة رصيدك ونقاط ولاءك:</p>
+                <i class="fa-solid fa-shield-halved" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 15px; display: inline-block;"></i>
+                <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;">بوابة العلاف الآمنة (حماية ضد الاختراق)</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 20px;">سجل الدخول بحسابك المعتمد لتأمين طلباتك، استلام الفواتير المباشرة من الإدارة، ومتابعة رصيدك ونقاط ولاءك:</p>
 
                 <button type="button" onclick="loginWithGoogle()" class="btn-google-auth">
-                    <i class="fa-brands fa-google text-red-500 text-xl"></i> تسجيل الدخول المشفر عبر Google
+                    <i class="fa-brands fa-google" style="color: #dc2626; font-size: 1.2rem;"></i> تسجيل الدخول المشفر عبر Google
                 </button>
 
                 <div class="auth-divider"><span>أو بواسطة رقم الهاتف الموثق</span></div>
 
-                <input type="text" id="quick-phone-input" placeholder="أدخل رقم هاتفك (مثلاً: 01012345678)">
+                <input type="text" id="quick-phone-input" placeholder="أدخل رقم هاتفك (مثلاً: 01012345678)" style="margin-bottom: 12px;">
                 <button type="button" onclick="loginByPhoneQuick()" class="btn-primary w-full">الدخول الآمن برقم الهاتف 📱</button>
             </div>
 
@@ -188,21 +185,21 @@
                 
                 <!-- كارت معلومات العميل الشخصية -->
                 <div class="cust-profile-header">
-                    <div class="cust-avatar-container" style="overflow: hidden; width: 64px; height: 64px; border-radius: 50%;">
+                    <div class="cust-avatar-container" style="overflow: hidden; width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border-color);">
                         <img id="cust-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
                     </div>
-                    <div>
-                        <h3 id="cust-display-name">اسم العميل / المزرعة</h3>
-                        <div id="cust-display-email" class="text-sub">email@domain.com</div>
-                        <div id="cust-display-phone" class="text-sub font-bold text-amber-700">01000000000</div>
+                    <div style="flex: 1;">
+                        <h3 id="cust-display-name" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 4px;">اسم العميل / المزرعة</h3>
+                        <div id="cust-display-email" class="text-sub" style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2px;">email@domain.com</div>
+                        <div id="cust-display-phone" class="text-sub font-bold" style="color: var(--primary); font-size: 0.9rem; font-weight: 700;">01000000000</div>
                     </div>
-                    <button onclick="customerLogout()" class="btn-danger btn-sm logout-btn">تسجيل خروج آمن 🚪</button>
+                    <button onclick="customerLogout()" class="btn-primary" style="background: #fee2e2; color: #dc2626; width: auto; padding: 8px 16px; font-size: 0.85rem; box-shadow: none;">تسجيل خروج آمن 🚪</button>
                 </div>
 
                 <!-- شريط نقاط الولاء والحساب -->
                 <div class="cust-info-bar">
-                    <div>⭐ رصيد نقاط الولاء: <span id="cust-points" class="font-bold text-lg">0</span> نقطة</div>
-                    <div>💰 حالة الحساب: <span id="cust-balance-status" class="font-bold text-emerald-700">آمن وخالي من الديون</span></div>
+                    <div>⭐ رصيد نقاط الولاء: <span id="cust-points" class="font-bold text-lg" style="color: var(--primary);">0</span> نقطة</div>
+                    <div>💰 حالة الحساب: <span id="cust-balance-status" class="font-bold" style="color: var(--accent-green);">آمن وخالي من الديون</span></div>
                 </div>
 
                 <!-- التنقل الداخلي في البروفايل -->
@@ -215,25 +212,25 @@
 
                 <!-- محتوى 1: المشتريات -->
                 <div id="cust-subtab-orders" class="subtab-content active">
-                    <h4 class="subtab-title">📦 سجل طلباتك ومتابعة الشحنات:</h4>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 15px; color: var(--text-main);">📦 سجل طلباتك ومتابعة الشحنات:</h4>
                     <div id="customer-orders-list" class="orders-list"></div>
                 </div>
 
                 <!-- محتوى 2: الفواتير الصادرة من الإدارة -->
                 <div id="cust-subtab-invoices" class="subtab-content hidden">
-                    <h4 class="subtab-title">🧾 الفواتير الصادرة لحسابك من إدارة العلاف:</h4>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 15px; color: var(--text-main);">🧾 الفواتير الصادرة لحسابك من إدارة العلاف:</h4>
                     <div id="customer-invoices-list" class="invoices-list"></div>
                 </div>
 
                 <!-- محتوى 3: كشف الحساب والرصيد -->
                 <div id="cust-subtab-statement" class="subtab-content hidden">
-                    <h4 class="subtab-title">💰 ملخص الحساب المالي والرصيد:</h4>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 15px; color: var(--text-main);">💰 ملخص الحساب المالي والرصيد:</h4>
                     <div id="customer-statement-box" class="statement-card"></div>
                 </div>
 
                 <!-- محتوى 4: التنبيهات والإشعارات -->
                 <div id="cust-subtab-notifications" class="subtab-content hidden">
-                    <h4 class="subtab-title">🔔 التنبيهات والإشعارات الخاصة بحسابك:</h4>
+                    <h4 style="font-size: 1.05rem; font-weight: 800; margin-bottom: 15px; color: var(--text-main);">🔔 التنبيهات والإشعارات الخاصة بحسابك:</h4>
                     <div id="customer-notifications-list" class="notifications-list"></div>
                 </div>
 
@@ -245,27 +242,27 @@
     <!-- نافذة عرض وطباعة الفاتورة التفصيلية Modal -->
     <div id="invoiceModal" class="modal-overlay hidden">
         <div class="modal-card">
-            <div class="modal-header">
-                <h3>🧾 فاتورة رسمية مؤمنة - تطبيق العلاف للأعلاف</h3>
-                <button onclick="closeInvoiceModal()" class="close-modal-btn">&times;</button>
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border-color);">
+                <h3 style="font-size: 1.2rem; font-weight: 800;">🧾 فاتورة رسمية مؤمنة - تطبيق العلاف للأعلاف</h3>
+                <button onclick="closeInvoiceModal()" class="close-modal-btn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">&times;</button>
             </div>
-            <div id="invoiceModalBody" class="modal-body"></div>
-            <div class="modal-footer">
-                <button onclick="printInvoiceModal()" class="btn-primary"><i class="fa-solid fa-print"></i> طباعة / حفظ PDF</button>
-                <button onclick="closeInvoiceModal()" class="btn-secondary">إغلاق</button>
+            <div id="invoiceModalBody" class="modal-body" style="margin-bottom: 20px;"></div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="printInvoiceModal()" class="btn-primary" style="width: auto; padding: 10px 20px;"><i class="fa-solid fa-print"></i> طباعة / حفظ PDF</button>
+                <button onclick="closeInvoiceModal()" class="btn-secondary" style="background: #e2e8f0; border: none; padding: 10px 20px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: var(--text-main);">إغلاق</button>
             </div>
         </div>
     </div>
 
     <!-- نافذة التنبيه لتسجيل الدخول عند الشراء Auth Prompt Modal -->
     <div id="authPromptModal" class="modal-overlay hidden">
-        <div class="modal-card auth-prompt-card">
-            <i class="fa-solid fa-lock text-amber-600 text-4xl mb-10"></i>
-            <h3>تسجيل الدخول الآمن مطلوب لإتمام الطلب</h3>
-            <p>من فضلك سجل الدخول بحسابك الموثق أولاً لحفظ طلبية الأعلاف وإصدار الفاتورة باسمك ومتابعتها بأمان في البروفايل:</p>
-            <div class="modal-prompt-btns">
-                <button onclick="closeAuthPrompt(); switchTab('customer');" class="btn-primary">تسجيل الدخول الآن 🚀</button>
-                <button onclick="closeAuthPrompt()" class="btn-secondary">متابعة التصفح</button>
+        <div class="modal-card auth-prompt-card" style="text-align: center; max-width: 450px;">
+            <i class="fa-solid fa-lock" style="color: var(--primary); font-size: 2.5rem; margin-bottom: 15px; display: inline-block;"></i>
+            <h3 style="font-size: 1.25rem; font-weight: 800; margin-bottom: 10px;">تسجيل الدخول الآمن مطلوب لإتمام الطلب</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 25px;">من فضلك سجل الدخول بحسابك الموثق أولاً لحفظ طلبية الأعلاف وإصدار الفاتورة باسمك ومتابعتها بأمان في البروفايل:</p>
+            <div class="modal-prompt-btns" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="closeAuthPrompt(); switchTab('customer');" class="btn-primary" style="flex: 1;">تسجيل الدخول الآن 🚀</button>
+                <button onclick="closeAuthPrompt()" class="btn-secondary" style="flex: 1; background: #e2e8f0; border: none; padding: 14px 20px; border-radius: var(--radius-md); font-weight: 700; cursor: pointer; color: var(--text-main);">متابعة التصفح</button>
             </div>
         </div>
     </div>
@@ -296,7 +293,7 @@
                 window.customerLng = pos.coords.longitude;
                 if (statusBox) {
                     statusBox.innerHTML = `✅ تم تثبيت الموقع بنجاح: (${window.customerLat.toFixed(4)}, ${window.customerLng.toFixed(4)})`;
-                    statusBox.style.color = "#16a34a";
+                    statusBox.style.color = "#10b981";
                 }
             }, () => {
                 if (statusBox) statusBox.innerText = "❌ تعذر تحديد الموقع، تأكد من تفعيل الـ GPS.";
