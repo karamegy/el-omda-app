@@ -115,7 +115,6 @@ onAuthStateChanged(auth, async (user) => {
         authModal.style.display = 'none';
         profileBtn.style.display = 'flex';
         
-        // التحقق المباشر: إذا كان البريد هو بريدك الأساسي، تظهر لوحة التحكم مباشرة
         if (user.email === "haretg@gmail.com") {
             adminBtn.style.display = 'flex';
         } else {
@@ -263,6 +262,14 @@ async function loadUserProfile() {
     if (!currentUser) return;
     document.getElementById('userEmailDisplay').textContent = currentUser.email;
     
+    const roleDisplay = document.getElementById('userRoleDisplay');
+    if (currentUser.email === "haretg@gmail.com") {
+        roleDisplay.textContent = "مدير النظام (Admin)";
+        roleDisplay.style.color = "#d4a373";
+    } else {
+        roleDisplay.textContent = "عميل معتمد";
+    }
+
     const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
     const querySnapshot = await getDocs(q);
     let invoicesHtml = '';
