@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.karamegy.omda",
+        "sha256_cert_fingerprints": ["70:C4:07:BC:8D:C3:46:63:A2:67:9C:2E:E0:2A:22:D8:0C:48:D4:2E:0E:3F:B1:EC:13:ED:95:86:BC:23:E7:01"]
+      }
+    }]
