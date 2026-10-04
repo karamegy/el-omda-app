@@ -2,14 +2,16 @@
   "name": "تطبيق العلاف - تجارة وتوريد الأعلاف والحبوب",
   "short_name": "تطبيق العلاف 🌾",
   "description": "منصة طلب وتوريد أعلاف الدواجن والمواشي والخلطات المخصصة للمزارع",
-  "start_url": "./index.html",
+  "id": "el-omda-allaf-app-2026",
+  "start_url": "./index.html?pwa=allaf",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1c1917",
   "theme_color": "#b45309",
   "icons": [
     {
-      "src": "icon1-512.png",
+      "src": "icon1-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
