@@ -179,7 +179,6 @@ async function loadCategories() {
                 { id: 'supplements', name: 'مكملات وفيتامينات', icon: 'fa-solid fa-pills' },
                 { id: 'veterinary', name: 'أدوية بيطرية', icon: 'fa-solid fa-kit-medical' }
             ];
-            // حفظها أوتوماتيكياً في فايربيس لأول مرة
             for (let cat of allCategoriesCache) {
                 await setDoc(doc(db, "categories", cat.id), { name: cat.name, icon: cat.icon });
             }
@@ -209,6 +208,7 @@ async function loadCategories() {
     }
 }
 
+// دالة تحميل المنتجات وتوليدها تلقائياً بفايربيس لضمان عدم ظهور فراغ
 async function loadProducts() {
     await loadCategories();
     productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات والمنشورات...</p>';
@@ -220,14 +220,22 @@ async function loadProducts() {
         });
         
         if (allProductsCache.length === 0) {
-            allProductsCache = [
-                { id: '1', name: 'علاف تسمين عالي البروتين (50 كجم)', price: '250', category: 'concentrates', mediaUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80', mediaType: 'image' },
-                { id: '2', name: 'ذرة صفراء مستوردة صافية (50 كجم)', price: '180', category: 'grains', mediaUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80', mediaType: 'image' }
+            const defaultProducts = [
+                { name: 'علاف تسمين عالي البروتين (50 كجم)', price: '250', category: 'concentrates', mediaUrl: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80', mediaType: 'image' },
+                { name: 'ذرة صفراء مستوردة صافية (50 كجم)', price: '180', category: 'grains', mediaUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80', mediaType: 'image' }
             ];
+            for (let prod of defaultProducts) {
+                await addDoc(collection(db, "products"), prod);
+            }
+            const freshSnapshot = await getDocs(collection(db, "products"));
+            freshSnapshot.forEach((docSnap) => {
+                allProductsCache.push({ id: docSnap.id, ...docSnap.data() });
+            });
         }
         renderProducts('all', '');
         startProductCarousel();
     } catch (e) {
+        console.error("Error loading products:", e);
         productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">حدث خطأ أثناء تحميل المنتجات.</p>';
     }
 }
@@ -454,7 +462,6 @@ addCategoryForm.addEventListener('submit', async (e) => {
 
     try {
         if (editCatId) {
-            // إذا كان تعديل، قد يتطلب تحديث الـ doc أو حذفه وإنشاء جديد إذا تغير الـ ID
             if (editCatId !== catId) {
                 await deleteDoc(doc(db, "categories", editCatId));
             }
@@ -502,7 +509,7 @@ async function loadCategoriesForAdmin() {
 window.editCategory = function(id, name, icon) {
     document.getElementById('editCatId').value = id;
     document.getElementById('catIdInput').value = id;
-    document.getElementById('catIdInput').disabled = true; // منع تغيير المعرف الرئيسي لتجنب الأخطاء
+    document.getElementById('catIdInput').disabled = true;
     document.getElementById('catNameInput').value = name;
     document.getElementById('catIconInput').value = icon;
     document.getElementById('categoryFormTitle').textContent = 'تعديل القسم';
