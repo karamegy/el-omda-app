@@ -1,4 +1,6 @@
+// ==========================================
 // استيراد مكتبات فايربيس الموحدة بالإصدار 10.12.0 لتجنب أي تضارب في المتصفح
+// ==========================================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js";
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -163,7 +165,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     initHeroSlider();
     initRealtimeCloudSync();
 
-    // التحقق من نتيجة إعادة التوجيه للمصادقة على الهواتف
     try {
         const redirectResult = await getRedirectResult(window.auth);
         if (redirectResult && redirectResult.user) {
@@ -173,14 +174,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Redirect auth error:", err);
     }
 
-    // 1. تشغيل الخريطة تلقائياً إذا كانت صفحة الخريطة مفتوحة
     if (document.getElementById('leafletMap')) {
         checkUserPermissions();
         initLeafletMap();
         initRealtimeMapData();
     }
 
-    // 2. تشغيل لوحة التجهيز (KDS) تلقائياً إذا كانت الشاشة مفتوحة
     if (document.getElementById('kitchen-orders-grid')) {
         if (checkKitchenAccessSecurity()) {
             loadKitchenOrdersFromLocal();
@@ -188,19 +187,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // 3. تشغيل لوحة الإدارة تلقائياً إذا كانت الصفحة مفتوحة
     if (document.getElementById('admin-dashboard')) {
         if (localStorage.getItem('allaf_logged_user')) {
             loadAdminDashboard();
         }
     }
 
-    // 4. تشغيل تفاصيل المنتج تلقائياً إذا كانت صفحة المنتج مفتوحة
     if (document.getElementById('product-detail-container')) {
         initProductDetailsPage();
     }
 
-    // 5. تشغيل صفحة المكافآت تلقائياً إذا كانت الصفحة مفتوحة
     if (document.getElementById('user-reward-points')) {
         initRewardsPage();
     }
@@ -1364,7 +1360,7 @@ function toggleGpsTracking() {
             statusBox.className = "text-[11px] bg-sky-50 p-2 rounded-lg text-sky-800 text-center font-mono font-bold border border-sky-200";
         }
         if(toggleBtn) {
-            toggleBtn.innerText = "بدء بث الموقع الحي 🛰️️";
+            toggleBtn.innerText = "بدء بث الموقع الحي 🛰";
             toggleBtn.className = "btn-primary w-full text-xs py-2 bg-emerald-600 hover:bg-emerald-700 cursor-pointer";
         }
     } else {
@@ -1651,7 +1647,6 @@ async function setKitchenStatus(orderId, newStatus) {
 // ==========================================
 // وظائف لوحة التحكم والإدارة (admin.html)
 // ==========================================
-
 function switchAdminSection(sectionName, btnElement) {
     document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
     document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
@@ -2473,7 +2468,6 @@ window.initProductDetailsPage = initProductDetailsPage;
 window.addSpecificProductToCart = addSpecificProductToCart;
 window.initRewardsPage = initRewardsPage;
 window.redeemReward = redeemReward;
-// تصدير إضافي للدوال المستخدمة في admin.html والواجهات الديناميكية
 window.loadAdminDashboard = loadAdminDashboard;
 window.setKitchenStatus = setKitchenStatus;
 window.showInvoiceDetails = showInvoiceDetails;
@@ -2491,9 +2485,8 @@ window.addCustomMixToCart = addCustomMixToCart;
 window.submitOrder = submitOrder;
 window.sendWhatsAppOrder = sendWhatsAppOrder;
 window.switchCustomerSubTab = switchCustomerSubTab;
-// ==========================================
-// دوال تحكم البانر المتحرك (Hero Slider) الناقصة
-// ==========================================
+
+// دوال تحكم البانر المتحرك (Hero Slider)
 function prevSliderItem() {
     if (!menuProducts || menuProducts.length === 0) return;
     currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
@@ -2522,7 +2515,6 @@ function sliderClickAction() {
     }
 }
 
-// ربط الدوال بالنطاق العام لتعمل مع HTML
 window.prevSliderItem = prevSliderItem;
 window.nextSliderItem = nextSliderItem;
 window.sliderAddToCart = sliderAddToCart;
