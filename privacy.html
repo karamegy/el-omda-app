@@ -6,9 +6,9 @@
     <title>سياسة الخصوصية | تطبيق العلاف لتجارة وتوريد الأعلاف والحبوب 🌾</title>
     <meta name="theme-color" content="#b45309">
     <!-- تحديث رابط المينيفست برقم إصدار لمنع تداخل التخزين المؤقت -->
-    <link rel="manifest" href="manifest.json?v=2.0">
-    <!-- سياسات الأمان وحماية المتصفح ضد الهجمات (Content Security Policy) -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.gstatic.com https://*.googleapis.com https://cdnjs.cloudflare.com https://images.unsplash.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://images.unsplash.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com;">
+    <link rel="manifest" href="manifest.json?v=2.1">
+    <!-- سياسات الأمان وحماية المتصفح الشاملة -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.gstatic.com https://*.googleapis.com https://cdnjs.cloudflare.com https://images.unsplash.com https://cdn.tailwindcss.com; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; img-src 'self' data: https://images.unsplash.com https://*.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://accounts.google.com; frame-src 'self' https://accounts.google.com https://*.firebaseapp.com;">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -20,16 +20,16 @@
 <body class="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
 
     <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم المستخدم -->
-    <header class="corporate-card p-4 sm:p-6 flex justify-between items-center bg-white border-amber-200 flex-wrap gap-4">
+    <header class="corporate-card p-4 sm:p-6 flex justify-between items-center bg-white border-amber-200 flex-wrap gap-4 shadow-sm">
         <div class="flex items-center gap-3">
             <div style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #fde047; background: #000;">
                 <img id="nav-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
                 <h1 class="font-black text-slate-900 text-base sm:text-lg">سياسة الخصوصية - منصة العلاف 🌾</h1>
-                <div class="flex gap-2 items-center flex-wrap">
+                <div class="flex gap-2 items-center flex-wrap mt-1">
                     <span class="text-xs text-amber-800 font-bold">آخر تحديث: أكتوبر 2026 (آمن 🛡️)</span>
-                    <span id="nav-username-display" class="text-xs text-slate-700 bg-amber-50 px-2 py-0.5 rounded"></span>
+                    <span id="nav-username-display" class="text-xs text-slate-700 bg-amber-50 px-2 py-0.5 rounded font-bold">زائر</span>
                 </div>
             </div>
         </div>
@@ -38,18 +38,18 @@
                 <i class="fa-solid fa-store ml-1"></i> العودة للمتجر
             </a>
             <a href="Map.html" class="bg-emerald-50 text-emerald-900 border border-emerald-200 px-3 py-2 rounded-xl text-xs font-bold hover:bg-emerald-100 transition flex items-center gap-1">
-                <i class="fa-solid fa-map-location-dot"></i> الخريطة
+                <i class="fa-solid fa-map-location-dot"></i> الخريطة الحية
             </a>
         </nav>
     </header>
 
     <!-- محتوى سياسة الخصوصية -->
-    <main class="corporate-card p-6 sm:p-8 space-y-6 text-sm leading-relaxed">
+    <main class="corporate-card p-6 sm:p-8 space-y-6 text-sm leading-relaxed border-t-4 border-t-amber-600">
         
         <section class="space-y-2">
             <h2 class="text-base font-bold text-amber-900 border-b border-amber-100 pb-2">1. مقدمة ونبذة تعريفية</h2>
             <p class="text-slate-600">
-                مرحباً بك في منصة وتطبيق <strong>"العلاف لتجارة وتوريد الأعلاف والحبوب"</strong>. نحن نولي اهتماماً بالغاً بحماية خصوصيتك وبياناتك الشخصية وبينات مزرعتك. توضح وثيقة سياسة الخصوصية هذه كيفية جمع واستخدام وحماية المعلومات الخاصة بك عند استخدامك لتطبيقنا وموقعنا الإلكتروني وخدمات التوصيل والتتبع الحي للشحنات ومكالمات الدعم.
+                مرحباً بك في منصة وتطبيق <strong>"العلاف لتجارة وتوريد الأعلاف والحبوب"</strong>. نحن نولي اهتماماً بالغاً بحماية خصوصيتك وبياناتك الشخصية وبيانات مزرعتك. توضح وثيقة سياسة الخصوصية هذه كيفية جمع واستخدام وحماية المعلومات الخاصة بك عند استخدامك لتطبيقنا وموقعنا الإلكتروني وخدمات التوصيل والتتبع الحي للشحنات ومكالمات الدعم.
             </p>
         </section>
 
@@ -170,7 +170,7 @@
             const nameEl = document.getElementById('nav-username-display');
 
             if (sessionUser && (sessionUser.name || sessionUser.email)) {
-                if (nameEl) nameEl.innerText = sanitizeInput(sessionUser.name || sessionUser.email);
+                if (nameEl) nameEl.innerText = sanitizeInput(sessionUser.name || sessionUser.email || sessionUser.phone);
                 if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
             } else {
                 if (nameEl) nameEl.innerText = 'زائر';
