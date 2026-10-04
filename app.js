@@ -47,10 +47,21 @@ window.firebaseModules = {
 // تثبيت الجلسة محلياً لمنع الخروج التلقائي وحل مشكلة متصفحات الموبايل (Storage Partitioning)
 setPersistence(window.auth, browserLocalPersistence).catch(console.error);
 
-// مراقبة واستعادة جلسة المستخدم تلقائياً بدون تعارض
+// مراقبة واستعادة جلسة المستخدم تلقائياً بدون تعارض أو طرد
 onAuthStateChanged(window.auth, async (user) => {
     if (user) {
         await handleSuccessfulAuthUser(user, false);
+    } else {
+        // حماية الجلسة محلياً لتفادي تأخير استجابة فايربيس الكاش
+        const saved = localStorage.getItem('allaf_logged_user');
+        if (saved && !currentCustomer) {
+            try {
+                currentCustomer = JSON.parse(saved);
+                if (typeof loadCustomerDashboard === 'function') {
+                    loadCustomerDashboard();
+                }
+            } catch(e) {}
+        }
     }
 });
 
@@ -178,7 +189,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول المعرفة بـ window (حل أخطاء الموبايل)
+// دوال المصادقة وتسجيل الدخول المعرفة بـ window
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
