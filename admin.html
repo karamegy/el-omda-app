@@ -403,7 +403,7 @@
 
     </main>
 
-    <!-- تهيئة Firebase السحابية ومصادقة Google (المحدثة للمشروع الجديد) -->
+    <!-- تهيئة Firebase السحابية ومصادقة Google -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -430,7 +430,6 @@
         window.signInWithPopup = signInWithPopup;
         window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc };
 
-        // المتابعة التلقائية لعملية تسجيل الدخول وإظهار لوحة التحكم للأدمن
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const email = user.email.toLowerCase();
@@ -460,7 +459,7 @@
         });
     </script>
 
-    <!-- ملف الجافاسكربت الشامل للتطبيق -->
-    <script src="app.js"></script>
+    <!-- ملف الجافاسكربت الشامل للتطبيق (مدعوم كوحدة برمجية) -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
