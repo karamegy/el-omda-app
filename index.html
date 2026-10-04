@@ -3,263 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الأسطول اللوجستي وإدارة الشحنات والحسابات 🚀</title>
+    <title>تطبيق العلاف - الأعلاف والحبوب والمستلزمات الزراعية 🌾</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#b45309">
+    <meta name="theme-color" content="#d97706">
 </head>
 <body>
 
-    <!-- شريط الإعلانات المتحرك (RSS Ticker) -->
+    <!-- شريط الإعلانات المتحرك بأسعار الأعلاف والعروض -->
     <div class="ticker-container">
-        <div class="ticker-label"><i class="fa-solid fa-bullhorn"></i> إعلانات الأسطول:</div>
+        <div class="ticker-label"><i class="fa-solid fa-wheat-awn"></i> أحدث أسعار وتنبيهات العلاف:</div>
         <div class="ticker-content">
-            <marquee id="main-ticker-text" scrollamount="6">🔥 أهلاً بكم في منصة الأسطول اللوجستي المتكامل - أسرع خدمة توصيل طرود وشحنات وتحصيل نقدي COD يومياً! استخدم برومو كود FLEET2026 لخصم 10% على شحنتك الأولى 🔥</marquee>
+            <marquee id="main-ticker-text" scrollamount="6">🌾 أهلاً بكم في تطبيق العلاف - أجود أنواع الأعلاف المركزة للدواجن والمواشي والأرانب والحبوب بأفضل الأسعار وتوصيل سريع للمزارع! خصم خاص 10% على طلبيتك الأولى باستخدام كود ALLAF2026 🌾</marquee>
         </div>
     </div>
 
-    <!-- الهيدر وشريط التنقل المنظم للموبايل والشاشات -->
+    <!-- الهيدر وشريط التنقل الرئيسي -->
     <header class="main-header">
         <div class="logo-container">
-            <img src="icon1-512.png" alt="لوجو الأسطول اللوجستي" class="logo-img">
+            <div class="logo-icon-box">
+                <i class="fa-solid fa-wheat-awn text-amber-400 text-2xl"></i>
+            </div>
             <div>
-                <h1>الأسطول اللوجستي</h1>
-                <span id="userRoleBadge" style="font-size: 0.7rem; color: #fde047; font-weight: bold; display: block;">وضع تتبع الشحنة والطلبات للعملاء 📦</span>
+                <h1>تطبيق العلاف 🌾</h1>
+                <span id="userRoleBadge" class="header-badge">متجر الأعلاف والحبوب والمستلزمات الزراعية</span>
             </div>
         </div>
-        <nav class="nav-links" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: center; padding: 5px 0;">
-            <button onclick="switchTab('menu')" class="nav-btn active" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-boxes-stacked"></i> الخدمات</button>
-            <button onclick="switchTab('custom-tray')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-wand-magic-sparkles"></i> صمم شحنتك</button>
-            <button onclick="switchTab('offers')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-fire"></i> الباقات</button>
-            <button onclick="switchTab('cart')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-cart-shopping"></i> سلة الشحنات (<span id="cart-count">0</span>)</button>
-            <button onclick="switchTab('reservation')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-truck-fast"></i> طلب أسطول</button>
-            <button onclick="switchTab('favorites')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-heart"></i> المفضلة</button>
-            <button onclick="switchTab('customer')" class="nav-btn" style="font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-user"></i> حسابي والبروفايل</button>
-            
-            <!-- زر الانتقال لصفحة promo.html المستقلة -->
-            <a href="promo.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #9333ea; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-tags"></i> العروض والبرومو 🎟️</a>
 
-            <!-- زر الانتقال لصفحة privacy.html المستقلة -->
-            <a href="privacy.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #78350f; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-shield-halved"></i> الخصوصية 🔒</a>
-            
-            <a href="Map.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #16a34a; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية 🗺️</a>
-            <a href="branches.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #b45309; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-store"></i> المراكز 📍</a>
-            <a href="kitchen-display.html" class="nav-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 4px; background-color: #991b1b; font-size: 0.8rem; padding: 6px 10px;"><i class="fa-solid fa-desktop"></i> لوحة العمليات 🔥</a>           
+        <nav class="nav-links">
+            <button onclick="switchTab('menu')" class="nav-btn active"><i class="fa-solid fa-boxes-stacked"></i> الأعلاف والمنتجات</button>
+            <button onclick="switchTab('custom-mix')" class="nav-btn"><i class="fa-solid fa-mortar-pestle"></i> صمم خلطتك</button>
+            <button onclick="switchTab('offers')" class="nav-btn"><i class="fa-solid fa-tags"></i> باقات التوريد</button>
+            <button onclick="switchTab('cart')" class="nav-btn"><i class="fa-solid fa-cart-shopping"></i> سلة الزائر (<span id="cart-count">0</span>)</button>
+            <button onclick="switchTab('customer')" class="nav-btn"><i class="fa-solid fa-user"></i> حسابي وفواتيري</button>
+            <button id="adminNavBtn" onclick="window.location.href='admin.html'" class="nav-btn admin-btn hidden"><i class="fa-solid fa-user-gear"></i> لوحة الإدارة</button>
         </nav>
     </header>
 
     <!-- المحتوى الرئيسي -->
     <main class="container">
 
-        <!-- 1. قسم الخدمات والطلب -->
+        <!-- 1. قسم الأعلاف والمنتجات -->
         <section id="tab-menu" class="tab-content active">
-            <div id="hero-slider-banner" class="banner" style="position: relative; overflow: hidden; padding: 15px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(135deg, #78350f, #b45309); box-shadow: 0 4px 15px rgba(0,0,0,0.15);">
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="background: #991b1b; color: white; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold;"><i class="fa-solid fa-fire"></i> أسرع خدمات التوصيل واللوجستيات</span>
-                    <span id="slider-counter" style="color: #fde047; font-size: 0.8rem; font-weight: bold; direction: ltr; unicode-bidi: embed;">1 / 5</span>
+            <!-- بانر العروض المميزة Slider -->
+            <div id="hero-slider-banner" class="banner hero-banner">
+                <div class="slider-header">
+                    <span class="badge-fire"><i class="fa-solid fa-fire"></i> الأعلاف الأعلى طلباً والمغذية</span>
+                    <span id="slider-counter" class="slider-counter">1 / 5</span>
                 </div>
-                <div style="position: relative; width: 100%; height: 230px; border-radius: 10px; overflow: hidden; background: #1c1917; display: flex; align-items: center; justify-content: center; border: 2.5px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer;" onclick="sliderClickAction()">
-                    <img id="slider-prod-img" src="icon1-512.png" alt="صورة الخدمة المميزة" style="width: 100%; height: 100%; object-fit: contain; background: #000;">
-                    <button type="button" onclick="event.stopPropagation(); prevSliderItem()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-right"></i></button>
-                    <button type="button" onclick="event.stopPropagation(); nextSliderItem()" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.6); color: white; border: none; width: 38px; height: 38px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; z-index: 5;"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="slider-media-container" onclick="sliderClickAction()">
+                    <img id="slider-prod-img" src="https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=800" alt="صورة العلف" class="slider-img">
+                    <button type="button" onclick="event.stopPropagation(); prevSliderItem()" class="slider-arrow arrow-right"><i class="fa-solid fa-chevron-right"></i></button>
+                    <button type="button" onclick="event.stopPropagation(); nextSliderItem()" class="slider-arrow arrow-left"><i class="fa-solid fa-chevron-left"></i></button>
                 </div>
-                <div style="width: 100%; text-align: center; margin-top: 10px;">
-                    <h3 id="slider-prod-name" style="color: #fef3c7; font-size: 1.2rem; margin: 4px 0;">🚀 منصة الأسطول والحسابات</h3>
-                    <p id="slider-prod-desc" style="font-size: 0.85rem; color: #f5f5f4; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">جاري تحميل أسرع خدمات الشحن والتوصيل...</p>
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 15px;">
-                        <div id="slider-prod-price" style="font-size: 1.1rem; font-weight: bold; color: #fde047;">0 جنيه</div>
-                        <button type="button" id="slider-action-btn" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary" style="padding: 6px 16px; font-size: 0.85rem; background-color: #16a34a; border: none; cursor: pointer; border-radius: 6px; color: white; font-weight: bold;"><i class="fa-solid fa-cart-plus"></i> اطلب الخدمة فوراً</button>
+                <div class="slider-info">
+                    <h3 id="slider-prod-name">🌾 أعلاف دواجن فائقة التسمين</h3>
+                    <p id="slider-prod-desc">تركيزات بروتين متوازنة مع فيتامينات كاملة لزيادة الوزن والصحة العامة...</p>
+                    <div class="slider-action-bar">
+                        <div id="slider-prod-price" class="slider-price">0 جنيه</div>
+                        <button type="button" onclick="event.stopPropagation(); sliderAddToCart()" class="btn-primary add-cart-slider-btn">
+                            <i class="fa-solid fa-cart-plus"></i> إضافة لسلة الزائر
+                        </button>
                     </div>
                 </div>
             </div>
             
+            <!-- أشرطة أقسام الأعلاف -->
             <div class="categories-bar">
                 <button onclick="filterCategory('all')" class="cat-btn active">الكل</button>
-                <button onclick="filterCategory('express')" class="cat-btn">توصيل فوري ⚡</button>
-                <button onclick="filterCategory('cargo')" class="cat-btn">شحنات وبضائع 📦</button>
-                <button onclick="filterCategory('financial')" class="cat-btn">تحصيل مالي COD 💰</button>
-                <button onclick="filterCategory('corporate')" class="cat-btn">اشتراكات شركات 🏢</button>
+                <button onclick="filterCategory('poultry')" class="cat-btn">أعلاف دواجن 🐣</button>
+                <button onclick="filterCategory('livestock')" class="cat-btn">أعلاف مواشي وأغنام 🐄</button>
+                <button onclick="filterCategory('rabbits')" class="cat-btn">أعلاف أرانب وخيول 🐇</button>
+                <button onclick="filterCategory('supplements')" class="cat-btn">مكملات وأملاح 🧂</button>
+                <button onclick="filterCategory('grains')" class="cat-btn">حبوب وبذور 🌾</button>
             </div>
 
+            <!-- شبكة كروت المنتجات -->
             <div id="menu-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 1.5 صمم شحنتك بنفسك -->
-        <section id="tab-custom-tray" class="tab-content">
-            <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309);">
-                <h2>🎨 صمم شحنتك وخدمة التوصيل الخاصة بك</h2>
-                <p>اختر نوع الشحنة، مسار التوصيل، والإضافات الحصرية وسيقوم طيار الأسطول بتنفيذها بدقة واحترافية!</p>
+        <!-- 2. تصميم خلطة علف مخصصة -->
+        <section id="tab-custom-mix" class="tab-content">
+            <div class="banner">
+                <h2>⚖️ صمم خلطة العلف الخاصة بمزرعتك</h2>
+                <p>اختر مكونات العلف والنسب المطلوبة وسيقوم مصنع العلاف بتجهيزها وتعبئتها وشحنها لمزرعتك مباشرة!</p>
             </div>
-            <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
-                <div class="checkout-form" style="max-width: 100%;">
-                    <label style="font-weight: bold; color: var(--secondary-color);">اختر نوع الشحنة أو الخدمة:</label>
-                    <select id="custom-size">
-                        <option value="60">شحنة عادية / طرد صغير (داخل المدينة) - 60 جنيه</option>
-                        <option value="150">شحنة ثقيلة / بضائع ومعدات - 150 جنيه</option>
-                        <option value="250">خدمة توصيل متعدد المحطات (Multi-Stop) - 250 جنيه</option>
+            <div class="cart-container max-w-600">
+                <div class="checkout-form">
+                    <label class="form-label">اختر المكون الأساسي للخلطة:</label>
+                    <select id="custom-base-grain">
+                        <option value="650">ذرة صفراء مجروشة ناعم / خشن (شكارة 50 كجم) - 650 ج</option>
+                        <option value="850">كسب صويا 44% بروتين (شكارة 50 كجم) - 850 ج</option>
+                        <option value="420">ردة ناعمة عالية الجودة (شكارة 40 كجم) - 420 ج</option>
                     </select>
 
-                    <label style="font-weight: bold; color: var(--secondary-color);">اختر طبيعة النقل والتحصيل:</label>
-                    <select id="custom-meat">
-                        <option value="توصيل عادي بدون تحصيل">توصيل طرد أو مستندات فقط</option>
-                        <option value="تحصيل نقدي قيمة فاتورة COD">تحصيل نقدي قيمة فاتورة (COD) وإيداعها الخزنة</option>
-                        <option value="توصيل بضائع هشة وعناية خاصة">توصيل بضائع هشة وعناية قصوى بالطلب</option>
+                    <label class="form-label">طبيعة الاستخدام والهضم:</label>
+                    <select id="custom-feed-type">
+                        <option value="بادئ تسمين سريع">بادئ تسمين سريع (عالي البروتين)</option>
+                        <option value="علف مدر للبن للمواشي">علف مدر للبن ومغذي للمواشي والأغنام</option>
+                        <option value="علف متوازن خالي من السموم">علف متوازن مع مضاد سموم فطرية</option>
                     </select>
 
-                    <label style="font-weight: bold; color: var(--secondary-color);">إضافات الأسطول اللوجستية:</label>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap; background: #fafaf9; padding: 10px; border-radius: 8px;">
-                        <label><input type="checkbox" id="ext-mombar" value="80"> تغليف خاص (+80 ج)</label>
-                        <label><input type="checkbox" id="ext-mahshi" value="60"> تأمين الشحنة (+60 ج)</label>
-                        <label><input type="checkbox" id="ext-pepsi" value="50"> أولوية قصوى فورية (+50 ج)</label>
+                    <label class="form-label">المكملات والإضافات الغذائية الحصرية:</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="ext-minerals" value="90"> ثنائي فسفات الصوديوم وأملاح (+90 ج)</label>
+                        <label><input type="checkbox" id="ext-toxin" value="120"> مضاد سموم بيولوجي ومحفز نمو (+120 ج)</label>
+                        <label><input type="checkbox" id="ext-vitamins" value="70"> مجموعة فيتامينات أ د3 هـ (+70 ج)</label>
                     </div>
 
-                    <textarea id="custom-notes" placeholder="أي ملاحظات خاصة بالعنوان، مواعيد الاستلام، أو اسم المستلم..."></textarea>
-                    <button onclick="addCustomTrayToCart()" class="btn-primary" style="background-color: var(--primary-color);">إضافة الشحنة المخصصة للسلة 🚀</button>
+                    <textarea id="custom-mix-notes" placeholder="أدخل أي ملاحظات حول نسبة البروتين المطلوبة أو اسم المزرعة..."></textarea>
+                    <button onclick="addCustomMixToCart()" class="btn-primary">إضافة الخلطة الخاصة لسلة الزائر 🚀</button>
                 </div>
             </div>
         </section>
 
-        <!-- 2. باقات الشركات والأسطول -->
+        <!-- 3. باقات التوريد للمزارع والشركات -->
         <section id="tab-offers" class="tab-content">
-            <div class="banner" style="background: linear-gradient(135deg, #991b1b, #7f1d1d);">
-                <h2>🔥 باقات وعروض الأسطول التجاري والشركات 🔥</h2>
-                <p>خصص طيارين وحسابات مالية متكاملة لخدمة متجرك أو شركتك بأعلى كفاءة!</p>
+            <div class="banner banner-dark-amber">
+                <h2>🔥 باقات وعقود توريد الأعلاف للمزارع والشركات 🔥</h2>
+                <p>تخصيص كميات توريد شهرية للأعلاف والحبوب بأسعار الجملة وتوفير سيارات نقل مخصصة للمزارع!</p>
             </div>
             <div id="offers-grid" class="menu-grid"></div>
         </section>
 
-        <!-- 3. سلة الشحنات -->
+        <!-- 4. سلة الزائر الشاملة -->
         <section id="tab-cart" class="tab-content">
-            <h2>🛒 سلة الشحنات والخدمات اللوجستية</h2>
+            <h2>🛒 سلة مشتريات الزائر</h2>
             <div class="cart-container">
                 <div id="cart-items-list" class="cart-items"></div>
                 <div class="cart-summary">
-                    <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="promo-input" placeholder="أدخل البرومو كود (مثل FLEET2026)" style="flex: 1; padding: 10px; border: 1px solid #d6d3d1; border-radius: 6px;">
-                        <button onclick="applyPromoCode()" class="btn-secondary" style="padding: 10px 15px;">تطبيق الكوبون</button>
+                    <div class="promo-box">
+                        <input type="text" id="promo-input" placeholder="أدخل كود الخصم (مثل ALLAF2026)">
+                        <button onclick="applyPromoCode()" class="btn-secondary">تطبيق الكود</button>
                     </div>
-                    <h3>إجمالي الشحنات: <span id="cart-total">0</span> جنيه <span id="discount-note" style="font-size:0.9rem; color:#16a34a;"></span></h3>
-                    <div class="checkout-form" style="margin-top: 15px;">
-                        <input type="text" id="order-name" placeholder="اسمك أو اسم شركتك">
-                        <input type="text" id="order-phone" placeholder="رقم الهاتف (للتتبع الفوري)">
-                        <textarea id="order-address" placeholder="عنوان الاستلام والتوصيل بالتفصيل"></textarea>
-                        
-                        <div style="margin-bottom: 10px;">
-                            <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-secondary" style="background-color: #0284c7; color: white; width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold;">
-                                <i class="fa-solid fa-location-crosshairs"></i> تحديد وتثبيت موقع الاستلام عبر GPS 📍
-                            </button>
-                            <div id="customer-gps-status" style="font-size: 0.85rem; color: #16a34a; margin-top: 5px; text-align: center; font-weight: bold;"></div>
-                        </div>
-
-                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                            <button onclick="submitOrder()" class="btn-primary" style="flex: 1;">إرسال الشحنة للتتبع 🚀</button>
-                            <button onclick="sendWhatsAppOrder()" class="btn-secondary" style="flex: 1; background-color: #25d366;"><i class="fa-brands fa-whatsapp"></i> اطلب عبر واتساب 💬</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. حجز الأسطول -->
-        <section id="tab-reservation" class="tab-content">
-            <h2>🪑 طلب تخصيص طيار أو أسطول توصيل شهري</h2>
-            <div class="cart-container" style="max-width: 600px; margin: 0 auto;">
-                <p style="margin-bottom: 15px; color: #57534e;">احجز طيارين مخصصين لمتجرك مسبقاً أو رتب لعقد شحن وتوصيل تجاري وسنتواصل معك فوراً!</p>
-                <div class="checkout-form" style="max-width: 100%;">
-                    <input type="text" id="res-name" placeholder="اسم المسؤول أو الشركة">
-                    <input type="text" id="res-phone" placeholder="رقم الهاتف">
-                    <input type="date" id="res-date">
-                    <input type="time" id="res-time">
-                    <input type="number" id="res-guests" placeholder="عدد الطيارين المطلوبين (مثلاً: 3 طيارين)" min="1">
-                    <textarea id="res-notes" placeholder="ملاحظات العقد التجاري أو نطاق التوصيل المطلوب..."></textarea>
-                    <button onclick="submitReservation()" class="btn-primary">تأكيد طلب تخصيص الأسطول 🚀</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- 5. المفضلة -->
-        <section id="tab-favorites" class="tab-content">
-            <h2>❤️ قائمة الخدمات والشحنات المفضلة</h2>
-            <div id="favorites-grid" class="menu-grid"></div>
-        </section>
-
-        <!-- 6. بوابة تسجيل الدخول الحصرية عبر جوجل وقسم البروفايل -->
-        <section id="tab-customer" class="tab-content">
-            <h2>🔐 بوابة تسجيل الدخول الموحدة وإدارة البروفايل الشخصي</h2>
-            
-            <div class="customer-login-box" id="unified-login-box" style="max-width: 480px; margin: 20px auto; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border: 2px solid #b45309;">
-                <p style="text-align: center; color: #57534e; margin-bottom: 20px; font-weight: bold;">
-                    سجل الدخول بحساب جوجل المعتمد لضمان مزامنة حسابك، شحناتك، وصورتك الشخصية ومنع تداخل الحسابات تماماً:
-                </p>
-
-                <button type="button" onclick="loginWithGoogle()" style="width: 100%; border: 1px solid #d6d3d1; color: #444; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 15px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 1.05rem;">
-                    <i class="fa-brands fa-google" style="color: #ea4335; font-size: 1.3rem;"></i> تسجيل الدخول المعتمد باستخدام جوجل 🚀
-                </button>
-            </div>
-
-            <!-- لوحة العميل وبروفايله الشخصي -->
-            <div id="customer-dashboard" class="customer-dashboard hidden" style="max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-                
-                <!-- قسم البروفايل وصورة الحساب -->
-                <div style="text-align: center; margin-bottom: 20px; padding: 15px; background: #fdf8f6; border-radius: 10px; border: 1px solid #fed7aa;">
-                    <div style="position: relative; width: 95px; height: 95px; margin: 0 auto 10px auto; border-radius: 50%; overflow: hidden; border: 3px solid #b45309; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
-                        <img id="cust-avatar-img" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
-                    </div>
-                    <h3 id="cust-display-name" style="color: #78350f; font-size: 1.2rem; margin-bottom: 3px;">اسم المستخدم</h3>
-                    <div style="font-size: 0.85rem; color: #64748b; margin-bottom: 10px;" id="cust-display-email">email@domain.com</div>
+                    <h3>إجمالي الطلبية: <span id="cart-total">0</span> جنيه <span id="discount-note" class="discount-note"></span></h3>
                     
-                    <label for="profile-pic-input" style="background: #b45309; color: white; padding: 6px 14px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; display: inline-block; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                        <i class="fa-solid fa-camera"></i> تغيير صورة البروفايل الشخصي 🖼️
-                    </label>
-                    <input type="file" id="profile-pic-input" accept="image/*" style="display: none;" onchange="uploadProfilePicture(this)">
-                </div>
+                    <div class="checkout-form mt-15">
+                        <input type="text" id="order-name" placeholder="اسمك الكامل أو اسم المزرعة/الشركة">
+                        <input type="text" id="order-phone" placeholder="رقم الهاتف (للتواصل ومتابعة الفاتورة)">
+                        <textarea id="order-address" placeholder="عنوان المزرعة أو المخزن للتوصيل بالتفصيل"></textarea>
+                        
+                        <button type="button" onclick="fetchCustomerGpsLocation()" class="btn-gps">
+                            <i class="fa-solid fa-location-crosshairs"></i> تحديد وتثبيت موقع المزرعة عبر GPS 📍
+                        </button>
+                        <div id="customer-gps-status" class="gps-status-box"></div>
 
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <button onclick="customerLogout()" class="btn-secondary btn-sm" style="background-color: #dc2626; color: white; width: 100%;">تسجيل خروج آمن 🚪</button>
+                        <div class="checkout-btns">
+                            <button onclick="submitOrder()" class="btn-primary flex-1">إرسال الطلبية وحفظ الفاتورة 🚚</button>
+                            <button onclick="sendWhatsAppOrder()" class="btn-whatsapp flex-1"><i class="fa-brands fa-whatsapp"></i> طلب سريع عبر واتساب 💬</button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </section>
 
-                <div class="cust-info" style="background: #e0f2fe; margin-top: 15px; padding: 10px; border-radius: 8px; color: #0369a1;">
-                    ⭐ رصيد نقاط الولاء: <span id="cust-points" style="font-weight: bold; font-size: 1.1rem;">0</span> نقطة (كل 100 جنيه = 10 نقاط هدية)
-                </div>
+        <!-- 5. بروفايل العميل الشامل (مشتريات - فواتير - كشف حساب - إشعارات) -->
+        <section id="tab-customer" class="tab-content">
+            <h2>👤 بروفايل العميل وفواتير الحساب</h2>
+            
+            <!-- نافذة تسجيل الدخول/إنشاء الحساب للزائر -->
+            <div id="unified-login-box" class="customer-login-box">
+                <i class="fa-solid fa-wheat-awn text-amber-600 text-4xl mb-10"></i>
+                <h3>مرحباً بك في تطبيق العلاف</h3>
+                <p>سجل الدخول لحفظ طلباتك، استلام الفواتير المباشرة من الإدارة، ومتابعة رصيدك ونقاط ولاءك:</p>
+
+                <button type="button" onclick="loginWithGoogle()" class="btn-google-auth">
+                    <i class="fa-brands fa-google text-red-500 text-xl"></i> تسجيل الدخول المعتمد عبر Google
+                </button>
+
+                <div class="auth-divider"><span>أو بواسطة رقم الهاتف</span></div>
+
+                <input type="text" id="quick-phone-input" placeholder="أدخل رقم هاتفك (مثلاً: 01012345678)">
+                <button type="button" onclick="loginByPhoneQuick()" class="btn-primary w-full">الدخول السريع برقم الهاتف 📱</button>
+            </div>
+
+            <!-- لوحة العميل وبروفايله المسجل -->
+            <div id="customer-dashboard" class="customer-dashboard hidden">
                 
-                <a href="rewards.html" class="btn-primary" style="text-decoration: none; display: block; text-align: center; margin-top: 15px; background-color: #d97706;">
-                    <i class="fa-solid fa-gift"></i> استبدل نقاط ولائك بهدايا مجانية 🎁
-                </a>
+                <!-- كارت معلومات العميل الشخصية -->
+                <div class="cust-profile-header">
+                    <div class="cust-avatar-container">
+                        <img id="cust-avatar-img" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" alt="صورة البروفايل">
+                    </div>
+                    <div>
+                        <h3 id="cust-display-name">اسم العميل / المزرعة</h3>
+                        <div id="cust-display-email" class="text-sub">email@domain.com</div>
+                        <div id="cust-display-phone" class="text-sub font-bold text-amber-700">01000000000</div>
+                    </div>
+                    <button onclick="customerLogout()" class="btn-danger btn-sm logout-btn">تسجيل خروج 🚪</button>
+                </div>
 
-                <h3 style="margin-top: 20px; color: #292524;">📦 سجل شحناتك ومؤشر التوصيل الحي:</h3>
-                <div id="customer-orders-list" class="orders-list" style="margin-top: 10px;"></div>
+                <!-- شريط نقاط الولاء والحساب -->
+                <div class="cust-info-bar">
+                    <div>⭐ رصيد نقاط الولاء: <span id="cust-points" class="font-bold text-lg">0</span> نقطة</div>
+                    <div>💰 حالة الحساب: <span id="cust-balance-status" class="font-bold text-emerald-700">خالي من الديون</span></div>
+                </div>
+
+                <!-- التنقل الداخلي في البروفايل -->
+                <div class="profile-sub-tabs">
+                    <button onclick="switchCustomerSubTab('orders')" id="subtab-btn-orders" class="profile-tab-btn active"><i class="fa-solid fa-boxes-packing"></i> مشترياتي وطلباتي</button>
+                    <button onclick="switchCustomerSubTab('invoices')" id="subtab-btn-invoices" class="profile-tab-btn"><i class="fa-solid fa-file-invoice-dollar"></i> فواتيري الصادرة</button>
+                    <button onclick="switchCustomerSubTab('statement')" id="subtab-btn-statement" class="profile-tab-btn"><i class="fa-solid fa-calculator"></i> كشف الحساب</button>
+                    <button onclick="switchCustomerSubTab('notifications')" id="subtab-btn-notifications" class="profile-tab-btn"><i class="fa-solid fa-bell"></i> التنبيهات (<span id="unread-notif-count">0</span>)</button>
+                </div>
+
+                <!-- محتوى 1: المشتريات -->
+                <div id="cust-subtab-orders" class="subtab-content active">
+                    <h4 class="subtab-title">📦 سجل طلباتك ومتابعة الشحنات:</h4>
+                    <div id="customer-orders-list" class="orders-list"></div>
+                </div>
+
+                <!-- محتوى 2: الفواتير الصادرة من الإدارة -->
+                <div id="cust-subtab-invoices" class="subtab-content hidden">
+                    <h4 class="subtab-title">🧾 الفواتير الصادرة لحسابك من إدارة العلاف:</h4>
+                    <div id="customer-invoices-list" class="invoices-list"></div>
+                </div>
+
+                <!-- محتوى 3: كشف الحساب والرصيد -->
+                <div id="cust-subtab-statement" class="subtab-content hidden">
+                    <h4 class="subtab-title">💰 ملخص الحساب المالي والرصيد:</h4>
+                    <div id="customer-statement-box" class="statement-card"></div>
+                </div>
+
+                <!-- محتوى 4: التنبيهات والإشعارات -->
+                <div id="cust-subtab-notifications" class="subtab-content hidden">
+                    <h4 class="subtab-title">🔔 التنبيهات والإشعارات الخاصة بحسابك:</h4>
+                    <div id="customer-notifications-list" class="notifications-list"></div>
+                </div>
+
             </div>
         </section>
 
     </main>
 
-    <!-- نافذة الاتصال المباشر (WebRTC Call Modal) -->
-    <div id="callModal" class="hidden" style="position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: #1c1917; width: 100%; max-width: 500px; border-radius: 12px; padding: 20px; color: white; border: 2px solid #b45309; text-align: center;">
-            <h3 id="callStatusTitle" style="font-size: 1.2rem; color: #fde047; margin-bottom: 5px;">📞 جاري الاتصال...</h3>
-            <p id="callOrderInfo" style="font-size: 0.85rem; color: #d6d3d1; margin-bottom: 15px;"></p>
-            <div style="display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap;">
-                <div style="position: relative; width: 45%; background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3;">
-                    <video id="localVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-                    <span style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); font-size: 10px; padding: 2px 6px; border-radius: 4px;">أنت</span>
-                </div>
-                <div style="position: relative; width: 45%; background: #000; border-radius: 8px; overflow: hidden; aspect-ratio: 4/3;">
-                    <video id="remoteVideo" autoplay playsinline style="width: 100%; height: 100%; object-fit: cover;"></video>
-                    <span style="position: absolute; bottom: 5px; right: 5px; background: rgba(0,0,0,0.6); font-size: 10px; padding: 2px 6px; border-radius: 4px;">الطرف الآخر</span>
-                </div>
+    <!-- نافذة عرض وطباعة الفاتورة التفصيلية Modal -->
+    <div id="invoiceModal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🧾 فاتورة رسمية - تطبيق العلاف للأعلاف</h3>
+                <button onclick="closeInvoiceModal()" class="close-modal-btn">&times;</button>
             </div>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button id="answerCallBtn" onclick="answerIncomingCall()" class="hidden" style="background: #16a34a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-phone"></i> رد</button>
-                <button onclick="endWebRtcCall()" style="background: #dc2626; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; cursor: pointer;"><i class="fa-solid fa-phone-slash"></i> إنهاء المكالمة</button>
+            <div id="invoiceModalBody" class="modal-body"></div>
+            <div class="modal-footer">
+                <button onclick="printInvoiceModal()" class="btn-primary"><i class="fa-solid fa-print"></i> طباعة / حفظ PDF</button>
+                <button onclick="closeInvoiceModal()" class="btn-secondary">إغلاق</button>
             </div>
         </div>
     </div>
 
-    <!-- تهيئة Firebase ومزامنة الحسابات -->
+    <!-- نافذة التنبيه لتسجيل الدخول عند الشراء Auth Prompt Modal -->
+    <div id="authPromptModal" class="modal-overlay hidden">
+        <div class="modal-card auth-prompt-card">
+            <i class="fa-solid fa-lock text-amber-600 text-4xl mb-10"></i>
+            <h3>تسجيل الدخول مطلوب لإتمام الطلب</h3>
+            <p>من فضلك سجل الدخول بحسابك أولاً لحفظ طلبية الأعلاف وإصدار الفاتورة باسمك ومتابعتها في البروفايل:</p>
+            <div class="modal-prompt-btns">
+                <button onclick="closeAuthPrompt(); switchTab('customer');" class="btn-primary">تسجيل الدخول الآن 🚀</button>
+                <button onclick="closeAuthPrompt()" class="btn-secondary">متابعة التصفح</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- تهيئة Firebase السحابية -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -268,8 +277,7 @@
             projectId: "omda-a750f",
             storageBucket: "omda-a750f.firebasestorage.app",
             messagingSenderId: "1078714497381",
-            appId: "1:1078714497381:web:074cbcf0d66c72a746898c",
-            measurementId: "G-P763CFS7GG"
+            appId: "1:1078714497381:web:074cbcf0d66c72a746898c"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -285,7 +293,7 @@
                 const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
 
                 let userRole = 'customer';
-                let existingPhoto = user.photoURL || 'icon1-512.png';
+                let existingPhoto = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
                 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
@@ -293,15 +301,15 @@
                         const data = userDoc.data();
                         userRole = data.role || 'customer';
                         if(data.photoURL) existingPhoto = data.photoURL;
-                    } else if (email === 'haretg@gmail.com' || email === 'admin@fleet.com') {
+                    } else if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
                         userRole = 'admin';
                     }
                 } catch(e) {}
 
                 const userObj = {
-                    name: user.displayName || 'مستخدم جوجل الحقيقي',
+                    name: user.displayName || 'عميل العلاف المميز',
                     email: email,
-                    phone: user.phoneNumber || 'غير متوفر',
+                    phone: user.phoneNumber || 'غير مدخل',
                     role: userRole,
                     photoURL: existingPhoto,
                     provider: 'Google Auth',
@@ -309,22 +317,21 @@
                 };
                 
                 await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
-                localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
+                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
 
-                if (typeof routeUserByRole === 'function') {
-                    routeUserByRole(userObj);
-                }
+                window.currentCustomer = userObj;
+                if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
+                alert(`أهلاً بك يا ${userObj.name} في تطبيق العلاف 🌾`);
             } catch (error) {
-                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
+                alert("حدث خطأ أثناء تسجيل الدخول: " + error.message);
             }
         };
 
         window.customerLogout = async function() {
             try {
                 await signOut(auth);
-                localStorage.removeItem('fleet_logged_user');
-                localStorage.removeItem('fleet_session_user');
+                localStorage.removeItem('allaf_logged_user');
+                window.currentCustomer = null;
                 document.getElementById('customer-dashboard').classList.add('hidden');
                 document.getElementById('unified-login-box').style.display = 'block';
                 alert('تم تسجيل الخروج بنجاح.');
@@ -340,43 +347,25 @@
                 let userObj = { 
                     name: user.displayName || email.split('@')[0], 
                     email: email, 
-                    phone: user.phoneNumber || 'غير متوفر',
-                    photoURL: user.photoURL || 'icon1-512.png',
-                    provider: 'Google Auth'
+                    phone: user.phoneNumber || '',
+                    photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                    role: 'customer'
                 };
 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
-                    if (userDoc.exists()) {
-                        userObj = userDoc.data();
-                    }
+                    if (userDoc.exists()) userObj = userDoc.data();
                 } catch(e) {}
 
                 window.currentCustomer = userObj;
-                localStorage.setItem('fleet_session_user', JSON.stringify(userObj));
-                localStorage.setItem('fleet_logged_user', JSON.stringify(userObj));
+                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
                 
-                const loginBox = document.getElementById('unified-login-box');
-                const dashBox = document.getElementById('customer-dashboard');
-                if(loginBox) loginBox.style.display = 'none';
-                if(dashBox) dashBox.classList.remove('hidden');
-
-                const nameEl = document.getElementById('cust-display-name');
-                const emailEl = document.getElementById('cust-display-email');
-                const avatarEl = document.getElementById('cust-avatar-img');
-
-                if(nameEl) nameEl.innerText = userObj.name;
-                if(emailEl) emailEl.innerText = userObj.email;
-                if(avatarEl && userObj.photoURL) avatarEl.src = userObj.photoURL;
-                
-                if (typeof loadCustomerDashboard === 'function') {
-                    loadCustomerDashboard();
-                }
+                if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
             }
         });
 
         window.db = db;
-        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc };
+        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc };
     </script>
 
     <script src="app.js"></script>
