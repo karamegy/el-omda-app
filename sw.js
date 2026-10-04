@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v22'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
+const CACHE_NAME = 'allaf-feeds-v23'; // تحديث رقم الاصدار لتفريغ الكاش القديم
 const assetsToCache = [
   './',
   './index.html',
@@ -14,7 +14,7 @@ const assetsToCache = [
   './app.js',
   './manifest.json',
   './icon1-512.png',
-   './icon1-192.png',
+  './icon1-192.png',
 ];
 
 // تثبيت السيرفر ووركر وتخزين ملفات تطبيق العلاف
@@ -45,17 +45,27 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// جلب الملفات مع استثناء طلبات Firebase السحابية لضمان مزامنة البيانات الحية
+// جلب الملفات مع معالجة ذكية لضمان عدم ضياع بيانات مصادقة جوجل
 self.addEventListener('fetch', event => {
-  const reqUrl = event.request.url;
+  const reqUrl = new URL(event.request.url);
 
-  // تجاوز طلبات قواعد البيانات السحابية وخدمات جوجل
-  if (reqUrl.includes('firestore.googleapis.com') || 
-      reqUrl.includes('firebase') || 
-      reqUrl.includes('google.com')) {
+  // 1. تجاوز طلبات قواعد البيانات السحابية وخدمات جوجل بالكامل
+  if (reqUrl.hostname.includes('firestore.googleapis.com') || 
+      reqUrl.hostname.includes('firebase') || 
+      reqUrl.hostname.includes('google.com') ||
+      reqUrl.hostname.includes('googleapis.com')) {
     return;
   }
 
+  // 2. إذا كان الطلب عبارة عن إعادة توجيه من جوجل أو صفحة تنقل، استخدم Network-First لضمان وصول الرموز
+  if (event.request.mode === 'navigate' || reqUrl.search.includes('code=') || reqUrl.search.includes('state=')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // 3. باقي الملفات الثابتة تسحب من الكاش مع التحديث العادي
   event.respondWith(
     caches.match(event.request).then(response => {
       return response || fetch(event.request);
