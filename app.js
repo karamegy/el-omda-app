@@ -52,7 +52,6 @@ onAuthStateChanged(window.auth, async (user) => {
     if (user) {
         await handleSuccessfulAuthUser(user, false);
     } else {
-        // حماية الجلسة محلياً لتفادي تأخير استجابة فايربيس الكاش
         const saved = localStorage.getItem('allaf_logged_user');
         if (saved && !currentCustomer) {
             try {
@@ -166,9 +165,6 @@ let storeCoords = [29.9600, 31.2100];
 let currentSliderIndex = 0;
 let sliderInterval = null;
 
-// ==========================================
-// متغيرات ومحرك الخريطة
-// ==========================================
 let map;
 let mapTileLayers = {};
 let currentTileLayer;
@@ -185,14 +181,11 @@ let activeFilter = 'all';
 let watchGpsId = null;
 let isPickingLocation = null;
 
-// ==========================================
-// متغيرات النقاط والمكافآت
-// ==========================================
 let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول (تم التحديث لضمان الاستقرار الفوري)
+// دالة تسجيل الدخول عبر جوجل المُحسّنة (محلول مشكلة الحظر)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -201,19 +194,8 @@ window.loginWithGoogle = async function() {
     }
     try {
         await setPersistence(window.auth, browserLocalPersistence);
-        
-        // محاولة استخدام Popup أولاً لتجاوز مشاكل التوجيه وتأمين الدخول السريع
-        try {
-            const result = await signInWithPopup(window.auth, window.googleProvider);
-            if (result && result.user) {
-                await handleSuccessfulAuthUser(result.user, true);
-                return;
-            }
-        } catch (popupErr) {
-            console.log("Popup blocked or failed, falling back to redirect:", popupErr);
-            // لو الـ Popup تم حظره، يتم التحويل تلقائياً إلى الـ Redirect كبديل آمن
-            await signInWithRedirect(window.auth, window.googleProvider);
-        }
+        // الاعتماد على التوجيه المباشر لتفادي حظر الـ Popup
+        await signInWithRedirect(window.auth, window.googleProvider);
     } catch (error) {
         console.error("Google Auth Error:", error);
         alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
@@ -333,9 +315,6 @@ async function handleSuccessfulAuthUser(user, showAlert = false) {
     }
 }
 
-// ==========================================
-// تهيئة التطبيق الذكية عند الفتح
-// ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     checkSavedUserSession();
     renderMenu();
@@ -393,9 +372,6 @@ function checkSavedUserSession() {
     } catch (e) {}
 }
 
-// ==========================================
-// التنقل بين الأقسام الرئيسية
-// ==========================================
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
@@ -416,9 +392,6 @@ function switchTab(tabId) {
     }
 }
 
-// ==========================================
-// عرض كروت منتجات الأعلاف في الرئيسية
-// ==========================================
 function renderMenu(filter = 'all') {
     const grid = document.getElementById('menu-grid');
     if (!grid) return;
@@ -487,9 +460,6 @@ function renderOffers() {
     });
 }
 
-// ==========================================
-// سلة الشراء وتعديل الكميات
-// ==========================================
 function addToCart(productId) {
     const prod = menuProducts.find(p => String(p.id) === String(productId));
     if (!prod) return;
@@ -583,9 +553,6 @@ function applyPromoCode() {
     }
 }
 
-// ==========================================
-// تصميم خلطة علف مخصصة
-// ==========================================
 function addCustomMixToCart() {
     const baseSelect = document.getElementById('custom-base-grain');
     const typeSelect = document.getElementById('custom-feed-type');
@@ -628,7 +595,7 @@ function addCustomMixToCart() {
 }
 
 // ==========================================
-// إرسال طلبية الشراء والتحقق من الدخول
+// إرسال الطلبية مع إرفاق إحداثيات الـ GPS للمزرعة
 // ==========================================
 async function submitOrder() {
     const nameEl = document.getElementById('order-name');
@@ -664,6 +631,8 @@ async function submitOrder() {
         name: name,
         phone: phone,
         address: address,
+        lat: window.customerLat || null, // ربط إحداثيات خط العرض للمزرعة
+        lng: window.customerLng || null, // ربط إحداثيات خط الطول للمزرعة
         items: [...cart],
         total: total,
         status: 'pending',
@@ -707,9 +676,6 @@ function sendWhatsAppOrder() {
     window.open(`https://wa.me/201000000000?text=${msg}`, '_blank');
 }
 
-// ==========================================
-// بروفايل العميل والتنقل فيه وإظهار زر الإدارة
-// ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('unified-login-box');
     const dashBox = document.getElementById('customer-dashboard');
@@ -911,9 +877,6 @@ function renderCustomerNotifications() {
     });
 }
 
-// ==========================================
-// طباعة وعرض الفواتير التفصيلية
-// ==========================================
 function showInvoiceDetails(invoiceId) {
     const inv = allInvoices.find(i => String(i.id) === String(invoiceId));
     if (!inv) return;
@@ -1003,9 +966,6 @@ function getStatusText(status) {
     }
 }
 
-// ==========================================
-// Hero Slider
-// ==========================================
 function initHeroSlider() {
     if (!menuProducts || menuProducts.length === 0) return;
     updateSliderContent();
@@ -1096,9 +1056,6 @@ function initRealtimeCloudSync() {
     }
 }
 
-// ==========================================
-// وظائف الخريطة والتتبع الحي (Map.html)
-// ==========================================
 function checkUserPermissions() {
     const savedUserStr = localStorage.getItem('allaf_logged_user') || '{}';
     let user = {};
@@ -1671,9 +1628,6 @@ function getStatusLabelMap(st) {
     return st || 'نشط';
 }
 
-// ==========================================
-// وظائف لوحة تجهيز الطلبات والشحنات (KDS)
-// ==========================================
 function checkKitchenAccessSecurity() {
     const savedUserStr = localStorage.getItem('allaf_logged_user') || '{}';
     let loggedUser = {};
@@ -1837,9 +1791,6 @@ async function setKitchenStatus(orderId, newStatus) {
     }
 }
 
-// ==========================================
-// وظائف لوحة التحكم والإدارة (admin.html)
-// ==========================================
 function switchAdminSection(sectionName, btnElement) {
     document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
     document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
@@ -1919,9 +1870,6 @@ function adminLogout() {
     window.location.reload();
 }
 
-// ==========================================
-// إدارة الخزنة والمصروفات النثرية
-// ==========================================
 function updateVaultStats() {
     let salesTotal = allOrders.reduce((sum, o) => sum + (o.total || 0), 0);
     let expensesTotal = expensesList.reduce((sum, e) => sum + (e.amount || 0), 0);
@@ -1985,9 +1933,6 @@ function renderExpensesList() {
     });
 }
 
-// ==========================================
-// إدارة الطلبيات المبيعات
-// ==========================================
 function renderAdminOrders() {
     const list = document.getElementById('admin-orders-list');
     if (!list) return;
@@ -2022,9 +1967,6 @@ function renderAdminOrders() {
     });
 }
 
-// ==========================================
-// إصدار وإرسال الفواتير للعملاء
-// ==========================================
 function populateInvoiceClientsSelect() {
     const select = document.getElementById('invoice-client-select');
     if (!select) return;
@@ -2102,9 +2044,6 @@ function renderInvoicesHistory() {
     });
 }
 
-// ==========================================
-// إدارة الموردين والتوريدات
-// ==========================================
 async function adminAddSupplier() {
     const name = document.getElementById('supp-name').value.trim();
     const phone = document.getElementById('supp-phone').value.trim();
@@ -2175,9 +2114,6 @@ async function adminRecordSupplyTransaction() {
     document.getElementById('supply-paid-cost').value = '';
 }
 
-// ==========================================
-// قسم التنبيهات والإشعارات
-// ==========================================
 function populateNotificationTargetsSelect() {
     const select = document.getElementById('notif-target-select');
     if (!select) return;
@@ -2235,9 +2171,6 @@ function renderNotificationsHistory() {
     });
 }
 
-// ==========================================
-// استعراض الحسابات والأدوار سحابياً
-// ==========================================
 async function loadGoogleAccountsList() {
     const list = document.getElementById('admin-google-accounts-list');
     if (!list) return;
@@ -2278,9 +2211,6 @@ async function updateUserRoleInCloud(docId, newRole) {
     }
 }
 
-// ==========================================
-// إضافة وتعديل أصناف الأعلاف
-// ==========================================
 async function addNewProductWithMedia() {
     const name = document.getElementById('new-prod-name').value.trim();
     const cat = document.getElementById('new-prod-cat').value;
@@ -2346,9 +2276,6 @@ async function deleteProductFromCloud(prodId) {
     }
 }
 
-// ==========================================
-// الطلبيات اليدوية وطاقم العمل
-// ==========================================
 async function adminCreateOrder() {
     const name = document.getElementById('admin-ord-name').value.trim();
     const phone = document.getElementById('admin-ord-phone').value.trim();
@@ -2357,7 +2284,7 @@ async function adminCreateOrder() {
     const total = parseFloat(document.getElementById('admin-ord-total').value);
 
     if (!name || !phone || isNaN(total)) {
-        alert('أدخل بيانات العليم والطلب والإجمالي بشكل صحيح!');
+        alert('أدخل بيانات العميل والطلب والإجمالي بشكل صحيح!');
         return;
     }
 
@@ -2366,6 +2293,8 @@ async function adminCreateOrder() {
         name: name,
         phone: phone,
         address: address,
+        lat: window.customerLat || null,
+        lng: window.customerLng || null,
         items: [{ name: items, qty: 1, price: total }],
         total: total,
         status: 'pending',
@@ -2420,9 +2349,6 @@ function changeMyPassword() {
     alert('✓ تم تحديث كلمة المرور للحساب الحالي بنجاح!');
 }
 
-// ==========================================
-// وظائف صفحة تفاصيل المنتج (product.html)
-// ==========================================
 async function initProductDetailsPage() {
     const urlParams = new URLSearchParams(window.location.search);
     const productIdParam = urlParams.get('id');
@@ -2522,9 +2448,6 @@ async function addSpecificProductToCart(id) {
     window.location.href = 'index.html';
 }
 
-// ==========================================
-// وظائف صفحة المكافآت ونقاط الولاء (rewards.html)
-// ==========================================
 async function initRewardsPage() {
     let customer = JSON.parse(localStorage.getItem('allaf_logged_user') || 'null');
     userRewardIdentifier = customer ? (customer.phone || customer.email) : localStorage.getItem('allaf_user_phone');
@@ -2589,9 +2512,6 @@ async function redeemReward(cost, rewardName) {
     alert(`🎉 مبروك! تم استبدال النقاط بنجاح والحصول على (${rewardName}). يرجى إبراز هذه الرسالة لمسؤول التوريدات أو إرسالها عبر الواتساب عند الطلب! 🌾`);
 }
 
-// ==========================================
-// دوال تحكم البانر المتحرك (Hero Slider)
-// ==========================================
 function prevSliderItem() {
     if (!menuProducts || menuProducts.length === 0) return;
     currentSliderIndex = (currentSliderIndex - 1 + menuProducts.length) % menuProducts.length;
