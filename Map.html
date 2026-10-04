@@ -326,40 +326,7 @@
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/control.geocoder.js"></script>
 
-    <!-- تهيئة Firebase السحابية (المحدثة للمشروع الجديد) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
-            authDomain: "alaf-93848.firebaseapp.com",
-            projectId: "alaf-93848",
-            storageBucket: "alaf-93848.firebasestorage.app",
-            messagingSenderId: "984757380320",
-            appId: "1:984757380320:web:247065b2434c002c445c85",
-            measurementId: "G-ESV2GNSQZ4"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.db = db;
-        window.firebaseModules = { 
-            collection, 
-            getDocs, 
-            doc, 
-            setDoc, 
-            updateDoc, 
-            deleteDoc, 
-            onSnapshot, 
-            query, 
-            where,
-            getDoc
-        };
-    </script>
-
-    <!-- الملف الموحد والشامل لكل وظائف التطبيق والخريطة -->
-    <script src="app.js"></script>
+    <!-- الملف الموحد والشامل متوافق مع نظام الوحدات -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
