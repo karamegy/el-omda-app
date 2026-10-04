@@ -3,71 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>متجر مكافآت ونقاط الولاء | الأسطول اللوجستي وإدارة الشحنات</title>
+    <title>متجر مكافآت ونقاط الولاء | العلاف لتجارة وتوريد الأعلاف والحبوب 🌾</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#b45309">
 </head>
-<body class="p-3 sm:p-6 space-y-4" style="background: #f5f5f4; font-family: 'Cairo', sans-serif; margin: 0; padding: 0;">
+<body style="background: #fcfbf4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; color: #292524;">
 
     <!-- الهيدر العلوي الموحد مع مزامنة صورة البروفايل واسم المستخدم -->
     <header class="main-header" style="background: linear-gradient(135deg, #1c1917, #78350f); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
         <div class="logo-container" style="display: flex; align-items: center; gap: 12px;">
             <div style="width: 45px; height: 45px; border-radius: 50%; overflow: hidden; border: 2px solid #fde047; background: #000;">
-                <img id="nav-user-avatar" src="icon1-512.png" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
+                <img id="nav-user-avatar" src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200" alt="صورة البروفايل" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
             <div>
-                <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">مكافآت الأسطول 👑</h1>
+                <h1 style="font-size: 1.1rem; margin: 0; color: #fde047;">العلاف للتجارة والتوريدات 🌾</h1>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                    <span style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متجر الهدايا والنقاط الرمزية</span>
+                    <span style="font-size: 0.7rem; color: #a8a29e; font-weight: bold;">متجر الهدايا ونقاط ولاء المزارع</span>
                     <span id="nav-username-display" style="font-size: 0.75rem; color: #fff; background: rgba(255,255,255,0.2); padding: 1px 6px; border-radius: 4px;"></span>
                 </div>
             </div>
         </div>
         <nav class="nav-links" style="display: flex; gap: 10px; align-items: center;">
-            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-boxes-stacked"></i> الخدمات والمنيو</a>
+            <a href="index.html" class="nav-btn" style="background: #78350f; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-store"></i> المتجر</a>
             <a href="Map.html" class="nav-btn" style="background: #16a34a; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-map-location-dot"></i> الخريطة الحية</a>
-            <a href="admin.html" id="adminPanelLink" class="nav-btn admin-link" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;"><i class="fa-solid fa-lock"></i> لوحة التحكم</a>
+            <a href="admin.html" id="adminPanelLink" class="nav-btn" style="background: #374151; color: #fff; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; display: none;"><i class="fa-solid fa-lock"></i> لوحة التحكم</a>
         </nav>
     </header>
 
     <main class="container" style="max-width: 900px; margin: 30px auto; padding: 0 15px;">
-        <div class="banner" style="background: linear-gradient(135deg, #0369a1, #0284c7); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(3,105,161,0.25);">
-            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">⭐ استبدل نقاط ولائك بشحنات وتوصيل مجاني</h2>
-            <p style="font-size: 0.95rem; color: #e0f2fe;">كلما أرسلت شحنات أكثر عبر الأسطول اللوجستي، كلما جمعت نقاطاً أكثر واستمتعت بمكافآت حصرية!</p>
+        <div class="banner" style="background: linear-gradient(135deg, #78350f, #b45309); padding: 25px; border-radius: 14px; text-align: center; color: white; margin-bottom: 25px; box-shadow: 0 6px 20px rgba(120,53,15,0.25);">
+            <h2 style="font-size: 1.5rem; margin-bottom: 8px;">⭐ استبدل نقاط ولائك بخصومات وشكائر علف وتوصيل مجاني</h2>
+            <p style="font-size: 0.95rem; color: #fef3c7;">كلما طلبت أعلافاً وحبوباً للمزرعة عبر تطبيق العلاف، كلما جمعت نقاطاً أكثر واستمتعت بمكافآت حصرية!</p>
         </div>
 
-        <div class="cart-container" style="max-width: 600px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 14px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid #0284c7;">
+        <div class="cart-container" style="max-width: 600px; margin: 0 auto 30px auto; background: white; padding: 25px; border-radius: 14px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid #fde047;">
             <h3 style="color: #78350f; margin-bottom: 10px; font-size: 1.1rem;">رصيد نقاطك الحالي</h3>
-            <div style="font-size: 2.5rem; font-weight: bold; color: #16a34a;" id="user-reward-points" class="mono-font">0 نقطة</div>
-            <p style="font-size: 0.85rem; color: #57534e; margin-top: 8px;">(كل 100 جنيه شحن وتوصيل = 10 نقاط هدية مجانية)</p>
+            <div style="font-size: 2.5rem; font-weight: bold; color: #16a34a;" id="user-reward-points">0 نقطة</div>
+            <p style="font-size: 0.85rem; color: #57534e; margin-top: 8px;">(كل 100 جنيه مشتريات أعلاف = 10 نقاط هدية مجانية)</p>
         </div>
 
-        <h3 style="color: #b45309; margin-bottom: 20px; text-align: center; font-size: 1.25rem;">🎁 قائمة المكافآت المتاحة للاستبدال:</h3>
+        <h3 style="color: #b45309; margin-bottom: 20px; text-align: center; font-size: 1.25rem;">🎁 قائمة المكافآت المتاحة للاستبدال للمزارع والعملاء:</h3>
         
         <div class="menu-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;">
             <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
-                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-truck-fast"></i></div>
-                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">شحنة توصيل فوري مجانية</h3>
-                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">استبدل نقاطك واحصل على شحنة عادية مجانية بالكامل داخل المدينة.</p>
-                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">50 نقطة</div>
-                <button onclick="redeemReward(50, 'شحنة توصيل فوري مجانية')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                <h3 style="color: #78350f; font-size: 1.1rem; margin-bottom: 8px;">توصيل مجاني لطلبية المزرعة</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">استبدل نقاطك واحصل على توصيل مجاني لشحنة الأعلاف مباشرة حتى مزرعتك.</p>
+                <div class="price" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">50 نقطة</div>
+                <button onclick="redeemReward(50, 'توصيل مجاني لطلبية المزرعة')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
             </div>
 
             <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
-                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-boxes-stacked"></i></div>
-                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">خدمة شحنة ثقيلة / بضائع</h3>
-                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">نقل وتوصيل بضائع ثقيلة أو معدات مع عناية خاصة وتأمين.</p>
-                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">120 نقطة</div>
-                <button onclick="redeemReward(120, 'خدمة شحنة ثقيلة وبضائع')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-wheat-awn"></i></div>
+                <h3 style="color: #78350f; font-size: 1.1rem; margin-bottom: 8px;">خصم 100 جنيه على طلبية العلف</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">خصم مباشر على أليفات العلف أو الشكائر المخصصة لتسمين الماشية والدواجن.</p>
+                <div class="price" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">120 نقطة</div>
+                <button onclick="redeemReward(120, 'خصم 100 جنيه على طلبية العلف')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
             </div>
 
             <div class="corporate-card" style="background: white; padding: 20px; border-radius: 14px; text-align: center; border: 1px solid #e7e5e4; box-shadow: 0 4px 10px rgba(0,0,0,0.04);">
-                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-ticket"></i></div>
-                <h3 style="color: #991b1b; font-size: 1.1rem; margin-bottom: 8px;">خصم 20% على باقات الشركات</h3>
-                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">قسيمة خصم مميزة على اشتراكات الأسطول الشهري للشركات والمتاجر.</p>
-                <div class="price mono-font" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">200 نقطة</div>
-                <button onclick="redeemReward(200, 'خصم 20% على باقات الشركات')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
+                <div style="font-size: 2.5rem; color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-sheet-plastic"></i></div>
+                <h3 style="color: #78350f; font-size: 1.1rem; margin-bottom: 8px;">شكارة ردة ناعمة 40 كجم هدية</h3>
+                <p style="color: #57534e; font-size: 0.9rem; margin-bottom: 15px;">احصل على شكارة ردة قمح ناعمة فاخرة هدية مجانية مضافة لطلبيتك القادمة.</p>
+                <div class="price" style="margin: 10px 0; font-size: 1.2rem; font-weight: bold; color: #16a34a;">200 نقطة</div>
+                <button onclick="redeemReward(200, 'شكارة ردة ناعمة 40 كجم هدية')" class="btn-primary" style="width: 100%; background: #b45309; padding: 10px; border-radius: 8px; font-weight: bold; color: white; border: none; cursor: pointer;">استبدال المكافأة 🎁</button>
             </div>
         </div>
     </main>
@@ -104,9 +104,13 @@
             where 
         };
 
-        // مزامنة وعرض بيانات البروفايل والحساب الحالي في الهيدر
         document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('fleet_session_user') || localStorage.getItem('fleet_current_cust') || '{}');
+            const sessionUser = JSON.parse(
+                localStorage.getItem('allaf_logged_user') || 
+                localStorage.getItem('fleet_logged_user') || 
+                localStorage.getItem('fleet_session_user') || 
+                localStorage.getItem('fleet_current_cust') || '{}'
+            );
             
             const avatarEl = document.getElementById('nav-user-avatar');
             const nameEl = document.getElementById('nav-username-display');
@@ -118,79 +122,9 @@
                 if (nameEl) nameEl.innerText = 'زائر';
             }
         });
-        
-        console.log("🎁🚀 تم ربط متجر مكافآت الأسطول بقاعدة بيانات Firebase ومزامنة الحساب بنجاح تام!");
     </script>
 
+    <!-- ملف الجافاسكربت الشامل للتطبيق -->
     <script src="app.js"></script>
-    <script>
-        let currentPoints = 0;
-        let currentIdentifier = '';
-
-        window.addEventListener('DOMContentLoaded', async () => {
-            let customer = JSON.parse(localStorage.getItem('fleet_current_cust') || localStorage.getItem('omda_current_cust') || 'null');
-            currentIdentifier = customer ? (customer.phone || customer.email) : (localStorage.getItem('fleet_user_phone') || localStorage.getItem('omda_user_phone'));
-
-            if (!currentIdentifier) {
-                let loggedUser = JSON.parse(localStorage.getItem('fleet_logged_user') || localStorage.getItem('omda_logged_user') || 'null');
-                if (loggedUser) {
-                    currentIdentifier = loggedUser.phone || loggedUser.email;
-                }
-            }
-
-            if (currentIdentifier && window.db && window.firebaseModules) {
-                try {
-                    const docRef = window.firebaseModules.doc(window.db, "users", String(currentIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
-                    const docSnap = await window.firebaseModules.getDoc(docRef);
-                    if (docSnap.exists() && docSnap.data().points !== undefined) {
-                        currentPoints = docSnap.data().points;
-                    }
-                } catch (e) {
-                    console.error("Cloud points fetch error:", e);
-                }
-            }
-
-            if (currentPoints === 0) {
-                let pointsDB = JSON.parse(localStorage.getItem('fleet_points') || localStorage.getItem('omda_points') || '{}');
-                if (currentIdentifier && pointsDB[currentIdentifier]) {
-                    currentPoints = pointsDB[currentIdentifier];
-                }
-            }
-
-            document.getElementById('user-reward-points').innerText = currentPoints + ' نقطة';
-        });
-
-        async function redeemReward(cost, rewardName) {
-            if(!currentIdentifier) {
-                alert('يجب تسجيل الدخول برقم هاتفك أو بريدك الإلكتروني أولاً في الصفحة الرئيسية لتتمكن من استبدال النقاط!');
-                return;
-            }
-
-            if(currentPoints < cost) {
-                alert(`عذراً، رصيدك الحالي (${currentPoints} نقطة) لا يكفي للحصول على (${rewardName}) التي تتطلب ${cost} نقطة.`);
-                return;
-            }
-
-            currentPoints -= cost;
-            document.getElementById('user-reward-points').innerText = currentPoints + ' نقطة';
-
-            // تحديث محلياً
-            let pointsDB = JSON.parse(localStorage.getItem('fleet_points') || localStorage.getItem('omda_points') || '{}');
-            pointsDB[currentIdentifier] = currentPoints;
-            localStorage.setItem('fleet_points', JSON.stringify(pointsDB));
-
-            // تحديث سحابياً عبر Firebase
-            if (window.db && window.firebaseModules) {
-                try {
-                    const docRef = window.firebaseModules.doc(window.db, "users", String(currentIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
-                    await window.firebaseModules.setDoc(docRef, { points: currentPoints }, { merge: true });
-                } catch (e) {
-                    console.error("Cloud points update error:", e);
-                }
-            }
-
-            alert(`🎉 مبروك يا أسطى! تم استبدال النقاط بنجاح وتحصيل (${rewardName}). يرجى إبراز هذه الرسالة لدعم الأسطول أو إرسالها عبر واتساب لتأكيد الاستلام!`);
-        }
-    </script>
 </body>
 </html>
