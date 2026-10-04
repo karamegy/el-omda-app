@@ -23,7 +23,7 @@ let allProductsCache = [];
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
-let selectedLat = 30.0444; // افتراضي القاهرة / شبرامنت
+let selectedLat = 30.0444; 
 let selectedLng = 31.2357;
 
 // DOM Elements
@@ -90,7 +90,6 @@ googleLoginBtn.addEventListener('click', async () => {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         
-        // حفظ بيانات المستخدم في فايربيز إن لم يكن موجوداً
         const userRef = doc(db, "users", user.email);
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
@@ -108,7 +107,7 @@ googleLoginBtn.addEventListener('click', async () => {
     }
 });
 
-// مراقبة حالة المستخدم وصلاحيات المدير
+// مراقبة حالة المستخدم ومنح صلاحيات المدير فوراً لبريدك
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -116,13 +115,21 @@ onAuthStateChanged(auth, async (user) => {
         authModal.style.display = 'none';
         profileBtn.style.display = 'flex';
         
-        const userDocRef = doc(db, "users", user.email);
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists() && userDoc.data().col === "admin") {
+        // التحقق المباشر: إذا كان البريد هو بريدك الأساسي، تظهر لوحة التحكم مباشرة
+        if (user.email === "haretg@gmail.com") {
             adminBtn.style.display = 'flex';
         } else {
-            adminBtn.style.display = 'none';
+            try {
+                const userDocRef = doc(db, "users", user.email);
+                const userDoc = await getDoc(userDocRef);
+                if (userDoc.exists() && userDoc.data().col === "admin") {
+                    adminBtn.style.display = 'flex';
+                } else {
+                    adminBtn.style.display = 'none';
+                }
+            } catch (err) {
+                adminBtn.style.display = 'none';
+            }
         }
     } else {
         currentUser = null;
@@ -211,7 +218,6 @@ function updateCartUI() {
     document.getElementById('cartCount').textContent = cart.length;
 }
 
-// إتمام الطلب وحفظ موقع الخريطة مع الطلب
 checkoutBtn.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -269,7 +275,6 @@ async function loadUserProfile() {
     document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
 }
 
-// تهيئة خريطة العميل في البروفايل لاختيار موقع التوصيل
 function initUserMap() {
     if (userMap) {
         userMap.invalidateSize();
@@ -298,7 +303,6 @@ saveLocationBtn.addEventListener('click', () => {
     alert('تم حفظ موقع التوصيل المختار بنجاح لاستخدامه عند الطلب!');
 });
 
-// التبديل بين تبويبات الإدارة
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -341,7 +345,6 @@ async function loadAllUsers() {
     });
 }
 
-// تهيئة خريطة الإدارة لعرض مواقع الشحنات لجميع العملاء
 async function initAdminMap() {
     if (adminMap) {
         adminMap.invalidateSize();
@@ -362,5 +365,4 @@ async function initAdminMap() {
     });
 }
 
-// التشغيل الأولي
 loadProducts();
