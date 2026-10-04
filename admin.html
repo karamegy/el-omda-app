@@ -425,98 +425,12 @@
 
         window.db = db;
         window.auth = auth;
+        window.googleProvider = googleProvider;
+        window.signInWithPopup = signInWithPopup;
         window.firebaseModules = { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, onSnapshot, getDoc };
-
-        window.adminLoginWithGoogle = async function() {
-            try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                const email = user.email.toLowerCase();
-
-                let userRole = 'customer';
-                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-                try {
-                    const userDoc = await getDoc(doc(db, "users", docId));
-                    if (userDoc.exists()) {
-                        userRole = userDoc.data().role || 'customer';
-                    } else if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                        userRole = 'admin';
-                    }
-                } catch(e) {}
-
-                const userObj = {
-                    name: user.displayName || 'إدارة العلاف',
-                    email: email,
-                    phone: user.phoneNumber || '01000000000',
-                    role: userRole,
-                    photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-                    provider: 'Google Auth',
-                    date: new Date().toLocaleString('ar-EG')
-                };
-
-                await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-                window.currentCustomer = userObj;
-                loadAdminDashboard();
-            } catch (error) {
-                alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
-            }
-        };
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const sessionUser = JSON.parse(localStorage.getItem('allaf_logged_user') || '{}');
-            const avatarEl = document.getElementById('nav-user-avatar');
-            const nameEl = document.getElementById('nav-username-display');
-
-            if (sessionUser && sessionUser.name) {
-                if (nameEl) nameEl.innerText = sessionUser.name;
-                if (avatarEl && sessionUser.photoURL) avatarEl.src = sessionUser.photoURL;
-            }
-        });
     </script>
 
+    <!-- ملف الجافاسكربت الشامل للتطبيق -->
     <script src="app.js"></script>
-    <script>
-        function switchAdminSection(sectionName, btnElement) {
-            document.querySelectorAll('.admin-panel-box').forEach(box => box.classList.remove('active'));
-            document.querySelectorAll('.admin-section-btn').forEach(btn => btn.classList.remove('active'));
-
-            const targetEl = document.getElementById('section-' + sectionName);
-            if(targetEl) targetEl.classList.add('active');
-            if(btnElement) btnElement.classList.add('active');
-
-            if (sectionName === 'google-accounts' && typeof loadGoogleAccountsList === 'function') loadGoogleAccountsList();
-            if (sectionName === 'issue-invoice' && typeof populateInvoiceClientsSelect === 'function') populateInvoiceClientsSelect();
-            if (sectionName === 'suppliers' && typeof populateSuppliersSelect === 'function') populateSuppliersSelect();
-            if (sectionName === 'notifications' && typeof populateNotificationTargetsSelect === 'function') populateNotificationTargetsSelect();
-        }
-
-        window.adminLoginCustom = function() {
-            const idInput = document.getElementById('admin-login-id').value.trim().toLowerCase();
-            const passInput = document.getElementById('admin-pass').value.trim();
-
-            if(!idInput || !passInput) {
-                alert('من فضلك أدخل البريد الإلكتروني أو الهاتف مع كلمة المرور!');
-                return;
-            }
-
-            if((idInput === 'haretg@gmail.com' || idInput === 'admin@allaf.com' || idInput === '01000000000' || idInput === 'مدير') && passInput === '1234') {
-                const masterUser = { name: 'المدير العام', email: 'haretg@gmail.com', phone: '01000000000', role: 'admin' };
-                localStorage.setItem('allaf_logged_user', JSON.stringify(masterUser));
-                window.currentCustomer = masterUser;
-                loadAdminDashboard();
-                return;
-            }
-
-            alert('بيانات الدخول غير صحيحة!');
-        };
-
-        window.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('allaf_logged_user')) {
-                loadAdminDashboard();
-            }
-        });
-    </script>
 </body>
 </html>
