@@ -23,6 +23,131 @@ body {
     color: var(--text-dark);
     direction: rtl;
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* ==========================================
+   طبقة الخلفية المتحركة (أبقار، أغنام، ماعز)
+   ========================================== */
+.farm-animation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* تضمن عدم إعاقة الضغط على الأزرار */
+    z-index: 0;
+    overflow: hidden;
+    background: rgba(252, 251, 244, 0.45); /* طبقة شفافية لضمان وضوح النصوص */
+}
+
+/* الأغنام والأبقار المتحركة في أسفل الشاشة */
+.animated-livestock {
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    padding: 0 20px;
+    opacity: 0.88;
+}
+
+.animal-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform-origin: bottom center;
+}
+
+/* حركة الأكل والمضغ للأبقار والمواشي */
+.cow-anim {
+    animation: eatAndChew 6s infinite ease-in-out;
+}
+
+.sheep-anim {
+    animation: eatAndChew 4.5s infinite ease-in-out 1s;
+}
+
+.goat-anim {
+    animation: eatAndChew 5.2s infinite ease-in-out 0.5s;
+}
+
+/* كروت طعام وحبوب أمام المواشي */
+.feed-bowl {
+    width: 45px;
+    height: 18px;
+    background: #78350f;
+    border-radius: 0 0 15px 15px;
+    border: 2px solid #fde047;
+    position: relative;
+    margin-top: -8px;
+}
+
+.feed-bowl::after {
+    content: '🌾🌽';
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 13px;
+}
+
+/* أنيميشن حركة الرأس والأكل */
+@keyframes eatAndChew {
+    0%, 100% {
+        transform: translateY(0) rotate(0deg);
+    }
+    25% {
+        transform: translateY(4px) rotate(-3deg); /* الانحناء للأكل */
+    }
+    35% {
+        transform: translateY(6px) rotate(2deg); /* تناول الذرة والقمح */
+    }
+    50% {
+        transform: translateY(1px) rotate(-1deg); /* المضغ */
+    }
+    75% {
+        transform: translateY(5px) rotate(-2deg);
+    }
+}
+
+/* حركة تنقل خفيفة للأغنام عبر الشاشة */
+.walking-sheep {
+    position: absolute;
+    bottom: 25px;
+    right: -100px;
+    animation: walkAcross 35s linear infinite;
+    font-size: 2.2rem;
+}
+
+@keyframes walkAcross {
+    0% {
+        right: -100px;
+        transform: scaleX(1);
+    }
+    49% {
+        transform: scaleX(1);
+    }
+    50% {
+        right: 105%;
+        transform: scaleX(-1); /* الدوران عند الوصول للنهاية */
+    }
+    99% {
+        transform: scaleX(-1);
+    }
+    100% {
+        right: -100px;
+        transform: scaleX(1);
+    }
+}
+
+/* رفع محتوى التطبيق ليكون فوق الخلفية المتحركة */
+.ticker-container, .main-header, .container, .modal-overlay {
+    position: relative;
+    z-index: 10;
 }
 
 /* شريط الإعلانات المتحرك */
@@ -52,7 +177,7 @@ body {
 
 /* الهيدر وشريط التنقل */
 .main-header {
-    background: rgba(28, 25, 23, 0.92);
+    background: rgba(28, 25, 23, 0.94);
     backdrop-filter: blur(10px);
     color: #fff;
     padding: 12px 20px;
@@ -132,12 +257,13 @@ body {
 
 /* البانر و Slider */
 .hero-banner {
-    background: linear-gradient(135deg, #78350f, #b45309);
+    background: linear-gradient(135deg, rgba(120,53,15,0.95), rgba(180,83,9,0.95));
     color: white;
     padding: 15px;
     border-radius: 12px;
     margin-bottom: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    backdrop-filter: blur(5px);
 }
 
 .slider-header {
@@ -234,7 +360,7 @@ body {
 }
 
 .cat-btn {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
     border: 1px solid #fde047;
     padding: 8px 16px;
     border-radius: 20px;
@@ -258,15 +384,16 @@ body {
 }
 
 .menu-card {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     border: 1px solid #fef08a;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     transition: transform 0.2s;
+    backdrop-filter: blur(4px);
 }
 
 .menu-card:hover {
@@ -339,7 +466,7 @@ body {
 
 /* السلة والحاويات */
 .cart-container {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.96);
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -436,7 +563,7 @@ body {
 
 /* بروفايل العميل والتنقل */
 .customer-login-box {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.96);
     padding: 25px;
     border-radius: 12px;
     max-width: 450px;
