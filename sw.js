@@ -1,4 +1,4 @@
-const CACHE_NAME = 'allaf-feeds-v23'; // تحديث رقم الاصدار لتفريغ الكاش القديم
+const CACHE_NAME = 'allaf-feeds-v24'; // تحديث رقم الاصدار لتفريغ الكاش القديم
 const assetsToCache = [
   './',
   './index.html',
