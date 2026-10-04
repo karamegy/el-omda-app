@@ -151,15 +151,31 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// [مُحدث] تسجيل الدخول بالبريد الإلكتروني مع إنشاء مستند المستخدم تلقائياً في فايربيس
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // التحقق من وجود مستند المستخدم في قاعدة البيانات أو إنشاؤه تلقائياً
+        const userRef = doc(db, "users", user.email);
+        const userSnap = await getDoc(userRef);
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                email: user.email,
+                name: user.email === "haretg@gmail.com" ? "مدير النظام" : "عميل",
+                col: user.email === "haretg@gmail.com" ? "admin" : "customer"
+            });
+        }
+
         alert('تم تسجيل الدخول بنجاح');
+        authModal.style.display = 'none';
+        location.reload();
     } catch (error) {
-        alert('خطأ في البيانات: ' + error.message);
+        alert('خطأ في البيانات أو الصلاحيات: ' + error.message);
     }
 });
 
