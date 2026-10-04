@@ -7,6 +7,8 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- مكتبة الخرائط Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3d2f">
 </head>
@@ -60,7 +62,7 @@
     <!-- المحتوى الرئيسي -->
     <main class="app-main">
         
-        <!-- قسم عرض المنتجات (الواجهة الرئيسية) -->
+        <!-- قسم عرض المنتجات -->
         <section id="productsSection" class="app-section active">
             <div class="hero-banner">
                 <div class="hero-content">
@@ -74,22 +76,21 @@
                 <span>تصفح أقوى العروض والمنتجات</span>
             </div>
 
-            <div id="productsGrid" class="products-grid">
-                <!-- يتم تعبئتها ديناميكياً -->
-            </div>
+            <div id="productsGrid" class="products-grid"></div>
         </section>
 
         <!-- لوحة تحكم المدير الشاملة -->
         <section id="adminSection" class="app-section" style="display:none;">
             <div class="admin-header">
                 <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل</h2>
-                <p>إدارة كاملة للمنتجات، الطلبات، وحسابات العملاء.</p>
+                <p>إدارة كاملة للمنتجات، الطلبات، ومتابعة خريطة الشحنات.</p>
             </div>
 
             <div class="admin-tabs">
                 <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> إدارة المنتجات</button>
                 <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> إدارة الطلبات والشحنات</button>
-                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء وكشوفات الحساب</button>
+                <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة تتبع الشحنات</button>
+                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء والحسابات</button>
             </div>
 
             <!-- تبويب المنتجات -->
@@ -125,8 +126,14 @@
 
             <!-- تبويب الطلبات -->
             <div id="adminOrdersTab" class="admin-panel" style="display:none;">
-                <h3>طلبات الشراء الواردة وتتبع الشحنات</h3>
+                <h3>طلبات الشراء الواردة</h3>
                 <div id="adminOrdersList" class="data-list"></div>
+            </div>
+
+            <!-- تبويب الخريطة للإدارة -->
+            <div id="adminMapTab" class="admin-panel" style="display:none;">
+                <h3>خريطة تتبع الشحنات الحية للعملاء</h3>
+                <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 15px; border: 2px solid #ddd;"></div>
             </div>
 
             <!-- تبويب العملاء -->
@@ -136,10 +143,10 @@
             </div>
         </section>
 
-        <!-- بروفايل العميل -->
+        <!-- بروفايل العميل وتتبع الشحنات بالخريطة -->
         <section id="profileSection" class="app-section" style="display:none;">
             <div class="profile-card-header">
-                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي ومتابعة الطلبات</h2>
+                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي ومتابعة الشحنات</h2>
                 <div class="user-info-box">
                     <p><strong>البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
                     <p><strong>نوع الحساب:</strong> <span id="userRoleDisplay">عميل معتمد</span></p>
@@ -152,8 +159,10 @@
                     <div id="userInvoicesList"></div>
                 </div>
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-shipping-fast"></i> حالة تتبع الشحنات</h3>
-                    <div id="userShipmentsList"></div>
+                    <h3><i class="fa-solid fa-map-marked-alt"></i> تتبع موقع الشحنة على الخريطة</h3>
+                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">حدد موقع استلام الشحنة الخاص بك:</p>
+                    <div id="userMap" style="height: 250px; border-radius: 8px;"></div>
+                    <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;">حفظ موقع التوصيل</button>
                 </div>
             </div>
         </section>
@@ -167,9 +176,7 @@
                 <h3><i class="fa-solid fa-cart-shopping"></i> سلة المشتريات</h3>
                 <span class="close-modal">&times;</span>
             </div>
-            <div class="modal-body" id="cartItemsList">
-                <!-- عناصر السلة -->
-            </div>
+            <div class="modal-body" id="cartItemsList"></div>
             <div class="modal-footer">
                 <div class="total-row">
                     <span>المجموع الإجمالي:</span>
@@ -180,7 +187,7 @@
         </div>
     </div>
 
-    <!-- نافذة تسجيل الدخول العصرية -->
+    <!-- نافذة تسجيل الدخول (مع دعم جوجل) -->
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-container auth-container">
             <div class="modal-header">
@@ -188,10 +195,15 @@
                 <span class="close-auth-modal">&times;</span>
             </div>
             <div class="modal-body">
+                <!-- زر تسجيل الدخول بحساب جوجل السريع -->
+                <button id="googleLoginBtn" class="btn-google">
+                    <i class="fa-brands fa-google"></i> تسجيل الدخول باستخدام جوجل
+                </button>
+                <div style="text-align: center; margin: 15px 0; color: #777; font-size: 0.9rem;">أو بالبريد الإلكتروني</div>
                 <form id="loginForm">
                     <div class="input-group">
                         <label>البريد الإلكتروني</label>
-                        <input type="email5" id="loginEmail" placeholder="name@example.com" required>
+                        <input type="email" id="loginEmail" placeholder="name@example.com" required>
                     </div>
                     <div class="input-group">
                         <label>كلمة المرور</label>
@@ -203,6 +215,8 @@
         </div>
     </div>
 
+    <!-- مكتبة Leaflet للخرائط -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
