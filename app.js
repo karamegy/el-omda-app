@@ -146,6 +146,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             loadAdminDashboard();
         }
     }
+
+    // 4. تشغيل تفاصيل المنتج تلقائياً إذا كانت صفحة المنتج مفتوحة
+    if (document.getElementById('product-detail-container')) {
+        initProductDetailsPage();
+    }
 });
 
 function checkSavedUserSession() {
@@ -203,11 +208,13 @@ function renderMenu(filter = 'all') {
         grid.innerHTML += `
             <div class="menu-card">
                 <div class="card-img-box">
-                    <img src="${product.image}" alt="${product.name}" class="menu-img">
+                    <a href="product.html?id=${product.id}">
+                        <img src="${product.image}" alt="${product.name}" class="menu-img">
+                    </a>
                     <span class="weight-badge"><i class="fa-solid fa-weight-hanging"></i> ${product.weight || 'شكارة 50 كجم'}</span>
                 </div>
                 <div class="menu-card-body">
-                    <h3>${product.name}</h3>
+                    <h3><a href="product.html?id=${product.id}" style="color: inherit; text-decoration: none;">${product.name}</a></h3>
                     <p>${product.desc}</p>
                     <div class="card-price-row">
                         <span class="price-val">${product.price} جنيه</span>
@@ -237,9 +244,11 @@ function renderOffers() {
         grid.innerHTML += `
             <div class="menu-card offer-card">
                 <div class="offer-banner-tag">باقة توريد مزارع 🔥</div>
-                <img src="${product.image}" alt="${product.name}" class="menu-img">
+                <a href="product.html?id=${product.id}">
+                    <img src="${product.image}" alt="${product.name}" class="menu-img">
+                </a>
                 <div class="menu-card-body">
-                    <h3>🌾 ${product.name}</h3>
+                    <h3>🌾 <a href="product.html?id=${product.id}" style="color: inherit; text-decoration: none;">${product.name}</a></h3>
                     <p>${product.desc}</p>
                     <div class="price-val">${product.price} جنيه / للشكارة</div>
                 </div>
@@ -2199,7 +2208,114 @@ function changeMyPassword() {
     alert('✓ تم تحديث كلمة المرور للحساب الحالي بنجاح!');
 }
 
-// تصدير الدوان لإمكانية الاستدعاء المباشر من عناصر HTML
+// ==========================================
+// وظائف صفحة تفاصيل المنتج (product.html)
+// ==========================================
+async function initProductDetailsPage() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const productIdParam = urlParams.get('id');
+    if (!productIdParam) {
+        const container = document.getElementById('product-detail-container');
+        if (container) container.innerHTML = '<p style="text-align:center; padding:40px; color:#78716c; font-size:1.1rem;">لم يتم تحديد صنف علف لعرضه.</p>';
+        return;
+    }
+
+    const productId = isNaN(productIdParam) ? productIdParam : parseInt(productIdParam);
+    
+    // 1. البحث في القائمة الرئيسية
+    let product = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => String(p.id) === String(productId));
+
+    // 2. البحث في التخزين المحلي
+    if (!product) {
+        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || localStorage.getItem('omda_custom_products') || '[]');
+        product = localProducts.find(p => String(p.id) === String(productId));
+    }
+
+    // 3. البحث في سحابة Firebase
+    if (!product && window.db && window.firebaseModules) {
+        try {
+            const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(productId)));
+            if (docSnap.exists()) {
+                product = docSnap.data();
+            }
+        } catch (e) {
+            console.error("Error fetching product from cloud:", e);
+        }
+    }
+
+    const container = document.getElementById('product-detail-container');
+    if (!container) return;
+
+    if (!product) {
+        container.innerHTML = '<p style="text-align:center; padding:40px; color:#78716c; font-size:1.1rem;">عذراً، صنف العلف المطلوب غير موجود أو تم حذفه من القائمة.</p>';
+        return;
+    }
+
+    const mediaSrc = product.image || product.media || 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=500';
+    const isVid = product.mediaType === 'video' || (typeof mediaSrc === 'string' && mediaSrc.startsWith('data:video'));
+    
+    let mediaHtml = isVid 
+        ? `<video src="${mediaSrc}" controls autoplay loop style="width:100%; max-height:450px; object-fit:cover; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);"></video>`
+        : `<img src="${mediaSrc}" alt="${product.name}" style="width:100%; max-height:450px; object-fit:cover; border-radius:12px; margin-bottom:20px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">`;
+
+    container.innerHTML = `
+        ${mediaHtml}
+        <h1 style="color: #292524; font-size: 1.8rem; margin-bottom: 10px; color: #78350f;">🌾 ${product.name}</h1>
+        <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+            <div style="font-size: 1.5rem; color: #b45309; font-weight: bold;">${product.price} جنيه</div>
+            <span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 0.9rem;">
+                <i class="fa-solid fa-weight-hanging"></i> ${product.weight || 'شكارة 50 كجم'}
+            </span>
+        </div>
+        <p style="color: #57534e; font-size: 1.05rem; line-height: 1.7; margin-bottom: 25px; background: #fafaf9; padding: 15px; border-radius: 10px; border: 1px solid #f5f5f4;">
+            ${product.desc || product.description || 'علف ممتاز عالي الجودة والبروتين لتلبية احتياجات المزارع وتحقيق أعلى معدلات التحويل.'}
+        </p>
+        
+        <div style="display: flex; gap: 15px; align-items: center; border-top: 1px solid #e7e5e4; padding-top: 20px; flex-wrap: wrap;">
+            <label style="font-weight: bold; color: #292524;">الكمية (بالشكارة):</label>
+            <input type="number" id="detail-qty" value="1" min="1" style="width: 80px; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px; text-align: center; font-size: 1rem; font-weight: bold;">
+            <button onclick="addSpecificProductToCart('${product.id}')" class="btn-primary" style="flex: 1; min-width: 220px; background-color: #b45309; padding: 12px; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; border: none; font-size: 1.05rem;">
+                <i class="fa-solid fa-cart-plus"></i> أضف للسلة وانتقل لإتمام الطلب 🛒
+            </button>
+        </div>
+    `;
+}
+
+async function addSpecificProductToCart(id) {
+    const qtyInput = document.getElementById('detail-qty');
+    const qty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+    
+    let prod = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => String(p.id) === String(id));
+    
+    if(!prod) {
+        let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || localStorage.getItem('omda_custom_products') || '[]');
+        prod = localProducts.find(p => String(p.id) === String(id));
+    }
+
+    if (!prod && window.db && window.firebaseModules) {
+        try {
+            const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(id)));
+            if (docSnap.exists()) {
+                prod = docSnap.data();
+            }
+        } catch (e) {}
+    }
+
+    if(!prod) return;
+
+    let existing = cart.find(item => String(item.id) === String(id));
+    if(existing) {
+        existing.qty += qty;
+    } else {
+        cart.push({ ...prod, qty: qty });
+    }
+
+    updateCartUI();
+    alert(`تمت إضافة (${prod.name}) بالكمية (${qty}) إلى السلة بنجاح! 🌾🛒`);
+    window.location.href = 'index.html';
+}
+
+// تصدير الدوال لاستدعائها المباشر
 window.switchAdminSection = switchAdminSection;
 window.adminLoginWithGoogle = adminLoginWithGoogle;
 window.adminLoginCustom = adminLoginCustom;
@@ -2215,3 +2331,5 @@ window.deleteProductFromCloud = deleteProductFromCloud;
 window.adminCreateOrder = adminCreateOrder;
 window.createNewStaff = createNewStaff;
 window.changeMyPassword = changeMyPassword;
+window.initProductDetailsPage = initProductDetailsPage;
+window.addSpecificProductToCart = addSpecificProductToCart;
