@@ -10,8 +10,6 @@ import {
     getAuth, 
     GoogleAuthProvider, 
     signInWithPopup, 
-    signInWithRedirect, 
-    getRedirectResult, 
     signOut, 
     setPersistence, 
     browserLocalPersistence, 
@@ -38,7 +36,6 @@ window.db = getFirestore(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
 window.signInWithPopup = signInWithPopup;
-window.signInWithRedirect = signInWithRedirect;
 
 window.firebaseModules = {
     collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
@@ -192,7 +189,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول (تم التحديث لضمان الاستقرار الفوري)
+// دوال المصادقة وتسجيل الدخول (كما كانت في النسخة السابقة المستقرة)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -201,18 +198,9 @@ window.loginWithGoogle = async function() {
     }
     try {
         await setPersistence(window.auth, browserLocalPersistence);
-        
-        // محاولة استخدام Popup أولاً لتجاوز مشاكل التوجيه وتأمين الدخول السريع
-        try {
-            const result = await signInWithPopup(window.auth, window.googleProvider);
-            if (result && result.user) {
-                await handleSuccessfulAuthUser(result.user, true);
-                return;
-            }
-        } catch (popupErr) {
-            console.log("Popup blocked or failed, falling back to redirect:", popupErr);
-            // لو الـ Popup تم حظره، يتم التحويل تلقائياً إلى الـ Redirect كبديل آمن
-            await signInWithRedirect(window.auth, window.googleProvider);
+        const result = await signInWithPopup(window.auth, window.googleProvider);
+        if (result && result.user) {
+            await handleSuccessfulAuthUser(result.user, true);
         }
     } catch (error) {
         console.error("Google Auth Error:", error);
@@ -342,15 +330,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCartUI();
     initHeroSlider();
     initRealtimeCloudSync();
-
-    try {
-        const redirectResult = await getRedirectResult(window.auth);
-        if (redirectResult && redirectResult.user) {
-            await handleSuccessfulAuthUser(redirectResult.user, true);
-        }
-    } catch (err) {
-        console.error("Redirect auth error:", err);
-    }
 
     if (document.getElementById('leafletMap')) {
         checkUserPermissions();
