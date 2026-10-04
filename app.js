@@ -10,6 +10,8 @@ import {
     getAuth, 
     GoogleAuthProvider, 
     signInWithPopup, 
+    signInWithRedirect, 
+    getRedirectResult, 
     signOut, 
     setPersistence, 
     browserLocalPersistence, 
@@ -36,6 +38,7 @@ window.db = getFirestore(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
 window.signInWithPopup = signInWithPopup;
+window.signInWithRedirect = signInWithRedirect;
 
 window.firebaseModules = {
     collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
@@ -44,8 +47,152 @@ window.firebaseModules = {
 // تثبيت الجلسة محلياً لمنع الخروج التلقائي وحل مشكلة متصفحات الموبايل (Storage Partitioning)
 setPersistence(window.auth, browserLocalPersistence).catch(console.error);
 
+// مراقبة واستعادة جلسة المستخدم تلقائياً بدون تعارض أو طرد
+onAuthStateChanged(window.auth, async (user) => {
+    if (user) {
+        await handleSuccessfulAuthUser(user, false);
+    } else {
+        // حماية الجلسة محلياً لتفادي تأخير استجابة فايربيس الكاش
+        const saved = localStorage.getItem('allaf_logged_user');
+        if (saved && !currentCustomer) {
+            try {
+                currentCustomer = JSON.parse(saved);
+                if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
+                    currentCustomer.role = 'admin';
+                }
+                if (typeof loadCustomerDashboard === 'function') {
+                    loadCustomerDashboard();
+                }
+            } catch(e) {}
+        }
+    }
+});
+
 // ==========================================
-// دالة تسجيل الدخول عبر جوجل (محدثة لتعتمد على Popup وتتجنب تعليق الموبايل بعد "متابعة")
+// بيانات أعلاف العلاف والحبوب الأساسية
+// ==========================================
+const defaultProducts = [
+    { 
+        id: 101, 
+        name: "علف دواجن سوبر بادي 23%", 
+        category: "poultry", 
+        price: 780, 
+        weight: "شكارة 50 كجم", 
+        desc: "علف بادي عالي البروتين لتسمين الكتاكيت والدواجن مع مضاد سموم فطرية وفيتامينات كاملة.", 
+        image: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=500" 
+    },
+    { 
+        id: 102, 
+        name: "علف دواجن نامي 21% ممتاز", 
+        category: "poultry", 
+        price: 750, 
+        weight: "شكارة 50 كجم", 
+        desc: "علف المرحلة الثانية لتحقيق أعلى معدلات التحويل وزيادة أوزان الدواجن بسرعة وسلاسة.", 
+        image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=500" 
+    },
+    { 
+        id: 103, 
+        name: "علف مواشي تسمين 16% سوبر", 
+        category: "livestock", 
+        price: 680, 
+        weight: "شكارة 50 كجم", 
+        desc: "خلطة مخصصة لتسمين العجول والأغنام يحتوي على ذرة وصويا وردة بنسب علمية مدروسة.", 
+        image: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=500" 
+    },
+    { 
+        id: 104, 
+        name: "علف مواشي مدر للبن 18%", 
+        category: "livestock", 
+        price: 710, 
+        weight: "شكارة 50 كجم", 
+        desc: "مخصص للأبقار والجاموس الحلابة لزيادة إنتاج اللبن ونسبة الدسم بفاعلية عالية.", 
+        image: "https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?w=500" 
+    },
+    { 
+        id: 105, 
+        name: "علف أرانب سوبر ممتاز 18%", 
+        category: "rabbits", 
+        price: 620, 
+        weight: "شكارة 50 كجم", 
+        desc: "مغذي ومقوي لأمهات وفطام الأرانب يمنع المشاكل المعوية ويحفز الخصوبة وزيادة الوزن.", 
+        image: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=500" 
+    },
+    { 
+        id: 106, 
+        name: "ذرة صفراء مجروشة ناعم", 
+        category: "grains", 
+        price: 650, 
+        weight: "شكارة 50 كجم", 
+        desc: "ذرة صفراء برازيلي نقية مجروشة بعناية خالية من الشوائب ومناسبة لكافة أنواع الخلطات.", 
+        image: "https://images.unsplash.com/photo-1601593346740-925612772716?w=500" 
+    },
+    { 
+        id: 107, 
+        name: "ردة ناعمة عالية الجودة", 
+        category: "grains", 
+        price: 420, 
+        weight: "شكارة 40 كجم", 
+        desc: "ردة قمح ناعمة طازجة ومفيدة جداً للهضم وتغذية المواشي والحيوانات الحلابة.", 
+        image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500" 
+    },
+    { 
+        id: 108, 
+        name: "مخلوط أملاح معدنية وفيتامينات", 
+        category: "supplements", 
+        price: 180, 
+        weight: "عبوة 5 كجم", 
+        desc: "مكمل غذائي مركز يضاف للخلطات لتعويض نقص المعادن والوقاية من لين العظام والضعف.", 
+        image: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500" 
+    }
+];
+
+let menuProducts = [...defaultProducts];
+let cart = []; 
+let currentCustomer = null;
+let allOrders = [];
+let allInvoices = [];
+let allNotifications = [];
+let allSuppliers = [];
+let supplyTransactions = [];
+let expensesList = [];
+let registeredUsers = [];
+let pointsDB = {};
+
+let activeDiscount = 0;
+let customerLat = null;
+let customerLng = null;
+let storeCoords = [29.9600, 31.2100];
+
+let currentSliderIndex = 0;
+let sliderInterval = null;
+
+// ==========================================
+// متغيرات ومحرك الخريطة
+// ==========================================
+let map;
+let mapTileLayers = {};
+let currentTileLayer;
+let routingControl = null;
+
+let markersGroup = {
+    branches: {},
+    drivers: {},
+    orders: {}
+};
+
+let storeLocation = [29.9600, 31.2100];
+let activeFilter = 'all';
+let watchGpsId = null;
+let isPickingLocation = null;
+
+// ==========================================
+// متغيرات النقاط والمكافآت
+// ==========================================
+let userRewardPoints = 0;
+let userRewardIdentifier = '';
+
+// ==========================================
+// دوال المصادقة وتسجيل الدخول (تم التحديث لضمان الاستقرار الفوري)
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -55,10 +202,17 @@ window.loginWithGoogle = async function() {
     try {
         await setPersistence(window.auth, browserLocalPersistence);
         
-        // استخدام Popup مباشرة لجميع الأجهزة لمنع ضياع جلسة العودة والتجميد
-        const result = await signInWithPopup(window.auth, window.googleProvider);
-        if (result && result.user) {
-            await handleSuccessfulAuthUser(result.user, true);
+        // محاولة استخدام Popup أولاً لتجاوز مشاكل التوجيه وتأمين الدخول السريع
+        try {
+            const result = await signInWithPopup(window.auth, window.googleProvider);
+            if (result && result.user) {
+                await handleSuccessfulAuthUser(result.user, true);
+                return;
+            }
+        } catch (popupErr) {
+            console.log("Popup blocked or failed, falling back to redirect:", popupErr);
+            // لو الـ Popup تم حظره، يتم التحويل تلقائياً إلى الـ Redirect كبديل آمن
+            await signInWithRedirect(window.auth, window.googleProvider);
         }
     } catch (error) {
         console.error("Google Auth Error:", error);
@@ -184,11 +338,19 @@ async function handleSuccessfulAuthUser(user, showAlert = false) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     checkSavedUserSession();
-
     renderMenu();
     updateCartUI();
     initHeroSlider();
     initRealtimeCloudSync();
+
+    try {
+        const redirectResult = await getRedirectResult(window.auth);
+        if (redirectResult && redirectResult.user) {
+            await handleSuccessfulAuthUser(redirectResult.user, true);
+        }
+    } catch (err) {
+        console.error("Redirect auth error:", err);
+    }
 
     if (document.getElementById('leafletMap')) {
         checkUserPermissions();
@@ -230,129 +392,6 @@ function checkSavedUserSession() {
         }
     } catch (e) {}
 }
-
-// ==========================================
-// بيانات أعلاف العلاف والحبوب الأساسية
-// ==========================================
-const defaultProducts = [
-    { 
-        id: 101, 
-        name: "علف دواجن سوبر بادي 23%", 
-        category: "poultry", 
-        price: 780, 
-        weight: "شكارة 50 كجم", 
-        desc: "علف بادي عالي البروتين لتسمين الكتاكيت والدواجن مع مضاد سموم فطرية وفيتامينات كاملة.", 
-        image: "https://images.unsplash.com/photo-1595246140625-573b715d11dc?w=500" 
-    },
-    { 
-        id: 102, 
-        name: "علف دواجن نامي 21% ممتاز", 
-        category: "poultry", 
-        price: 750, 
-        weight: "شكارة 50 كجم", 
-        desc: "علف المرحلة الثانية لتحقيق أعلى معدلات التحويل وزيادة أوزان الدواجن بسرعة وسلاسة.", 
-        image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=500" 
-    },
-    { 
-        id: 103, 
-        name: "علف مواشي تسمين 16% سوبر", 
-        category: "livestock", 
-        price: 680, 
-        weight: "شكارة 50 كجم", 
-        desc: "خلطة مخصصة لتسمين العجول والأغنام يحتوي على ذرة وصويا وردة بنسب علمية مدروسة.", 
-        image: "https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?w=500" 
-    },
-    { 
-        id: 104, 
-        name: "علف مواشي مدر للبن 18%", 
-        category: "livestock", 
-        price: 710, 
-        weight: "شكارة 50 كجم", 
-        desc: "مخصص للأبقار والجاموس الحلابة لزيادة إنتاج اللبن ونسبة الدسم بفاعلية عالية.", 
-        image: "https://images.unsplash.com/photo-1527153857715-3908f2bae5e8?w=500" 
-    },
-    { 
-        id: 105, 
-        name: "علف أرانب سوبر ممتاز 18%", 
-        category: "rabbits", 
-        price: 620, 
-        weight: "شكارة 50 كجم", 
-        desc: "مغذي ومقوي لأمهات وفطام الأرانب يمنع المشاكل المعوية ويحفز الخصوبة وزيادة الوزن.", 
-        image: "https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=500" 
-    },
-    { 
-        id: 106, 
-        name: "ذرة صفراء مجروشة ناعم", 
-        category: "grains", 
-        price: 650, 
-        weight: "شكارة 50 كجم", 
-        desc: "ذرة صفراء برازيلي نقية مجروشة بعناية خالية من الشوائب ومناسبة لكافة أنواع الخلطات.", 
-        image: "https://images.unsplash.com/photo-1601593346740-925612772716?w=500" 
-    },
-    { 
-        id: 107, 
-        name: "ردة ناعمة عالية الجودة", 
-        category: "grains", 
-        price: 420, 
-        weight: "شكارة 40 كجم", 
-        desc: "ردة قمح ناعمة طازجة ومفيدة جداً للهضم وتغذية المواشي والحيوانات الحلابة.", 
-        image: "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?w=500" 
-    },
-    { 
-        id: 108, 
-        name: "مخلوط أملاح معدنية وفيتامينات", 
-        category: "supplements", 
-        price: 180, 
-        weight: "عبوة 5 كجم", 
-        desc: "مكمل غذائي مركز يضاف للخلطات لتعويض نقص المعادن والوقاية من لين العظام والضعف.", 
-        image: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=500" 
-    }
-];
-
-let menuProducts = [...defaultProducts];
-let cart = []; 
-let currentCustomer = null;
-let allOrders = [];
-let allInvoices = [];
-let allNotifications = [];
-let allSuppliers = [];
-let supplyTransactions = [];
-let expensesList = [];
-let registeredUsers = [];
-let pointsDB = {};
-
-let activeDiscount = 0;
-let customerLat = null;
-let customerLng = null;
-let storeCoords = [29.9600, 31.2100];
-
-let currentSliderIndex = 0;
-let sliderInterval = null;
-
-// ==========================================
-// متغيرات ومحرك الخريطة
-// ==========================================
-let map;
-let mapTileLayers = {};
-let currentTileLayer;
-let routingControl = null;
-
-let markersGroup = {
-    branches: {},
-    drivers: {},
-    orders: {}
-};
-
-let storeLocation = [29.9600, 31.2100];
-let activeFilter = 'all';
-let watchGpsId = null;
-let isPickingLocation = null;
-
-// ==========================================
-// متغيرات النقاط والمكافآت
-// ==========================================
-let userRewardPoints = 0;
-let userRewardIdentifier = '';
 
 // ==========================================
 // التنقل بين الأقسام الرئيسية
