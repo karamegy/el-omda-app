@@ -1,18 +1,19 @@
-const CACHE_NAME = 'allaf-feeds-v15'; // تم تحديث الاسم ورقم الإصدار لتطبيق العلاف
+const CACHE_NAME = 'allaf-feeds-v16'; // تم التحديث ليتوافق مع أحدث إصدار وقاعدة بيانات المزارع
 const assetsToCache = [
-  '/el-omda-app/',
-  '/el-omda-app/index.html',
-  '/el-omda-app/admin.html',
-  '/el-omda-app/Map.html',
-  '/el-omda-app/product.html',
-  '/el-omda-app/branches.html',
-  '/el-omda-app/kitchen-display.html',
-  '/el-omda-app/privacy.html',
-  '/el-omda-app/rewards.html',
-  '/el-omda-app/style.css',
-  '/el-omda-app/app.js',
-  '/el-omda-app/manifest.json',
-  '/el-omda-app/icon1-512.png'
+  './',
+  './index.html',
+  './admin.html',
+  './Map.html',
+  './product.html',
+  './branches.html',
+  './kitchen-display.html',
+  './privacy.html',
+  './rewards.html',
+  './convert.html',
+  './style.css',
+  './app.js',
+  './manifest.json',
+  './icon1-512.png'
 ];
 
 // تثبيت السيرفر ووركر وتخزين ملفات تطبيق العلاف
@@ -47,7 +48,7 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const reqUrl = event.request.url;
 
-  // تجاوز طلبات قواعد البيانات السحابية
+  // تجاوز طلبات قواعد البيانات السحابية وخدمات جوجل
   if (reqUrl.includes('firestore.googleapis.com') || 
       reqUrl.includes('firebase') || 
       reqUrl.includes('google.com')) {
