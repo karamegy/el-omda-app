@@ -57,6 +57,9 @@ onAuthStateChanged(window.auth, async (user) => {
         if (saved && !currentCustomer) {
             try {
                 currentCustomer = JSON.parse(saved);
+                if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
+                    currentCustomer.role = 'admin';
+                }
                 if (typeof loadCustomerDashboard === 'function') {
                     loadCustomerDashboard();
                 }
@@ -189,7 +192,7 @@ let userRewardPoints = 0;
 let userRewardIdentifier = '';
 
 // ==========================================
-// دوال المصادقة وتسجيل الدخول (المحدثة لتجاوز internal-error)
+// دوال المصادقة وتسجيل الدخول
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -198,8 +201,6 @@ window.loginWithGoogle = async function() {
     }
     try {
         await setPersistence(window.auth, browserLocalPersistence);
-        
-        // التحقق مما إذا كان الجهاز موبايل لتجنب فشل الـ Popup والـ internal-error
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
@@ -212,7 +213,6 @@ window.loginWithGoogle = async function() {
         }
     } catch (error) {
         console.error("Google Auth Error:", error);
-        // التحويل التلقائي لـ Redirect في حال حدوث أي خطأ بالـ Popup
         try {
             await signInWithRedirect(window.auth, window.googleProvider);
         } catch (err) {
@@ -272,7 +272,9 @@ window.customerLogout = async function() {
         if (loginBox) loginBox.style.display = 'block';
         
         const adminNavBtn = document.getElementById('adminNavBtn');
+        const adminPanelLink = document.getElementById('adminPanelLink');
         if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        if (adminPanelLink) adminPanelLink.style.display = 'none';
         
         alert('تم تسجيل الخروج بنجاح.');
     } catch (e) {}
@@ -283,19 +285,23 @@ async function handleSuccessfulAuthUser(user, showAlert = false) {
     if (!email) return;
 
     let userRole = 'customer';
-    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
+    // فرض صلاحية الأدمن فوراً على البريد المطلوب
     if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
         userRole = 'admin';
     }
 
-    if (window.db && window.firebaseModules) {
+    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+    if (window.db && window.firebaseModules && userRole !== 'admin') {
         try {
             const userDoc = await window.firebaseModules.getDoc(
                 window.firebaseModules.doc(window.db, "users", docId)
             );
-            if (userDoc.exists() && userRole !== 'admin') {
+            if (userDoc.exists()) {
                 userRole = userDoc.data().role || 'customer';
+                if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                    userRole = 'admin';
+                }
             }
         } catch(e) {}
     }
@@ -381,6 +387,9 @@ function checkSavedUserSession() {
         const saved = localStorage.getItem('allaf_logged_user');
         if (saved) {
             currentCustomer = JSON.parse(saved);
+            if (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com') {
+                currentCustomer.role = 'admin';
+            }
             loadCustomerDashboard();
         }
     } catch (e) {}
@@ -701,18 +710,32 @@ function sendWhatsAppOrder() {
 }
 
 // ==========================================
-// بروفايل العميل والتنقل فيه
+// بروفايل العميل والتنقل فيه وإظهار زر الإدارة
 // ==========================================
 function loadCustomerDashboard() {
     const loginBox = document.getElementById('unified-login-box');
     const dashBox = document.getElementById('customer-dashboard');
     const adminNavBtn = document.getElementById('adminNavBtn');
+    const adminPanelLink = document.getElementById('adminPanelLink');
+
+    if (currentCustomer && (currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com')) {
+        currentCustomer.role = 'admin';
+    }
+
+    const isAdmin = currentCustomer && (currentCustomer.role === 'admin' || currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com');
 
     if (adminNavBtn) {
-        if (currentCustomer && (currentCustomer.role === 'admin' || currentCustomer.email === 'haretg@gmail.com' || currentCustomer.email === 'admin@allaf.com')) {
+        if (isAdmin) {
             adminNavBtn.classList.remove('hidden');
+            adminNavBtn.style.display = 'inline-flex';
         } else {
             adminNavBtn.classList.add('hidden');
+        }
+    }
+
+    if (adminPanelLink) {
+        if (isAdmin) {
+            adminPanelLink.style.display = 'inline-flex';
         }
     }
 
@@ -1082,6 +1105,10 @@ function checkUserPermissions() {
     const savedUserStr = localStorage.getItem('allaf_logged_user') || '{}';
     let user = {};
     try { user = JSON.parse(savedUserStr); } catch(e){}
+
+    if (user.email === 'haretg@gmail.com' || user.email === 'admin@allaf.com') {
+        user.role = 'admin';
+    }
 
     const avatarEl = document.getElementById('nav-user-avatar');
     const nameEl = document.getElementById('nav-username-display');
@@ -1650,6 +1677,10 @@ function checkKitchenAccessSecurity() {
     let loggedUser = {};
     try { loggedUser = JSON.parse(savedUserStr); } catch(e){}
 
+    if (loggedUser.email === 'haretg@gmail.com' || loggedUser.email === 'admin@allaf.com') {
+        loggedUser.role = 'admin';
+    }
+
     const role = (loggedUser.role || '').toLowerCase();
     const email = (loggedUser.email || '').toLowerCase();
     const phone = loggedUser.phone || '';
@@ -1833,6 +1864,10 @@ function loadAdminDashboard() {
     }
 
     const user = JSON.parse(userStr);
+    if (user.email === 'haretg@gmail.com' || user.email === 'admin@allaf.com') {
+        user.role = 'admin';
+    }
+
     if (loginBox) loginBox.style.display = 'none';
     if (dashBox) dashBox.classList.remove('hidden');
 
@@ -1842,7 +1877,7 @@ function loadAdminDashboard() {
     const displayEl = document.getElementById('nav-username-display');
 
     if (nameEl) nameEl.innerText = user.name || 'إدارة العلاف';
-    if (roleEl) roleEl.innerText = `الصلاحية: ${user.role || 'مدير ماستر (Master Admin)'}`;
+    if (roleEl) roleEl.innerText = `الصلاحية: المدير العام (Master Admin)`;
     if (avatarEl && user.photoURL) avatarEl.src = user.photoURL;
     if (displayEl) displayEl.innerText = user.name || '';
 
