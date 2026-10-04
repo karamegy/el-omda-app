@@ -28,7 +28,7 @@ body {
 }
 
 /* ==========================================
-   تأثيرات الخلفية الخفيفة (دخان، إضاءة، ورق/رعد، لوجو متحرك)
+   تأثيرات الخلفية الخفيفة (دخان، إضاءة، رعد، لوجو المؤسسة المتحرك)
    ========================================== */
 
 /* طبقة الإضاءة التفاعلية (Lighting Glow) */
@@ -98,8 +98,8 @@ body::after {
     transform: translate(-50%, -50%);
     width: 350px;
     height: 350px;
-    opacity: 0.035;
-    background-image: url('https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'); /* بديل بصري خفيف معبر عن مؤسسة الإخلاص والأعلاف الطبيعية[span_1](start_span)[span_1](end_span) */
+    opacity: 0.04;
+    background-image: url('logo.png'); /* استبدلها باسم ملف شعارك المرفوع في المستودع */
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -114,7 +114,7 @@ body::after {
 }
 
 /* ==========================================
-   تصميم الشريط العلوي (محدث ليكون متجاوباً تماماً بدون تداخل)
+   تصميم الشريط العلوي (متجاوب تماماً بدون تداخل)
    ========================================== */
 .main-header {
     background: var(--primary);
@@ -132,7 +132,7 @@ body::after {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: wrap; /* يمنع التداخل ويسمح بالالتفاف بسلاسة على الشاشات الصغيرة */
+    flex-wrap: wrap;
     gap: 12px;
 }
 
