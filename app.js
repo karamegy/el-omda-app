@@ -21,6 +21,7 @@ const db = getFirestore(app);
 
 let currentUser = null;
 let cart = [];
+let allProductsCache = []; // حفظ المنتجات محلياً للبحث السريع
 
 // DOM Elements
 const authBtn = document.getElementById('authBtn');
@@ -35,14 +36,21 @@ const closeModal = document.querySelector('.close-modal');
 const productsGrid = document.getElementById('productsGrid');
 const addProductForm = document.getElementById('addProductForm');
 const checkoutBtn = document.getElementById('checkoutBtn');
+const searchInput = document.getElementById('searchInput');
 
 // التحكم في التنقل بين الأقسام
 document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         e.target.classList.add('active');
-        loadProducts(e.target.dataset.cat);
+        renderProducts(e.target.dataset.cat, searchInput.value);
     });
+});
+
+// تفعيل البحث الفوري
+searchInput.addEventListener('input', (e) => {
+    const activeCat = document.querySelector('.cat-btn.active').dataset.cat;
+    renderProducts(activeCat, e.target.value);
 });
 
 // فتح وإغلاق النوافذ المنبثقة
@@ -64,7 +72,6 @@ profileBtn.addEventListener('click', () => {
 
 adminBtn.addEventListener('click', () => {
     switchSection('adminSection');
-    loadAdminData();
 });
 
 function switchSection(sectionId) {
@@ -108,48 +115,55 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// تحميل المنتجات
-async function loadProducts(category = 'all') {
+// تحميل المنتجات من الفايربيز
+async function loadProducts() {
     productsGrid.innerHTML = '<p>جاري تحميل المنتجات...</p>';
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
-        productsGrid.innerHTML = '';
+        allProductsCache = [];
         querySnapshot.forEach((docSnap) => {
-            const prod = docSnap.data();
-            if (category === 'all' || prod.category === category) {
-                productsGrid.innerHTML += `
-                    <div class="product-card">
-                        <img src="${prod.image}" alt="${prod.name}">
-                        <div class="product-info">
-                            <h3>${prod.name}</h3>
-                            <p class="product-price">${prod.price} ر.س</p>
-                            <button class="btn-primary" onclick='addToCart(${JSON.stringify({id: docSnap.id, ...prod})})'>أضف للسلة</button>
-                        </div>
-                    </div>
-                `;
-            }
+            allProductsCache.push({ id: docSnap.id, ...docSnap.data() });
         });
+        
+        if (allProductsCache.length === 0) {
+            // بيانات تجريبية افتراضية في حال عدم وجود منتجات مسبقة
+            allProductsCache = [
+                { id: '1', name: 'علاف تسمين عالي البروتين (50 كجم)', price: '250', category: 'concentrates', image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80' },
+                { id: '2', name: 'ذرة صفراء مستوردة صافية (50 كجم)', price: '180', category: 'grains', image: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80' }
+            ];
+        }
+        renderProducts('all', '');
     } catch (e) {
-        // بيانات تجريبية في حال عدم وجود منتجات مسبقة في قاعدة البيانات
-        productsGrid.innerHTML = `
+        productsGrid.innerHTML = '<p>حدث خطأ أثناء تحميل المنتجات.</p>';
+    }
+}
+
+// عرض وتصفية المنتجات حسب القسم والبحث
+function renderProducts(category, searchTerm) {
+    productsGrid.innerHTML = '';
+    const filtered = allProductsCache.filter(prod => {
+        const matchesCat = (category === 'all' || prod.category === category);
+        const matchesSearch = prod.name.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesCat && matchesSearch;
+    });
+
+    if (filtered.length === 0) {
+        productsGrid.innerHTML = '<p>لا توجد منتجات مطابقة للبحث.</p>';
+        return;
+    }
+
+    filtered.forEach(prod => {
+        productsGrid.innerHTML += `
             <div class="product-card">
-                <img src="https://images.unsplash.com/photo-1516467508483-a7212febe31a?auto=format&fit=crop&w=500&q=80" alt="علاف مركز">
+                <img src="${prod.image}" alt="${prod.name}">
                 <div class="product-info">
-                    <h3>علاف تسمين عالي البروتين (50 كجم)</h3>
-                    <p class="product-price">250 ر.س</p>
-                    <button class="btn-primary" onclick="alert('تمت الإضافة للسلة')">أضف للسلة</button>
-                </div>
-            </div>
-            <div class="product-card">
-                <img src="https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=500&q=80" alt="حبوب الذرة">
-                <div class="product-info">
-                    <h3>ذرة صفراء مستوردة صافية (50 كجم)</h3>
-                    <p class="product-price">180 ر.س</p>
-                    <button class="btn-primary" onclick="alert('تمت الإضافة للسلة')">أضف للسلة</button>
+                    <h3>${prod.name}</h3>
+                    <p class="product-price">${prod.price} ر.س</p>
+                    <button class="btn-primary" onclick='addToCart(${JSON.stringify(prod)})'>أضف للسلة</button>
                 </div>
             </div>
         `;
-    }
+    });
 }
 
 // إضافة للسلة
@@ -163,7 +177,7 @@ function updateCartUI() {
     const totalSpan = document.getElementById('cartTotalPrice');
     list.innerHTML = '';
     let total = 0;
-    cart.forEach((item, index) => {
+    cart.forEach((item) => {
         total += Number(item.price);
         list.innerHTML += `<p>${item.name} - ${item.price} ر.س</p>`;
     });
@@ -218,15 +232,14 @@ async function loadUserProfile() {
     document.getElementById('userEmailDisplay').textContent = currentUser.email;
     document.getElementById('userPhoneDisplay').textContent = currentUser.phoneNumber || 'غير مسجل';
     
-    // جلب فواتير وشحنات العميل
     const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
     const querySnapshot = await getDocs(q);
     let invoicesHtml = '';
     let shipmentsHtml = '';
     
-    querySnapshot.forEach((doc) => {
-        const order = doc.data();
-        invoicesHtml += `<div style="background:#fff; padding:10px; margin:5px 0; border:1px solid #ddd;">فاتورة رقم: ${doc.id} - المجموع: ${order.total} ر.س</div>`;
+    querySnapshot.forEach((docSnap) => {
+        const order = docSnap.data();
+        invoicesHtml += `<div style="background:#fff; padding:10px; margin:5px 0; border:1px solid #ddd;">فاتورة رقم: ${docSnap.id} - المجموع: ${order.total} ر.س</div>`;
         shipmentsHtml += `<div style="background:#fff; padding:10px; margin:5px 0; border:1px solid #ddd;">حالة الشحنة: <span style="color:green">${order.status}</span></div>`;
     });
     
@@ -267,6 +280,15 @@ async function loadAllUsers() {
         const u = docSnap.data();
         list.innerHTML += `<div style="background:#fff; padding:10px; margin:5px 0;">الاسم: ${u.name || 'غير محدد'} | البريد: ${u.email} | الصلاحية: ${u.col}</div>`;
     });
+}
+
+// تسجيل الـ Service Worker لدعم الـ PWA على GitHub Pages
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/el-omda-app/sw.js')
+      .then((reg) => console.log('Service Worker registered:', reg.scope))
+      .catch((err) => console.log('Service Worker failed:', err));
+  });
 }
 
 // التشغيل الأولي
