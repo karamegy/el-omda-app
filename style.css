@@ -36,13 +36,12 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* تضمن عدم إعاقة الضغط على الأزرار */
+    pointer-events: none;
     z-index: 0;
     overflow: hidden;
-    background: rgba(252, 251, 244, 0.45); /* طبقة شفافية لضمان وضوح النصوص */
+    background: rgba(252, 251, 244, 0.45);
 }
 
-/* الأغنام والأبقار المتحركة في أسفل الشاشة */
 .animated-livestock {
     position: absolute;
     bottom: 10px;
@@ -62,7 +61,6 @@ body {
     transform-origin: bottom center;
 }
 
-/* حركة الأكل والمضغ للأبقار والمواشي */
 .cow-anim {
     animation: eatAndChew 6s infinite ease-in-out;
 }
@@ -75,7 +73,6 @@ body {
     animation: eatAndChew 5.2s infinite ease-in-out 0.5s;
 }
 
-/* كروت طعام وحبوب أمام المواشي */
 .feed-bowl {
     width: 45px;
     height: 18px;
@@ -95,26 +92,14 @@ body {
     font-size: 13px;
 }
 
-/* أنيميشن حركة الرأس والأكل */
 @keyframes eatAndChew {
-    0%, 100% {
-        transform: translateY(0) rotate(0deg);
-    }
-    25% {
-        transform: translateY(4px) rotate(-3deg); /* الانحناء للأكل */
-    }
-    35% {
-        transform: translateY(6px) rotate(2deg); /* تناول الذرة والقمح */
-    }
-    50% {
-        transform: translateY(1px) rotate(-1deg); /* المضغ */
-    }
-    75% {
-        transform: translateY(5px) rotate(-2deg);
-    }
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(4px) rotate(-3deg); }
+    35% { transform: translateY(6px) rotate(2deg); }
+    50% { transform: translateY(1px) rotate(-1deg); }
+    75% { transform: translateY(5px) rotate(-2deg); }
 }
 
-/* حركة تنقل خفيفة للأغنام عبر الشاشة */
 .walking-sheep {
     position: absolute;
     bottom: 25px;
@@ -124,27 +109,13 @@ body {
 }
 
 @keyframes walkAcross {
-    0% {
-        right: -100px;
-        transform: scaleX(1);
-    }
-    49% {
-        transform: scaleX(1);
-    }
-    50% {
-        right: 105%;
-        transform: scaleX(-1); /* الدوران عند الوصول للنهاية */
-    }
-    99% {
-        transform: scaleX(-1);
-    }
-    100% {
-        right: -100px;
-        transform: scaleX(1);
-    }
+    0% { right: -100px; transform: scaleX(1); }
+    49% { transform: scaleX(1); }
+    50% { right: 105%; transform: scaleX(-1); }
+    99% { transform: scaleX(-1); }
+    100% { right: -100px; transform: scaleX(1); }
 }
 
-/* رفع محتوى التطبيق ليكون فوق الخلفية المتحركة */
 .ticker-container, .main-header, .container, .modal-overlay {
     position: relative;
     z-index: 10;
@@ -233,6 +204,10 @@ body {
     font-size: 0.85rem;
     font-weight: bold;
     transition: 0.2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .nav-btn:hover, .nav-btn.active {
@@ -247,13 +222,8 @@ body {
     padding: 0 12px;
 }
 
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
 /* البانر و Slider */
 .hero-banner {
@@ -350,7 +320,7 @@ body {
     color: #fde047;
 }
 
-/* الأقسام والشريط الأفقية */
+/* الأقسام والشريط الأفقي */
 .categories-bar {
     display: flex;
     gap: 8px;
@@ -396,9 +366,7 @@ body {
     backdrop-filter: blur(4px);
 }
 
-.menu-card:hover {
-    transform: translateY(-4px);
-}
+.menu-card:hover { transform: translateY(-4px); }
 
 .card-img-box {
     position: relative;
@@ -424,9 +392,7 @@ body {
     font-weight: bold;
 }
 
-.menu-card-body {
-    padding: 12px;
-}
+.menu-card-body { padding: 12px; }
 
 .menu-card h3 {
     color: var(--secondary-color);
@@ -447,7 +413,6 @@ body {
     font-size: 1.1rem;
 }
 
-/* زر سلة الزائر الخارجي */
 .outer-cart-btn {
     background: var(--primary-color);
     color: white;
@@ -460,9 +425,7 @@ body {
     transition: background 0.2s;
 }
 
-.outer-cart-btn:hover {
-    background: var(--primary-dark);
-}
+.outer-cart-btn:hover { background: var(--primary-dark); }
 
 /* السلة والحاويات */
 .cart-container {
@@ -491,10 +454,7 @@ body {
     cursor: pointer;
 }
 
-.qty-val {
-    margin: 0 8px;
-    font-weight: bold;
-}
+.qty-val { margin: 0 8px; font-weight: bold; }
 
 .btn-del-item {
     background: #dc2626;
@@ -703,6 +663,4 @@ body {
     font-size: 0.85rem;
 }
 
-.invoice-table th {
-    background: #fefce8;
-}
+.invoice-table th { background: #fefce8; }
