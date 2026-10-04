@@ -116,6 +116,12 @@ let watchGpsId = null;
 let isPickingLocation = null;
 
 // ==========================================
+// متغيرات النقاط والمكافآت
+// ==========================================
+let userRewardPoints = 0;
+let userRewardIdentifier = '';
+
+// ==========================================
 // تهيئة التطبيق الذكية عند الفتح
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
@@ -150,6 +156,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 4. تشغيل تفاصيل المنتج تلقائياً إذا كانت صفحة المنتج مفتوحة
     if (document.getElementById('product-detail-container')) {
         initProductDetailsPage();
+    }
+
+    // 5. تشغيل صفحة المكافآت تلقائياً إذا كانت الصفحة مفتوحة
+    if (document.getElementById('user-reward-points')) {
+        initRewardsPage();
     }
 });
 
@@ -2222,16 +2233,13 @@ async function initProductDetailsPage() {
 
     const productId = isNaN(productIdParam) ? productIdParam : parseInt(productIdParam);
     
-    // 1. البحث في القائمة الرئيسية
     let product = (typeof menuProducts !== 'undefined' ? menuProducts : []).find(p => String(p.id) === String(productId));
 
-    // 2. البحث في التخزين المحلي
     if (!product) {
         let localProducts = JSON.parse(localStorage.getItem('allaf_custom_products') || localStorage.getItem('omda_custom_products') || '[]');
         product = localProducts.find(p => String(p.id) === String(productId));
     }
 
-    // 3. البحث في سحابة Firebase
     if (!product && window.db && window.firebaseModules) {
         try {
             const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(productId)));
@@ -2294,7 +2302,7 @@ async function addSpecificProductToCart(id) {
 
     if (!prod && window.db && window.firebaseModules) {
         try {
-            const docSnap = await window.firebaseModules.getDoc(window.firebaseModules.doc(window.db, "products", String(id)));
+            const docSnap = await window.firebaseModules.getDoc(window.db, "products", String(id));
             if (docSnap.exists()) {
                 prod = docSnap.data();
             }
@@ -2315,6 +2323,84 @@ async function addSpecificProductToCart(id) {
     window.location.href = 'index.html';
 }
 
+// ==========================================
+// وظائف صفحة المكافآت ونقاط الولاء (rewards.html)
+// ==========================================
+async function initRewardsPage() {
+    let customer = JSON.parse(
+        localStorage.getItem('allaf_logged_user') || 
+        localStorage.getItem('fleet_current_cust') || 
+        localStorage.getItem('omda_current_cust') || 'null'
+    );
+    
+    userRewardIdentifier = customer ? (customer.phone || customer.email) : (localStorage.getItem('allaf_user_phone') || localStorage.getItem('fleet_user_phone'));
+
+    if (!userRewardIdentifier) {
+        let loggedUser = JSON.parse(localStorage.getItem('allaf_logged_user') || localStorage.getItem('fleet_logged_user') || 'null');
+        if (loggedUser) {
+            userRewardIdentifier = loggedUser.phone || loggedUser.email;
+        }
+    }
+
+    if (userRewardIdentifier && window.db && window.firebaseModules) {
+        try {
+            const docRef = window.firebaseModules.doc(window.db, "users", String(userRewardIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
+            const docSnap = await window.firebaseModules.getDoc(docRef);
+            if (docSnap.exists() && docSnap.data().points !== undefined) {
+                userRewardPoints = docSnap.data().points;
+            }
+        } catch (e) {
+            console.error("Cloud points fetch error:", e);
+        }
+    }
+
+    if (userRewardPoints === 0) {
+        let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || localStorage.getItem('fleet_points') || '{}');
+        if (userRewardIdentifier && pointsDB[userRewardIdentifier]) {
+            userRewardPoints = pointsDB[userRewardIdentifier];
+        } else {
+            userRewardPoints = 15; // نقاط ترحيبية افتراضية
+        }
+    }
+
+    const pointsEl = document.getElementById('user-reward-points');
+    if (pointsEl) pointsEl.innerText = userRewardPoints + ' نقطة';
+}
+
+async function redeemReward(cost, rewardName) {
+    if(!userRewardIdentifier && !currentCustomer) {
+        alert('يجب تسجيل الدخول برقم هاتفك أو بريدك الإلكتروني أولاً لتتمكن من استبدال النقاط!');
+        return;
+    }
+
+    if(userRewardPoints < cost) {
+        alert(`عذراً، رصيدك الحالي (${userRewardPoints} نقطة) لا يكفي للحصول على (${rewardName}) التي تتطلب ${cost} نقطة.`);
+        return;
+    }
+
+    userRewardPoints -= cost;
+    const pointsEl = document.getElementById('user-reward-points');
+    if (pointsEl) pointsEl.innerText = userRewardPoints + ' نقطة';
+
+    // 1. تحديث محلياً
+    let pointsDB = JSON.parse(localStorage.getItem('allaf_points') || localStorage.getItem('fleet_points') || '{}');
+    let identifierKey = userRewardIdentifier || (currentCustomer ? currentCustomer.phone : 'guest');
+    pointsDB[identifierKey] = userRewardPoints;
+    localStorage.setItem('allaf_points', JSON.stringify(pointsDB));
+
+    // 2. تحديث سحابياً عبر Firebase
+    if (window.db && window.firebaseModules && userRewardIdentifier) {
+        try {
+            const docRef = window.firebaseModules.doc(window.db, "users", String(userRewardIdentifier).replace(/[^a-zA-Z0-9]/g, '_'));
+            await window.firebaseModules.setDoc(docRef, { points: userRewardPoints }, { merge: true });
+        } catch (e) {
+            console.error("Cloud points update error:", e);
+        }
+    }
+
+    alert(`🎉 مبروك! تم استبدال النقاط بنجاح والحصول على (${rewardName}). يرجى إبراز هذه الرسالة لمسؤول التوريدات أو إرسالها عبر الواتساب عند الطلب! 🌾`);
+}
+
 // تصدير الدوال لاستدعائها المباشر
 window.switchAdminSection = switchAdminSection;
 window.adminLoginWithGoogle = adminLoginWithGoogle;
@@ -2333,3 +2419,5 @@ window.createNewStaff = createNewStaff;
 window.changeMyPassword = changeMyPassword;
 window.initProductDetailsPage = initProductDetailsPage;
 window.addSpecificProductToCart = addSpecificProductToCart;
+window.initRewardsPage = initRewardsPage;
+window.redeemReward = redeemReward;
