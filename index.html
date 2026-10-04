@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة الأعلاف والحبوب - المتجر المتكامل</title>
+    <title>منصة العمدة للأعلاف والحبوب - المتجر المتكامل</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -48,14 +48,10 @@
         </div>
     </header>
 
-    <!-- شريط التصنيفات والأقسام -->
+    <!-- شريط التصنيفات والأقسام (ديناميكي يتحدث تلقائياً) -->
     <nav class="categories-nav">
         <div class="cat-container" id="categoriesContainer">
             <button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>
-            <button class="cat-chip" data-cat="concentrates"><i class="fa-solid fa-boxes-stacked"></i> أعلاف مركزة</button>
-            <button class="cat-chip" data-cat="grains"><i class="fa-solid fa-seedling"></i> حبوب وبقوليات</button>
-            <button class="cat-chip" data-cat="supplements"><i class="fa-solid fa-pills"></i> مكملات وفيتامينات</button>
-            <button class="cat-chip" data-cat="veterinary"><i class="fa-solid fa-kit-medical"></i> أدوية بيطرية</button>
         </div>
     </nav>
 
@@ -82,63 +78,90 @@
         <!-- لوحة تحكم المدير الشاملة -->
         <section id="adminSection" class="app-section" style="display:none;">
             <div class="admin-header">
-                <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل</h2>
-                <p>إدارة كاملة للمنتجات، الطلبات، ومتابعة خريطة الشحنات.</p>
+                <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل - العمدة</h2>
+                <p>إدارة كاملة للمنتجات، الأقسام، الطلبات، الأسطول، ومتابعة خريطة الشحنات الحية.</p>
             </div>
 
             <div class="admin-tabs">
                 <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> إدارة المنتجات</button>
-                <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> إدارة الطلبات والشحنات</button>
-                <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة تتبع الشحنات</button>
-                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء والحسابات</button>
+                <button onclick="switchAdminTab('categories')" class="tab-btn" id="tabCatBtn"><i class="fa-solid fa-folder-plus"></i> إدارة الأقسام</button>
+                <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> إدارة الطلبات والأسطول</button>
+                <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة الشحنات الحية</button>
+                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء والصلاحيات</button>
             </div>
 
-            <!-- تبويب المنتجات -->
+            <!-- تبويب المنتجات (إضافة، تعديل، حذف) -->
             <div id="adminProductsTab" class="admin-panel active">
-                <div class="form-card">
-                    <h3>إضافة منتج جديد للمتجر</h3>
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3 id="productFormTitle">إضافة منتج جديد للمتجر</h3>
                     <form id="addProductForm">
+                        <input type="hidden" id="editProductId" value="">
                         <div class="input-group">
                             <label>اسم المنتج</label>
                             <input type="text" id="prodName" placeholder="مثال: علف تسمين ممتاز 50كغ" required>
                         </div>
                         <div class="input-group">
-                            <label>السعر (ر.س / جنيه)</label>
+                            <label>السعر (بالجنيه المصري - ج.م)</label>
                             <input type="number" id="prodPrice" placeholder="0.00" required>
                         </div>
                         <div class="input-group">
                             <label>القسم</label>
-                            <select id="prodCategory">
-                                <option value="concentrates">أعلاف مركزة</option>
-                                <option value="grains">حبوب وبقوليات</option>
-                                <option value="supplements">مكملات وفيتامينات</option>
-                                <option value="veterinary">أدوية بيطرية</option>
+                            <select id="prodCategory" required>
+                                <!-- يتم تعبئتها ديناميكياً بالأقسام المتاحة -->
                             </select>
                         </div>
                         <div class="input-group">
                             <label>رابط الصورة (URL)</label>
                             <input type="text" id="prodImage" placeholder="https://example.com/image.jpg" required>
                         </div>
-                        <button type="submit" class="btn-submit">نشر المنتج الآن</button>
+                        <button type="submit" class="btn-submit" id="saveProductBtn">نشر المنتج الآن</button>
+                        <button type="button" id="cancelEditBtn" class="btn-submit" style="background:#666; margin-top:5px; display:none;">إلغاء التعديل</button>
                     </form>
                 </div>
+
+                <h3>قائمة كافة المنتجات المعروضة للتحكم والتعديل</h3>
+                <div id="adminProductsList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
-            <!-- تبويب الطلبات -->
+            <!-- تبويب الأقسام (إضافة وحذف قسم جديد) -->
+            <div id="adminCategoriesTab" class="admin-panel" style="display:none;">
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3>إضافة قسم جديد للمنصة</h3>
+                    <form id="addCategoryForm">
+                        <div class="input-group">
+                            <label>معرف القسم بالإنجليزية (Slug) - بدون مسافات</label>
+                            <input type="text" id="catIdInput" placeholder="مثال: poultry_feed" required>
+                        </div>
+                        <div class="input-group">
+                            <label>اسم القسم بالعربي</label>
+                            <input type="text" id="catNameInput" placeholder="مثال: أعلاف دواجن تسمين" required>
+                        </div>
+                        <div class="input-group">
+                            <label>أيقونة القسم (FontAwesome Class)</label>
+                            <input type="text" id="catIconInput" value="fa-solid fa-wheat-awn" required>
+                        </div>
+                        <button type="submit" class="btn-submit">حفظ القسم الجديد</button>
+                    </form>
+                </div>
+                <h3>الأقسام الحالية في المنصة</h3>
+                <div id="adminCategoriesList" class="data-list" style="margin-top: 15px;"></div>
+            </div>
+
+            <!-- تبويب الطلبات والأسطول -->
             <div id="adminOrdersTab" class="admin-panel" style="display:none;">
-                <h3>طلبات الشراء الواردة</h3>
+                <h3>طلبات الشراء الواردة وتعيين أسطول الشحن</h3>
                 <div id="adminOrdersList" class="data-list"></div>
             </div>
 
             <!-- تبويب الخريطة للإدارة -->
             <div id="adminMapTab" class="admin-panel" style="display:none;">
-                <h3>خريطة تتبع الشحنات الحية للعملاء</h3>
+                <h3>خريطة تتبع الشحنات الحية وأسطول النقل للعملاء</h3>
                 <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 15px; border: 2px solid #ddd;"></div>
             </div>
 
-            <!-- تبويب العملاء -->
+            <!-- تبويب العملاء والصلاحيات -->
             <div id="adminUsersTab" class="admin-panel" style="display:none;">
-                <h3>قائمة العملاء المسجلين وكشوف الحساب</h3>
+                <h3>قائمة العملاء المسجلين والتحكم بالصلاحيات</h3>
                 <div id="adminUsersList" class="data-list"></div>
             </div>
         </section>
@@ -155,7 +178,7 @@
 
             <div class="profile-grid">
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> فواتير المشتريات</h3>
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> فواتير المشتريات (بالجنيه المصري)</h3>
                     <div id="userInvoicesList"></div>
                 </div>
                 <div class="profile-box">
@@ -180,7 +203,7 @@
             <div class="modal-footer">
                 <div class="total-row">
                     <span>المجموع الإجمالي:</span>
-                    <strong><span id="cartTotalPrice">0</span> ر.س</strong>
+                    <strong><span id="cartTotalPrice">0</span> ج.م</strong>
                 </div>
                 <button id="checkoutBtn" class="btn-checkout">إتمام الطلب وإصدار الفاتورة</button>
             </div>
