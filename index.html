@@ -91,7 +91,7 @@
         <!-- 2. تصميم خلطة علف مخصصة -->
         <section id="tab-custom-mix" class="tab-content">
             <div class="banner">
-                <h2>⚖️️ صمم خلطة العلف الخاصة بمزرعتك</h2>
+                <h2>⚖ صمم خلطة العلف الخاصة بمزرعتك</h2>
                 <p>اختر مكونات العلف والنسب المطلوبة وسيقوم مصنع العلاف بتجهيزها وتعبئتها وشحنها لمزرعتك مباشرة!</p>
             </div>
             <div class="cart-container max-w-600">
@@ -290,11 +290,11 @@
         });
     </script>
 
-    <!-- تهيئة Firebase السحابية الآمنة (مشروع alaf-93848) -->
+    <!-- تهيئة Firebase السحابية الآمنة باستخدام Redirect لتجنب أخطاء الهواتف -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
         import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+        import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
@@ -311,52 +311,63 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
+        // استخدام signInWithRedirect حصرياً لتجنب حظر الـ Popups على الجوال
         window.loginWithGoogle = async function() {
             try {
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                const email = user.email.toLowerCase();
-                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-                let userRole = 'customer';
-                let existingPhoto = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
-                
-                // منح صلاحيات الأدمن المشفرة للمدير العام
-                if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                    userRole = 'admin';
-                }
-
-                try {
-                    const userDoc = await getDoc(doc(db, "users", docId));
-                    if (userDoc.exists()) {
-                        const data = userDoc.data();
-                        if (userRole !== 'admin') {
-                            userRole = data.role || 'customer';
-                        }
-                        if(data.photoURL) existingPhoto = data.photoURL;
-                    }
-                } catch(e) {}
-
-                const userObj = {
-                    name: sanitizeInput(user.displayName || 'عميل العلاف المميز'),
-                    email: sanitizeInput(email),
-                    phone: sanitizeInput(user.phoneNumber || 'غير مدخل'),
-                    role: userRole,
-                    photoURL: existingPhoto,
-                    provider: 'Google Auth Secure',
-                    date: new Date().toLocaleString('ar-EG')
-                };
-                
-                await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-
-                window.currentCustomer = userObj;
-                if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
-                alert(`🛡️ أهلاً بك يا ${userObj.name} في تطبيق العلاف الآمن 🌾`);
+                await signInWithRedirect(auth, googleProvider);
             } catch (error) {
                 alert("حدث خطأ أثناء المصادقة الآمنة: " + error.message);
             }
         };
+
+        // التقاط ومعالجة نتيجة تسجيل الدخول عند العودة من صفحة جوجل
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const redirectResult = await getRedirectResult(auth);
+                if (redirectResult && redirectResult.user) {
+                    const user = redirectResult.user;
+                    const email = user.email.toLowerCase();
+                    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+
+                    let userRole = 'customer';
+                    let existingPhoto = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
+                    
+                    if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                        userRole = 'admin';
+                    }
+
+                    try {
+                        const userDoc = await getDoc(doc(db, "users", docId));
+                        if (userDoc.exists()) {
+                            const data = userDoc.data();
+                            if (userRole !== 'admin') {
+                                userRole = data.role || 'customer';
+                            }
+                            if(data.photoURL) existingPhoto = data.photoURL;
+                        }
+                    } catch(e) {}
+
+                    const userObj = {
+                        name: sanitizeInput(user.displayName || 'عميل العلاف المميز'),
+                        email: sanitizeInput(email),
+                        phone: sanitizeInput(user.phoneNumber || 'غير مدخل'),
+                        role: userRole,
+                        photoURL: existingPhoto,
+                        provider: 'Google Auth Secure',
+                        date: new Date().toLocaleString('ar-EG')
+                    };
+                    
+                    await setDoc(doc(db, "users", docId), userObj, { merge: true });
+                    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
+
+                    window.currentCustomer = userObj;
+                    if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
+                    alert(`🛡️ أهلاً بك يا ${userObj.name} في تطبيق العلاف الآمن 🌾`);
+                }
+            } catch (err) {
+                console.error("Redirect auth error:", err);
+            }
+        });
 
         window.customerLogout = async function() {
             try {
@@ -410,7 +421,7 @@
         window.db = db;
         window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc };
         
-        console.log("🛡️🚀 تم تشغيل درع الحماية ضد الهاكرز وربط فايربيس السحابي بنجاح تام!");
+        console.log("🛡️🚀 تم تشغيل درع الحماية وربط المصادقة الموجهة بنجاح تام!");
     </script>
 
     <!-- ربط ملف البرمجة العام بصيغة Module ليعمل التطبيق بدون أي توقف -->
