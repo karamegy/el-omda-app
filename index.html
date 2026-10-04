@@ -270,9 +270,9 @@
         </div>
     </div>
 
-    <!-- نظام الأمان الشامل ومقاومة الاختراق (Anti-Hacker Security Layer) -->
+    <!-- دوال واجهة المستخدم والخدمات المساعدة -->
     <script>
-        // تنقية المدخلات لمنع هجمات XSS وحقن الأكواد الضارة
+        // تنقية المدخلات لمنع هجمات XSS
         function sanitizeInput(str) {
             if (typeof str !== 'string') return str;
             return str.replace(/&/g, "&amp;")
@@ -311,141 +311,7 @@
         });
     </script>
 
-    <!-- تهيئة Firebase السحابية الآمنة باستخدام Redirect لتجنب أخطاء الهواتف -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-        import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
-            authDomain: "alaf-93848.firebaseapp.com",
-            projectId: "alaf-93848",
-            storageBucket: "alaf-93848.firebasestorage.app",
-            messagingSenderId: "984757380320",
-            appId: "1:984757380320:web:247065b2434c002c445c85",
-            measurementId: "G-ESV2GNSQZ4"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
-
-        // استخدام signInWithRedirect حصرياً لتجنب حظر الـ Popups على الجوال
-        window.loginWithGoogle = async function() {
-            try {
-                await signInWithRedirect(auth, googleProvider);
-            } catch (error) {
-                alert("حدث خطأ أثناء المصادقة الآمنة: " + error.message);
-            }
-        };
-
-        // التقاط ومعالجة نتيجة تسجيل الدخول عند العودة من صفحة جوجل
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const redirectResult = await getRedirectResult(auth);
-                if (redirectResult && redirectResult.user) {
-                    const user = redirectResult.user;
-                    const email = user.email.toLowerCase();
-                    const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-
-                    let userRole = 'customer';
-                    let existingPhoto = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
-                    
-                    if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                        userRole = 'admin';
-                    }
-
-                    try {
-                        const userDoc = await getDoc(doc(db, "users", docId));
-                        if (userDoc.exists()) {
-                            const data = userDoc.data();
-                            if (userRole !== 'admin') {
-                                userRole = data.role || 'customer';
-                            }
-                            if(data.photoURL) existingPhoto = data.photoURL;
-                        }
-                    } catch(e) {}
-
-                    const userObj = {
-                        name: sanitizeInput(user.displayName || 'عميل العلاف المميز'),
-                        email: sanitizeInput(email),
-                        phone: sanitizeInput(user.phoneNumber || 'غير مدخل'),
-                        role: userRole,
-                        photoURL: existingPhoto,
-                        provider: 'Google Auth Secure',
-                        date: new Date().toLocaleString('ar-EG')
-                    };
-                    
-                    await setDoc(doc(db, "users", docId), userObj, { merge: true });
-                    localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-
-                    window.currentCustomer = userObj;
-                    if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
-                    alert(`🛡️ أهلاً بك يا ${userObj.name} في تطبيق العلاف الآمن 🌾`);
-                }
-            } catch (err) {
-                console.error("Redirect auth error:", err);
-            }
-        });
-
-        window.customerLogout = async function() {
-            try {
-                await signOut(auth);
-                localStorage.removeItem('allaf_logged_user');
-                window.currentCustomer = null;
-                document.getElementById('customer-dashboard').classList.add('hidden');
-                document.getElementById('unified-login-box').style.display = 'block';
-                const adminNavBtn = document.getElementById('adminNavBtn');
-                if (adminNavBtn) adminNavBtn.classList.add('hidden');
-                alert('تم تسجيل الخروج الآمن بنجاح.');
-            } catch (e) {
-                console.error(e);
-            }
-        };
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const email = user.email.toLowerCase();
-                const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
-                let userRole = (email === 'haretg@gmail.com' || email === 'admin@allaf.com') ? 'admin' : 'customer';
-                
-                let userObj = { 
-                    name: sanitizeInput(user.displayName || email.split('@')[0]), 
-                    email: sanitizeInput(email), 
-                    phone: sanitizeInput(user.phoneNumber || ''),
-                    photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-                    role: userRole
-                };
-
-                try {
-                    const userDoc = await getDoc(doc(db, "users", docId));
-                    if (userDoc.exists()) {
-                        const data = userDoc.data();
-                        if (userRole !== 'admin') {
-                            userObj.role = data.role || 'customer';
-                        }
-                        if (data.name) userObj.name = sanitizeInput(data.name);
-                        if (data.phone) userObj.phone = sanitizeInput(data.phone);
-                        if (data.photoURL) userObj.photoURL = data.photoURL;
-                    }
-                } catch(e) {}
-
-                window.currentCustomer = userObj;
-                localStorage.setItem('allaf_logged_user', JSON.stringify(userObj));
-                
-                if (typeof loadCustomerDashboard === 'function') loadCustomerDashboard();
-            }
-        });
-
-        window.db = db;
-        window.firebaseModules = { collection, addDoc, getDocs, setDoc, doc, onSnapshot, getDoc, deleteDoc, updateDoc };
-        
-        console.log("🛡️🚀 تم تشغيل درع الحماية وربط المصادقة الموجهة بنجاح تام!");
-    </script>
-
-    <!-- ربط ملف البرمجة العام بصيغة Module ليعمل التطبيق بدون أي توقف -->
+    <!-- ربط ملف البرمجة الرئيسي كـ Module ليدير فايربيس والمصادقة بشكل موحد دون تعارض -->
     <script type="module" src="app.js"></script>
 </body>
 </html>
