@@ -295,14 +295,19 @@
                 let userRole = 'customer';
                 let existingPhoto = user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
                 
+                // 1. منح صلاحيات الأدمن فوراً لحساب الماستر
+                if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
+                    userRole = 'admin';
+                }
+
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
                     if (userDoc.exists()) {
                         const data = userDoc.data();
-                        userRole = data.role || 'customer';
+                        if (userRole !== 'admin') {
+                            userRole = data.role || 'customer';
+                        }
                         if(data.photoURL) existingPhoto = data.photoURL;
-                    } else if (email === 'haretg@gmail.com' || email === 'admin@allaf.com') {
-                        userRole = 'admin';
                     }
                 } catch(e) {}
 
@@ -334,6 +339,8 @@
                 window.currentCustomer = null;
                 document.getElementById('customer-dashboard').classList.add('hidden');
                 document.getElementById('unified-login-box').style.display = 'block';
+                const adminNavBtn = document.getElementById('adminNavBtn');
+                if (adminNavBtn) adminNavBtn.classList.add('hidden');
                 alert('تم تسجيل الخروج بنجاح.');
             } catch (e) {
                 console.error(e);
@@ -344,17 +351,27 @@
             if (user) {
                 const email = user.email.toLowerCase();
                 const docId = String(email.replace(/[^a-zA-Z0-9]/g, '_'));
+                let userRole = (email === 'haretg@gmail.com' || email === 'admin@allaf.com') ? 'admin' : 'customer';
+                
                 let userObj = { 
                     name: user.displayName || email.split('@')[0], 
                     email: email, 
                     phone: user.phoneNumber || '',
                     photoURL: user.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
-                    role: 'customer'
+                    role: userRole
                 };
 
                 try {
                     const userDoc = await getDoc(doc(db, "users", docId));
-                    if (userDoc.exists()) userObj = userDoc.data();
+                    if (userDoc.exists()) {
+                        const data = userDoc.data();
+                        if (userRole !== 'admin') {
+                            userObj.role = data.role || 'customer';
+                        }
+                        if (data.name) userObj.name = data.name;
+                        if (data.phone) userObj.phone = data.phone;
+                        if (data.photoURL) userObj.photoURL = data.photoURL;
+                    }
                 } catch(e) {}
 
                 window.currentCustomer = userObj;
