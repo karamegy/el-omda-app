@@ -10,8 +10,6 @@ import {
     getAuth, 
     GoogleAuthProvider, 
     signInWithPopup, 
-    signInWithRedirect, 
-    getRedirectResult, 
     signOut, 
     setPersistence, 
     browserLocalPersistence, 
@@ -38,7 +36,6 @@ window.db = getFirestore(app);
 window.auth = getAuth(app);
 window.googleProvider = new GoogleAuthProvider();
 window.signInWithPopup = signInWithPopup;
-window.signInWithRedirect = signInWithRedirect;
 
 window.firebaseModules = {
     collection, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, getDocs
@@ -48,7 +45,7 @@ window.firebaseModules = {
 setPersistence(window.auth, browserLocalPersistence).catch(console.error);
 
 // ==========================================
-// دالة تسجيل الدخول عبر جوجل (محسنة لتتجاوز حظر الموبايل)
+// دالة تسجيل الدخول عبر جوجل (محدثة لتعتمد على Popup وتتجنب تعليق الموبايل بعد "متابعة")
 // ==========================================
 window.loginWithGoogle = async function() {
     if (!window.auth || !window.googleProvider) {
@@ -58,26 +55,14 @@ window.loginWithGoogle = async function() {
     try {
         await setPersistence(window.auth, browserLocalPersistence);
         
-        // التحقق من نوع الجهاز (هاتف محمول أم كمبيوتر)
-        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        if (isMobileDevice) {
-            // استخدام Redirect للموبايل لتجنب حظر الـ Popups
-            await signInWithRedirect(window.auth, window.googleProvider);
-        } else {
-            // استخدام Popup لأجهزة الكمبيوتر
-            const result = await signInWithPopup(window.auth, window.googleProvider);
-            if (result && result.user) {
-                await handleSuccessfulAuthUser(result.user, true);
-            }
+        // استخدام Popup مباشرة لجميع الأجهزة لمنع ضياع جلسة العودة والتجميد
+        const result = await signInWithPopup(window.auth, window.googleProvider);
+        if (result && result.user) {
+            await handleSuccessfulAuthUser(result.user, true);
         }
     } catch (error) {
         console.error("Google Auth Error:", error);
-        try {
-            await signInWithRedirect(window.auth, window.googleProvider);
-        } catch (redirectError) {
-            alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + redirectError.message);
-        }
+        alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل: " + error.message);
     }
 };
 
@@ -199,18 +184,6 @@ async function handleSuccessfulAuthUser(user, showAlert = false) {
 // ==========================================
 document.addEventListener('DOMContentLoaded', async () => {
     checkSavedUserSession();
-    
-    // التحقق من نتيجة التوجيه (مهم جداً لعمل الدخول على الموبايل عبر Redirect)
-    if (window.auth) {
-        try {
-            const redirectResult = await getRedirectResult(window.auth);
-            if (redirectResult && redirectResult.user) {
-                await handleSuccessfulAuthUser(redirectResult.user, true);
-            }
-        } catch (err) {
-            console.error("Redirect auth error:", err);
-        }
-    }
 
     renderMenu();
     updateCartUI();
