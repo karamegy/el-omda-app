@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
@@ -20,6 +20,7 @@ const googleProvider = new GoogleAuthProvider();
 let currentUser = null;
 let cart = [];
 let allProductsCache = [];
+let allCategoriesCache = [];
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
@@ -39,21 +40,15 @@ const cartModal = document.getElementById('cartModal');
 const closeModal = document.querySelector('.close-modal');
 const productsGrid = document.getElementById('productsGrid');
 const addProductForm = document.getElementById('addProductForm');
+const addCategoryForm = document.getElementById('addCategoryForm');
 const checkoutBtn = document.getElementById('checkoutBtn');
 const searchInput = document.getElementById('searchInput');
 const saveLocationBtn = document.getElementById('saveLocationBtn');
+const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-// الأقسام والبحث
-document.querySelectorAll('.cat-chip').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        renderProducts(e.currentTarget.dataset.cat, searchInput.value);
-    });
-});
-
+// البحث التفاعلي
 searchInput.addEventListener('input', (e) => {
-    const activeCat = document.querySelector('.cat-chip.active').dataset.cat;
+    const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
     renderProducts(activeCat, e.target.value);
 });
 
@@ -77,6 +72,8 @@ profileBtn.addEventListener('click', () => {
 
 adminBtn.addEventListener('click', () => {
     switchSection('adminSection');
+    loadCategoriesForAdmin();
+    loadAdminProductsList();
 });
 
 function switchSection(sectionId) {
@@ -107,7 +104,7 @@ googleLoginBtn.addEventListener('click', async () => {
     }
 });
 
-// مراقبة حالة المستخدم ومنح صلاحيات المدير فوراً لبريدك
+// مراقبة حالة المستخدم وصلاحيات المدير المطلقة
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
@@ -150,8 +147,55 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
+// تحميل الأقسام ديناميكياً
+async function loadCategories() {
+    try {
+        const querySnapshot = await getDocs(collection(db, "categories"));
+        allCategoriesCache = [];
+        querySnapshot.forEach((docSnap) => {
+            allCategoriesCache.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        if (allCategoriesCache.length === 0) {
+            // أقسام افتراضية أولية إذا كانت القاعدة فارغة
+            allCategoriesCache = [
+                { id: 'concentrates', name: 'أعلاف مركزة', icon: 'fa-solid fa-boxes-stacked' },
+                { id: 'grains', name: 'حبوب وبقوليات', icon: 'fa-solid fa-seedling' },
+                { id: 'supplements', name: 'مكملات وفيتامينات', icon: 'fa-solid fa-pills' },
+                { id: 'veterinary', name: 'أدوية بيطرية', icon: 'fa-solid fa-kit-medical' }
+            ];
+        }
+
+        const catContainer = document.getElementById('categoriesContainer');
+        catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
+        
+        const prodCategorySelect = document.getElementById('prodCategory');
+        if (prodCategorySelect) prodCategorySelect.innerHTML = '';
+
+        allCategoriesCache.forEach(cat => {
+            catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
+            if (prodCategorySelect) {
+                prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            }
+        });
+
+        // ربط الأحداث للأقسام الجديدة
+        document.querySelectorAll('.cat-chip').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                renderProducts(e.currentTarget.dataset.cat, searchInput.value);
+            });
+        });
+
+    } catch (e) {
+        console.error("Error loading categories:", e);
+    }
+}
+
 // تحميل المنتجات
 async function loadProducts() {
+    await loadCategories();
     productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات...</p>';
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
@@ -191,7 +235,7 @@ function renderProducts(category, searchTerm) {
                 <img src="${prod.image}" alt="${prod.name}">
                 <div class="product-info">
                     <h3>${prod.name}</h3>
-                    <p class="product-price">${prod.price} ر.س</p>
+                    <p class="product-price">${prod.price} ج.م</p>
                     <button class="btn-primary-action" onclick='addToCart(${JSON.stringify(prod)})'>أضف للسلة</button>
                 </div>
             </div>
@@ -202,6 +246,7 @@ function renderProducts(category, searchTerm) {
 window.addToCart = function(product) {
     cart.push(product);
     alert('تمت إضافة المنتج إلى السلة بنجاح');
+    updateCartUI();
 };
 
 function updateCartUI() {
@@ -209,13 +254,25 @@ function updateCartUI() {
     const totalSpan = document.getElementById('cartTotalPrice');
     list.innerHTML = '';
     let total = 0;
-    cart.forEach((item) => {
+    cart.forEach((item, index) => {
         total += Number(item.price);
-        list.innerHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;"><span>${item.name}</span> <strong>${item.price} ر.س</strong></div>`;
+        list.innerHTML += `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                <span>${item.name}</span> 
+                <div>
+                    <strong>${item.price} ج.م</strong>
+                    <button onclick="removeFromCart(${index})" style="background:none; border:none; color:red; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>`;
     });
     totalSpan.textContent = total;
     document.getElementById('cartCount').textContent = cart.length;
 }
+
+window.removeFromCart = function(index) {
+    cart.splice(index, 1);
+    updateCartUI();
+};
 
 checkoutBtn.addEventListener('click', async () => {
     if (!currentUser) {
@@ -223,12 +280,16 @@ checkoutBtn.addEventListener('click', async () => {
         authModal.style.display = 'flex';
         return;
     }
+    if (cart.length === 0) {
+        alert('السلة فارغة!');
+        return;
+    }
     try {
         await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
             items: cart,
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
-            status: 'قيد المراجعة والشحن',
+            status: 'قيد المراجعة والشحن (أسطول العمدة)',
             lat: selectedLat,
             lng: selectedLng,
             date: new Date().toLocaleDateString('ar-EG')
@@ -236,27 +297,154 @@ checkoutBtn.addEventListener('click', async () => {
         alert('تم إرسال الطلب بنجاح وتحديد موقع الشحنة على الخريطة!');
         cart = [];
         cartModal.style.display = 'none';
+        updateCartUI();
     } catch (err) {
         alert('خطأ أثناء إتمام الطلب: ' + err.message);
     }
 });
 
+// إدارة المنتجات للأدمن (إضافة / تعديل / حذف)
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const editId = document.getElementById('editProductId').value;
+    const prodData = {
+        name: document.getElementById('prodName').value,
+        price: document.getElementById('prodPrice').value,
+        category: document.getElementById('prodCategory').value,
+        image: document.getElementById('prodImage').value
+    };
+
     try {
-        await addDoc(collection(db, "products"), {
-            name: document.getElementById('prodName').value,
-            price: document.getElementById('prodPrice').value,
-            category: document.getElementById('prodCategory').value,
-            image: document.getElementById('prodImage').value
-        });
-        alert('تم إضافة المنتج بنجاح للقاعدة!');
+        if (editId) {
+            await updateDoc(doc(db, "products", editId), prodData);
+            alert('تم تحديث المنتج بنجاح!');
+            document.getElementById('editProductId').value = '';
+            document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد للمتجر';
+            document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
+            cancelEditBtn.style.display = 'none';
+        } else {
+            await addDoc(collection(db, "products"), prodData);
+            alert('تم إضافة المنتج بنجاح للقاعدة!');
+        }
         addProductForm.reset();
         loadProducts();
+        loadAdminProductsList();
     } catch (err) {
         alert('خطأ: ' + err.message);
     }
 });
+
+cancelEditBtn.addEventListener('click', () => {
+    addProductForm.reset();
+    document.getElementById('editProductId').value = '';
+    document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد للمتجر';
+    document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
+    cancelEditBtn.style.display = 'none';
+});
+
+async function loadAdminProductsList() {
+    const list = document.getElementById('adminProductsList');
+    list.innerHTML = 'جاري التحميل...';
+    try {
+        const snapshot = await getDocs(collection(db, "products"));
+        list.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const p = docSnap.data();
+            const id = docSnap.id;
+            list.innerHTML += `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong>${p.name}</strong> - <span style="color:#d4a373">${p.price} ج.م</span> (${p.category})
+                    </div>
+                    <div>
+                        <button onclick='editProduct("${id}", ${JSON.stringify(p.name)}, "${p.price}", "${p.category}", "${p.image}")' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-left:5px;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='deleteProduct("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </div>
+                </div>`;
+        });
+    } catch (e) {
+        list.innerHTML = 'خطأ في التحميل.';
+    }
+}
+
+window.editProduct = function(id, name, price, category, image) {
+    document.getElementById('editProductId').value = id;
+    document.getElementById('prodName').value = name;
+    document.getElementById('prodPrice').value = price;
+    document.getElementById('prodCategory').value = category;
+    document.getElementById('prodImage').value = image;
+    document.getElementById('productFormTitle').textContent = 'تعديل بيانات المنتج';
+    document.getElementById('saveProductBtn').textContent = 'حفظ التعديلات';
+    cancelEditBtn.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteProduct = async function(id) {
+    if (confirm('هل أنت متأكد من حذف هذا المنتج نهائياً؟')) {
+        try {
+            await deleteDoc(doc(db, "products", id));
+            alert('تم الحذف بنجاح');
+            loadProducts();
+            loadAdminProductsList();
+        } catch (e) {
+            alert('خطأ أثناء الحذف: ' + e.message);
+        }
+};
+}
+
+// إضافة قسم جديد للأدمن
+addCategoryForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const catId = document.getElementById('catIdInput').value.trim();
+    const catName = document.getElementById('catNameInput').value.trim();
+    const catIcon = document.getElementById('catIconInput').value.trim();
+
+    try {
+        await setDoc(doc(db, "categories", catId), {
+            name: catName,
+            icon: catIcon
+        });
+        alert('تم إضافة القسم الجديد بنجاح!');
+        addCategoryForm.reset();
+        loadCategories();
+        loadCategoriesForAdmin();
+    } catch (err) {
+        alert('خطأ في إضافة القسم: ' + err.message);
+    }
+});
+
+async function loadCategoriesForAdmin() {
+    const list = document.getElementById('adminCategoriesList');
+    list.innerHTML = 'جاري التحميل...';
+    try {
+        const snapshot = await getDocs(collection(db, "categories"));
+        list.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const c = docSnap.data();
+            const id = docSnap.id;
+            list.innerHTML += `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><i class="${c.icon || 'fa-solid fa-wheat-awn'}"></i> <strong>${c.name}</strong> (معرف: ${id})</div>
+                    <button onclick='deleteCategory("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف القسم</button>
+                </div>`;
+        });
+    } catch (e) {
+        list.innerHTML = 'خطأ في التحميل.';
+    }
+}
+
+window.deleteCategory = async function(id) {
+    if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+        try {
+            await deleteDoc(doc(db, "categories", id));
+            alert('تم حذف القسم بنجاح');
+            loadCategories();
+            loadCategoriesForAdmin();
+        } catch (e) {
+            alert('خطأ أثناء الحذف: ' + e.message);
+        }
+    }
+};
 
 async function loadUserProfile() {
     if (!currentUser) return;
@@ -264,7 +452,7 @@ async function loadUserProfile() {
     
     const roleDisplay = document.getElementById('userRoleDisplay');
     if (currentUser.email === "haretg@gmail.com") {
-        roleDisplay.textContent = "مدير النظام (Admin)";
+        roleDisplay.textContent = "مدير النظام الرئيسي (Admin)";
         roleDisplay.style.color = "#d4a373";
     } else {
         roleDisplay.textContent = "عميل معتمد";
@@ -276,7 +464,7 @@ async function loadUserProfile() {
     
     querySnapshot.forEach((docSnap) => {
         const order = docSnap.data();
-        invoicesHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">رقم الطلب: #${docSnap.id.slice(0,6)} | الإجمالي: <strong>${order.total} ر.س</strong> | الحالة: <span style="color:green">${order.status}</span></div>`;
+        invoicesHtml += `<div style="background:#f9f9f9; padding:10px; margin-bottom:8px; border-radius:6px;">رقم الطلب: #${docSnap.id.slice(0,6)} | الإجمالي: <strong>${order.total} ج.م</strong> | الحالة: <span style="color:green">${order.status}</span></div>`;
     });
     
     document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
@@ -317,6 +505,11 @@ window.switchAdminTab = function(tabName) {
     if (tabName === 'products') {
         document.getElementById('adminProductsTab').style.display = 'block';
         document.getElementById('tabProdBtn').classList.add('active');
+        loadAdminProductsList();
+    } else if (tabName === 'categories') {
+        document.getElementById('adminCategoriesTab').style.display = 'block';
+        document.getElementById('tabCatBtn').classList.add('active');
+        loadCategoriesForAdmin();
     } else if (tabName === 'orders') {
         document.getElementById('adminOrdersTab').style.display = 'block';
         document.getElementById('tabOrdBtn').classList.add('active');
@@ -338,9 +531,27 @@ async function loadAllOrders() {
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
         const o = docSnap.data();
-        list.innerHTML += `<div class="data-item">العميل: ${o.userEmail} | المجموع: <strong>${o.total} ر.س</strong> | الحالة: ${o.status}</div>`;
+        const id = docSnap.id;
+        list.innerHTML += `
+            <div class="data-item">
+                الطلب #${id.slice(0,6)} | العميل: ${o.userEmail} | المجموع: <strong>${o.total} ج.م</strong> | الحالة: <span style="color:#2c5e3b">${o.status}</span>
+                <div style="margin-top:8px;">
+                    <button onclick='updateOrderStatus("${id}", "جاري التوصيل عبر أسطول العمدة")' style="background:#1e3d2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">تعيين للأسطول وجاري التوصيل</button>
+                    <button onclick='updateOrderStatus("${id}", "تم التسليم بنجاح")' style="background:green; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:5px;">تم التسليم</button>
+                </div>
+            </div>`;
     });
 }
+
+window.updateOrderStatus = async function(orderId, newStatus) {
+    try {
+        await updateDoc(doc(db, "orders", orderId), { status: newStatus });
+        alert('تم تحديث حالة الطلب بنجاح');
+        loadAllOrders();
+    } catch (e) {
+        alert('خطأ: ' + e.message);
+    }
+};
 
 async function loadAllUsers() {
     const list = document.getElementById('adminUsersList');
@@ -348,9 +559,27 @@ async function loadAllUsers() {
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
-        list.innerHTML += `<div class="data-item">الاسم: ${u.name || 'غير محدد'} | البريد: ${u.email} | الصلاحية: <strong>${u.col}</strong></div>`;
+        const email = docSnap.id;
+        list.innerHTML += `
+            <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
+                <div>الاسم: ${u.name || 'غير محدد'} | البريد: ${email} | الصلاحية: <strong>${u.col}</strong></div>
+                <div>
+                    <button onclick='toggleUserRole("${email}", "${u.col}")' style="background:#d4a373; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">تبديل الصلاحية (مدير/عميل)</button>
+                </div>
+            </div>`;
     });
 }
+
+window.toggleUserRole = async function(email, currentCol) {
+    const newCol = currentCol === "admin" ? "customer" : "admin";
+    try {
+        await updateDoc(doc(db, "users", email), { col: newCol });
+        alert('تم تحديث صلاحية المستخدم بنجاح!');
+        loadAllUsers();
+    } catch (e) {
+        alert('خطأ: ' + e.message);
+    }
+};
 
 async function initAdminMap() {
     if (adminMap) {
@@ -367,7 +596,7 @@ async function initAdminMap() {
         const order = docSnap.data();
         if (order.lat && order.lng) {
             L.marker([order.lat, order.lng]).addTo(adminMap)
-                .bindPopup(`<b>عميل:</b> ${order.userEmail}<br><b>المبلغ:</b> ${order.total} ر.س<br><b>الحالة:</b> ${order.status}`);
+                .bindPopup(`<b>عميل:</b> ${order.userEmail}<br><b>المبلغ:</b> ${order.total} ج.م<br><b>الحالة:</b> ${order.status}`);
         }
     });
 }
