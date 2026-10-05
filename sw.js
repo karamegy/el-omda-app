@@ -1,11 +1,11 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v23';
+const CACHE_NAME = 'el-omda-exclusive-cache-v24';
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './icon1-192.png',
-  './icon1-512.png'
+  '/el-omda-app/',
+  '/el-omda-app/index.html',
+  '/el-omda-app/style.css',
+  '/el-omda-app/app.js',
+  '/el-omda-app/icon1-192.png',
+  '/el-omda-app/icon1-512.png'
 ];
 
 // تثبيت الـ Service Worker بشكل آمن يمنع توقف التثبيت
@@ -28,7 +28,6 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return;
 
-  // إذا كان الطلب عبارة عن فتح الصفحة الرئيسية أو التنقل، نجرب الشبكة أولاً
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -39,13 +38,12 @@ self.addEventListener('fetch', (event) => {
            });
         })
         .catch(() => {
-          return caches.match('./index.html');
+          return caches.match('/el-omda-app/index.html');
         })
     );
     return;
   }
 
-  // باقي الملفات (CSS, JS, الصور)
   event.respondWith(
     caches.match(event.request)
       .then((cachedResponse) => {
