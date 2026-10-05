@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v19';
+const CACHE_NAME = 'el-omda-exclusive-cache-v17';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const urlsToCache = [
   './icon1-512.png'
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الأساسية
+// تثبيت الـ Service Worker وتخزين الملفات الخاصة بتطبيق العمدة
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -20,54 +20,23 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// التعامل الذكي مع الطلبات لمنع ظهور النسخ المحذوفة
+// التعامل مع الطلبات لجلب الملفات من الكاش أو الشبكة
 self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http')) return;
-
-  // إذا كان الطلب عبارة عن فتح الصفحة الرئيسية أو التنقل، نجرب الشبكة أولاً وبقوة
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-           return caches.open(CACHE_NAME).then((cache) => {
-             cache.put(event.request, networkResponse.clone());
-             return networkResponse;
-           });
-        })
-        .catch(() => {
-          return caches.match('./index.html');
-        })
-    );
-    return;
-  }
-
-  // باقي الملفات (CSS, JS, الصور)
   event.respondWith(
     caches.match(event.request)
-      .then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
-          return networkResponse;
-        }).catch(() => {
-          // إذا فشلت الشبكة، نرجع النسخة المخزنة إن وجدت
-          return cachedResponse;
-        });
-
-        return cachedResponse || fetchPromise;
+      .then((response) => {
+        return response || fetch(event.request);
       })
   );
 });
 
-// تفعيل وتحديث الكاش وحذف أي نسخ قديمة نهائياً
+// تفعيل وتحديث الكاش وحذف النسخ القديمة
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('el-omda-') && cacheName !== CACHE_NAME) {
-            console.log('تم مسح الكاش القديم بالكامل:', cacheName);
             return caches.delete(cacheName);
           }
         })
