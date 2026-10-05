@@ -1,17 +1,12 @@
-const CACHE_NAME = 'el-omda-cache-v1';
+const CACHE_NAME = 'el-omda-cache-v2';
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
   '/el-omda-app/style.css',
-  '/el-omda-app/app.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
+  '/el-omda-app/app.js'
 ];
 
-// تثبيت التخزين المؤقت
+// تثبيت التخزين المؤقت الأساسي وضمان نجاحه بدون انهيار بسبب الـ CDN
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -22,7 +17,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// تفعيل وتحديث النسخ القديمة
+// تفعيل وتحديث النسخ القديمة وحذفها فوراً
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -39,11 +34,20 @@ self.addEventListener('activate', (event) => {
   self.clientsClaim();
 });
 
-// جلب الملفات (استراتيجية الشبكة أولاً ثم التخزين المؤقت أو العكس حسب الحاجة)
+// جلب الملفات مع التخزين المؤقت الديناميكي (عشان يسحب الخارجي والداخلي من غير مشاكل)
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      return response || fetch(event.request).catch(() => {
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      return fetch(event.request).then((networkResponse) => {
+        // تخزين أي ملف جديد يتم جلبه تلقائياً (مثل الخطوط والـ CDNs)
+        return caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, networkResponse.clone());
+          return networkResponse;
+        });
+      }).catch(() => {
         // في حال انقطاع الإنترنت تماماً
         if (event.request.mode === 'navigate') {
           return caches.match('/el-omda-app/index.html');
