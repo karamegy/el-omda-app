@@ -1,79 +1,54 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v24';
-const urlsToCache = [
+const CACHE_NAME = 'el-omda-cache-v1';
+const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
   '/el-omda-app/style.css',
   '/el-omda-app/app.js',
-  '/el-omda-app/icon1-192.png',
-  '/el-omda-app/icon1-512.png'
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+  'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+  'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'
 ];
 
-// تثبيت الـ Service Worker بشكل آمن يمنع توقف التثبيت
+// تثبيت التخزين المؤقت
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(
-        urlsToCache.map((url) => {
-          return cache.add(url).catch((err) => {
-            console.warn('فشل تخزين الملف مؤقتاً:', url, err);
-          });
-        })
-      );
+      console.log('تم فتح التخزين المؤقت بنجاح');
+      return cache.addAll(assetsToCache);
     })
   );
   self.skipWaiting();
 });
 
-// التعامل الذكي مع الطلبات لمنع ظهور النسخ المحذوفة
-self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http')) return;
-
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request)
-        .then((networkResponse) => {
-           return caches.open(CACHE_NAME).then((cache) => {
-             cache.put(event.request, networkResponse.clone());
-             return networkResponse;
-           });
-        })
-        .catch(() => {
-          return caches.match('/el-omda-app/index.html');
-        })
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(event.request)
-      .then((cachedResponse) => {
-        const fetchPromise = fetch(event.request).then((networkResponse) => {
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, networkResponse.clone());
-          });
-          return networkResponse;
-        }).catch(() => {
-          return cachedResponse;
-        });
-
-        return cachedResponse || fetchPromise;
-      })
-  );
-});
-
-// تفعيل وتحديث الكاش وحذف أي نسخ قديمة نهائياً
+// تفعيل وتحديث النسخ القديمة
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName.startsWith('el-omda-') && cacheName !== CACHE_NAME) {
-            console.log('تم مسح الكاش القديم بالكامل:', cacheName);
-            return caches.delete(cacheName);
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('حذف التخزين المؤقت القديم:', cache);
+            return caches.delete(cache);
           }
         })
       );
     })
   );
-  self.clients.claim();
+  self.clientsClaim();
+});
+
+// جلب الملفات (استراتيجية الشبكة أولاً ثم التخزين المؤقت أو العكس حسب الحاجة)
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).catch(() => {
+        // في حال انقطاع الإنترنت تماماً
+        if (event.request.mode === 'navigate') {
+          return caches.match('/el-omda-app/index.html');
+        }
+      });
+    })
+  );
 });
