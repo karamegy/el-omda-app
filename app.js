@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
@@ -16,7 +15,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+
+// تفعيل وضع العمل بدون انترنت (Offline Persistence)
+try {
+    enableIndexedDbPersistence(db).catch((err) => {
+        if (err.code == 'failed-precondition') {
+            console.warn('تعدد النوافذ يمنع تفعيل التخزين المؤقت حالياً.');
+        } else if (err.code == 'unimplemented') {
+            console.warn('المتصفح لا يدعم التخزين المؤقت لـ Firestore.');
+        }
+    });
+} catch (e) {
+    console.log("Persistence info:", e);
+}
+
 const googleProvider = new GoogleAuthProvider();
 
 let currentUser = null;
@@ -50,7 +62,6 @@ const closeModal = document.querySelector('.close-modal');
 const productsGrid = document.getElementById('productsGrid');
 const addProductForm = document.getElementById('addProductForm');
 const addCategoryForm = document.getElementById('addCategoryForm');
-const cancelCatEditBtn = document.getElementById('cancelCatEditBtn');
 const checkoutBtn = document.getElementById('checkoutBtn');
 const searchInput = document.getElementById('searchInput');
 const saveLocationBtn = document.getElementById('saveLocationBtn');
@@ -63,7 +74,9 @@ const trackInvoiceBtn = document.getElementById('trackInvoiceBtn');
 const notificationsBtn = document.getElementById('notificationsBtn');
 const notificationsModal = document.getElementById('notificationsModal');
 const sendNotificationForm = document.getElementById('sendNotificationForm');
-const productDetailModal = document.getElementById('productDetailModal');
+const addVehicleForm = document.getElementById('addVehicleForm');
+const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
+const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
 searchInput.addEventListener('input', (e) => {
     const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
@@ -82,7 +95,7 @@ cartBtn.addEventListener('click', () => { cartModal.style.display = 'flex'; upda
 closeModal.addEventListener('click', () => cartModal.style.display = 'none');
 document.querySelector('.close-invoice-modal').addEventListener('click', () => invoiceModal.style.display = 'none');
 closeInvoiceModalBtn.addEventListener('click', () => invoiceModal.style.display = 'none');
-document.querySelector('.close-prod-modal').addEventListener('click', () => productDetailModal.style.display = 'none');
+document.querySelector('.close-prod-modal').addEventListener('click', () => document.getElementById('productDetailModal').style.display = 'none');
 
 notificationsBtn.addEventListener('click', () => {
     notificationsModal.style.display = 'flex';
@@ -206,29 +219,32 @@ async function loadCategories() {
                 await setDoc(doc(db, "categories", cat.id), { name: cat.name, icon: cat.icon });
             }
         }
-
-        const catContainer = document.getElementById('categoriesContainer');
-        catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
-        const prodCategorySelect = document.getElementById('prodCategory');
-        if (prodCategorySelect) prodCategorySelect.innerHTML = '';
-
-        allCategoriesCache.forEach(cat => {
-            catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
-            if (prodCategorySelect) {
-                prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-            }
-        });
-
-        document.querySelectorAll('.cat-chip').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-                e.currentTarget.classList.add('active');
-                renderProducts(e.currentTarget.dataset.cat, searchInput.value);
-            });
-        });
+        localStorage.setItem('allaf_categories_cache', JSON.stringify(allCategoriesCache));
     } catch (e) {
-        console.error("Error loading categories:", e);
+        console.warn("جاري التحميل من التخزين المحلي (وضع بدون انترنت)...");
+        const cached = localStorage.getItem('allaf_categories_cache');
+        if (cached) allCategoriesCache = JSON.parse(cached);
     }
+
+    const catContainer = document.getElementById('categoriesContainer');
+    catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
+    const prodCategorySelect = document.getElementById('prodCategory');
+    if (prodCategorySelect) prodCategorySelect.innerHTML = '';
+
+    allCategoriesCache.forEach(cat => {
+        catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
+        if (prodCategorySelect) {
+            prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+        }
+    });
+
+    document.querySelectorAll('.cat-chip').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            renderProducts(e.currentTarget.dataset.cat, searchInput.value);
+        });
+    });
 }
 
 async function loadProducts() {
@@ -254,10 +270,19 @@ async function loadProducts() {
                 allProductsCache.push({ id: docSnap.id, ...docSnap.data() });
             });
         }
+        localStorage.setItem('allaf_products_cache', JSON.stringify(allProductsCache));
         renderProducts('all', '');
         startProductCarousel();
     } catch (e) {
-        console.error("Error loading products:", e);
+        console.warn("جاري استخدام المنتجات المخزنة محلياً (بدون انترنت)...");
+        const cached = localStorage.getItem('allaf_products_cache');
+        if (cached) {
+            allProductsCache = JSON.parse(cached);
+            renderProducts('all', '');
+            startProductCarousel();
+        } else {
+            productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">لا توجد منتجات متاحة دون اتصال بالإنترنت.</p>';
+        }
     }
 }
 
@@ -267,9 +292,6 @@ function startProductCarousel() {
     let index = 0;
     const bannerContainer = document.getElementById('dynamicBannerCarousel');
     if (!bannerContainer) return;
-    
-    bannerContainer.style.minHeight = "90px";
-    bannerContainer.style.overflow = "hidden";
     
     const updateCarouselItem = () => {
         if (!bannerContainer) return;
@@ -330,24 +352,6 @@ function renderProducts(category, searchTerm) {
 }
 
 window.openProductModal = function(product) {
-    if (!document.getElementById('productDetailModal')) {
-        const modalDiv = document.createElement('div');
-        modalDiv.id = 'productDetailModal';
-        modalDiv.className = 'modal-overlay';
-        modalDiv.style.display = 'none';
-        modalDiv.innerHTML = `
-            <div class="modal-container" style="max-width: 600px;">
-                <div class="modal-header">
-                    <h3 id="modalProdTitle">تفاصيل المنتج</h3>
-                    <span class="close-prod-modal" style="font-size: 1.6rem; cursor: pointer; color: #fff;">&times;</span>
-                </div>
-                <div class="modal-body" id="modalProdBody" style="background:#fff; padding:20px;"></div>
-            </div>
-        `;
-        document.body.appendChild(modalDiv);
-        modalDiv.querySelector('.close-prod-modal').onclick = () => modalDiv.style.display = 'none';
-    }
-
     document.getElementById('modalProdTitle').textContent = product.name;
     const body = document.getElementById('modalProdBody');
     
@@ -378,10 +382,6 @@ window.openProductModal = function(product) {
     };
 
     document.getElementById('productDetailModal').style.display = 'flex';
-};
-
-window.addToCart = function(product) {
-    openProductModal(product);
 };
 
 function updateCartUI() {
@@ -442,7 +442,7 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات ونشر الوسائط بشكل مباشر وآمن 100%
+// إدارة المنتجات (إضافة / تعديل / حذف)
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -455,8 +455,6 @@ addProductForm.addEventListener('submit', async (e) => {
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
             mediaType = file.type.startsWith('video') ? 'video' : 'image';
-            
-            // تحويل مباشر وآمن للصورة أو الفيديو إلى Base64 لضمان النشر الفوري دون مشاكل صلاحيات
             mediaUrl = await new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
@@ -584,50 +582,7 @@ async function loadCategoriesForAdmin() {
     });
 }
 
-if (!document.getElementById('adminFleetTab')) {
-    const fleetTabBtn = document.createElement('button');
-    fleetTabBtn.onclick = () => switchAdminTab('fleet');
-    fleetTabBtn.className = 'tab-btn';
-    fleetTabBtn.id = 'tabFleetBtn';
-    fleetTabBtn.innerHTML = '<i class="fa-solid fa-car"></i> سيارتي والأسطول';
-    document.querySelector('.admin-tabs').appendChild(fleetTabBtn);
-
-    const fleetPanel = document.createElement('div');
-    fleetPanel.id = 'adminFleetTab';
-    fleetPanel.className = 'admin-panel';
-    fleetPanel.style.display = 'none';
-    fleetPanel.innerHTML = `
-        <div class="form-card" style="margin-bottom: 20px;">
-            <h3>إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف</h3>
-            <form id="addVehicleForm">
-                <div class="input-group">
-                    <label>رقم أو لوحة السيارة</label>
-                    <input type="text" id="vehPlate" placeholder="مثال: ر و م 1234" required>
-                </div>
-                <div class="input-group">
-                    <label>نوع السيارة وموديلها</label>
-                    <input type="text" id="vehModel" placeholder="مثال: إيسوزو نقل ثقيل" required>
-                </div>
-                <div class="input-group">
-                    <label>السائق / الموظف المسؤول على السيارة</label>
-                    <select id="vehDriverSelect" required></select>
-                </div>
-                <div class="input-group">
-                    <label>موقع السيارة الحالي (GPS)</label>
-                    <button type="button" id="locateVehicleBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 8px; padding: 8px;">
-                        <i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً
-                    </button>
-                    <p id="vehCoordsDisplay" style="font-size: 0.85rem; color: #666;">الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)</p>
-                </div>
-                <button type="submit" class="btn-submit">تسجيل السيارة بالأسطول</button>
-            </form>
-        </div>
-        <h3>قائمة سيارات الأسطول الحالية</h3>
-        <div id="adminVehiclesList" class="data-list"></div>
-    `;
-    document.querySelector('#adminSection').appendChild(fleetPanel);
-}
-
+// أزرار وجلب إحداثيات GPS للسيارات
 document.addEventListener('click', (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         if (navigator.geolocation) {
@@ -649,46 +604,113 @@ document.addEventListener('click', (e) => {
     }
 });
 
-document.addEventListener('submit', async (e) => {
-    if (e.target && e.target.id === 'addVehicleForm') {
-        e.preventDefault();
-        const plate = document.getElementById('vehPlate').value;
-        const model = document.getElementById('vehModel').value;
-        const driver = document.getElementById('vehDriverSelect').value;
-        try {
-            await addDoc(collection(db, "vehicles"), { 
-                plate, 
-                model, 
-                driver, 
-                lat: newVehLat, 
-                lng: newVehLng 
-            });
+// إدارة الأسطول (إضافة / تعديل / حذف سيارات الأسطول)
+addVehicleForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editVehicleId = document.getElementById('editVehicleId').value;
+    const plate = document.getElementById('vehPlate').value;
+    const model = document.getElementById('vehModel').value;
+    const driver = document.getElementById('vehDriverSelect').value;
+
+    try {
+        const vehicleData = {
+            plate,
+            model,
+            driver,
+            lat: newVehLat,
+            lng: newVehLng
+        };
+
+        if (editVehicleId) {
+            await updateDoc(doc(db, "vehicles", editVehicleId), vehicleData);
+            alert('تم تحديث بيانات سيارة الأسطول بنجاح!');
+            document.getElementById('editVehicleId').value = '';
+            document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
+            document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
+            if(cancelVehicleEditBtn) cancelVehicleEditBtn.style.display = 'none';
+        } else {
+            await addDoc(collection(db, "vehicles"), vehicleData);
             alert('تم تسجيل السيارة بالأسطول ("سيارتي") بنجاح وتحديد موقعها على الخريطة!');
-            e.target.reset();
-            newVehLat = 30.0444;
-            newVehLng = 31.2357;
-            const display = document.getElementById('vehCoordsDisplay');
-            if (display) {
-                display.textContent = 'الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)';
-                display.style.color = "#666";
-            }
-            loadVehiclesList();
-        } catch (err) {
-            alert('خطأ: ' + err.message);
         }
+
+        addVehicleForm.reset();
+        newVehLat = 30.0444;
+        newVehLng = 31.2357;
+        const display = document.getElementById('vehCoordsDisplay');
+        if (display) {
+            display.textContent = 'الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)';
+            display.style.color = "#666";
+        }
+        loadVehiclesList();
+    } catch (err) {
+        alert('خطأ أثناء حفظ سيارة الأسطول: ' + err.message);
     }
 });
+
+if(cancelVehicleEditBtn) {
+    cancelVehicleEditBtn.addEventListener('click', () => {
+        addVehicleForm.reset();
+        document.getElementById('editVehicleId').value = '';
+        document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
+        document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
+        cancelVehicleEditBtn.style.display = 'none';
+    });
+}
 
 async function loadVehiclesList() {
     const list = document.getElementById('adminVehiclesList');
     if (!list) return;
-    const snapshot = await getDocs(collection(db, "vehicles"));
-    list.innerHTML = '';
-    snapshot.forEach(docSnap => {
-        const v = docSnap.data();
-        list.innerHTML += `<div class="data-item">سيارة: <strong>${v.plate}</strong> (${v.model}) | السائق الموظف المسؤول: <span style="color:var(--primary); font-weight:bold;">${v.driver}</span></div>`;
-    });
+    try {
+        const snapshot = await getDocs(collection(db, "vehicles"));
+        list.innerHTML = '';
+        snapshot.forEach(docSnap => {
+            const v = docSnap.data();
+            const id = docSnap.id;
+            list.innerHTML += `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>سيارة: <strong>${v.plate}</strong> (${v.model}) | السائق المسؤول: <span style="color:var(--primary); font-weight:bold;">${v.driver}</span></div>
+                    <div>
+                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate)}, ${JSON.stringify(v.model)}, ${JSON.stringify(v.driver)}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='deleteVehicle("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </div>
+                </div>`;
+        });
+    } catch (e) {
+        list.innerHTML = 'خطأ في تحميل السيارات.';
+    }
 }
+
+window.editVehicle = function(id, plate, model, driver, lat, lng) {
+    document.getElementById('editVehicleId').value = id;
+    document.getElementById('vehPlate').value = plate;
+    document.getElementById('vehModel').value = model;
+    document.getElementById('vehDriverSelect').value = driver;
+    newVehLat = lat;
+    newVehLng = lng;
+    
+    const display = document.getElementById('vehCoordsDisplay');
+    if (display) {
+        display.textContent = `الإحداثيات الحالية المحفوظة: (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        display.style.color = "green";
+    }
+
+    document.getElementById('vehicleFormTitle').textContent = 'تعديل بيانات سيارة الأسطول';
+    document.getElementById('saveVehicleBtn').textContent = 'حفظ تعديلات السيارة';
+    if(cancelVehicleEditBtn) cancelVehicleEditBtn.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteVehicle = async function(id) {
+    if (confirm('هل أنت متأكد من حذف سيارة الأسطول هذه؟')) {
+        try {
+            await deleteDoc(doc(db, "vehicles", id));
+            alert('تم حذف السيارة بنجاح');
+            loadVehiclesList();
+        } catch (e) {
+            alert('خطأ أثناء الحذف: ' + e.message);
+        }
+    }
+};
 
 async function loadDriversDropdown() {
     const select = document.getElementById('vehDriverSelect');
@@ -872,13 +894,11 @@ trackInvoiceBtn.addEventListener('click', async () => {
             resultBox.innerHTML = '<p style="color:red;">لم يتم العثور على شحنة بهذا الرقم.</p>';
         }
     } catch (err) {
-        resultBox.innerHTML = '<p style="color:red;">حدث خطأ.</p>';
+        resultBox.innerHTML = '<p style="color:red;">حدث خطأ في البحث.</p>';
     }
 });
 
-let currentOrderToPrint = null;
 window.previewInvoice = function(orderId, order) {
-    currentOrderToPrint = { orderId, order };
     const content = document.getElementById('printableInvoiceContent');
     let itemsHtml = '';
     if (order.items) {
@@ -973,18 +993,36 @@ window.switchAdminTab = function(tabName) {
 }
 
 async function initAdminMap() {
-    if (adminMap) { adminMap.invalidateSize(); return; }
-    adminMap = L.Map ? L.map('adminMap').setView([30.0444, 31.2357], 11) : null;
-    if(!adminMap) return;
+    if (adminMap) {
+        adminMap.invalidateSize();
+        return;
+    }
+    adminMap = L.map('adminMap').setView([30.0444, 31.2357], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
 
-    const snapshot = await getDocs(collection(db, "vehicles"));
-    snapshot.forEach(docSnap => {
-        const v = docSnap.data();
-        if (v.lat && v.lng) {
-            L.marker([v.lat, v.lng]).addTo(adminMap)
-                .bindPopup(`<b>سيارة أسطول ("سيارتي"):</b> ${v.plate}<br><b>السائق الموظف:</b> ${v.driver}`);
-        }
+    await refreshAdminMapMarkers();
+}
+
+async function refreshAdminMapMarkers() {
+    if (!adminMap) return;
+    try {
+        const snapshot = await getDocs(collection(db, "vehicles"));
+        snapshot.forEach(docSnap => {
+            const v = docSnap.data();
+            if (v.lat && v.lng) {
+                L.marker([v.lat, v.lng]).addTo(adminMap)
+                    .bindPopup(`<b>سيارة أسطول ("سيارتي"):</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق الموظف:</b> ${v.driver}`);
+            }
+        });
+        alert('تم تحديث الخريطة ومواقع الأسطول بنجاح!');
+    } catch (e) {
+        console.warn("خطأ في تحديث مواقع الخريطة:", e);
+    }
+}
+
+if (refreshAdminMapBtn) {
+    refreshAdminMapBtn.addEventListener('click', () => {
+        initAdminMap();
     });
 }
 
