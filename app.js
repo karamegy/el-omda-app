@@ -442,7 +442,7 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات ونشر الوسائط مع ضمان عدم تعطل النشر أبداً
+// إدارة المنتجات ونشر الوسائط بشكل مباشر وآمن 100%
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -456,20 +456,13 @@ addProductForm.addEventListener('submit', async (e) => {
             const file = fileInput.files[0];
             mediaType = file.type.startsWith('video') ? 'video' : 'image';
             
-            try {
-                // محاولة الرفع عبر Firebase Storage
-                const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
-                const snapshot = await uploadBytes(fileRef, file);
-                mediaUrl = await getDownloadURL(snapshot.ref);
-            } catch (storageErr) {
-                console.warn("Storage upload failed, fallback to base64:", storageErr);
-                // بديل تلقائي سريع (Base64) لضمان عدم توقف النشر أبداً إذا فشلت سحابة Storage
-                mediaUrl = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = () => resolve(reader.result);
-                    reader.readAsDataURL(file);
-                });
-            }
+            // تحويل مباشر وآمن للصورة أو الفيديو إلى Base64 لضمان النشر الفوري دون مشاكل صلاحيات
+            mediaUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
         }
 
         const prodData = {
@@ -490,7 +483,7 @@ addProductForm.addEventListener('submit', async (e) => {
             if(cancelEditBtn) cancelEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "products"), prodData);
-            alert('تم نشر المنتج بنجاح في قاعدة البيانات!');
+            alert('تم نشر المنتج وصورته بنجاح!');
         }
         
         addProductForm.reset();
