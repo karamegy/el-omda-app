@@ -1,11 +1,11 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v20';
+const CACHE_NAME = 'el-omda-exclusive-cache-v21';
 const urlsToCache = [
-  './',
-  './index.html',
-  './style.css',
-  './app.js',
-  './icon1-192.png',
-  './icon1-512.png'
+  '/el-omda-app/',
+  '/el-omda-app/index.html',
+  '/el-omda-app/style.css',
+  '/el-omda-app/app.js',
+  '/el-omda-app/icon1-192.png',
+  '/el-omda-app/icon1-512.png'
 ];
 
 // تثبيت الـ Service Worker وتخزين الملفات الأساسية
@@ -35,7 +35,7 @@ self.addEventListener('fetch', (event) => {
            });
         })
         .catch(() => {
-          return caches.match('./index.html');
+          return caches.match('/el-omda-app/index.html');
         })
     );
     return;
