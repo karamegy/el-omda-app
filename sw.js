@@ -1,21 +1,25 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v21';
+const CACHE_NAME = 'el-omda-exclusive-cache-v22';
 const urlsToCache = [
-  '/el-omda-app/',
-  '/el-omda-app/index.html',
-  '/el-omda-app/style.css',
-  '/el-omda-app/app.js',
-  '/el-omda-app/icon1-192.png',
-  '/el-omda-app/icon1-512.png'
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './icon1-192.png',
+  './icon1-512.png'
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الأساسية
+// تثبيت الـ Service Worker بشكل آمن يمنع توقف التثبيت
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('تم فتح الكاش الخاص بمنصة العمدة بنجاح');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then((cache) => {
+      return Promise.all(
+        urlsToCache.map((url) => {
+          return cache.add(url).catch((err) => {
+            console.warn('فشل تخزين الملف مؤقتاً:', url, err);
+          });
+        })
+      );
+    })
   );
   self.skipWaiting();
 });
@@ -24,7 +28,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return;
 
-  // إذا كان الطلب عبارة عن فتح الصفحة الرئيسية أو التنقل، نجرب الشبكة أولاً وبقوة
+  // إذا كان الطلب عبارة عن فتح الصفحة الرئيسية أو التنقل، نجرب الشبكة أولاً
   if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -35,7 +39,7 @@ self.addEventListener('fetch', (event) => {
            });
         })
         .catch(() => {
-          return caches.match('/el-omda-app/index.html');
+          return caches.match('./index.html');
         })
     );
     return;
@@ -51,7 +55,6 @@ self.addEventListener('fetch', (event) => {
           });
           return networkResponse;
         }).catch(() => {
-          // إذا فشلت الشبكة، نرجع النسخة المخزنة إن وجدت
           return cachedResponse;
         });
 
