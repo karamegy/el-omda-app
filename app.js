@@ -446,7 +446,17 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح مع معالجة آمنة لرفع الملفات
+// دالة مساعدة لقراءة الملف المحلي وتحويله إلى Base64 لتخزين آمن ومباشر
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+    });
+}
+
+// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح ودون مشاكل التخزين
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -457,19 +467,11 @@ addProductForm.addEventListener('submit', async (e) => {
     let mediaType = editId ? editingOldMediaType : 'image';
 
     try {
-        // التحقق من وجود ملف مرفوع جديد
+        // التحقق من وجود ملف مرفوع جديد وتحويله مباشرة
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
-            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
-            try {
-                await uploadBytes(fileRef, file);
-                mediaUrl = await getDownloadURL(fileRef);
-                mediaType = file.type.startsWith('video') ? 'video' : 'image';
-            } catch (storageErr) {
-                console.error("Storage Error:", storageErr);
-                alert('فشل رفع الملف لـ Firebase Storage. تأكد من تفعيل قواعد الأمان (Storage Rules): ' + storageErr.message);
-                return; // إيقاف العملية إذا فشل الرفع لضمان عدم نشر منتج بدون صورة صحيحة
-            }
+            mediaType = file.type.startsWith('video') ? 'video' : 'image';
+            mediaUrl = await readFileAsDataURL(file);
         }
 
         const prodData = {
@@ -490,7 +492,7 @@ addProductForm.addEventListener('submit', async (e) => {
             if(cancelEditBtn) cancelEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "products"), prodData);
-            alert('تم نشر المنتج بنجاح للقاعدة!');
+            alert('تم نشر المنتج وصورته بنجاح للقاعدة!');
         }
         
         addProductForm.reset();
