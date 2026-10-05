@@ -31,6 +31,14 @@ let selectedLat = 30.0444;
 let selectedLng = 31.2357;
 let carouselInterval = null;
 
+// متغيرات عامة لتخزين الوسائط القديمة عند التعديل بنجاح
+let editingOldMediaUrl = '';
+let editingOldMediaType = 'image';
+
+// متغيرات إحداثيات السيارة الجديدة عند إضافتها للأسطول
+let newVehLat = 30.0444;
+let newVehLng = 31.2357;
+
 // DOM Elements
 const authBtn = document.getElementById('authBtn');
 const authModal = document.getElementById('authModal');
@@ -59,7 +67,6 @@ const notificationsBtn = document.getElementById('notificationsBtn');
 const notificationsModal = document.getElementById('notificationsModal');
 const sendNotificationForm = document.getElementById('sendNotificationForm');
 const productDetailModal = document.getElementById('productDetailModal');
-const addVehicleForm = document.getElementById('addVehicleForm');
 
 searchInput.addEventListener('input', (e) => {
     const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
@@ -257,31 +264,35 @@ async function loadProducts() {
     }
 }
 
-// العروض السريعة المتطورة تعرض الصور والفيديوهات والأسعار بشكل متحرك
+// العروض السريعة المتطورة مع تثبيت الأبعاد ومنع الاهتزاز
 function startProductCarousel() {
     if (carouselInterval) clearInterval(carouselInterval);
     if (allProductsCache.length === 0) return;
     let index = 0;
     const bannerContainer = document.getElementById('dynamicBannerCarousel');
+    if (!bannerContainer) return;
+    
+    bannerContainer.style.minHeight = "90px";
+    bannerContainer.style.overflow = "hidden";
     
     const updateCarouselItem = () => {
         if (!bannerContainer) return;
         const prod = allProductsCache[index];
-        let mediaThumb = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80'}" style="width:65px; height:65px; border-radius:10px; object-fit:cover;">`;
+        let mediaThumb = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80'}" style="width:65px; height:65px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
         if (prod.mediaType === 'video') {
-            mediaThumb = `<video src="${prod.mediaUrl}" style="width:65px; height:65px; border-radius:10px; object-fit:cover;"></video>`;
+            mediaThumb = `<video src="${prod.mediaUrl}" style="width:65px; height:65px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
         }
         
         bannerContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px; cursor: pointer; flex: 1;" onclick='openProductModal(${JSON.stringify(prod)})'>
-                <i class="fa-solid fa-bullhorn" style="font-size: 2rem; color: var(--accent);"></i>
+            <div style="display: flex; align-items: center; gap: 15px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick='openProductModal(${JSON.stringify(prod)})'>
+                <i class="fa-solid fa-bullhorn" style="font-size: 2rem; color: var(--accent); flex-shrink:0;"></i>
                 ${mediaThumb}
-                <div>
-                    <h4 style="color: var(--primary); font-size: 1.1rem; margin-bottom: 3px;">${prod.name}</h4>
-                    <p style="font-size: 0.95rem; color: var(--accent); font-weight: bold;">السعر: ${prod.price} ج.م</p>
+                <div style="flex: 1; min-width: 0;">
+                    <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prod.name}</h4>
+                    <p style="font-size: 0.9rem; color: var(--accent); font-weight: bold;">السعر: ${prod.price} ج.م</p>
                 </div>
             </div>
-            <span style="background: var(--primary); color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;">عروض سريعة</span>
+            <span style="background: var(--primary); color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem; flex-shrink:0;">عروض سريعة</span>
         `;
         index = (index + 1) % allProductsCache.length;
     };
@@ -435,14 +446,14 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات والوسائط المرفوعة
+// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح عند التعديل أو الإضافة
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
     const fileInput = document.getElementById('prodFile');
     
-    let mediaUrl = document.getElementById('editProductId').dataset.oldUrl || '';
-    let mediaType = document.getElementById('editProductId').dataset.oldType || 'image';
+    let mediaUrl = editingOldMediaUrl;
+    let mediaType = editingOldMediaType;
 
     try {
         if (fileInput.files && fileInput.files[0]) {
@@ -465,6 +476,7 @@ addProductForm.addEventListener('submit', async (e) => {
             await updateDoc(doc(db, "products", editId), prodData);
             alert('تم تحديث المنتج بنجاح!');
             document.getElementById('editProductId').value = '';
+            editingOldMediaUrl = '';
             document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
             document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
             cancelEditBtn.style.display = 'none';
@@ -483,6 +495,7 @@ addProductForm.addEventListener('submit', async (e) => {
 cancelEditBtn.addEventListener('click', () => {
     addProductForm.reset();
     document.getElementById('editProductId').value = '';
+    editingOldMediaUrl = '';
     document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
     document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
     cancelEditBtn.style.display = 'none';
@@ -513,8 +526,9 @@ async function loadAdminProductsList() {
 
 window.editProduct = function(id, name, price, category, mediaUrl, mediaType) {
     document.getElementById('editProductId').value = id;
-    document.getElementById('editProductId').dataset.oldUrl = mediaUrl;
-    document.getElementById('editProductId').dataset.oldType = mediaType;
+    editingOldMediaUrl = mediaUrl || '';
+    editingOldMediaType = mediaType || 'image';
+
     document.getElementById('prodName').value = name;
     document.getElementById('prodPrice').value = price;
     document.getElementById('prodCategory').value = category;
@@ -563,7 +577,7 @@ async function loadCategoriesForAdmin() {
     });
 }
 
-// إضافة إدارة سيارات الأسطول ("سيارتي") وتعيين السائق الموظف
+// إضافة إدارة سيارات الأسطول ("سيارتي") وتعيين السائق وتحديد الموقع بـ GPS
 if (!document.getElementById('adminFleetTab')) {
     const fleetTabBtn = document.createElement('button');
     fleetTabBtn.onclick = () => switchAdminTab('fleet');
@@ -585,12 +599,19 @@ if (!document.getElementById('adminFleetTab')) {
                     <input type="text" id="vehPlate" placeholder="مثال: ر و م 1234" required>
                 </div>
                 <div class="input-group">
-                    <label>نوع السيارة والموديل</label>
+                    <label>نوع السيارة وموديلها</label>
                     <input type="text" id="vehModel" placeholder="مثال: إيسوزو نقل ثقيل" required>
                 </div>
                 <div class="input-group">
                     <label>السائق / الموظف المسؤول على السيارة</label>
                     <select id="vehDriverSelect" required></select>
+                </div>
+                <div class="input-group">
+                    <label>موقع السيارة الحالي (GPS)</label>
+                    <button type="button" id="locateVehicleBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 8px; padding: 8px;">
+                        <i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً
+                    </button>
+                    <p id="vehCoordsDisplay" style="font-size: 0.85rem; color: #666;">الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)</p>
                 </div>
                 <button type="submit" class="btn-submit">تسجيل السيارة بالأسطول</button>
             </form>
@@ -599,22 +620,60 @@ if (!document.getElementById('adminFleetTab')) {
         <div id="adminVehiclesList" class="data-list"></div>
     `;
     document.querySelector('#adminSection').appendChild(fleetPanel);
-    
-    document.getElementById('addVehicleForm').addEventListener('submit', async (e) => {
+}
+
+// حدث زر جلب إحداثيات سيارة الأسطول عبر GPS
+document.addEventListener('click', (e) => {
+    if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                newVehLat = position.coords.latitude;
+                newVehLng = position.coords.longitude;
+                const display = document.getElementById('vehCoordsDisplay');
+                if (display) {
+                    display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
+                    display.style.color = "green";
+                }
+                alert('تم تحديد موقع السيارة الحالي بنجاح!');
+            }, () => {
+                alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
+            });
+        } else {
+            alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
+        }
+    }
+});
+
+// حدث إرسال نموذج إضافة السيارة للأسطول
+document.addEventListener('submit', async (e) => {
+    if (e.target && e.target.id === 'addVehicleForm') {
         e.preventDefault();
         const plate = document.getElementById('vehPlate').value;
         const model = document.getElementById('vehModel').value;
         const driver = document.getElementById('vehDriverSelect').value;
         try {
-            await addDoc(collection(db, "vehicles"), { plate, model, driver, lat: 30.0444, lng: 31.2357 });
-            alert('تم تسجيل السيارة بالأسطول ("سيارتي") بنجاح وتتبعها على الخريطة!');
+            await addDoc(collection(db, "vehicles"), { 
+                plate, 
+                model, 
+                driver, 
+                lat: newVehLat, 
+                lng: newVehLng 
+            });
+            alert('تم تسجيل السيارة بالأسطول ("سيارتي") بنجاح وتحديد موقعها على الخريطة!');
             e.target.reset();
+            newVehLat = 30.0444;
+            newVehLng = 31.2357;
+            const display = document.getElementById('vehCoordsDisplay');
+            if (display) {
+                display.textContent = 'الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)';
+                display.style.color = "#666";
+            }
             loadVehiclesList();
         } catch (err) {
             alert('خطأ: ' + err.message);
         }
-    });
-}
+    }
+});
 
 async function loadVehiclesList() {
     const list = document.getElementById('adminVehiclesList');
@@ -852,7 +911,7 @@ function initUserMap() {
     userMap = L.map('userMap').setView([30.0444, 31.2357], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
     userMarker = L.marker([30.0444, 31.2357], { draggable: true }).addTo(userMap);
-    userMarker.on('dragend', (e) => {
+    userMarker.on('dragend', () => {
         selectedLat = userMarker.getLatLng().lat;
         selectedLng = userMarker.getLatLng().lng;
     });
