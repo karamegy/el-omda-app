@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-omda-cache-v2';
+const CACHE_NAME = 'el-omda-cache-v3';
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
@@ -6,7 +6,7 @@ const assetsToCache = [
   '/el-omda-app/app.js'
 ];
 
-// تثبيت التخزين المؤقت الأساسي وضمان نجاحه بدون انهيار بسبب الـ CDN
+// تثبيت التخزين المؤقت الأساسي
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -34,7 +34,7 @@ self.addEventListener('activate', (event) => {
   self.clientsClaim();
 });
 
-// جلب الملفات مع التخزين المؤقت الديناميكي (عشان يسحب الخارجي والداخلي من غير مشاكل)
+// جلب الملفات
 self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
@@ -42,13 +42,11 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
       return fetch(event.request).then((networkResponse) => {
-        // تخزين أي ملف جديد يتم جلبه تلقائياً (مثل الخطوط والـ CDNs)
         return caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
       }).catch(() => {
-        // في حال انقطاع الإنترنت تماماً
         if (event.request.mode === 'navigate') {
           return caches.match('/el-omda-app/index.html');
         }
