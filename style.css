@@ -31,7 +31,6 @@ body {
    تأثيرات الخلفية الخفيفة (دخان، إضاءة، رعد، لوجو المؤسسة المتحرك)
    ========================================== */
 
-/* طبقة الإضاءة التفاعلية (Lighting Glow) */
 body::before {
     content: '';
     position: fixed;
@@ -50,7 +49,6 @@ body::before {
     100% { transform: scale(1.1); opacity: 1; }
 }
 
-/* تأثير وميض الرعد الخفيف (Lightning) */
 body::after {
     content: '';
     position: fixed;
@@ -71,7 +69,6 @@ body::after {
     94% { opacity: 0.3; }
 }
 
-/* تأثير الدخان الخفيف المتحرك في الخلفية */
 .smoke-bg {
     position: fixed;
     bottom: 0;
@@ -90,7 +87,6 @@ body::after {
     100% { transform: translateY(0) scale(1); }
 }
 
-/* لوجو المؤسسة المتحرك في الخلفية (Watermark) */
 .bg-logo-watermark {
     position: fixed;
     top: 50%;
@@ -113,7 +109,6 @@ body::after {
     100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
 }
 
-/* تنسيق الطباعة الاحترافي للفواتير */
 @media print {
     body * {
         visibility: hidden;
@@ -131,7 +126,44 @@ body::after {
 }
 
 /* ==========================================
-   تصميم الشريط العلوي (متجاوب تماماً بدون تداخل)
+   إطار العروض السريعة المتطور الجديد
+   ========================================== */
+.dynamic-carousel-card {
+    background: var(--white);
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+    border-right: 5px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    transition: 0.3s;
+}
+
+.dynamic-carousel-card:hover {
+    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+}
+
+.carousel-icon-box {
+    font-size: 2rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+}
+
+.carousel-badge {
+    background: var(--primary);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+/* ==========================================
+   تصميم الشريط العلوي
    ========================================== */
 .main-header {
     background: var(--primary);
@@ -329,6 +361,7 @@ body::after {
     display: flex;
     flex-direction: column;
     transition: transform 0.3s;
+    cursor: pointer;
 }
 
 .product-card:hover {
