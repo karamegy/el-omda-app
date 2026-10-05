@@ -71,14 +71,11 @@
                 </div>
             </div>
 
-            <!-- الإطار الديناميكي المتطور للعروض السريعة مع تثبيت الأبعاد لمنع الاهتزاز -->
             <div id="dynamicBannerCarousel" class="dynamic-carousel-card" style="min-height: 90px; overflow: hidden;">
                 <div class="carousel-icon-box">
                     <i class="fa-solid fa-bullhorn"></i>
                 </div>
-                <div id="carouselContentArea" class="carousel-content-area" style="display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer;">
-                    <!-- محتوى متحرك للصور والفيديوهات والأسعار -->
-                </div>
+                <div id="carouselContentArea" class="carousel-content-area" style="display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer;"></div>
                 <span class="carousel-badge">عرض متطور</span>
             </div>
             
@@ -168,8 +165,9 @@
 
             <div id="adminFleetTab" class="admin-panel" style="display:none;">
                 <div class="form-card" style="margin-bottom: 20px;">
-                    <h3>إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف</h3>
+                    <h3 id="vehicleFormTitle">إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف</h3>
                     <form id="addVehicleForm">
+                        <input type="hidden" id="editVehicleId" value="">
                         <div class="input-group">
                             <label>رقم أو لوحة السيارة</label>
                             <input type="text" id="vehPlate" placeholder="مثال: ر و م 1234" required>
@@ -189,16 +187,20 @@
                             </button>
                             <p id="vehCoordsDisplay" style="font-size: 0.85rem; color: #666;">الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)</p>
                         </div>
-                        <button type="submit" class="btn-submit">تسجيل السيارة في الأسطول</button>
+                        <button type="submit" class="btn-submit" id="saveVehicleBtn">تسجيل السيارة في الأسطول</button>
+                        <button type="button" id="cancelVehicleEditBtn" class="btn-submit" style="background:#666; margin-top:5px; display:none;">إلغاء التعديل</button>
                     </form>
                 </div>
-                <h3>قائمة سيارات الأسطول الحالية وتتبعها</h3>
+                <h3>قائمة سيارات الأسطول الحالية وتتبعها (تعديل / حذف)</h3>
                 <div id="adminVehiclesList" class="data-list"></div>
             </div>
 
             <div id="adminMapTab" class="admin-panel" style="display:none;">
-                <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
-                <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 15px; border: 2px solid #ddd;"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap:10px;">
+                    <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
+                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والمواقع</button>
+                </div>
+                <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 5px; border: 2px solid #ddd;"></div>
             </div>
 
             <div id="adminMessagingTab" class="admin-panel" style="display:none;">
