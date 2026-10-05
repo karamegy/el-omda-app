@@ -442,7 +442,7 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات ونشر الوسائط باستخدام Firebase Storage لرفع الملفات بكفاءة
+// إدارة المنتجات ونشر الوسائط مع ضمان عدم تعطل النشر أبداً
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -456,10 +456,20 @@ addProductForm.addEventListener('submit', async (e) => {
             const file = fileInput.files[0];
             mediaType = file.type.startsWith('video') ? 'video' : 'image';
             
-            // رفع الملف إلى Firebase Storage للحصول على رابط مباشر
-            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
-            const snapshot = await uploadBytes(fileRef, file);
-            mediaUrl = await getDownloadURL(snapshot.ref);
+            try {
+                // محاولة الرفع عبر Firebase Storage
+                const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(fileRef, file);
+                mediaUrl = await getDownloadURL(snapshot.ref);
+            } catch (storageErr) {
+                console.warn("Storage upload failed, fallback to base64:", storageErr);
+                // بديل تلقائي سريع (Base64) لضمان عدم توقف النشر أبداً إذا فشلت سحابة Storage
+                mediaUrl = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.readAsDataURL(file);
+                });
+            }
         }
 
         const prodData = {
@@ -480,7 +490,7 @@ addProductForm.addEventListener('submit', async (e) => {
             if(cancelEditBtn) cancelEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "products"), prodData);
-            alert('تم نشر المنتج وصورته بنجاح للقاعدة!');
+            alert('تم نشر المنتج بنجاح في قاعدة البيانات!');
         }
         
         addProductForm.reset();
@@ -488,7 +498,7 @@ addProductForm.addEventListener('submit', async (e) => {
         loadProducts();
         loadAdminProductsList();
     } catch (err) {
-        alert('خطأ أثناء حفظ المنتج في قاعدة البيانات أو رفع الملف: ' + err.message);
+        alert('خطأ أثناء حفظ المنتج: ' + err.message);
     }
 });
 
