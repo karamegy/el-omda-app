@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v18';
+const CACHE_NAME = 'el-omda-exclusive-cache-v19';
 const urlsToCache = [
   './',
   './index.html',
@@ -8,7 +8,7 @@ const urlsToCache = [
   './icon1-512.png'
 ];
 
-// تثبيت الـ Service Worker وتخزين الملفات الخاصة بتطبيق العمدة
+// تثبيت الـ Service Worker وتخزين الملفات الأساسية
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -20,35 +20,54 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// التعامل مع الطلبات باستخدام استراتيجية الشبكة أولاً (Network-First)
+// التعامل الذكي مع الطلبات لمنع ظهور النسخ المحذوفة
 self.addEventListener('fetch', (event) => {
-  // تجاهل الطلبات التي ليست من نوع http أو https
   if (!event.request.url.startsWith('http')) return;
 
+  // إذا كان الطلب عبارة عن فتح الصفحة الرئيسية أو التنقل، نجرب الشبكة أولاً وبقوة
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+           return caches.open(CACHE_NAME).then((cache) => {
+             cache.put(event.request, networkResponse.clone());
+             return networkResponse;
+           });
+        })
+        .catch(() => {
+          return caches.match('./index.html');
+        })
+    );
+    return;
+  }
+
+  // باقي الملفات (CSS, JS, الصور)
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // إذا كان هناك إنترنت، يتم جلب النسخة الأحدث وتحديث الكاش بها في الخلفية
-        return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
+    caches.match(event.request)
+      .then((cachedResponse) => {
+        const fetchPromise = fetch(event.request).then((networkResponse) => {
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, networkResponse.clone());
+          });
           return networkResponse;
+        }).catch(() => {
+          // إذا فشلت الشبكة، نرجع النسخة المخزنة إن وجدت
+          return cachedResponse;
         });
-      })
-      .catch(() => {
-        // إذا انقطع الإنترنت تماماً، يتم الرجوع إلى النسخة المحفوظة في الكاش
-        return caches.match(event.request);
+
+        return cachedResponse || fetchPromise;
       })
   );
 });
 
-// تفعيل وتحديث الكاش وحذف النسخ القديمة تلقائياً
+// تفعيل وتحديث الكاش وحذف أي نسخ قديمة نهائياً
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName.startsWith('el-omda-') && cacheName !== CACHE_NAME) {
-            console.log('تم حذف الكاش القديم:', cacheName);
+            console.log('تم مسح الكاش القديم بالكامل:', cacheName);
             return caches.delete(cacheName);
           }
         })
