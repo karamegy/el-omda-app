@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-omda-exclusive-cache-v19';
+const CACHE_NAME = 'el-omda-exclusive-cache-v20';
 const urlsToCache = [
   './',
   './index.html',
