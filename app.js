@@ -355,7 +355,7 @@ window.openProductModal = function(product) {
     document.getElementById('modalProdTitle').textContent = product.name;
     const body = document.getElementById('modalProdBody');
     
-    let mediaHtml = `<img src="${product.mediaUrl || ''}" style="width:100%; height:250px; border-radius:8px; object-fit:cover; margin-bottom:15px;">`;
+    let mediaHtml = `<img src="${product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" style="width:100%; height:250px; border-radius:8px; object-fit:cover; margin-bottom:15px;">`;
     if (product.mediaType === 'video') {
         mediaHtml = `<video src="${product.mediaUrl}" controls autoplay style="width:100%; height:250px; border-radius:8px; object-fit:cover; margin-bottom:15px;"></video>`;
     }
@@ -446,22 +446,30 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح عند التعديل أو الإضافة
+// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح مع معالجة آمنة لرفع الملفات
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
     const fileInput = document.getElementById('prodFile');
     
-    let mediaUrl = editingOldMediaUrl;
-    let mediaType = editingOldMediaType;
+    // القيم الافتراضية للوسائط
+    let mediaUrl = editId ? editingOldMediaUrl : 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80';
+    let mediaType = editId ? editingOldMediaType : 'image';
 
     try {
+        // التحقق من وجود ملف مرفوع جديد
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
             const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
-            await uploadBytes(fileRef, file);
-            mediaUrl = await getDownloadURL(fileRef);
-            mediaType = file.type.startsWith('video') ? 'video' : 'image';
+            try {
+                await uploadBytes(fileRef, file);
+                mediaUrl = await getDownloadURL(fileRef);
+                mediaType = file.type.startsWith('video') ? 'video' : 'image';
+            } catch (storageErr) {
+                console.error("Storage Error:", storageErr);
+                alert('فشل رفع الملف لـ Firebase Storage. تأكد من تفعيل قواعد الأمان (Storage Rules): ' + storageErr.message);
+                return; // إيقاف العملية إذا فشل الرفع لضمان عدم نشر منتج بدون صورة صحيحة
+            }
         }
 
         const prodData = {
@@ -479,30 +487,35 @@ addProductForm.addEventListener('submit', async (e) => {
             editingOldMediaUrl = '';
             document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
             document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
-            cancelEditBtn.style.display = 'none';
+            if(cancelEditBtn) cancelEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "products"), prodData);
             alert('تم نشر المنتج بنجاح للقاعدة!');
         }
+        
         addProductForm.reset();
+        editingOldMediaUrl = '';
         loadProducts();
         loadAdminProductsList();
     } catch (err) {
-        alert('خطأ في الرفع: ' + err.message);
+        alert('خطأ أثناء حفظ المنتج في قاعدة البيانات: ' + err.message);
     }
 });
 
-cancelEditBtn.addEventListener('click', () => {
-    addProductForm.reset();
-    document.getElementById('editProductId').value = '';
-    editingOldMediaUrl = '';
-    document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
-    document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
-    cancelEditBtn.style.display = 'none';
-});
+if(cancelEditBtn) {
+    cancelEditBtn.addEventListener('click', () => {
+        addProductForm.reset();
+        document.getElementById('editProductId').value = '';
+        editingOldMediaUrl = '';
+        document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
+        document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
+        cancelEditBtn.style.display = 'none';
+    });
+}
 
 async function loadAdminProductsList() {
     const list = document.getElementById('adminProductsList');
+    if (!list) return;
     list.innerHTML = 'جاري التحميل...';
     try {
         const snapshot = await getDocs(collection(db, "products"));
@@ -534,7 +547,7 @@ window.editProduct = function(id, name, price, category, mediaUrl, mediaType) {
     document.getElementById('prodCategory').value = category;
     document.getElementById('productFormTitle').textContent = 'تعديل المنتج';
     document.getElementById('saveProductBtn').textContent = 'حفظ التعديلات';
-    cancelEditBtn.style.display = 'block';
+    if(cancelEditBtn) cancelEditBtn.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -569,6 +582,7 @@ addCategoryForm.addEventListener('submit', async (e) => {
 
 async function loadCategoriesForAdmin() {
     const list = document.getElementById('adminCategoriesList');
+    if (!list) return;
     const snapshot = await getDocs(collection(db, "categories"));
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
@@ -701,6 +715,7 @@ async function loadDriversDropdown() {
 
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
+    if (!list) return;
     const snapshot = await getDocs(collection(db, "orders"));
     const vehiclesSnap = await getDocs(collection(db, "vehicles"));
     let vehicleOptions = '<option value="">اختر السيارة للأسطول</option>';
@@ -753,6 +768,7 @@ window.updateOrderStatus = async function(orderId, newStatus) {
 // التحكم الشامل برتب وصلاحيات العملاء (الرتب الستة الكاملة)
 async function loadAllUsers() {
     const list = document.getElementById('adminUsersList');
+    if (!list) return;
     const snapshot = await getDocs(collection(db, "users"));
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
@@ -812,6 +828,7 @@ async function checkUnreadNotifications() {
 
 async function loadNotifications() {
     const list = document.getElementById('notificationsListContent');
+    if (!list) return;
     const snapshot = await getDocs(collection(db, "notifications"));
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
@@ -968,7 +985,8 @@ window.switchAdminTab = function(tabName) {
 
 async function initAdminMap() {
     if (adminMap) { adminMap.invalidateSize(); return; }
-    adminMap = L.map('adminMap').setView([30.0444, 31.2357], 11);
+    adminMap = L.Map ? L.map('adminMap').setView([30.0444, 31.2357], 11) : null;
+    if(!adminMap) return;
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
 
     const snapshot = await getDocs(collection(db, "vehicles"));
