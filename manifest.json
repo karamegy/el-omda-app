@@ -2,22 +2,25 @@
   "id": "/el-omda-app/",
   "name": "منصة العمدة للأعلاف والحبوب",
   "short_name": "العمدة للأعلاف",
-  "description": "تطبيق متكامل لبيع الأعلاف والحبوب وإدارة شحنات العملاء",
+  "description": "تطبيق متكامل لبيع الأعلاف والحبوب وإدارة شحنات العملاء والأسطول",
   "start_url": "/el-omda-app/",
   "scope": "/el-omda-app/",
   "display": "standalone",
   "background_color": "#1e3d2f",
   "theme_color": "#1e3d2f",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/el-omda-app/icon1-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/el-omda-app/icon1-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
