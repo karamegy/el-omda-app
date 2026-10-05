@@ -2,6 +2,29 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+// === التسجيل التلقائي وتحديث الـ Service Worker لمنع النسخ القديمة ===
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((registration) => {
+      console.log('ServiceWorker registered successfully: ', registration);
+      
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === 'installed') {
+            if (navigator.serviceWorker.controller) {
+              console.ون('New version available, reloading...');
+              window.location.reload();
+            }
+          }
+        };
+      };
+    }).catch((error) => {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+  });
+}
+
 const firebaseConfig = {
   apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
   authDomain: "alaf-93848.firebaseapp.com",
@@ -78,10 +101,12 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
-searchInput.addEventListener('input', (e) => {
-    const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
-    renderProducts(activeCat, e.target.value);
-});
+if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+        const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
+        renderProducts(activeCat, e.target.value);
+    });
+}
 
 authBtn.addEventListener('click', () => {
     if (currentUser) {
@@ -227,29 +252,31 @@ async function loadCategories() {
     }
 
     const catContainer = document.getElementById('categoriesContainer');
-    catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
-    const prodCategorySelect = document.getElementById('prodCategory');
-    if (prodCategorySelect) prodCategorySelect.innerHTML = '';
+    if (catContainer) {
+        catContainer.innerHTML = `<button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>`;
+        const prodCategorySelect = document.getElementById('prodCategory');
+        if (prodCategorySelect) prodCategorySelect.innerHTML = '';
 
-    allCategoriesCache.forEach(cat => {
-        catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
-        if (prodCategorySelect) {
-            prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
-        }
-    });
-
-    document.querySelectorAll('.cat-chip').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-            e.currentTarget.classList.add('active');
-            renderProducts(e.currentTarget.dataset.cat, searchInput.value);
+        allCategoriesCache.forEach(cat => {
+            catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
+            if (prodCategorySelect) {
+                prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            }
         });
-    });
+
+        document.querySelectorAll('.cat-chip').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                renderProducts(e.currentTarget.dataset.cat, searchInput ? searchInput.value : '');
+            });
+        });
+    }
 }
 
 async function loadProducts() {
     await loadCategories();
-    productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات...</p>';
+    if (productsGrid) productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">جاري تحميل المنتجات...</p>';
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         allProductsCache = [];
@@ -280,7 +307,7 @@ async function loadProducts() {
             allProductsCache = JSON.parse(cached);
             renderProducts('all', '');
             startProductCarousel();
-        } else {
+        } else if (productsGrid) {
             productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">لا توجد منتجات متاحة دون اتصال بالإنترنت.</p>';
         }
     }
@@ -320,6 +347,7 @@ function startProductCarousel() {
 }
 
 function renderProducts(category, searchTerm) {
+    if (!productsGrid) return;
     productsGrid.innerHTML = '';
     const filtered = allProductsCache.filter(prod => {
         const matchesCat = (category === 'all' || prod.category === category);
@@ -387,6 +415,7 @@ window.openProductModal = function(product) {
 function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalSpan = document.getElementById('cartTotalPrice');
+    if (!list || !totalSpan) return;
     list.innerHTML = '';
     let total = 0;
     cart.forEach((item, index) => {
@@ -833,7 +862,8 @@ async function checkUnreadNotifications() {
         const snapshot = await getDocs(collection(db, "notifications"));
         let count = 0;
         snapshot.forEach(docSnap => { if (!docSnap.data().read) count++; });
-        document.getElementById('notifCount').textContent = count;
+        const notifCountElem = document.getElementById('notifCount');
+        if (notifCountElem) notifCountElem.textContent = count;
     } catch (e) { console.error(e); }
 }
 
@@ -850,8 +880,10 @@ async function loadNotifications() {
 
 async function loadUserProfile() {
     if (!currentUser) return;
-    document.getElementById('userEmailDisplay').textContent = currentUser.email;
-    document.getElementById('userRoleDisplay').textContent = currentUserRole;
+    const userEmailDisplay = document.getElementById('userEmailDisplay');
+    const userRoleDisplay = document.getElementById('userRoleDisplay');
+    if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
+    if (userRoleDisplay) userRoleDisplay.textContent = currentUserRole;
 
     const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
     const querySnapshot = await getDocs(q);
@@ -867,7 +899,8 @@ async function loadUserProfile() {
                 <button onclick='previewInvoice("${orderId}", ${JSON.stringify(order)})' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> معاينة الفاتورة</button>
             </div>`;
     });
-    document.getElementById('userInvoicesList').innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
+    const userInvoicesList = document.getElementById('userInvoicesList');
+    if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
 }
 
 trackInvoiceBtn.addEventListener('click', async () => {
@@ -934,6 +967,8 @@ saveInvoiceImgBtn.addEventListener('click', () => {
 
 function initUserMap() {
     if (userMap) { userMap.invalidateSize(); return; }
+    const userMapElem = document.getElementById('userMap');
+    if (!userMapElem) return;
     userMap = L.map('userMap').setView([30.0444, 31.2357], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(userMap);
     userMarker = L.marker([30.0444, 31.2357], { draggable: true }).addTo(userMap);
@@ -948,8 +983,10 @@ locateMeBtn.addEventListener('click', () => {
         navigator.geolocation.getCurrentPosition(position => {
             selectedLat = position.coords.latitude;
             selectedLng = position.coords.longitude;
-            userMap.setView([selectedLat, selectedLng], 15);
-            userMarker.setLatLng([selectedLat, selectedLng]);
+            if (userMap) {
+                userMap.setView([selectedLat, selectedLng], 15);
+                userMarker.setLatLng([selectedLat, selectedLng]);
+            }
             alert('تم تحديد موقعك بنجاح!');
         });
     }
@@ -997,6 +1034,8 @@ async function initAdminMap() {
         adminMap.invalidateSize();
         return;
     }
+    const adminMapElem = document.getElementById('adminMap');
+    if (!adminMapElem) return;
     adminMap = L.map('adminMap').setView([30.0444, 31.2357], 11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(adminMap);
 
