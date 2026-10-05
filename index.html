@@ -7,20 +7,16 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <!-- مكتبة الخرائط Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- مكتبة تحويل الفاتورة إلى صورة html2canvas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1e3d2f">
 </head>
 <body>
 
-    <!-- خلفيات التأثيرات الجمالية -->
     <div class="smoke-bg"></div>
     <div class="bg-logo-watermark"></div>
 
-    <!-- الشريط العلوي الاحترافي -->
     <header class="main-header">
         <div class="header-container">
             <div class="logo-area" onclick="switchSection('productsSection')" style="cursor: pointer;">
@@ -34,7 +30,6 @@
             </div>
 
             <div class="user-actions">
-                <!-- أيقونة الإشعارات والرسائل الجديدة -->
                 <button id="notificationsBtn" class="action-btn" title="الإشعارات والرسائل">
                     <i class="fa-solid fa-bell"></i>
                     <span>الإشعارات</span>
@@ -60,17 +55,14 @@
         </div>
     </header>
 
-    <!-- شريط التصنيفات والأقسام -->
     <nav class="categories-nav">
         <div class="cat-container" id="categoriesContainer">
             <button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>
         </div>
     </nav>
 
-    <!-- المحتوى الرئيسي -->
     <main class="app-main">
         
-        <!-- قسم عرض المنتجات -->
         <section id="productsSection" class="app-section active">
             <div class="hero-banner">
                 <div class="hero-content">
@@ -79,21 +71,20 @@
                 </div>
             </div>
 
-            <!-- الإطار الديناميكي المتغير للمنتجات كل ثانية -->
-            <div id="dynamicBannerCarousel" style="background: var(--white); padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 25px; border-right: 5px solid var(--accent); display: flex; align-items: center; justify-content: space-between;">
-                <div style="display: flex; align-items: center; gap: 15px;">
-                    <i class="fa-solid fa-bullhorn" style="font-size: 2rem; color: var(--accent);"></i>
-                    <div>
-                        <h4 style="color: var(--primary); font-size: 1.1rem; margin-bottom: 3px;">العروض السريعة والمنتجات البارزة</h4>
-                        <p id="carouselProductText" style="font-size: 0.9rem; color: #555;">جاري عرض المنتجات ديناميكياً...</p>
-                    </div>
+            <!-- الإطار الديناميكي المتطور للعروض السريعة -->
+            <div id="dynamicBannerCarousel" class="dynamic-carousel-card">
+                <div class="carousel-icon-box">
+                    <i class="fa-solid fa-bullhorn"></i>
                 </div>
-                <span style="background: var(--primary); color: #fff; padding: 5px 12px; border-radius: 20px; font-size: 0.75rem;">تحديث كل ثانية</span>
+                <div id="carouselContentArea" class="carousel-content-area" style="display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer;">
+                    <!-- محتوى متحرك للصور والفيديوهات والأسعار -->
+                </div>
+                <span class="carousel-badge">عرض متطور</span>
             </div>
             
             <div class="section-title">
                 <h3>المنتجات المميزة والمنشورات الحالية</h3>
-                <span>تصفح أقوى العروض والمنتجات</span>
+                <span>انقر على أي منتج لمشاهدة الصور/الفيديوهات، التفاصيل، وحجز الكمية</span>
             </div>
 
             <div id="productsGrid" class="products-grid"></div>
@@ -103,30 +94,30 @@
         <section id="adminSection" class="app-section" style="display:none;">
             <div class="admin-header">
                 <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل - العمدة</h2>
-                <p>إدارة كاملة للمنتجات، الأقسام (إضافة وتعديل وحذف)، الطلبات، الأسطول، وإرسال الإشعارات.</p>
+                <p>إدارة المنتجات، الأقسام، طلبات الشراء، أسطول السيارات، وصلاحيات العملاء بالرتب المختلفة.</p>
             </div>
 
             <div class="admin-tabs">
-                <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> المنتجات والمنشورات</button>
-                <button onclick="switchAdminTab('categories')" class="tab-btn" id="tabCatBtn"><i class="fa-solid fa-folder-plus"></i> الأقسام والتوجيه</button>
-                <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> الطلبات والأسطول</button>
-                <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة الشحنات الحية</button>
-                <button onclick="switchAdminTab('messaging')" class="tab-btn" id="tabMsgBtn"><i class="fa-solid fa-paper-plane"></i> إرسال الإشعارات</button>
-                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> العملاء والمعاملات</button>
+                <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> المنتجات</button>
+                <button onclick="switchAdminTab('categories')" class="tab-btn" id="tabCatBtn"><i class="fa-solid fa-folder-plus"></i> الأقسام</button>
+                <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> طلبات الشراء</button>
+                <button onclick="switchAdminTab('fleet')" class="tab-btn" id="tabFleetBtn"><i class="fa-solid fa-car"></i> سيارتي والأسطول</button>
+                <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة الشحنات</button>
+                <button onclick="switchAdminTab('messaging')" class="tab-btn" id="tabMsgBtn"><i class="fa-solid fa-paper-plane"></i> الإشعارات</button>
+                <button onclick="switchAdminTab('users')" class="tab-btn" id="tabUserBtn"><i class="fa-solid fa-users-gear"></i> رتب وصلاحيات العملاء</button>
             </div>
 
-            <!-- تبويب المنتجات -->
             <div id="adminProductsTab" class="admin-panel active">
                 <div class="form-card" style="margin-bottom: 20px;">
                     <h3 id="productFormTitle">إضافة منتج أو منشور جديد للمتجر</h3>
                     <form id="addProductForm">
                         <input type="hidden" id="editProductId" value="">
                         <div class="input-group">
-                            <label>اسم المنتج / المنشور</label>
-                            <input type="text" id="prodName" placeholder="مثال: علف تسمين ممتاز 50كغ" required>
+                            <label>اسم المنتج</label>
+                            <input type="text" id="prodName" placeholder="مثال: علف تسمين ممتاز" required>
                         </div>
                         <div class="input-group">
-                            <label>السعر (بالجنيه المصري - ج.م)</label>
+                            <label>السعر (ج.م)</label>
                             <input type="number" id="prodPrice" placeholder="0.00" required>
                         </div>
                         <div class="input-group">
@@ -145,10 +136,9 @@
                 <div id="adminProductsList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
-            <!-- تبويب الأقسام (تعديل، حذف، إضافة) -->
             <div id="adminCategoriesTab" class="admin-panel" style="display:none;">
                 <div class="form-card" style="margin-bottom: 20px;">
-                    <h3 id="categoryFormTitle">إضافة قسم جديد وتوجيه المنصة</h3>
+                    <h3 id="categoryFormTitle">إضافة قسم جديد</h3>
                     <form id="addCategoryForm">
                         <input type="hidden" id="editCatId" value="">
                         <div class="input-group">
@@ -157,7 +147,7 @@
                         </div>
                         <div class="input-group">
                             <label>اسم القسم بالعربي</label>
-                            <input type="text" id="catNameInput" placeholder="مثال: أعلاف دواجن تسمين" required>
+                            <input type="text" id="catNameInput" placeholder="مثال: أعلاف دواجن" required>
                         </div>
                         <div class="input-group">
                             <label>أيقونة القسم (FontAwesome)</label>
@@ -167,61 +157,80 @@
                         <button type="button" id="cancelCatEditBtn" class="btn-submit" style="background:#666; margin-top:5px; display:none;">إلغاء التعديل</button>
                     </form>
                 </div>
-                <h3>الأقسام الحالية (تحديث تلقائي في فايربيس)</h3>
+                <h3>الأقسام الحالية</h3>
                 <div id="adminCategoriesList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
-            <!-- تبويب الطلبات والأسطول -->
             <div id="adminOrdersTab" class="admin-panel" style="display:none;">
-                <h3>طلبات الشراء، الحسابات (نقدي/آجل)، وتعيين أسطول الشحن</h3>
+                <h3>طلبات الشراء والتحكم الإداري الكامل وتعيين السيارات والسائقين</h3>
                 <div id="adminOrdersList" class="data-list"></div>
             </div>
 
-            <!-- تبويب الخريطة للإدارة -->
+            <div id="adminFleetTab" class="admin-panel" style="display:none;">
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3>إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف</h3>
+                    <form id="addVehicleForm">
+                        <div class="input-group">
+                            <label>رقم أو لوحة السيارة</label>
+                            <input type="text" id="vehPlate" placeholder="مثال: ر و م 1234" required>
+                        </div>
+                        <div class="input-group">
+                            <label>نوع السيارة وموديلها</label>
+                            <input type="text" id="vehModel" placeholder="مثال: إيسوزو نقل ثقيل" required>
+                        </div>
+                        <div class="input-group">
+                            <label>السائق / الموظف المسؤول على السيارة</label>
+                            <select id="vehDriverSelect" required></select>
+                        </div>
+                        <button type="submit" class="btn-submit">تسجيل السيارة في الأسطول</button>
+                    </form>
+                </div>
+                <h3>قائمة سيارات الأسطول الحالية وتتبعها</h3>
+                <div id="adminVehiclesList" class="data-list"></div>
+            </div>
+
             <div id="adminMapTab" class="admin-panel" style="display:none;">
-                <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية للعملاء</h3>
+                <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
                 <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 15px; border: 2px solid #ddd;"></div>
             </div>
 
-            <!-- تبويب إرسال الرسائل والتنبيهات -->
             <div id="adminMessagingTab" class="admin-panel" style="display:none;">
                 <div class="form-card">
-                    <h3>إرسال رسالة وتنبيه فوري لجميع المستخدمين</h3>
+                    <h3>إرسال إشعار فوري لجميع المستخدمين</h3>
                     <form id="sendNotificationForm">
                         <div class="input-group">
                             <label>عنوان الإشعار</label>
-                            <input type="text" id="notifTitle" placeholder="مثال: عروض خاصة على الأعلاف اليوم" required>
+                            <input type="text" id="notifTitle" placeholder="مثال: عروض جديدة" required>
                         </div>
                         <div class="input-group">
                             <label>نص الرسالة</label>
-                            <textarea id="notifBody" rows="3" placeholder="اكتب تفاصيل التنبيه أو العرض هنا..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;" required></textarea>
+                            <textarea id="notifBody" rows="3" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;" required></textarea>
                         </div>
                         <button type="submit" class="btn-submit">إرسال الإشعار الآن</button>
                     </form>
                 </div>
             </div>
 
-            <!-- تبويب العملاء -->
             <div id="adminUsersTab" class="admin-panel" style="display:none;">
-                <h3>قائمة العملاء وكشوف الحسابات والمعاملات</h3>
+                <h3>إدارة حسابات العملاء وصلاحيات الرتب (مدير، مساعد مدير، محاسب، موظف، سائق، عميل)</h3>
                 <div id="adminUsersList" class="data-list"></div>
             </div>
         </section>
 
-        <!-- بروفايل العميل وتتبع الشحنات والفواتير -->
+        <!-- بروفايل العميل وتتبع الشحنات -->
         <section id="profileSection" class="app-section" style="display:none;">
             <div class="profile-card-header">
-                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي وكشف المعاملات والفواتير</h2>
+                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي وتتبع الشحنات</h2>
                 <div class="user-info-box">
                     <p><strong>البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
-                    <p><strong>نوع الحساب:</strong> <span id="userRoleDisplay">عميل معتمد</span></p>
+                    <p><strong>رتبة الحساب:</strong> <span id="userRoleDisplay">عميل</span></p>
                 </div>
             </div>
 
             <div class="profile-box" style="margin-bottom: 20px;">
-                <h3><i class="fa-solid fa-magnifying-glass-location"></i> تتبع الشحنة برقم الفاتورة</h3>
+                <h3><i class="fa-solid fa-magnifying-glass-location"></i> تتبع شحنتك وسيارة التوصيل برقم الفاتورة</h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <input type="text" id="trackInvoiceInput" placeholder="أدخل رقم الفاتورة أو الطلب (مثال: abc123xy)" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                    <input type="text" id="trackInvoiceInput" placeholder="أدخل رقم الفاتورة أو الطلب" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
                     <button id="trackInvoiceBtn" class="btn-submit" style="width: auto; padding: 10px 20px;">تتبع الشحنة</button>
                 </div>
                 <div id="trackResultBox" style="margin-top: 15px;"></div>
@@ -229,12 +238,11 @@
 
             <div class="profile-grid">
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> كشف الحساب والفواتير (مدفوعة / آجلة)</h3>
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> فواتيري وحساباتي السابقة</h3>
                     <div id="userInvoicesList"></div>
                 </div>
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-map-marked-alt"></i> تحديد موقع الاستلام بدقة</h3>
-                    <p style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">حدد موقعك أو اضغط زر التحديد التلقائي:</p>
+                    <h3><i class="fa-solid fa-map-marked-alt"></i> تحديد موقع التوصيل الخاص بك</h3>
                     <button id="locateMeBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 10px; padding: 8px;"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)</button>
                     <div id="userMap" style="height: 250px; border-radius: 8px;"></div>
                     <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;">حفظ موقع التوصيل</button>
@@ -243,6 +251,17 @@
         </section>
 
     </main>
+
+    <!-- نافذة معاينة تفاصيل المنتج والوسائط وحجز الكمية -->
+    <div id="productDetailModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 id="modalProdTitle">تفاصيل المنتج</h3>
+                <span class="close-prod-modal" style="font-size: 1.6rem; cursor: pointer; color: #fff;">&times;</span>
+            </div>
+            <div class="modal-body" id="modalProdBody" style="background:#fff; padding:20px;"></div>
+        </div>
+    </div>
 
     <!-- نافذة سلة المشتريات -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
@@ -269,29 +288,27 @@
         </div>
     </div>
 
-    <!-- نافذة معاينة الفاتورة للطباعة وحفظها كصورة -->
+    <!-- نافذة الفاتورة -->
     <div id="invoiceModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 700px;">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-print"></i> معاينة وطباعة الفاتورة (A3 / قياسي)</h3>
+                <h3><i class="fa-solid fa-print"></i> معاينة وطباعة الفاتورة</h3>
                 <span class="close-invoice-modal" style="font-size: 1.6rem; cursor: pointer; color: #fff;">&times;</span>
             </div>
-            <div class="modal-body" id="printableInvoiceContent" style="background:#fff; padding:25px; color:#000;">
-                <!-- تفاصيل الفاتورة -->
-            </div>
+            <div class="modal-body" id="printableInvoiceContent" style="background:#fff; padding:25px; color:#000;"></div>
             <div class="modal-footer" style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button onclick="window.print()" class="btn-submit" style="background:#2c5e3b; flex:1;"><i class="fa-solid fa-print"></i> طباعة A3</button>
+                <button onclick="window.print()" class="btn-submit" style="background:#2c5e3b; flex:1;"><i class="fa-solid fa-print"></i> طباعة الفاتورة</button>
                 <button id="saveInvoiceImgBtn" class="btn-submit" style="background:var(--accent); flex:1;"><i class="fa-solid fa-image"></i> حفظ الفاتورة كصورة</button>
                 <button id="closeInvoiceModalBtn" class="btn-submit" style="background:#666; width: 100%;">إغلاق</button>
             </div>
         </div>
     </div>
 
-    <!-- نافذة الإشعارات والرسائل الواردة -->
+    <!-- نافذة الإشعارات -->
     <div id="notificationsModal" class="modal-overlay" style="display:none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-bell"></i> الإشعارات والرسائل الواردة</h3>
+                <h3><i class="fa-solid fa-bell"></i> الإشعارات والرسائل</h3>
                 <span class="close-notif-modal" style="font-size: 1.6rem; cursor: pointer; color: #fff;">&times;</span>
             </div>
             <div class="modal-body" id="notificationsListContent">
@@ -327,7 +344,6 @@
         </div>
     </div>
 
-    <!-- مكتبة Leaflet للخرائط -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="app.js"></script>
 </body>
