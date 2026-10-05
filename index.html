@@ -71,8 +71,8 @@
                 </div>
             </div>
 
-            <!-- الإطار الديناميكي المتطور للعروض السريعة -->
-            <div id="dynamicBannerCarousel" class="dynamic-carousel-card">
+            <!-- الإطار الديناميكي المتطور للعروض السريعة مع تثبيت الأبعاد لمنع الاهتزاز -->
+            <div id="dynamicBannerCarousel" class="dynamic-carousel-card" style="min-height: 90px; overflow: hidden;">
                 <div class="carousel-icon-box">
                     <i class="fa-solid fa-bullhorn"></i>
                 </div>
@@ -181,6 +181,13 @@
                         <div class="input-group">
                             <label>السائق / الموظف المسؤول على السيارة</label>
                             <select id="vehDriverSelect" required></select>
+                        </div>
+                        <div class="input-group">
+                            <label>موقع السيارة الحالي (GPS)</label>
+                            <button type="button" id="locateVehicleBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 8px; padding: 8px;">
+                                <i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً
+                            </button>
+                            <p id="vehCoordsDisplay" style="font-size: 0.85rem; color: #666;">الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)</p>
                         </div>
                         <button type="submit" class="btn-submit">تسجيل السيارة في الأسطول</button>
                     </form>
