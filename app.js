@@ -147,6 +147,7 @@ function switchSection(sectionId) {
     document.getElementById(sectionId).style.display = 'block';
 }
 
+// تسجيل الدخول بجوجل (إلزام الحساب الجديد برتبة عميل customer تلقائياً)
 googleLoginBtn.addEventListener('click', async () => {
     try {
         const result = await signInWithPopup(auth, googleProvider);
@@ -157,7 +158,9 @@ googleLoginBtn.addEventListener('click', async () => {
             await setDoc(userRef, {
                 email: user.email,
                 name: user.displayName || 'عميل جوجل',
-                col: user.email === "haretg@gmail.com" ? "admin" : "customer"
+                role: "customer",
+                rol: "customer",
+                col: "customer"
             });
         }
         alert('تم تسجيل الدخول بحساب جوجل بنجاح!');
@@ -179,7 +182,8 @@ onAuthStateChanged(auth, async (user) => {
             const userDocRef = doc(db, "users", user.email);
             const userDoc = await getDoc(userDocRef);
             if (userDoc.exists()) {
-                currentUserRole = userDoc.data().col || "customer";
+                const userData = userDoc.data();
+                currentUserRole = userData.role || userData.rol || userData.col || "customer";
             } else if (user.email === "haretg@gmail.com") {
                 currentUserRole = "admin";
             }
@@ -201,6 +205,7 @@ onAuthStateChanged(auth, async (user) => {
     }
 });
 
+// تسجيل الدخول بالبريد (إلزام الحساب الجديد برتبة عميل customer تلقائياً)
 loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -214,8 +219,10 @@ loginForm.addEventListener('submit', async (e) => {
         if (!userSnap.exists()) {
             await setDoc(userRef, {
                 email: user.email,
-                name: user.email === "haretg@gmail.com" ? "مدير النظام" : "عميل",
-                col: user.email === "haretg@gmail.com" ? "admin" : "customer"
+                name: "عميل",
+                role: "customer",
+                rol: "customer",
+                col: "customer"
             });
         }
 
@@ -750,8 +757,9 @@ async function loadDriversDropdown() {
     select.innerHTML = '<option value="">اختر السائق الموظف</option>';
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
-        if (['driver', 'employee', 'admin', 'assistant_manager'].includes(u.col)) {
-            select.innerHTML += `<option value="${u.email}">${u.name || u.email} (${u.col})</option>`;
+        const userRole = u.role || u.rol || u.col;
+        if (['driver', 'employee', 'admin', 'assistant_manager'].includes(userRole)) {
+            select.innerHTML += `<option value="${u.email}">${u.name || u.email} (${userRole})</option>`;
         }
     });
 }
@@ -816,17 +824,18 @@ async function loadAllUsers() {
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
         const email = docSnap.id;
+        const userRole = u.role || u.rol || u.col || 'customer';
         list.innerHTML += `
             <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>الاسم: ${u.name || 'مستخدم'} | البريد: ${email} | الرتبة الحالية: <strong style="color:var(--accent);">${u.col || 'customer'}</strong></div>
+                <div>الاسم: ${u.name || 'مستخدم'} | البريد: ${email} | الرتبة الحالية: <strong style="color:var(--accent);">${userRole}</strong></div>
                 <div>
                     <select id="roleSelect_${email.replace(/[@.]/g, '_')}" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
-                        <option value="admin">مدير</option>
-                        <option value="assistant_manager">مساعد مدير</option>
-                        <option value="accountant">محاسب</option>
-                        <option value="employee">موظف</option>
-                        <option value="driver">سائق</option>
-                        <option value="customer">عميل</option>
+                        <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>مدير</option>
+                        <option value="assistant_manager" ${userRole === 'assistant_manager' ? 'selected' : ''}>مساعد مدير</option>
+                        <option value="accountant" ${userRole === 'accountant' ? 'selected' : ''}>محاسب</option>
+                        <option value="employee" ${userRole === 'employee' ? 'selected' : ''}>موظف</option>
+                        <option value="driver" ${userRole === 'driver' ? 'selected' : ''}>سائق</option>
+                        <option value="customer" ${userRole === 'customer' ? 'selected' : ''}>عميل</option>
                     </select>
                     <button onclick='changeUserRole("${email}")' style="background:#2c5e3b; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
                 </div>
@@ -838,7 +847,11 @@ window.changeUserRole = async function(email) {
     const selectId = `roleSelect_${email.replace(/[@.]/g, '_')}`;
     const newRole = document.getElementById(selectId).value;
     try {
-        await updateDoc(doc(db, "users", email), { col: newRole });
+        await updateDoc(doc(db, "users", email), { 
+            role: newRole,
+            rol: newRole,
+            col: newRole 
+        });
         alert('تم تحديث رتبة وصلاحية المستخدم بنجاح!');
         loadAllUsers();
     } catch (e) {
