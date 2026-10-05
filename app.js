@@ -31,11 +31,8 @@ let selectedLat = 30.0444;
 let selectedLng = 31.2357;
 let carouselInterval = null;
 
-// متغيرات عامة لتخزين الوسائط القديمة عند التعديل بنجاح
 let editingOldMediaUrl = '';
 let editingOldMediaType = 'image';
-
-// متغيرات إحداثيات السيارة الجديدة عند إضافتها للأسطول
 let newVehLat = 30.0444;
 let newVehLng = 31.2357;
 
@@ -264,7 +261,6 @@ async function loadProducts() {
     }
 }
 
-// العروض السريعة المتطورة مع تثبيت الأبعاد ومنع الاهتزاز
 function startProductCarousel() {
     if (carouselInterval) clearInterval(carouselInterval);
     if (allProductsCache.length === 0) return;
@@ -446,32 +442,24 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// دالة مساعدة لقراءة الملف المحلي وتحويله إلى Base64 لتخزين آمن ومباشر
-function readFileAsDataURL(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-        reader.readAsDataURL(file);
-    });
-}
-
-// إدارة المنتجات ونشر الوسائط المرفوعة بنجاح ودون مشاكل التخزين
+// إدارة المنتجات ونشر الوسائط باستخدام Firebase Storage لرفع الملفات بكفاءة
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
     const fileInput = document.getElementById('prodFile');
     
-    // القيم الافتراضية للوسائط
     let mediaUrl = editId ? editingOldMediaUrl : 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80';
     let mediaType = editId ? editingOldMediaType : 'image';
 
     try {
-        // التحقق من وجود ملف مرفوع جديد وتحويله مباشرة
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
             mediaType = file.type.startsWith('video') ? 'video' : 'image';
-            mediaUrl = await readFileAsDataURL(file);
+            
+            // رفع الملف إلى Firebase Storage للحصول على رابط مباشر
+            const fileRef = storageRef(storage, `products/${Date.now()}_${file.name}`);
+            const snapshot = await uploadBytes(fileRef, file);
+            mediaUrl = await getDownloadURL(snapshot.ref);
         }
 
         const prodData = {
@@ -500,7 +488,7 @@ addProductForm.addEventListener('submit', async (e) => {
         loadProducts();
         loadAdminProductsList();
     } catch (err) {
-        alert('خطأ أثناء حفظ المنتج في قاعدة البيانات: ' + err.message);
+        alert('خطأ أثناء حفظ المنتج في قاعدة البيانات أو رفع الملف: ' + err.message);
     }
 });
 
@@ -593,7 +581,6 @@ async function loadCategoriesForAdmin() {
     });
 }
 
-// إضافة إدارة سيارات الأسطول ("سيارتي") وتعيين السائق وتحديد الموقع بـ GPS
 if (!document.getElementById('adminFleetTab')) {
     const fleetTabBtn = document.createElement('button');
     fleetTabBtn.onclick = () => switchAdminTab('fleet');
@@ -638,7 +625,6 @@ if (!document.getElementById('adminFleetTab')) {
     document.querySelector('#adminSection').appendChild(fleetPanel);
 }
 
-// حدث زر جلب إحداثيات سيارة الأسطول عبر GPS
 document.addEventListener('click', (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         if (navigator.geolocation) {
@@ -660,7 +646,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// حدث إرسال نموذج إضافة السيارة للأسطول
 document.addEventListener('submit', async (e) => {
     if (e.target && e.target.id === 'addVehicleForm') {
         e.preventDefault();
@@ -767,7 +752,6 @@ window.updateOrderStatus = async function(orderId, newStatus) {
     }
 };
 
-// التحكم الشامل برتب وصلاحيات العملاء (الرتب الستة الكاملة)
 async function loadAllUsers() {
     const list = document.getElementById('adminUsersList');
     if (!list) return;
