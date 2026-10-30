@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- تحسينتوافقية أجهزة الـ GPS -->
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -77,6 +80,35 @@
         <meta-data
             android:name="android.support.customtabs.trusted.METADATA_LOCATION_DELEGATION_ENABLED"
             android:value="true" />
+
+        <!-- تفعيل ميزة تفويض الإشعارات الفورية لتظهر باسم التطبيق -->
+        <meta-data
+            android:name="android.support.customtabs.trusted.METADATA_NOTIFICATION_DELEGATION_ENABLED"
+            android:value="true" />
+
+        <!-- إعدادات شاشة التحميل (Splash Screen) لمنع الوميض الأبيض أثناء الفتح -->
+        <meta-data
+            android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE"
+            android:resource="@mipmap/ic_launcher" />
+
+        <meta-data
+            android:name="android.support.customtabs.trusted.SPLASH_SCREEN_BACKGROUND_COLOR"
+            android:resource="@color/colorPrimary" />
+
+        <meta-data
+            android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
+            android:value="300" />
+
+        <!-- مزود الملفات للسماح برفع الصور والفيديوهات عبر عناصر المدخلات <input type="file"> -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="io.github.karamegy.omda.fileprovider"
+            android:grantUriPermissions="true"
+            android:exported="false">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/filepaths" />
+        </provider>
 
     </application>
 </manifest>
