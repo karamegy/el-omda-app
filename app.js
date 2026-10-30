@@ -1046,7 +1046,7 @@ function downloadBlobFallback(blob, fileName) {
 }
 
 // ==========================================
-// === إعداد خريطة العميل المحدثة وفائقة السرعة ===
+// === إعداد خريطة العميل المحدثة وحرة الاتجاهات ===
 // ==========================================
 function initUserMap() {
     const userMapElem = document.getElementById('userMap');
@@ -1068,8 +1068,7 @@ function initUserMap() {
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
         maxZoom: 19,
         keepBuffer: 3,
-        updateWhenIdle: true,
-        updateWhenZooming: false
+        updateWhenIdle: true
     });
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
@@ -1077,14 +1076,16 @@ function initUserMap() {
         keepBuffer: 3
     });
 
+    // تفعيل التدوير الحر والحرية الكاملة للاتجاهات
     userMap = L.map('userMap', {
         center: [selectedLat, selectedLng],
         zoom: 14,
         layers: [streetLayer],
         preferCanvas: true,
-        zoomControl: true,
-        fadeAnimation: true,
-        zoomAnimation: true
+        rotate: true,          // تفعيل محرك التدوير
+        touchRotate: true,     // تدوير الخريطة بأصبعين على شاشات اللمس
+        rotateControl: true,   // زر البوصلة للعودة للشمال
+        bearing: 0             // زاوية الاتجاه الابتدائية
     });
 
     const baseMaps = {
@@ -1119,6 +1120,16 @@ function initUserMap() {
         userMarker.setLatLng([selectedLat, selectedLng]);
         userMap.panTo([selectedLat, selectedLng]);
     });
+
+    // الربط مع مستشعر اتجاه بوصلة الجوال لتدوير الخريطة تلقائياً مع حركة المستخدم
+    if (window.DeviceOrientationEvent) {
+        window.addEventListener('deviceorientation', (e) => {
+            if (e.alpha !== null && userMap && typeof userMap.setBearing === 'function') {
+                const compassHeading = e.webkitCompassHeading || (360 - e.alpha);
+                userMap.setBearing(compassHeading);
+            }
+        }, true);
+    }
 
     // حل المشكلة الرمادية نهائياً عند اكتمال العرض
     setTimeout(() => {
@@ -1238,7 +1249,11 @@ async function initAdminMap() {
         center: [30.0444, 31.2357],
         zoom: 11,
         layers: [streetLayer],
-        preferCanvas: true
+        preferCanvas: true,
+        rotate: true,
+        touchRotate: true,
+        rotateControl: true,
+        bearing: 0
     });
 
     const baseMaps = {
