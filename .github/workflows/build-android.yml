@@ -39,7 +39,7 @@ jobs:
             echo "$KEYSTORE_DATA" | base64 --decode > signing.keystore
           fi
 
-          # 2. تجهيز مجلد الويب www بنظافة ودون تكرار
+          # 2. تجهيز مجلد الويب www بنظافة ودون تكرار نهائياً
           rm -rf www
           mkdir -p www
           find . -maxdepth 1 -type f ! -name ".*" -exec cp {} www/ \;
@@ -55,19 +55,14 @@ jobs:
           }
           EOF
 
-          # 4. تثبيت حزم Capacitor المطلوبة ومكتبة توثيق Firebase الأصلية
-          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem @capacitor/share @capacitor/assets @capacitor-firebase/authentication@latest --save-dev
+          # 4. تثبيت حزم Capacitor المطلوبة مع مكتبة أندرويد
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
 
           # 5. بناء منصة أندرويد
           rm -rf android
           npx cap add android
 
-          # 6. نقل ملف google-services.json تلقائياً إلى مجلد أندرويد
-          if [ -f "google-services.json" ]; then
-            cp google-services.json android/app/
-          fi
-
-          # 7. تجهيز توليد الأيقونات
+          # 6. تجهيز توليد الأيقونات
           mkdir -p assets
           if [ -f "icon1-512.png" ]; then
             cp icon1-512.png assets/icon.png
@@ -80,7 +75,7 @@ jobs:
             npx @capacitor/assets generate --android || true
           fi
 
-          # 8. إعداد AndroidManifest.xml و file_paths
+          # 7. إعداد AndroidManifest.xml و file_paths
           mkdir -p android/app/src/main/res/xml/
           cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -156,7 +151,7 @@ jobs:
           </manifest>
           EOF
 
-          # 9. إعداد ملف strings.xml
+          # 8. إعداد ملف strings.xml
           mkdir -p android/app/src/main/res/values/
           cat << 'EOF' > android/app/src/main/res/values/strings.xml
           <?xml version='1.0' encoding='utf-8'?>
@@ -169,73 +164,61 @@ jobs:
           </resources>
           EOF
 
-          # 10. نقل ملف التوقيع وتكوين build.gradle المخصص
+          # 9. نقل ملف التوقيع إن وجد
           if [ -f "signing.keystore" ]; then
             cp signing.keystore android/app/
           fi
 
-          cat << 'EOF' > android/app/build.gradle
-          apply plugin: 'com.android.application'
+          # 10. إعداد التوقيع والإصدار في build.gradle
+          if [ -f "android/app/signing.keystore" ]; then
+            cat << EOF >> android/app/build.gradle
 
           android {
-              namespace "io.github.karamegy.omda"
-              compileSdk 35
-
               defaultConfig {
                   applicationId "io.github.karamegy.omda"
                   minSdk 24
-                  targetSdk 35
+                  targetSdk 36
                   versionCode 10000
                   versionName "1.0.0"
-                  testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
               }
-
               compileOptions {
                   sourceCompatibility JavaVersion.VERSION_21
                   targetCompatibility JavaVersion.VERSION_21
               }
-
               signingConfigs {
                   release {
-                      if (file('signing.keystore').exists()) {
-                          storeFile file('signing.keystore')
-                          storePassword System.getenv("KEYSTORE_PASSWORD")
-                          keyAlias System.getenv("KEY_ALIAS")
-                          keyPassword System.getenv("KEY_PASSWORD")
-                      }
+                      storeFile file('signing.keystore')
+                      storePassword '$KEYSTORE_PASSWORD'
+                      keyAlias '$KEY_ALIAS'
+                      keyPassword '$KEY_PASSWORD'
                   }
               }
-
               buildTypes {
                   release {
                       signingConfig signingConfigs.release
                       minifyEnabled false
-                      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
                   }
               }
           }
+          EOF
+          else
+            cat << EOF >> android/app/build.gradle
 
-          repositories {
-              flatDir {
-                  dirs 'libs'
+          android {
+              defaultConfig {
+                  applicationId "io.github.karamegy.omda"
+                  minSdk 24
+                  targetSdk 36
+                  versionCode 10000
+                  versionName "1.0.0"
               }
-          }
-
-          dependencies {
-              implementation fileTree(dir: 'libs', include: ['*.jar'])
-              implementation "androidx.appcompat:appcompat:1.6.1"
-              implementation project(':capacitor-android')
-          }
-
-          try {
-              def servicesJSON = file('google-services.json')
-              if (servicesJSON.text) {
-                  apply plugin: 'com.google.gms.google-services'
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_21
+                  targetCompatibility JavaVersion.VERSION_21
               }
-          } catch(Exception e) {
-              logger.info("google-services.json not found, google-services plugin not applied.")
           }
           EOF
+          fi
 
           # 11. المزامنة والتجميع
           npx cap sync android
