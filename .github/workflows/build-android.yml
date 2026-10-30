@@ -1,72 +1,224 @@
-name: Build Native Signed Android Package (TWA)
+name: Build El-Omda Native Android App
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '20'
 
-      - name: Setup Java JDK 17
+      - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
-      - name: Install Bubblewrap CLI
-        run: npm install -g @bubblewrap/cli
-
-      - name: Accept Android SDK Licenses
+      - name: Build Android App
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          # 1. استخراج ملف التوقيع Keystore من أسرار GitHub إذا كان مسجلاً كـ Base64
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > signing.keystore
+          fi
 
-      - name: Configure Bubblewrap Environment
-        run: |
-          mkdir -p ~/.bubblewrap
-          cat <<EOF > ~/.bubblewrap/config.json
-          {
-            "jdkPath": "$JAVA_HOME",
-            "androidSdkPath": "$ANDROID_HOME"
+          # 2. إعداد مجلد الويب الموحد
+          mkdir -p www
+          cp -r * www/ 2>/dev/null || true
+
+          # 3. إعداد وتحديث ملف تكوين Capacitor لتطبيق العمدة
+          node -e '
+            const fs = require("fs");
+            let cfg = {
+              appId: "io.github.karamegy.omda",
+              appName: "العمدة",
+              webDir: "www"
+            };
+            try {
+              if (fs.existsSync("capacitor.config.json")) {
+                cfg = JSON.parse(fs.readFileSync("capacitor.config.json", "utf8"));
+                cfg.webDir = "www";
+                cfg.appId = "io.github.karamegy.omda";
+                cfg.appName = "العمدة";
+              }
+            } catch(e){}
+            fs.writeFileSync("capacitor.config.json", JSON.stringify(cfg, null, 2));
+          '
+
+          # 4. تثبيت حزم Capacitor
+          npm install @capacitor/cli @capacitor/core @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
+
+          # 5. إعادة بناء بيئة الأندرويد
+          rm -rf android
+          npx cap add android
+
+          # 6. تجهيز الأيقونات
+          mkdir -p assets
+          if [ -f "icon1-512.png" ]; then
+            cp icon1-512.png assets/icon.png
+            cp icon1-512.png assets/icon-only.png
+          elif [ -f "logo.png" ]; then
+            cp logo.png assets/icon.png
+            cp logo.png assets/icon-only.png
+          fi
+          if [ -f "assets/icon.png" ]; then
+            npx @capacitor/assets generate --android || true
+          fi
+
+          # 7. إنشاء مسارات ملفات Sharing و AndroidManifest
+          mkdir -p android/app/src/main/res/xml/
+          cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths xmlns:android="http://schemas.android.com/apk/res/android">
+              <external-path name="external_files" path="." />
+              <cache-path name="cache_files" path="." />
+              <files-path name="files_path" path="." />
+          </paths>
+          EOF
+
+          cat << 'EOF' > android/app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools"
+              package="io.github.karamegy.omda">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+              <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+              <queries>
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="https" />
+                  </intent>
+              </queries>
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@mipmap/ic_launcher"
+                  android:label="@string/app_name"
+                  android:roundIcon="@mipmap/ic_launcher_round"
+                  android:supportsRtl="true"
+                  android:usesCleartextTraffic="true"
+                  android:theme="@style/AppTheme"
+                  tools:overrideLibrary="com.getcapacitor.android">
+
+                  <activity
+                      android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode"
+                      android:name="io.github.karamegy.omda.MainActivity"
+                      android:label="@string/title_activity_main"
+                      android:theme="@style/AppTheme.NoActionBarLaunch"
+                      android:launchMode="singleTask"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                      <intent-filter android:autoVerify="true">
+                          <action android:name="android.intent.action.VIEW" />
+                          <category android:name="android.intent.category.DEFAULT" />
+                          <category android:name="android.intent.category.BROWSABLE" />
+                          <data android:scheme="https" android:host="karamegy.github.io" android:pathPrefix="/el-omda-app" />
+                      </intent-filter>
+                  </activity>
+
+                  <provider
+                      android:name="androidx.core.content.FileProvider"
+                      android:authorities="io.github.karamegy.omda.fileprovider"
+                      android:exported="false"
+                      android:grantUriPermissions="true">
+                      <meta-data
+                          android:name="android.support.FILE_PROVIDER_PATHS"
+                          android:resource="@xml/file_paths" />
+                  </provider>
+
+              </application>
+
+          </manifest>
+          EOF
+
+          # 8. إعداد ملف النصوص strings.xml
+          mkdir -p android/app/src/main/res/values/
+          cat << 'EOF' > android/app/src/main/res/values/strings.xml
+          <?xml version='1.0' encoding='utf-8'?>
+          <resources>
+              <string name="app_name">العمدة</string>
+              <string name="title_activity_main">العمدة</string>
+              <string name="package_name">io.github.karamegy.omda</string>
+              <string name="custom_url_scheme">io.github.karamegy.omda</string>
+              <string name="file_provider_authority">io.github.karamegy.omda.fileprovider</string>
+          </resources>
+          EOF
+
+          # 9. نقل ملف التوقيع إلى مجلد البناء
+          if [ -f "signing.keystore" ]; then
+            cp signing.keystore android/app/
+          fi
+
+          # 10. إعداد build.gradle وتحديد التوقيع وإصدار التطبيق
+          cat << EOF >> android/app/build.gradle
+
+          android {
+              defaultConfig {
+                  applicationId "io.github.karamegy.omda"
+                  minSdk 24
+                  targetSdk 36
+                  versionCode 10000
+                  versionName "1.0.0"
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_21
+                  targetCompatibility JavaVersion.VERSION_21
+              }
+              signingConfigs {
+                  release {
+                      storeFile file('signing.keystore')
+                      storePassword '$KEYSTORE_PASSWORD'
+                      keyAlias '$KEY_ALIAS'
+                      keyPassword '$KEY_PASSWORD'
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                      minifyEnabled true
+                  }
+              }
           }
           EOF
 
-      - name: Restore Keystore File
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+          # 11. المزامنة والتجميع
+          npx cap sync android
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon
+          ./gradlew assembleRelease --no-daemon
 
-      - name: Generate Android Gradle Project Files
-        run: |
-          bubblewrap update --skipAppVersionCheck
-
-      - name: Build Android App Bundle (AAB) & APK
-        run: |
-          bubblewrap build --keyPath=release.keystore --keyAlias="${{ secrets.KEY_ALIAS }}" --keyPassword="${{ secrets.KEY_PASSWORD }}" --storePassword="${{ secrets.KEYSTORE_PASSWORD }}" --skipAppVersionCheck
-
-      - name: Upload Signed APK & AAB
+      - name: Upload AAB Bundle Artifact (Google Play)
         uses: actions/upload-artifact@v4
         with:
-          name: elomda-android-builds
-          path: |
-            *.apk
-            *.aab
+          name: elomda-release-bundle
+          path: android/app/build/outputs/bundle/release/*.aab
 
-      - name: Upload Full Android Studio Source Project
+      - name: Upload APK Artifact (Direct Install)
         uses: actions/upload-artifact@v4
         with:
-          name: elomda-android-studio-source-code
-          path: |
-            .
-            !.git
-            !node_modules
+          name: elomda-installable-apk
+          path: android/app/build/outputs/apk/release/*.apk
