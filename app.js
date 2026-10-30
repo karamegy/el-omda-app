@@ -27,14 +27,14 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// إعدادات Firebase المحدثة لمشروع omda-a750f
 const firebaseConfig = {
-  apiKey: "AIzaSyCLgvF-u77h-RwSSaJPLx4x-U3ZLOtuvrM",
-  authDomain: "alaf-93848.firebaseapp.com",
-  projectId: "alaf-93848",
-  storageBucket: "alaf-93848.firebasestorage.app",
-  messagingSenderId: "984757380320",
-  appId: "1:984757380320:web:247065b2434c002c445c85",
-  measurementId: "G-ESV2GNSQZ4"
+  apiKey: "AIzaSyCU--Klxwfg7pDinUgS0UEde9cpmmsrDRM",
+  authDomain: "omda-a750f.firebaseapp.com",
+  projectId: "omda-a750f",
+  storageBucket: "omda-a750f.firebasestorage.app",
+  messagingSenderId: "1078714497381",
+  appId: "1:1078714497381:android:9430672b84226b0a46898c"
 };
 
 const app = initializeApp(firebaseConfig);
