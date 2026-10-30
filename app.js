@@ -37,8 +37,8 @@ const firebaseConfig = {
   appId: "1:1078714497381:android:9430672b84226b0a46898c"
 };
 
-// Client ID لربط نافذة توثيق جوجل في الأندرويد والهواتف
-const GOOGLE_WEB_CLIENT_ID = "1078714497381-jhgocuj7jumoudh3o1a75dbilosciscv.apps.googleusercontent.com";
+// Client ID لربط نافذة توثيق جوجل المحدث من ملف google-services.json الجديد (Web Client ID - Type 3)
+const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
