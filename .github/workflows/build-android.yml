@@ -58,8 +58,8 @@ jobs:
             fs.writeFileSync("capacitor.config.json", JSON.stringify(cfg, null, 2));
           '
 
-          # 4. تثبيت حزم Capacitor
-          npm install @capacitor/cli @capacitor/core @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
+          # 4. تثبيت حزم Capacitor وشمل مكتبة android الأساسية
+          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
 
           # 5. إعادة بناء بيئة الأندرويد
           rm -rf android
