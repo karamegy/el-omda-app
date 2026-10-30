@@ -39,7 +39,7 @@ jobs:
             echo "$KEYSTORE_DATA" | base64 --decode > signing.keystore
           fi
 
-          # 2. تجهيز مجلد الويب www بنظافة ودون تكرار نهائياً
+          # 2. تجهيز مجلد الويب www بنظافة ودون تكرار
           rm -rf www
           mkdir -p www
           find . -maxdepth 1 -type f ! -name ".*" -exec cp {} www/ \;
@@ -55,14 +55,19 @@ jobs:
           }
           EOF
 
-          # 4. تثبيت حزم Capacitor المطلوبة مع مكتبة أندرويد
+          # 4. تثبيت حزم Capacitor المطلوبة
           npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
 
           # 5. بناء منصة أندرويد
           rm -rf android
           npx cap add android
 
-          # 6. تجهيز توليد الأيقونات
+          # 6. نقل ملف google-services.json تلقائياً إلى مجلد التطبيق
+          if [ -f "google-services.json" ]; then
+            cp google-services.json android/app/
+          fi
+
+          # 7. تجهيز توليد الأيقونات
           mkdir -p assets
           if [ -f "icon1-512.png" ]; then
             cp icon1-512.png assets/icon.png
@@ -75,7 +80,7 @@ jobs:
             npx @capacitor/assets generate --android || true
           fi
 
-          # 7. إعداد AndroidManifest.xml و file_paths
+          # 8. إعداد AndroidManifest.xml و file_paths
           mkdir -p android/app/src/main/res/xml/
           cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -151,7 +156,7 @@ jobs:
           </manifest>
           EOF
 
-          # 8. إعداد ملف strings.xml
+          # 9. إعداد ملف strings.xml
           mkdir -p android/app/src/main/res/values/
           cat << 'EOF' > android/app/src/main/res/values/strings.xml
           <?xml version='1.0' encoding='utf-8'?>
@@ -164,12 +169,12 @@ jobs:
           </resources>
           EOF
 
-          # 9. نقل ملف التوقيع إن وجد
+          # 10. نقل ملف التوقيع إن وجد
           if [ -f "signing.keystore" ]; then
             cp signing.keystore android/app/
           fi
 
-          # 10. إعداد التوقيع والإصدار في build.gradle
+          # 11. إضافة إعدادات التوقيع والإصدار لمشروع أندرويد القائم
           if [ -f "android/app/signing.keystore" ]; then
             cat << EOF >> android/app/build.gradle
 
@@ -220,7 +225,7 @@ jobs:
           EOF
           fi
 
-          # 11. المزامنة والتجميع
+          # 12. المزامنة والتجميع
           npx cap sync android
           cd android
           chmod +x gradlew
