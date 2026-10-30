@@ -430,6 +430,7 @@ window.removeFromCart = function(index) {
     updateCartUI();
 };
 
+// === إتمام الطلب وإصدار الفاتورة مع تجريد وسائط السلة الثقيلة لتجنب تجاوز 1MB ===
 checkoutBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -442,9 +443,16 @@ checkoutBtn?.addEventListener('click', async () => {
     }
     const paymentType = document.getElementById('paymentTypeSelect').value;
     try {
+        // تجريد عناصر السلة من الصور والوسائط الثقيلة لتخفيف حجم الوثيقة
+        const sanitizedItems = cart.map(item => ({
+            id: item.id || '',
+            name: item.name || '',
+            price: item.price || 0
+        }));
+
         const orderRef = await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
-            items: cart,
+            items: sanitizedItems, // إرسال البيانات الخفيفة فقط
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
             status: 'قيد المراجعة والشحن',
             paymentType: paymentType,
@@ -524,16 +532,15 @@ if(cancelEditBtn) {
     });
 }
 
+// تحسين: الاستفادة من الذاكرة المحلية أولاً بدلاً من إعادة جلب كل المنتجات بـ getDocs
 async function loadAdminProductsList() {
     const list = document.getElementById('adminProductsList');
     if (!list) return;
-    list.innerHTML = 'جاري التحميل...';
-    try {
-        const snapshot = await getDocs(collection(db, "products"));
+    
+    const renderList = (products) => {
         list.innerHTML = '';
-        snapshot.forEach(docSnap => {
-            const p = docSnap.data();
-            const id = docSnap.id;
+        products.forEach(p => {
+            const id = p.id;
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
                     <div><strong>${p.name}</strong> - <span style="color:var(--accent); font-weight:bold;">${p.price} ج.م</span></div>
@@ -543,8 +550,20 @@ async function loadAdminProductsList() {
                     </div>
                 </div>`;
         });
-    } catch (e) {
-        list.innerHTML = 'خطأ في التحميل.';
+    };
+
+    if (allProductsCache.length > 0) {
+        renderList(allProductsCache);
+    } else {
+        list.innerHTML = 'جاري التحميل...';
+        try {
+            const snapshot = await getDocs(collection(db, "products"));
+            const fetched = [];
+            snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
+            renderList(fetched);
+        } catch (e) {
+            list.innerHTML = 'خطأ في التحميل.';
+        }
     }
 }
 
@@ -589,15 +608,26 @@ addCategoryForm?.addEventListener('submit', async (e) => {
     }
 });
 
+// تحسين: استغلال الذاكرة المؤقتة للأقسام لتقليل القراءات
 async function loadCategoriesForAdmin() {
     const list = document.getElementById('adminCategoriesList');
     if (!list) return;
-    const snapshot = await getDocs(collection(db, "categories"));
-    list.innerHTML = '';
-    snapshot.forEach(docSnap => {
-        const c = docSnap.data();
-        list.innerHTML += `<div class="data-item"><i class="${c.icon}"></i> <strong>${c.name}</strong> (${docSnap.id})</div>`;
-    });
+
+    const renderList = (categories) => {
+        list.innerHTML = '';
+        categories.forEach(c => {
+            list.innerHTML += `<div class="data-item"><i class="${c.icon}"></i> <strong>${c.name}</strong> (${c.id})</div>`;
+        });
+    };
+
+    if (allCategoriesCache.length > 0) {
+        renderList(allCategoriesCache);
+    } else {
+        const snapshot = await getDocs(collection(db, "categories"));
+        const fetched = [];
+        snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
+        renderList(fetched);
+    }
 }
 
 document.addEventListener('click', (e) => {
@@ -890,19 +920,19 @@ async function loadUserProfile() {
     if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
 }
 
+// تحسين البحث عن الشحنات: استخدام getDoc أولاً لجلب المستند المحدد بقراءة واحدة فقط
 trackInvoiceBtn?.addEventListener('click', async () => {
     const invId = document.getElementById('trackInvoiceInput').value.trim();
     const resultBox = document.getElementById('trackResultBox');
     if (!invId) return;
     resultBox.innerHTML = 'جاري البحث...';
     try {
-        const snapshot = await getDocs(collection(db, "orders"));
-        let found = null;
-        snapshot.forEach(docSnap => {
-            if (docSnap.id.includes(invId)) found = { id: docSnap.id, ...docSnap.data() };
-        });
+        // البحث المباشر بـ getDoc عند إدخال معرف المستند الكامل (1 Read)
+        const orderDocRef = doc(db, "orders", invId);
+        const docSnap = await getDoc(orderDocRef);
 
-        if (found) {
+        if (docSnap.exists()) {
+            const found = { id: docSnap.id, ...docSnap.data() };
             resultBox.innerHTML = `
                 <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                     <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
@@ -911,7 +941,25 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                     <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
                 </div>`;
         } else {
-            resultBox.innerHTML = '<p style="color:red;">لم يتم العثور على شحنة بهذا الرقم.</p>';
+            // بحث احتياطي في طلبات المستخدم الحالي فقط لتقليل نطاق البحث
+            const q = query(collection(db, "orders"), where("userEmail", "==", currentUser?.email || ""));
+            const querySnap = await getDocs(q);
+            let found = null;
+            querySnap.forEach(d => {
+                if (d.id.includes(invId)) found = { id: d.id, ...d.data() };
+            });
+
+            if (found) {
+                resultBox.innerHTML = `
+                    <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
+                        <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
+                        <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
+                        <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
+                        <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
+                    </div>`;
+            } else {
+                resultBox.innerHTML = '<p style="color:red;">لم يتم العثور على شحنة بهذا الرقم.</p>';
+            }
         }
     } catch (err) {
         resultBox.innerHTML = '<p style="color:red;">حدث خطأ في البحث.</p>';
