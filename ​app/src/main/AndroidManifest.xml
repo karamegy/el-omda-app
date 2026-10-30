@@ -9,9 +9,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- إذن الكاميرا لتمكين التقاط الصور المباشرة عند الرفع -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- تحسينتوافقية أجهزة الـ GPS -->
+    <!-- تحسين توافقية أجهزة الـ GPS والكاميرا -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -81,12 +85,34 @@
             android:name="android.support.customtabs.trusted.METADATA_LOCATION_DELEGATION_ENABLED"
             android:value="true" />
 
-        <!-- تفعيل ميزة تفويض الإشعارات الفورية لتظهر باسم التطبيق -->
+        <!-- تفعيل ميزة تفويض الإشعارات الفورية -->
         <meta-data
             android:name="android.support.customtabs.trusted.METADATA_NOTIFICATION_DELEGATION_ENABLED"
             android:value="true" />
 
-        <!-- إعدادات شاشة التحميل (Splash Screen) لمنع الوميض الأبيض أثناء الفتح -->
+        <!-- خدمة تفويض الموقع لكروم -->
+        <service
+            android:name="com.google.android.apps.chrome.trusted.LocationDelegationService"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- خدمة تفويض الإشعارات لكروم -->
+        <service
+            android:name="com.google.android.apps.chrome.trusted.NotificationDelegationService"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- إعدادات شاشة التحميل (Splash Screen) -->
         <meta-data
             android:name="android.support.customtabs.trusted.SPLASH_IMAGE_DRAWABLE"
             android:resource="@mipmap/ic_launcher" />
@@ -99,7 +125,7 @@
             android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
             android:value="300" />
 
-        <!-- مزود الملفات للسماح برفع الصور والفيديوهات عبر عناصر المدخلات <input type="file"> -->
+        <!-- مزود الملفات للسماح برفع الصور والفيديوهات -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="io.github.karamegy.omda.fileprovider"
