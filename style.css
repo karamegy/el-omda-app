@@ -754,9 +754,10 @@ body::after {
     color: var(--primary);
 }
 
-/* خرائط Leaflet */
+/* خرائط Leaflet ومحرك التدوير الحر */
 .leaflet-container {
     z-index: 1 !important;
+    touch-action: pan-x pan-y pinch-zoom;
 }
 
 #userMap, #adminMap {
@@ -764,6 +765,24 @@ body::after {
     min-height: 280px;
     border-radius: 12px;
     overflow: hidden;
+}
+
+/* تحسين زر البوصلة والتحكم في التدوير لخريطة Leaflet */
+.leaflet-control-rotate {
+    background: #ffffff;
+    border-radius: 50% !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+    border: 2px solid var(--primary) !important;
+}
+
+.leaflet-control-rotate button {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* التجاوب مع الهواتف الذكية */
