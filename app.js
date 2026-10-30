@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === التسجيل التلقائي وتحديث الـ Service Worker لمنع النسخ القديمة ومشاكل GitHub Pages ===
+// === التسجيل التلقائي وتحديث الـ Service Worker منعاً للنسخ القديمة ومشاكل GitHub Pages ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).then((registration) => {
@@ -20,7 +20,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// إعدادات Firebase المحدثة لمشروع omda-a750f
+// إعدادات Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyCU--Klxwfg7pDinUgS0UEde9cpmmsrDRM",
   authDomain: "omda-a750f.firebaseapp.com",
@@ -36,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تفعيل وضع العمل بدون انترنت (Offline Persistence)
+// تفعيل وضع العمل بدون انترنت
 enableIndexedDbPersistence(db).catch((err) => {
     console.warn("تنبيه وضع الأوفلاين لـ Firestore: ", err.code);
 });
@@ -46,7 +46,6 @@ const googleProvider = new GoogleAuthProvider();
 let currentUser = null;
 let currentUserRole = 'customer';
 
-// التخزين المحلي المزدوج كذاكرة سريعة أونلاين وأوفلاين
 let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
 let allProductsCache = JSON.parse(localStorage.getItem('allaf_products_cache') || '[]');
 let allCategoriesCache = JSON.parse(localStorage.getItem('allaf_categories_cache') || '[]');
@@ -83,9 +82,6 @@ const saveLocationBtn = document.getElementById('saveLocationBtn');
 const locateMeBtn = document.getElementById('locateMeBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const invoiceModal = document.getElementById('invoiceModal');
-const closeInvoiceModalBtn = document.getElementById('closeInvoiceModalBtn');
-const saveInvoiceImgBtn = document.getElementById('saveInvoiceImgBtn');
-const printInvoiceBtn = document.getElementById('printInvoiceBtn');
 const trackInvoiceBtn = document.getElementById('trackInvoiceBtn');
 const notificationsBtn = document.getElementById('notificationsBtn');
 const notificationsModal = document.getElementById('notificationsModal');
@@ -94,7 +90,6 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
-// البحث المباشر السريع
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
         const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
@@ -114,7 +109,6 @@ closeAuthModal?.addEventListener('click', () => authModal.style.display = 'none'
 cartBtn?.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
 closeModal?.addEventListener('click', () => cartModal.style.display = 'none');
 document.querySelector('.close-invoice-modal')?.addEventListener('click', () => invoiceModal.style.display = 'none');
-closeInvoiceModalBtn?.addEventListener('click', () => invoiceModal.style.display = 'none');
 document.querySelector('.close-prod-modal')?.addEventListener('click', () => document.getElementById('productDetailModal').style.display = 'none');
 
 notificationsBtn?.addEventListener('click', () => {
@@ -135,7 +129,6 @@ adminBtn?.addEventListener('click', () => {
     loadAdminProductsList();
 });
 
-// التنقل بين شاشات التطبيق وتحديث شريط التنقل السفلي
 window.switchSection = function(sectionId) {
     document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
     const targetSection = document.getElementById(sectionId);
@@ -147,7 +140,6 @@ window.switchSection = function(sectionId) {
     if (sectionId === 'profileSection') document.getElementById('navProfileBtn')?.classList.add('active');
 };
 
-// تسجيل الدخول بجوجل (دعم الويب وCapacitor Native)
 googleLoginBtn?.addEventListener('click', async () => {
     try {
         let user;
@@ -187,11 +179,10 @@ googleLoginBtn?.addEventListener('click', async () => {
     }
 });
 
-// متابعة حالة المستخدم وتعيين الصلاحيات
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج';
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> خروج';
         if (authModal) authModal.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'flex';
         checkUnreadNotifications();
@@ -215,13 +206,12 @@ onAuthStateChanged(auth, async (user) => {
     } else {
         currentUser = null;
         currentUserRole = 'customer';
-        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول';
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول';
         if (adminBtn) adminBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
     }
 });
 
-// تسجيل الدخول بالبريد الإلكتروني
 loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('loginEmail').value;
@@ -250,7 +240,6 @@ loginForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// المزامنة اللحظية مع التخزين المحلي
 function listenRealtimeData() {
     onSnapshot(collection(db, "categories"), (snapshot) => {
         allCategoriesCache = [];
@@ -889,7 +878,7 @@ async function loadUserProfile() {
         invoicesHtml += `
             <div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid var(--primary);">
                 رقم الفاتورة: <strong>#${orderId.slice(0,6)}</strong> | الإجمالي: <strong>${order.total} ج.م</strong><br>
-                الحالة: <span style="color:green">${order.status}</span> | سيارة التوصيل الخاصة بك: <strong>${order.assignedVehicle || 'قريباً'}</strong><br>
+                الحالة: <span style="color:green">${order.status}</span> | سيارة التوصيل: <strong>${order.assignedVehicle || 'قريباً'}</strong><br>
                 <button onclick='previewInvoice("${orderId}", ${JSON.stringify(order)})' style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> معاينة الفاتورة</button>
             </div>`;
     });
@@ -914,7 +903,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                 <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                     <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
                     <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
-                    <p><strong>سيارة الأسطول المخصصة لتتبع شحنتك:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
+                    <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
                     <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
                 </div>`;
         } else {
@@ -925,6 +914,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     }
 });
 
+// === معاينة الفاتورة وبناء الأزرار المصغرة والتفاعلية ===
 window.previewInvoice = function(orderId, order) {
     const content = document.getElementById('printableInvoiceContent');
     let itemsHtml = '';
@@ -935,84 +925,122 @@ window.previewInvoice = function(orderId, order) {
     }
 
     content.innerHTML = `
-        <div id="invoiceCanvasArea" style="background:#fff; padding:20px; text-align:right;">
-            <h2 style="color:var(--primary); text-align:center;">منصة العمدة للأعلاف والحبوب</h2>
-            <p style="text-align:center; color:#666;">فاتورة مبيعات رسمية</p>
-            <hr style="margin:10px 0;">
-            <p><strong>رقم الفاتورة:</strong> #${orderId}</p>
-            <p><strong>العميل:</strong> ${order.userEmail}</p>
-            <table style="width:100%; border-collapse:collapse; margin:15px 0;">
-                <tr style="background:var(--primary); color:#fff;"><th style="padding:8px; border:1px solid #ddd;">المنتج</th><th style="padding:8px; border:1px solid #ddd;">الكمية</th><th style="padding:8px; border:1px solid #ddd;">السعر</th></tr>
+        <div id="invoiceCanvasArea" style="background:#fff; padding:15px; text-align:right;">
+            <h2 style="color:var(--primary); text-align:center; font-size:1.3rem;">منصة العمدة للأعلاف والحبوب</h2>
+            <p style="text-align:center; color:#666; font-size:0.85rem;">فاتورة مبيعات رسمية</p>
+            <hr style="margin:8px 0;">
+            <p style="font-size:0.85rem;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
+            <p style="font-size:0.85rem;"><strong>العميل:</strong> ${order.userEmail}</p>
+            <table style="width:100%; border-collapse:collapse; margin:12px 0;">
+                <tr style="background:var(--primary); color:#fff;"><th style="padding:6px; border:1px solid #ddd;">المنتج</th><th style="padding:6px; border:1px solid #ddd;">الكمية</th><th style="padding:6px; border:1px solid #ddd;">السعر</th></tr>
                 ${itemsHtml}
             </table>
-            <h3>الإجمالي النهائي: ${order.total} ج.م</h3>
+            <h3 style="font-size:1.1rem; color:var(--primary);">الإجمالي النهائي: ${order.total} ج.م</h3>
+        </div>
+        
+        <div class="invoice-actions-grid">
+            <button id="saveInvoiceImgBtn" class="btn-invoice-sm"><i class="fa-solid fa-image"></i> حفظ كصورة</button>
+            <button id="saveInvoicePdfBtn" class="btn-invoice-sm"><i class="fa-solid fa-file-pdf"></i> حفظ PDF</button>
+            <button id="printInvoiceBtn" class="btn-invoice-sm"><i class="fa-solid fa-print"></i> طباعة</button>
+            <button id="closeInvoiceModalBtn" class="btn-invoice-sm close-invoice-btn-sm"><i class="fa-solid fa-xmark"></i> إغلاق</button>
         </div>`;
-    if (invoiceModal) invoiceModal.style.display = 'flex';
-};
 
-// زر طباعة الفاتورة الفعلي المباشر
-if (printInvoiceBtn) {
-    printInvoiceBtn.addEventListener('click', () => {
+    if (invoiceModal) invoiceModal.style.display = 'flex';
+
+    // ربط الأزرار فور إنشائها داخل الـ DOM
+    document.getElementById('closeInvoiceModalBtn')?.addEventListener('click', () => {
+        invoiceModal.style.display = 'none';
+    });
+
+    document.getElementById('printInvoiceBtn')?.addEventListener('click', () => {
         window.print();
     });
-}
 
-// === زر حفظ الفاتورة كصورة (متوافق مع أندرويد والمتصفحات وتطبيقات WebView) ===
-if (saveInvoiceImgBtn) {
-    saveInvoiceImgBtn.addEventListener('click', async () => {
-        const canvasArea = document.getElementById('invoiceCanvasArea');
-        if (!canvasArea) {
-            alert('يرجى فتح معاينة الفاتورة أولاً.');
-            return;
-        }
+    document.getElementById('saveInvoiceImgBtn')?.addEventListener('click', saveInvoiceAsImage);
+    document.getElementById('saveInvoicePdfBtn')?.addEventListener('click', saveInvoiceAsPDF);
+};
 
-        if (typeof html2canvas === 'undefined') {
-            alert('تأكد من الاتصال بالإنترنت لتنزيل مكتبة حفظ الصورة.');
-            return;
-        }
+// === حفظ الفاتورة كصورة (يدعم Android WebView & Share API) ===
+async function saveInvoiceAsImage() {
+    const canvasArea = document.getElementById('invoiceCanvasArea');
+    if (!canvasArea) return;
 
-        try {
-            const canvas = await html2canvas(canvasArea, { 
-                scale: 2, 
-                useCORS: true,
-                backgroundColor: '#ffffff'
-            });
-            
-            const dataUrl = canvas.toDataURL('image/png');
-            const fileName = `Invoice_${Date.now()}.png`;
+    if (typeof html2canvas === 'undefined') {
+        alert('يرجى التأكد من إضافة مكتبة html2canvas في ملف index.html');
+        return;
+    }
 
-            const response = await fetch(dataUrl);
-            const blob = await response.blob();
-            const file = new File([blob], fileName, { type: 'image/png' });
+    try {
+        const canvas = await html2canvas(canvasArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const dataUrl = canvas.toDataURL('image/png');
+        const fileName = `Invoice_${Date.now()}.png`;
 
-            // استخدام ميزة المشاركة والحفظ المباشرة لـ Android
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file],
-                    title: 'فاتورة منصة العمدة',
-                    text: 'فاتورة شراء رسمية - منصة العمدة للأعلاف والحبوب'
-                });
+        const response = await fetch(dataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], fileName, { type: 'image/png' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'فاتورة منصة العمدة', text: 'فاتورة شراء - منصة العمدة' });
+        } else {
+            // حل بديل للأندرويد فتح الصورة نافذة جديدة لتسهيل الحفظ المباشر
+            const imgWindow = window.open("");
+            if (imgWindow) {
+                imgWindow.document.write(`<img src="${dataUrl}" style="width:100%"/>`);
             } else {
-                // تنزيل تقليدي لمتصفحات الكمبيوتر
                 const link = document.createElement('a');
                 link.download = fileName;
                 link.href = dataUrl;
-                document.body.appendChild(link);
                 link.click();
-                document.body.removeChild(link);
             }
-        } catch (err) {
-            alert('حدث خطأ أثناء حفظ الفاتورة كصورة: ' + err.message);
         }
-    });
+    } catch (err) {
+        alert('خطأ أثناء حفظ الصورة: ' + err.message);
+    }
 }
 
-// === إعداد خريطة العميل مع استرجاع الإحداثيات ودعم طبقة القمر الصناعي ===
+// === حفظ الفاتورة كـ PDF (متوافق مع الأندرويد) ===
+async function saveInvoiceAsPDF() {
+    const canvasArea = document.getElementById('invoiceCanvasArea');
+    if (!canvasArea) return;
+
+    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
+        alert('يرجى تأكيد تضمين مكتبات html2canvas و jsPDF في ملف index.html');
+        return;
+    }
+
+    try {
+        const canvas = await html2canvas(canvasArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+        const imgData = canvas.toDataURL('image/png');
+
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
+        
+        const fileName = `Invoice_${Date.now()}.pdf`;
+
+        // إخراج الملف وتجربة المشاركة أو التنزيل
+        const pdfBlob = pdf.output('blob');
+        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file], title: 'فاتورة منصة العمدة PDF' });
+        } else {
+            pdf.save(fileName);
+        }
+    } catch (err) {
+        alert('خطأ أثناء حفظ ملف PDF: ' + err.message);
+    }
+}
+
+// === إعداد خريطة العميل ===
 function initUserMap() {
     const userMapElem = document.getElementById('userMap');
     if (!userMapElem) return;
 
-    // استعادة الإحداثيات المحفوظة محلياً إن وجدت
     const savedLat = parseFloat(localStorage.getItem('omda_user_lat')) || selectedLat;
     const savedLng = parseFloat(localStorage.getItem('omda_user_lng')) || selectedLng;
     selectedLat = savedLat;
@@ -1068,7 +1096,6 @@ locateMeBtn?.addEventListener('click', () => {
     }
 });
 
-// === حفظ موقع التوصيل بـ Firestore وحفظه محلياً ===
 saveLocationBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لحفظ موقع التوصيل.');
@@ -1093,7 +1120,6 @@ saveLocationBtn?.addEventListener('click', async () => {
     }
 });
 
-// === إدارة تبويبات لوحة التحكم والإدارة ===
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1129,7 +1155,6 @@ window.switchAdminTab = function(tabName) {
     }
 };
 
-// === إعداد خريطة تتبع شحنات وسيارات المدير مع طبقة القمر الصناعي ===
 async function initAdminMap() {
     const adminMapElem = document.getElementById('adminMap');
     if (!adminMapElem) return;
@@ -1167,7 +1192,7 @@ async function refreshAdminMapMarkers() {
             const v = docSnap.data();
             if (v.lat && v.lng) {
                 L.marker([v.lat, v.lng]).addTo(adminMap)
-                    .bindPopup(`<b>سيارة أسطول ("سيارتي"):</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق الموظف:</b> ${v.driver}`);
+                    .bindPopup(`<b>سيارة أسطول:</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق:</b> ${v.driver}`);
             }
         });
         alert('تم تحديث الخريطة ومواقع الأسطول بنجاح!');
@@ -1182,6 +1207,5 @@ if (refreshAdminMapBtn) {
     });
 }
 
-// تشغيل المزامنة الفورية للسلة والبيانات
 listenRealtimeData();
 updateCartUI();
