@@ -30,42 +30,39 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          # 1. استخراج ملف التوقيع Keystore من أسرار GitHub إذا كان مسجلاً كـ Base64
-          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > signing.keystore
+          # 1. استخراج ملف التوقيع Keystore تلقائياً
+          KEYSTORE_DATA="${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          if [ -z "$KEYSTORE_DATA" ]; then
+            KEYSTORE_DATA="${{ secrets.ANDROID_KEYSTORE }}"
+          fi
+          if [ -n "$KEYSTORE_DATA" ]; then
+            echo "$KEYSTORE_DATA" | base64 --decode > signing.keystore
           fi
 
-          # 2. إعداد مجلد الويب الموحد
+          # 2. تجهيز مجلد الويب www بنظافة ودون تكرار نهائياً
+          rm -rf www
           mkdir -p www
-          cp -r * www/ 2>/dev/null || true
+          find . -maxdepth 1 -type f ! -name ".*" -exec cp {} www/ \;
+          if [ -d "assets" ]; then cp -r assets www/; fi
 
-          # 3. إعداد وتحديث ملف تكوين Capacitor لتطبيق العمدة
-          node -e '
-            const fs = require("fs");
-            let cfg = {
-              appId: "io.github.karamegy.omda",
-              appName: "العمدة",
-              webDir: "www"
-            };
-            try {
-              if (fs.existsSync("capacitor.config.json")) {
-                cfg = JSON.parse(fs.readFileSync("capacitor.config.json", "utf8"));
-                cfg.webDir = "www";
-                cfg.appId = "io.github.karamegy.omda";
-                cfg.appName = "العمدة";
-              }
-            } catch(e){}
-            fs.writeFileSync("capacitor.config.json", JSON.stringify(cfg, null, 2));
-          '
+          # 3. إنشاء ملف تكوين Capacitor لتطبيق العمدة
+          cat << 'EOF' > capacitor.config.json
+          {
+            "appId": "io.github.karamegy.omda",
+            "appName": "العمدة",
+            "webDir": "www",
+            "bundledWebRuntime": false
+          }
+          EOF
 
-          # 4. تثبيت حزم Capacitor وشمل مكتبة android الأساسية
-          npm install @capacitor/cli @capacitor/core @capacitor/android @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
+          # 4. تثبيت حزم Capacitor المطلوبة مع مكتبة أندرويد
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
 
-          # 5. إعادة بناء بيئة الأندرويد
+          # 5. بناء منصة أندرويد
           rm -rf android
           npx cap add android
 
-          # 6. تجهيز الأيقونات
+          # 6. تجهيز توليد الأيقونات
           mkdir -p assets
           if [ -f "icon1-512.png" ]; then
             cp icon1-512.png assets/icon.png
@@ -78,7 +75,7 @@ jobs:
             npx @capacitor/assets generate --android || true
           fi
 
-          # 7. إنشاء مسارات ملفات Sharing و AndroidManifest
+          # 7. إعداد AndroidManifest.xml و file_paths
           mkdir -p android/app/src/main/res/xml/
           cat << 'EOF' > android/app/src/main/res/xml/file_paths.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -154,7 +151,7 @@ jobs:
           </manifest>
           EOF
 
-          # 8. إعداد ملف النصوص strings.xml
+          # 8. إعداد ملف strings.xml
           mkdir -p android/app/src/main/res/values/
           cat << 'EOF' > android/app/src/main/res/values/strings.xml
           <?xml version='1.0' encoding='utf-8'?>
@@ -167,13 +164,14 @@ jobs:
           </resources>
           EOF
 
-          # 9. نقل ملف التوقيع إلى مجلد البناء
+          # 9. نقل ملف التوقيع إن وجد
           if [ -f "signing.keystore" ]; then
             cp signing.keystore android/app/
           fi
 
-          # 10. إعداد build.gradle وتحديد التوقيع وإصدار التطبيق
-          cat << EOF >> android/app/build.gradle
+          # 10. إعداد التوقيع والإصدار في build.gradle
+          if [ -f "android/app/signing.keystore" ]; then
+            cat << EOF >> android/app/build.gradle
 
           android {
               defaultConfig {
@@ -198,18 +196,36 @@ jobs:
               buildTypes {
                   release {
                       signingConfig signingConfigs.release
-                      minifyEnabled true
+                      minifyEnabled false
                   }
               }
           }
           EOF
+          else
+            cat << EOF >> android/app/build.gradle
+
+          android {
+              defaultConfig {
+                  applicationId "io.github.karamegy.omda"
+                  minSdk 24
+                  targetSdk 36
+                  versionCode 10000
+                  versionName "1.0.0"
+              }
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_21
+                  targetCompatibility JavaVersion.VERSION_21
+              }
+          }
+          EOF
+          fi
 
           # 11. المزامنة والتجميع
           npx cap sync android
           cd android
           chmod +x gradlew
-          ./gradlew bundleRelease --no-daemon
           ./gradlew assembleRelease --no-daemon
+          ./gradlew bundleRelease --no-daemon
 
       - name: Upload AAB Bundle Artifact (Google Play)
         uses: actions/upload-artifact@v4
