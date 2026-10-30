@@ -2,7 +2,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === التسجيل التلقائي وتحديث الـ Service Worker منعاً للنسخ القديمة ومشاكل GitHub Pages ===
+// === التسجيل التلقائي وتحديث الـ Service Worker ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).then((registration) => {
@@ -914,7 +914,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     }
 });
 
-// === معاينة الفاتورة وبناء الأزرار المصغرة والتفاعلية ===
+// === معاينة الفاتورة وعرض زر الصورة والطباعة فقط ===
 window.previewInvoice = function(orderId, order) {
     const content = document.getElementById('printableInvoiceContent');
     let itemsHtml = '';
@@ -926,114 +926,99 @@ window.previewInvoice = function(orderId, order) {
 
     content.innerHTML = `
         <div id="invoiceCanvasArea" style="background:#fff; padding:15px; text-align:right;">
-            <h2 style="color:var(--primary); text-align:center; font-size:1.3rem;">منصة العمدة للأعلاف والحبوب</h2>
-            <p style="text-align:center; color:#666; font-size:0.85rem;">فاتورة مبيعات رسمية</p>
-            <hr style="margin:8px 0;">
-            <p style="font-size:0.85rem;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
-            <p style="font-size:0.85rem;"><strong>العميل:</strong> ${order.userEmail}</p>
+            <h2 style="color:var(--primary); text-align:center; font-size:1.3rem; margin-bottom:5px;">منصة العمدة للأعلاف والحبوب</h2>
+            <p style="text-align:center; color:#666; font-size:0.85rem; margin-bottom:10px;">فاتورة مبيعات رسمية</p>
+            <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
+            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
+            <p style="font-size:0.85rem; margin-bottom:8px;"><strong>العميل:</strong> ${order.userEmail}</p>
             <table style="width:100%; border-collapse:collapse; margin:12px 0;">
                 <tr style="background:var(--primary); color:#fff;"><th style="padding:6px; border:1px solid #ddd;">المنتج</th><th style="padding:6px; border:1px solid #ddd;">الكمية</th><th style="padding:6px; border:1px solid #ddd;">السعر</th></tr>
                 ${itemsHtml}
             </table>
-            <h3 style="font-size:1.1rem; color:var(--primary);">الإجمالي النهائي: ${order.total} ج.م</h3>
-        </div>
-        
-        <div class="invoice-actions-grid">
-            <button id="saveInvoiceImgBtn" class="btn-invoice-sm"><i class="fa-solid fa-image"></i> حفظ كصورة</button>
-            <button id="saveInvoicePdfBtn" class="btn-invoice-sm"><i class="fa-solid fa-file-pdf"></i> حفظ PDF</button>
-            <button id="printInvoiceBtn" class="btn-invoice-sm"><i class="fa-solid fa-print"></i> طباعة</button>
-            <button id="closeInvoiceModalBtn" class="btn-invoice-sm close-invoice-btn-sm"><i class="fa-solid fa-xmark"></i> إغلاق</button>
+            <h3 style="font-size:1.1rem; color:var(--primary); margin-top:10px;">الإجمالي النهائي: ${order.total} ج.م</h3>
         </div>`;
 
     if (invoiceModal) invoiceModal.style.display = 'flex';
 
-    // ربط الأزرار فور إنشائها داخل الـ DOM
-    document.getElementById('closeInvoiceModalBtn')?.addEventListener('click', () => {
-        invoiceModal.style.display = 'none';
-    });
+    // ربط الفعاليات بـ الزرين المحددين
+    const closeBtn = document.getElementById('closeInvoiceModalBtn');
+    const printBtn = document.getElementById('printInvoiceBtn');
+    const saveImgBtn = document.getElementById('saveInvoiceImgBtn');
 
-    document.getElementById('printInvoiceBtn')?.addEventListener('click', () => {
-        window.print();
-    });
+    if (closeBtn) {
+        closeBtn.onclick = () => { invoiceModal.style.display = 'none'; };
+    }
 
-    document.getElementById('saveInvoiceImgBtn')?.addEventListener('click', saveInvoiceAsImage);
-    document.getElementById('saveInvoicePdfBtn')?.addEventListener('click', saveInvoiceAsPDF);
+    if (printBtn) {
+        printBtn.onclick = () => { window.print(); };
+    }
+
+    if (saveImgBtn) {
+        saveImgBtn.onclick = saveInvoiceAsImage;
+    }
 };
 
-// === حفظ الفاتورة كصورة (يدعم Android WebView & Share API) ===
+// === حفظ الفاتورة كصورة وتشغيل نافذة جوجل للمشاركة والتنزيل في الأندرويد ===
 async function saveInvoiceAsImage() {
     const canvasArea = document.getElementById('invoiceCanvasArea');
     if (!canvasArea) return;
 
     if (typeof html2canvas === 'undefined') {
-        alert('يرجى التأكد من إضافة مكتبة html2canvas في ملف index.html');
+        alert('يرجى الاتصال بالإنترنت لتحميل مكتبة التقاط الصور.');
         return;
     }
 
     try {
-        const canvas = await html2canvas(canvasArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-        const dataUrl = canvas.toDataURL('image/png');
+        const canvas = await html2canvas(canvasArea, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff'
+        });
+
         const fileName = `Invoice_${Date.now()}.png`;
 
-        const response = await fetch(dataUrl);
-        const blob = await response.blob();
-        const file = new File([blob], fileName, { type: 'image/png' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'فاتورة منصة العمدة', text: 'فاتورة شراء - منصة العمدة' });
-        } else {
-            // حل بديل للأندرويد فتح الصورة نافذة جديدة لتسهيل الحفظ المباشر
-            const imgWindow = window.open("");
-            if (imgWindow) {
-                imgWindow.document.write(`<img src="${dataUrl}" style="width:100%"/>`);
-            } else {
-                const link = document.createElement('a');
-                link.download = fileName;
-                link.href = dataUrl;
-                link.click();
+        // تحويل الكانفاس إلى Blob لمشاركته أو تنزيله رسمياً عبر نظام أندرويد
+        canvas.toBlob(async (blob) => {
+            if (!blob) {
+                alert('حدث خطأ أثناء معالجة صورة الفاتورة.');
+                return;
             }
-        }
+
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // استخدام Web Share API لتفعيل نافذة المشاركة الحية الخاصة بأندرويد وجوجل (حفظ في الصور، Drive، التنزيلات)
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: 'فاتورة منصة العمدة',
+                        text: 'فاتورة شراء رسمية من منصة العمدة للأعلاف والحبوب'
+                    });
+                } catch (shareErr) {
+                    if (shareErr.name !== 'AbortError') {
+                        downloadBlobFallback(blob, fileName);
+                    }
+                }
+            } else {
+                downloadBlobFallback(blob, fileName);
+            }
+        }, 'image/png');
+
     } catch (err) {
-        alert('خطأ أثناء حفظ الصورة: ' + err.message);
+        alert('حدث خطأ أثناء حفظ الفاتورة: ' + err.message);
     }
 }
 
-// === حفظ الفاتورة كـ PDF (متوافق مع الأندرويد) ===
-async function saveInvoiceAsPDF() {
-    const canvasArea = document.getElementById('invoiceCanvasArea');
-    if (!canvasArea) return;
-
-    if (typeof html2canvas === 'undefined' || typeof window.jspdf === 'undefined') {
-        alert('يرجى تأكيد تضمين مكتبات html2canvas و jsPDF في ملف index.html');
-        return;
-    }
-
-    try {
-        const canvas = await html2canvas(canvasArea, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
-        const imgData = canvas.toDataURL('image/png');
-
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-
-        pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight);
-        
-        const fileName = `Invoice_${Date.now()}.pdf`;
-
-        // إخراج الملف وتجربة المشاركة أو التنزيل
-        const pdfBlob = pdf.output('blob');
-        const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
-
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({ files: [file], title: 'فاتورة منصة العمدة PDF' });
-        } else {
-            pdf.save(fileName);
-        }
-    } catch (err) {
-        alert('خطأ أثناء حفظ ملف PDF: ' + err.message);
-    }
+// تنزيل احتياطي في حال عدم دعم Share API
+function downloadBlobFallback(blob, fileName) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // === إعداد خريطة العميل ===
@@ -1195,7 +1180,7 @@ async function refreshAdminMapMarkers() {
                     .bindPopup(`<b>سيارة أسطول:</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق:</b> ${v.driver}`);
             }
         });
-        alert('تم تحديث الخريطة ومواقع الأسطول بنجاح!');
+        alert('تم تحديث الخريطة وم مواقع الأسطول بنجاح!');
     } catch (e) {
         console.warn("خطأ في تحديث مواقع الخريطة:", e);
     }
