@@ -207,11 +207,12 @@ onAuthStateChanged(auth, async (user) => {
         try {
             const userDocRef = doc(db, "users", user.email);
             const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
+            
+            if (user.email === "haretg@gmail.com") {
+                currentUserRole = "admin"; // فرض رتبة الأدمين لبريدك الرئيسي فوراً
+            } else if (userDoc.exists()) {
                 const userData = userDoc.data();
                 currentUserRole = userData.role || userData.rol || userData.col || "customer";
-            } else if (user.email === "haretg@gmail.com") {
-                currentUserRole = "admin";
             }
             
             if (["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole)) {
