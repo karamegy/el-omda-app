@@ -25,6 +25,7 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
+    padding-bottom: 70px; /* مساحة سفلية لتجنب تغطية المحتوى بالشريط السفلي */
 }
 
 /* خلفيات متحركة ورسومات */
@@ -106,20 +107,22 @@ body::after {
     100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
 }
 
-/* الطباعة */
+/* طباعة الفاتورة */
 @media print {
     body * {
-        visibility: hidden;
+        visibility: hidden !important;
     }
-    #invoiceModal, #invoiceModal * {
-        visibility: visible;
+    #printableInvoiceContent, #printableInvoiceContent * {
+        visibility: visible !important;
     }
-    #invoiceModal {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: white;
+    #printableInvoiceContent {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        padding: 20px !important;
+        background: #ffffff !important;
+        color: #000000 !important;
     }
 }
 
@@ -242,11 +245,11 @@ body::after {
     padding: 10px 1.5rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.03);
     overflow-x: auto;
-    scrollbar-width: none; /* إخفاء سكرولبار لمتصفح فايرفوكس */
+    scrollbar-width: none;
 }
 
 .categories-nav::-webkit-scrollbar {
-    display: none; /* إخفاء سكرولبار لمتصفحات كروم وسفاري */
+    display: none;
 }
 
 .cat-container {
@@ -406,6 +409,44 @@ body::after {
     font-weight: 700;
     cursor: pointer;
     width: 100%;
+}
+
+/* شريط التنقل السفلي الثابت (Bottom Nav Bar) */
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background-color: var(--primary);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
+    border-top: 2px solid var(--accent);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.25);
+}
+
+.bottom-nav .nav-item {
+    background: none;
+    border: none;
+    color: #a8bba2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    gap: 3px;
+    transition: all 0.2s ease;
+}
+
+.bottom-nav .nav-item i {
+    font-size: 1.2rem;
+}
+
+.bottom-nav .nav-item.active {
+    color: var(--white);
+    font-weight: bold;
 }
 
 /* زر تسجيل الدخول بجوجل */
@@ -664,4 +705,4 @@ body::after {
     .admin-tabs {
         justify-content: center;
     }
-}
+    }
