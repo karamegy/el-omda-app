@@ -14,7 +14,7 @@ jobs:
       - name: Checkout Source Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js Environment
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -28,31 +28,18 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Restore Keystore File
+      - name: Restore Keystore File from Repository Secrets
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
-
-      - name: Initialize Android Studio Project
-        run: |
-          bubblewrap init --manifest=twa-manifest.json
 
       - name: Build Android App Bundle (AAB) & APK
         run: |
           bubblewrap build --keyPath=release.keystore --keyAlias="${{ secrets.KEY_ALIAS }}" --keyPassword="${{ secrets.KEY_PASSWORD }}" --storePassword="${{ secrets.KEYSTORE_PASSWORD }}"
 
-      - name: Upload Signed APK & AAB
+      - name: Upload Signed Android Artifacts (AAB & APK)
         uses: actions/upload-artifact@v4
         with:
           name: elomda-android-builds
           path: |
             *.apk
             *.aab
-
-      - name: Upload Full Android Studio Source Project
-        uses: actions/upload-artifact@v4
-        with:
-          name: elomda-android-studio-source-code
-          path: |
-            .
-            !.git
-            !node_modules
