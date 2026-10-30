@@ -26,7 +26,7 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    padding-bottom: 70px; /* مساحة سفلية لتجنب تغطية المحتوى بالشريط السفلي */
+    padding-bottom: 70px;
 }
 
 /* خلفيات متحركة ورسومات */
@@ -108,7 +108,7 @@ body::after {
     100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
 }
 
-/* تحسينات طباعة الفاتورة وإلغاء زوائد المتصفح */
+/* تحسينات طباعة الفاتورة */
 @page {
     size: auto;
     margin: 5mm;
@@ -246,7 +246,7 @@ body::after {
     font-weight: bold;
 }
 
-/* شريط الأقسام الأفقي */
+/* شريط الأقسام الافقي */
 .categories-nav {
     background: var(--white);
     padding: 10px 1.5rem;
@@ -557,22 +557,50 @@ body::after {
     cursor: pointer;
 }
 
-/* أزرار الفاتورة المخصصة والواضحة */
-#saveInvoiceImgBtn {
-    background: #b58352 !important;
-    color: #ffffff !important;
-    font-weight: bold;
-    transition: 0.3s;
+/* === أزرار الفاتورة المصغرة والمناسبة للأندرويد === */
+.invoice-actions-container {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
 }
 
-#saveInvoiceImgBtn:hover {
-    background: #96673a !important;
+.btn-invoice-action {
+    flex: 1;
+    min-width: 100px;
+    padding: 8px 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: background 0.2s, opacity 0.2s;
+    white-space: nowrap;
 }
 
-#printInvoiceBtn {
-    background: #1e3d2f !important;
-    color: #ffffff !important;
-    font-weight: bold;
+.btn-invoice-action:active {
+    opacity: 0.85;
+}
+
+.btn-save-img {
+    background: #d4a373;
+    color: #ffffff;
+}
+
+.btn-print {
+    background: #1e3d2f;
+    color: #ffffff;
+}
+
+.btn-close-inv {
+    background: #666666;
+    color: #ffffff;
 }
 
 /* جدول تفاصيل الفاتورة */
@@ -714,7 +742,7 @@ body::after {
     color: var(--primary);
 }
 
-/* إصلاح خرائط Leaflet مع طبقات الـ z-index */
+/* خرائط Leaflet */
 .leaflet-container {
     z-index: 1 !important;
 }
