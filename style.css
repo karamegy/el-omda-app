@@ -108,17 +108,44 @@ body::after {
     100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
 }
 
-/* تحسينات طباعة الفاتورة */
+/* ==========================================
+   تحسينات الفاتورة والتوافق مع html2canvas والطباعة
+========================================== */
 @page {
     size: auto;
     margin: 5mm;
 }
 
+/* تنسيق منطقة الفاتورة القابلة لالتقاط الصورة والطباعة */
+#printableInvoiceContent {
+    background: #ffffff !important;
+    color: #222222 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    font-size: 0.9rem;
+}
+
+#printableInvoiceContent table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin: 15px 0 !important;
+}
+
+#printableInvoiceContent th, 
+#printableInvoiceContent td {
+    padding: 8px !important;
+    border: 1px solid #ddd !important;
+    text-align: center !important;
+}
+
+/* إعدادات الطباعة النظامية */
 @media print {
     body * {
         visibility: hidden !important;
     }
-    #printableInvoiceContent, #printableInvoiceContent * {
+    #printableInvoiceContent, 
+    #printableInvoiceContent * {
         visibility: visible !important;
     }
     #printableInvoiceContent {
@@ -128,7 +155,6 @@ body::after {
         width: 100% !important;
         padding: 15px !important;
         background: #ffffff !important;
-        color: #000000 !important;
         box-shadow: none !important;
     }
 }
@@ -601,20 +627,6 @@ body::after {
 .btn-close-inv {
     background: #666666;
     color: #ffffff;
-}
-
-/* جدول تفاصيل الفاتورة */
-#printableInvoiceContent table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 15px 0;
-    font-size: 0.9rem;
-}
-
-#printableInvoiceContent th, #printableInvoiceContent td {
-    padding: 8px;
-    border: 1px solid #ddd;
-    text-align: center;
 }
 
 /* لوحة تحكم المدير */
