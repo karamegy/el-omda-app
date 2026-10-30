@@ -37,6 +37,9 @@ const firebaseConfig = {
   appId: "1:1078714497381:android:9430672b84226b0a46898c"
 };
 
+// Client ID لربط نافذة توثيق جوجل في الأندرويد والهواتف
+const GOOGLE_WEB_CLIENT_ID = "1078714497381-jhgocuj7jumoudh3o1a75dbilosciscv.apps.googleusercontent.com";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -155,7 +158,9 @@ googleLoginBtn.addEventListener('click', async () => {
 
         if (isNative && window.Capacitor?.Plugins?.FirebaseAuthentication) {
             // استخدام النافذة المعتمدة الأصلية لنظام أندرويد (Native Google Sign-In)
-            const result = await window.Capacitor.Plugins.FirebaseAuthentication.signInWithGoogle();
+            const result = await window.Capacitor.Plugins.FirebaseAuthentication.signInWithGoogle({
+                webClientId: GOOGLE_WEB_CLIENT_ID
+            });
             const idToken = result.credential?.idToken || result.user?.idToken;
             
             if (!idToken) {
@@ -184,6 +189,7 @@ googleLoginBtn.addEventListener('click', async () => {
         }
         alert('تم تسجيل الدخول بحساب جوجل بنجاح!');
         authModal.style.display = 'none';
+        location.reload();
     } catch (error) {
         console.error('Google Sign-In Error:', error);
         alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
