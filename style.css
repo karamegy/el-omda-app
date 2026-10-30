@@ -26,7 +26,7 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    padding-bottom: 70px;
+    padding-bottom: 70px; /* مساحة سفلية لتجنب تغطية المحتوى بالشريط السفلي */
 }
 
 /* خلفيات متحركة ورسومات */
@@ -557,51 +557,22 @@ body::after {
     cursor: pointer;
 }
 
-/* === تنسيق وتصغير أزرار الفاتورة الخاصة بالتطبيق === */
-.invoice-actions-grid {
-    display: flex;
-    gap: 8px;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 12px;
-}
-
-.btn-invoice-sm {
-    flex: 1;
-    min-width: 90px;
-    padding: 8px 10px !important;
-    font-size: 0.78rem !important;
-    border-radius: 8px !important;
-    font-weight: bold;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    text-align: center;
-    transition: 0.2s;
-}
-
+/* أزرار الفاتورة المخصصة والواضحة */
 #saveInvoiceImgBtn {
     background: #b58352 !important;
     color: #ffffff !important;
+    font-weight: bold;
+    transition: 0.3s;
 }
 
-#saveInvoicePdfBtn {
-    background: #e63946 !important;
-    color: #ffffff !important;
+#saveInvoiceImgBtn:hover {
+    background: #96673a !important;
 }
 
 #printInvoiceBtn {
     background: #1e3d2f !important;
     color: #ffffff !important;
-}
-
-.close-invoice-btn-sm {
-    background: #666666 !important;
-    color: #ffffff !important;
+    font-weight: bold;
 }
 
 /* جدول تفاصيل الفاتورة */
@@ -778,4 +749,4 @@ body::after {
     .admin-tabs {
         justify-content: center;
     }
-    }
+}
