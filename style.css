@@ -759,6 +759,13 @@ body::after {
     z-index: 1 !important;
 }
 
+#userMap, #adminMap {
+    width: 100%;
+    min-height: 280px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
 /* التجاوب مع الهواتف الذكية */
 @media(max-width: 768px) {
     .header-container {
