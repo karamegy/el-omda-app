@@ -53,6 +53,7 @@ let allCategoriesCache = JSON.parse(localStorage.getItem('allaf_categories_cache
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
+let adminMapMarkersGroup = null; // لمسح وعرض العلامات بسلاسة
 let selectedLat = 30.0444; 
 let selectedLng = 31.2357;
 let carouselInterval = null;
@@ -120,7 +121,7 @@ document.querySelector('.close-notif-modal')?.addEventListener('click', () => no
 profileBtn?.addEventListener('click', () => {
     switchSection('profileSection');
     loadUserProfile();
-    setTimeout(() => { initUserMap(); }, 300);
+    setTimeout(() => { initUserMap(); }, 200);
 });
 
 adminBtn?.addEventListener('click', () => {
@@ -137,7 +138,10 @@ window.switchSection = function(sectionId) {
     document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => btn.classList.remove('active'));
     if (sectionId === 'productsSection') document.getElementById('navHomeBtn')?.classList.add('active');
     if (sectionId === 'categoriesSection') document.getElementById('navCatBtn')?.classList.add('active');
-    if (sectionId === 'profileSection') document.getElementById('navProfileBtn')?.classList.add('active');
+    if (sectionId === 'profileSection') {
+        document.getElementById('navProfileBtn')?.classList.add('active');
+        setTimeout(() => { if (userMap) userMap.invalidateSize(); else initUserMap(); }, 200);
+    }
 };
 
 googleLoginBtn?.addEventListener('click', async () => {
@@ -1041,7 +1045,9 @@ function downloadBlobFallback(blob, fileName) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// === إعداد خريطة العميل ===
+// ==========================================
+// === إعداد خريطة العميل المحدثة وفائقة السرعة ===
+// ==========================================
 function initUserMap() {
     const userMapElem = document.getElementById('userMap');
     if (!userMapElem) return;
@@ -1053,21 +1059,32 @@ function initUserMap() {
 
     if (userMap) { 
         userMap.invalidateSize(); 
-        userMap.setView([selectedLat, selectedLng], 13);
+        userMap.setView([selectedLat, selectedLng], 14);
         if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
         return; 
     }
 
-    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+    // طبقات خريطة سريعة وخفيفة جداً
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        maxZoom: 19,
+        keepBuffer: 3,
+        updateWhenIdle: true,
+        updateWhenZooming: false
+    });
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
-        attribution: 'Esri Satellite'
+        attribution: 'Esri Satellite',
+        keepBuffer: 3
     });
 
     userMap = L.map('userMap', {
         center: [selectedLat, selectedLng],
-        zoom: 13,
-        layers: [streetLayer]
+        zoom: 14,
+        layers: [streetLayer],
+        preferCanvas: true,
+        zoomControl: true,
+        fadeAnimation: true,
+        zoomAnimation: true
     });
 
     const baseMaps = {
@@ -1076,26 +1093,56 @@ function initUserMap() {
     };
     L.control.layers(baseMaps).addTo(userMap);
 
-    userMarker = L.marker([selectedLat, selectedLng], { draggable: true }).addTo(userMap);
-    userMarker.on('dragend', () => {
-        selectedLat = userMarker.getLatLng().lat;
-        selectedLng = userMarker.getLatLng().lng;
+    // أيقونة دبوس مميزة وسريعة الاستجابة
+    const userIcon = L.divIcon({
+        className: 'custom-user-marker',
+        html: `<div style="background:#2c5e3b; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #fff;"><i class="fa-solid fa-location-dot" style="font-size:18px;"></i></div>`,
+        iconSize: [34, 34],
+        iconAnchor: [17, 34],
+        popupAnchor: [0, -34]
     });
+
+    userMarker = L.marker([selectedLat, selectedLng], { draggable: true, icon: userIcon }).addTo(userMap);
+    userMarker.bindPopup('موقع التوصيل المحدد').openPopup();
+
+    // تحديث الموقع عند سحب الدبوس
+    userMarker.on('dragend', () => {
+        const pos = userMarker.getLatLng();
+        selectedLat = pos.lat;
+        selectedLng = pos.lng;
+    });
+
+    // ميزة جديدة: الضغط في أي مكان على الخريطة لنقل الدبوس فوراً
+    userMap.on('click', (e) => {
+        selectedLat = e.latlng.lat;
+        selectedLng = e.latlng.lng;
+        userMarker.setLatLng([selectedLat, selectedLng]);
+        userMap.panTo([selectedLat, selectedLng]);
+    });
+
+    // حل المشكلة الرمادية نهائياً عند اكتمال العرض
+    setTimeout(() => {
+        if (userMap) userMap.invalidateSize();
+    }, 250);
 }
 
 locateMeBtn?.addEventListener('click', () => {
     if (navigator.geolocation) {
+        locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
         navigator.geolocation.getCurrentPosition(position => {
             selectedLat = position.coords.latitude;
             selectedLng = position.coords.longitude;
             if (userMap) {
                 userMap.setView([selectedLat, selectedLng], 15);
                 if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
+                userMap.invalidateSize();
             }
             alert('تم تحديد موقعك بنجاح!');
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
         }, () => {
             alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-        });
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+        }, { enableHighAccuracy: true, timeout: 10000 });
     } else {
         alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
     }
@@ -1149,7 +1196,10 @@ window.switchAdminTab = function(tabName) {
     } else if (tabName === 'map') {
         document.getElementById('adminMapTab').style.display = 'block';
         document.getElementById('tabMapBtn').classList.add('active');
-        setTimeout(() => { initAdminMap(); }, 300);
+        setTimeout(() => { 
+            initAdminMap(); 
+            if (adminMap) adminMap.invalidateSize();
+        }, 200);
     } else if (tabName === 'messaging') {
         document.getElementById('adminMessagingTab').style.display = 'block';
         document.getElementById('tabMsgBtn').classList.add('active');
@@ -1160,24 +1210,35 @@ window.switchAdminTab = function(tabName) {
     }
 };
 
+// ==========================================
+// === إعداد خريطة الإدارة والأسطول المحدثة ===
+// ==========================================
 async function initAdminMap() {
     const adminMapElem = document.getElementById('adminMap');
     if (!adminMapElem) return;
+
     if (adminMap) {
         adminMap.invalidateSize();
+        await refreshAdminMapMarkers();
         return;
     }
 
-    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
+    const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+        maxZoom: 19,
+        keepBuffer: 3,
+        updateWhenIdle: true
+    });
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
         maxZoom: 19,
-        attribution: 'Esri Satellite'
+        attribution: 'Esri Satellite',
+        keepBuffer: 3
     });
 
     adminMap = L.map('adminMap', {
         center: [30.0444, 31.2357],
         zoom: 11,
-        layers: [streetLayer]
+        layers: [streetLayer],
+        preferCanvas: true
     });
 
     const baseMaps = {
@@ -1186,31 +1247,65 @@ async function initAdminMap() {
     };
     L.control.layers(baseMaps).addTo(adminMap);
 
+    // مجموعة لترتيب وتحديث دبابيس سيارات الأسطول بدون تكرار
+    adminMapMarkersGroup = L.layerGroup().addTo(adminMap);
+
     await refreshAdminMapMarkers();
+    setTimeout(() => { if (adminMap) adminMap.invalidateSize(); }, 250);
 }
 
 async function refreshAdminMapMarkers() {
-    if (!adminMap) return;
+    if (!adminMap || !adminMapMarkersGroup) return;
+    adminMapMarkersGroup.clearLayers(); // تنظيف العلامات القديمة
+
     try {
         const snapshot = await getDocs(collection(db, "vehicles"));
+        const bounds = [];
+
+        const vehicleIcon = L.divIcon({
+            className: 'custom-veh-marker',
+            html: `<div style="background:#e63946; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #fff;"><i class="fa-solid fa-truck-front" style="font-size:16px;"></i></div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 34],
+            popupAnchor: [0, -34]
+        });
+
         snapshot.forEach(docSnap => {
             const v = docSnap.data();
             if (v.lat && v.lng) {
-                L.marker([v.lat, v.lng]).addTo(adminMap)
+                const marker = L.marker([v.lat, v.lng], { icon: vehicleIcon })
                     .bindPopup(`<b>سيارة أسطول:</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق:</b> ${v.driver}`);
+                adminMapMarkersGroup.addLayer(marker);
+                bounds.push([v.lat, v.lng]);
             }
         });
-        alert('تم تحديث الخريطة وم مواقع الأسطول بنجاح!');
+
+        // احتواء وتقريب تلقائي يضمن ظهور كل شاحنات الأسطول
+        if (bounds.length > 0) {
+            adminMap.fitBounds(bounds, { padding: [40, 40] });
+        }
     } catch (e) {
         console.warn("خطأ في تحديث مواقع الخريطة:", e);
     }
 }
 
 if (refreshAdminMapBtn) {
-    refreshAdminMapBtn.addEventListener('click', () => {
-        initAdminMap();
+    refreshAdminMapBtn.addEventListener('click', async () => {
+        if (!adminMap) {
+            await initAdminMap();
+        } else {
+            await refreshAdminMapMarkers();
+            adminMap.invalidateSize();
+            alert('تم تحديث الخريطة ومواقع الأسطول بنجاح!');
+        }
     });
 }
+
+// إعادة ضبط وتكييف حجم الخريطة فور تغيير أبعاد النافذة تلقائياً
+window.addEventListener('resize', () => {
+    if (userMap) userMap.invalidateSize();
+    if (adminMap) adminMap.invalidateSize();
+});
 
 listenRealtimeData();
 updateCartUI();
