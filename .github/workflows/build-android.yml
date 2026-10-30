@@ -28,14 +28,27 @@ jobs:
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
 
-      - name: Configure Bubblewrap Non-Interactively
-        run: |
-          mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
-
       - name: Restore Keystore File
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
+
+      - name: Configure Bubblewrap Environment
+        run: |
+          mkdir -p ~/.bubblewrap
+          node -e '
+            const fs = require("fs");
+            const os = require("os");
+            const path = require("path");
+            
+            const config = {
+              jdkPath: process.env.JAVA_HOME,
+              androidSdkPath: process.env.ANDROID_HOME || "/usr/local/lib/android/sdk"
+            };
+            
+            const configPath = path.join(os.homedir(), ".bubblewrap", "config.json");
+            fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+            console.log("Config created successfully:", config);
+          '
 
       - name: Build Android App Bundle (AAB) & APK
         run: |
