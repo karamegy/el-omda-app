@@ -24,6 +24,27 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Extract Certificate Fingerprints (SHA-1 & SHA-256)
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          KEYSTORE_DATA="${{ secrets.ANDROID_KEYSTORE_BASE64 }}"
+          if [ -z "$KEYSTORE_DATA" ]; then
+            KEYSTORE_DATA="${{ secrets.ANDROID_KEYSTORE }}"
+          fi
+          if [ -n "$KEYSTORE_DATA" ]; then
+            echo "$KEYSTORE_DATA" | base64 --decode > temp_signing.keystore
+            PASS="${KEYSTORE_PASSWORD:-SEXQAYbxVVf1}"
+            ALIAS="${KEY_ALIAS:-my-key-alias}"
+            echo "=================== CERTIFICATE FINGERPRINTS ==================="
+            keytool -list -v -keystore temp_signing.keystore -storepass "$PASS" -alias "$ALIAS" || keytool -list -v -keystore temp_signing.keystore -storepass "$PASS"
+            rm -f temp_signing.keystore
+            echo "================================================================"
+          else
+            echo "Error: Keystore secret not found in repository secrets."
+          fi
+
       - name: Build Android App
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -193,9 +214,9 @@ jobs:
               signingConfigs {
                   release {
                       storeFile file('signing.keystore')
-                      storePassword '$KEYSTORE_PASSWORD'
-                      keyAlias '$KEY_ALIAS'
-                      keyPassword '$KEY_PASSWORD'
+                      storePassword '${KEYSTORE_PASSWORD:-SEXQAYbxVVf1}'
+                      keyAlias '${KEY_ALIAS:-my-key-alias}'
+                      keyPassword '${KEY_PASSWORD:-SEXQAYbxVVf1}'
                   }
               }
               buildTypes {
