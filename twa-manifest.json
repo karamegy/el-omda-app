@@ -1,0 +1,32 @@
+{
+  "packageId": "io.github.karamegy.el-omda",
+  "host": "karamegy.github.io",
+  "name": "مؤسسة الإخلاص للأعلاف",
+  "launcherName": "العمدة",
+  "display": "standalone",
+  "themeColor": "#1e3d2f",
+  "navigationColor": "#1e3d2f",
+  "backgroundColor": "#1e3d2f",
+  "enableNotifications": true,
+  "startUrl": "/el-omda-app/",
+  "iconUrl": "https://karamegy.github.io/el-omda-app/logo.png",
+  "maskableIconUrl": "https://karamegy.github.io/el-omda-app/logo.png",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://karamegy.github.io/el-omda-app/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {
+    "locationDelegation": {
+      "enabled": true
+    }
+  },
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "signingKey": {
+    "path": "./release.keystore",
+    "alias": "KEY_ALIAS"
+  }
+}
