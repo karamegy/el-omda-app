@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // === التسجيل التلقائي وتحديث الـ Service Worker لمنع النسخ القديمة ومشاكل GitHub Pages ===
@@ -147,11 +147,30 @@ function switchSection(sectionId) {
     document.getElementById(sectionId).style.display = 'block';
 }
 
-// تسجيل الدخول بجوجل (إلزام الحساب الجديد برتبة عميل customer تلقائياً)
+// تسجيل الدخول بجوجل (دعم متكامل للنوافذ الأصلية Native ونوافذ الويب Web)
 googleLoginBtn.addEventListener('click', async () => {
     try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
+        let user;
+        const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+
+        if (isNative && window.Capacitor?.Plugins?.FirebaseAuthentication) {
+            // استخدام النافذة المعتمدة الأصلية لنظام أندرويد (Native Google Sign-In)
+            const result = await window.Capacitor.Plugins.FirebaseAuthentication.signInWithGoogle();
+            const idToken = result.credential?.idToken || result.user?.idToken;
+            
+            if (!idToken) {
+                throw new Error('لم يتم جلب رمز التوثيق (idToken) من جوجل.');
+            }
+            
+            const credential = GoogleAuthProvider.credential(idToken);
+            const userCredential = await signInWithCredential(auth, credential);
+            user = userCredential.user;
+        } else {
+            // استخدام Popup العادي عند الفتح عبر المتصفح
+            const result = await signInWithPopup(auth, googleProvider);
+            user = result.user;
+        }
+
         const userRef = doc(db, "users", user.email);
         const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) {
@@ -166,6 +185,7 @@ googleLoginBtn.addEventListener('click', async () => {
         alert('تم تسجيل الدخول بحساب جوجل بنجاح!');
         authModal.style.display = 'none';
     } catch (error) {
+        console.error('Google Sign-In Error:', error);
         alert('خطأ في تسجيل الدخول بجوجل: ' + error.message);
     }
 });
@@ -480,7 +500,6 @@ checkoutBtn.addEventListener('click', async () => {
     }
 });
 
-// إدارة المنتجات (إضافة / تعديل / حذف)
 addProductForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -620,7 +639,6 @@ async function loadCategoriesForAdmin() {
     });
 }
 
-// أزرار وجلب إحداثيات GPS للسيارات
 document.addEventListener('click', (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         if (navigator.geolocation) {
@@ -642,7 +660,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// إدارة الأسطول (إضافة / تعديل / حذف سيارات الأسطول)
 addVehicleForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editVehicleId = document.getElementById('editVehicleId').value;
