@@ -76,8 +76,8 @@ jobs:
           }
           EOF
 
-          # 4. تثبيت حزم Capacitor المطلوبة
-          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
+          # 4. تثبيت حزم Capacitor المطلوبة مع دعم Firebase Authentication الأصلي
+          npm install @capacitor/cli@latest @capacitor/core@latest @capacitor/android@latest @capacitor-firebase/authentication@latest @capacitor/filesystem @capacitor/share @capacitor/assets --save-dev
 
           # 5. بناء منصة أندرويد
           rm -rf android
