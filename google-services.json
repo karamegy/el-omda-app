@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "1078714497381-jhgocuj7jumoudh3o1a75dbilosciscv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "io.github.karamegy.omda",
+            "certificate_hash": "251ed4de1c11f366fd0c9cc5ee81222a07c2fb21"
+          }
+        },
+        {
           "client_id": "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com",
           "client_type": 3
         }
