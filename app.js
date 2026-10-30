@@ -950,7 +950,7 @@ window.previewInvoice = function(orderId, order) {
     if (saveImgBtn) saveImgBtn.onclick = saveInvoiceAsImage;
 };
 
-// === حفظ الفاتورة كصورة وفتح نافذة جوجل للمشاركة والتنزيل فوراً ===
+// === حفظ الفاتورة كصورة والتنزيل المباشر مع استدعاء نافذة جوجل أندرويد المعتمده ===
 async function saveInvoiceAsImage() {
     const canvasArea = document.getElementById('invoiceCanvasArea');
     if (!canvasArea) return;
@@ -964,7 +964,6 @@ async function saveInvoiceAsImage() {
     if (saveImgBtn) saveImgBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحضير...';
 
     try {
-        // التقاط صورة الكانفاس بسرعة وبجودة عالية
         const canvas = await html2canvas(canvasArea, {
             scale: 2,
             useCORS: true,
@@ -973,71 +972,64 @@ async function saveInvoiceAsImage() {
         });
 
         const fileName = `فاتورة_العمدة_${Date.now()}.png`;
-
-        // تحويل الكانفاس إلى Blob
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         
         if (!blob) throw new Error('فشل معالجة الصورة');
 
         const file = new File([blob], fileName, { type: 'image/png' });
 
-        // إعادة نص الزر الاصلي
-        if (saveImgBtn) saveImgBtn.innerHTML = '<i class="fa-solid fa-image"></i> حفظ كصورة';
+        // 1. تنزيل الصورة مباشرة إلى جهاز المستخدم دون فتح نافذة متصفح
+        downloadBlobFallback(blob, fileName);
 
-        // 1. تجربة تشغيل Web Share API المباشرة
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+        // 2. تفعيل نافذة النظام المعتمده للشارية لأندرويد (Android Share Sheet)
+        if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share) {
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = async () => {
+                const base64Data = reader.result;
+                if (Capacitor.Plugins.Filesystem) {
+                    const savedFile = await Capacitor.Plugins.Filesystem.writeFile({
+                        path: fileName,
+                        data: base64Data,
+                        directory: 'CACHE'
+                    });
+                    await Capacitor.Plugins.Share.share({
+                        title: 'الفاتورة الإلكترونية',
+                        text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب',
+                        url: savedFile.uri,
+                        dialogTitle: 'مشاركة الفاتورة'
+                    });
+                } else if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'الفاتورة الإلكترونية',
+                        text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب'
+                    });
+                }
+            };
+        } else if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
-                title: 'فاتورة منصة العمدة',
+                title: 'الفاتورة الإلكترونية',
                 text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب'
             });
-        } else {
-            // 2. في حال قيود WebView أو عدم الدعم، فتح الصورة نافذة تفاعلية تتيح المشاركة والحفظ
-            const imageUrl = canvas.toDataURL('image/png');
-            const shareWindow = window.open('', '_blank');
-            if (shareWindow) {
-                shareWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>معاينة الفاتورة وحفظها</title>
-                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                            <style>
-                                body { font-family: sans-serif; text-align: center; background: #f4f6f5; margin: 0; padding: 15px; }
-                                img { max-width: 100%; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); margin-bottom: 15px; }
-                                .btn { background: #1e3d2f; color: #fff; border: none; padding: 12px 20px; font-size: 1rem; border-radius: 25px; font-weight: bold; width: 100%; max-width: 300px; cursor: pointer; }
-                            </style>
-                        </head>
-                        <body>
-                            <h3>اضغط مطولاً على الصورة لحفظها أو مشاركتها</h3>
-                            <img src="${imageUrl}" />
-                            <br>
-                            <a href="${imageUrl}" download="${fileName}" style="text-decoration:none;"><button class="btn">تحميل الصورة مباشرة</button></a>
-                        </body>
-                    </html>
-                `);
-            } else {
-                downloadBlobFallback(blob, fileName);
-            }
         }
 
     } catch (err) {
-        if (saveImgBtn) saveImgBtn.innerHTML = '<i class="fa-solid fa-image"></i> حفظ كصورة';
         if (err.name !== 'AbortError') {
-            alert('تمت العملية أو حدث تنبيه: ' + err.message);
+            console.error('تنبيه مشاركة/حفظ الصورة:', err);
         }
+    } finally {
+        if (saveImgBtn) saveImgBtn.innerHTML = '<i class="fa-solid fa-image"></i> حفظ كصورة';
     }
 }
 
-// === تشغيل زر الطباعة ليعمل على نظام الأندرويد ===
+// === تشغيل زر الطباعة لفتح نافذة مشاركة وطباعة الأندرويد النظامية ===
 function triggerAndroidPrintOrShare() {
-    if (window.print) {
-        window.print();
-    } else {
-        saveInvoiceAsImage();
-    }
+    saveInvoiceAsImage();
 }
 
-// تنزيل احتياطي في حال عدم دعم Share API
+// تنزيل ملف الصورة مباشرة في التخزين المحلي
 function downloadBlobFallback(blob, fileName) {
     const url = URL.createObjectURL ? URL.createObjectURL(blob) : window.webkitURL.createObjectURL(blob);
     const a = document.createElement('a');
