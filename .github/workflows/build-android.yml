@@ -25,19 +25,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Bubblewrap CLI
         run: npm install -g @bubblewrap/cli
+
+      - name: Configure Bubblewrap Non-Interactively
+        run: |
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_HOME\"}" > ~/.bubblewrap/config.json
 
       - name: Restore Keystore File
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
 
-      - name: Initialize Android Studio Project (Non-Interactive)
+      - name: Initialize Android Studio Project
         run: |
-          echo "n" | bubblewrap init --manifest=twa-manifest.json
+          bubblewrap init --manifest=twa-manifest.json
 
       - name: Build Android App Bundle (AAB) & APK
         run: |
