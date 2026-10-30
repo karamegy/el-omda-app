@@ -957,32 +957,73 @@ if (printInvoiceBtn) {
     });
 }
 
-// زر حفظ الفاتورة كصورة عبر html2canvas
+// === زر حفظ الفاتورة كصورة (متوافق مع أندرويد والمتصفحات وتطبيقات WebView) ===
 if (saveInvoiceImgBtn) {
-    saveInvoiceImgBtn.addEventListener('click', () => {
+    saveInvoiceImgBtn.addEventListener('click', async () => {
         const canvasArea = document.getElementById('invoiceCanvasArea');
         if (!canvasArea) {
             alert('يرجى فتح معاينة الفاتورة أولاً.');
             return;
         }
+
         if (typeof html2canvas === 'undefined') {
             alert('تأكد من الاتصال بالإنترنت لتنزيل مكتبة حفظ الصورة.');
             return;
         }
-        html2canvas(canvasArea, { scale: 2, useCORS: true }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Invoice_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }).catch(err => alert('حدث خطأ أثناء حفظ الصورة: ' + err.message));
+
+        try {
+            const canvas = await html2canvas(canvasArea, { 
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            });
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            const fileName = `Invoice_${Date.now()}.png`;
+
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // استخدام ميزة المشاركة والحفظ المباشرة لـ Android
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    files: [file],
+                    title: 'فاتورة منصة العمدة',
+                    text: 'فاتورة شراء رسمية - منصة العمدة للأعلاف والحبوب'
+                });
+            } else {
+                // تنزيل تقليدي لمتصفحات الكمبيوتر
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = dataUrl;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } catch (err) {
+            alert('حدث خطأ أثناء حفظ الفاتورة كصورة: ' + err.message);
+        }
     });
 }
 
-// === إعداد خريطة العميل مع دعم طبقة القمر الصناعي (Esri Satellite Layer) ===
+// === إعداد خريطة العميل مع استرجاع الإحداثيات ودعم طبقة القمر الصناعي ===
 function initUserMap() {
     const userMapElem = document.getElementById('userMap');
     if (!userMapElem) return;
-    if (userMap) { userMap.invalidateSize(); return; }
+
+    // استعادة الإحداثيات المحفوظة محلياً إن وجدت
+    const savedLat = parseFloat(localStorage.getItem('omda_user_lat')) || selectedLat;
+    const savedLng = parseFloat(localStorage.getItem('omda_user_lng')) || selectedLng;
+    selectedLat = savedLat;
+    selectedLng = savedLng;
+
+    if (userMap) { 
+        userMap.invalidateSize(); 
+        userMap.setView([selectedLat, selectedLng], 13);
+        if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
+        return; 
+    }
 
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 });
     const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
@@ -1016,14 +1057,41 @@ locateMeBtn?.addEventListener('click', () => {
             selectedLng = position.coords.longitude;
             if (userMap) {
                 userMap.setView([selectedLat, selectedLng], 15);
-                userMarker.setLatLng([selectedLat, selectedLng]);
+                if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
             }
             alert('تم تحديد موقعك بنجاح!');
+        }, () => {
+            alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
         });
+    } else {
+        alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
     }
 });
 
-saveLocationBtn?.addEventListener('click', () => alert('تم حفظ موقع التوصيل بنجاح!'));
+// === حفظ موقع التوصيل بـ Firestore وحفظه محلياً ===
+saveLocationBtn?.addEventListener('click', async () => {
+    if (!currentUser) {
+        alert('الرجاء تسجيل الدخول أولاً لحفظ موقع التوصيل.');
+        if (authModal) authModal.style.display = 'flex';
+        return;
+    }
+
+    try {
+        localStorage.setItem('omda_user_lat', selectedLat);
+        localStorage.setItem('omda_user_lng', selectedLng);
+
+        const userRef = doc(db, "users", currentUser.email);
+        await setDoc(userRef, {
+            lat: selectedLat,
+            lng: selectedLng,
+            locationUpdated: new Date().toISOString()
+        }, { merge: true });
+
+        alert(`تم حفظ موقع التوصيل الخاص بك بنجاح! الإحداثيات: (${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)})`);
+    } catch (err) {
+        alert('خطأ أثناء حفظ الموقع: ' + err.message);
+    }
+});
 
 // === إدارة تبويبات لوحة التحكم والإدارة ===
 window.switchAdminTab = function(tabName) {
