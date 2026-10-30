@@ -1,0 +1,14 @@
+{
+  "appId": "io.github.karamegy.omda",
+  "appName": "العمدة",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com"
+      ]
+    }
+  }
+}
