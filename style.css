@@ -27,6 +27,7 @@ body {
     overflow-x: hidden;
 }
 
+/* خلفيات متحركة ورسومات */
 body::before {
     content: '';
     position: fixed;
@@ -105,6 +106,7 @@ body::after {
     100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
 }
 
+/* الطباعة */
 @media print {
     body * {
         visibility: hidden;
@@ -121,40 +123,7 @@ body::after {
     }
 }
 
-.dynamic-carousel-card {
-    background: var(--white);
-    padding: 15px 20px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 25px;
-    border-right: 5px solid var(--accent);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    transition: 0.3s;
-}
-
-.dynamic-carousel-card:hover {
-    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
-}
-
-.carousel-icon-box {
-    font-size: 2rem;
-    color: var(--accent);
-    display: flex;
-    align-items: center;
-}
-
-.carousel-badge {
-    background: var(--primary);
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    white-space: nowrap;
-}
-
+/* الهيدر الرئيسي */
 .main-header {
     background: var(--primary);
     color: var(--white);
@@ -240,6 +209,7 @@ body::after {
     font-size: 0.8rem;
     transition: 0.3s;
     white-space: nowrap;
+    position: relative;
 }
 
 .action-btn:hover, .btn-login-main:hover {
@@ -252,19 +222,31 @@ body::after {
     border-color: var(--accent);
 }
 
+.admin-badge {
+    background: rgba(212, 163, 115, 0.25);
+    border-color: var(--accent);
+}
+
 .action-btn .badge {
     background: #e63946;
     color: var(--white);
     font-size: 0.65rem;
-    padding: 2px 5px;
-    border-radius: 50%;
+    padding: 2px 6px;
+    border-radius: 50px;
+    font-weight: bold;
 }
 
+/* شريط الأقسام الأفقي */
 .categories-nav {
     background: var(--white);
     padding: 10px 1.5rem;
     box-shadow: 0 2px 5px rgba(0,0,0,0.03);
     overflow-x: auto;
+    scrollbar-width: none; /* إخفاء سكرولبار لمتصفح فايرفوكس */
+}
+
+.categories-nav::-webkit-scrollbar {
+    display: none; /* إخفاء سكرولبار لمتصفحات كروم وسفاري */
 }
 
 .cat-container {
@@ -295,6 +277,7 @@ body::after {
     border-color: var(--primary);
 }
 
+/* المنطقة الرئيسية */
 .app-main {
     max-width: 1300px;
     margin: 25px auto;
@@ -325,6 +308,40 @@ body::after {
     opacity: 0.9;
 }
 
+.dynamic-carousel-card {
+    background: var(--white);
+    padding: 15px 20px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 25px;
+    border-right: 5px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    transition: 0.3s;
+}
+
+.dynamic-carousel-card:hover {
+    box-shadow: 0 6px 25px rgba(0,0,0,0.1);
+}
+
+.carousel-icon-box {
+    font-size: 2rem;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+}
+
+.carousel-badge {
+    background: var(--primary);
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
 .section-title {
     margin-bottom: 15px;
 }
@@ -334,6 +351,7 @@ body::after {
     color: var(--primary);
 }
 
+/* شبكة المنتجات */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -390,6 +408,7 @@ body::after {
     width: 100%;
 }
 
+/* زر تسجيل الدخول بجوجل */
 .btn-google {
     background: #ffffff;
     color: #444;
@@ -416,6 +435,7 @@ body::after {
     font-size: 1.1rem;
 }
 
+/* النوافذ المنبثقة (Modals) */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -448,10 +468,15 @@ body::after {
     align-items: center;
 }
 
-.close-modal, .close-auth-modal {
+.close-modal, .close-auth-modal, .close-prod-modal, .close-invoice-modal, .close-notif-modal {
     font-size: 1.6rem;
     cursor: pointer;
     color: var(--white);
+    transition: 0.2s;
+}
+
+.close-modal:hover, .close-auth-modal:hover, .close-prod-modal:hover, .close-invoice-modal:hover, .close-notif-modal:hover {
+    opacity: 0.8;
 }
 
 .modal-body {
@@ -484,6 +509,7 @@ body::after {
     cursor: pointer;
 }
 
+/* لوحة تحكم المدير */
 .admin-header {
     margin-bottom: 20px;
 }
@@ -540,7 +566,7 @@ body::after {
     font-size: 0.9rem;
 }
 
-.input-group input, .input-group select {
+.input-group input, .input-group select, .input-group textarea {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border-color);
@@ -576,6 +602,7 @@ body::after {
     font-size: 0.9rem;
 }
 
+/* حساب العميل والتتبع */
 .profile-card-header {
     background: var(--white);
     padding: 20px;
@@ -590,12 +617,6 @@ body::after {
     gap: 20px;
 }
 
-@media(max-width: 768px) {
-    .profile-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 .profile-box {
     background: var(--white);
     padding: 18px;
@@ -606,4 +627,41 @@ body::after {
 .profile-box h3 {
     margin-bottom: 12px;
     color: var(--primary);
+}
+
+/* إصلاح خرائط Leaflet مع طبقات الـ z-index */
+.leaflet-container {
+    z-index: 1 !important;
+}
+
+/* التجاوب مع الهواتف الذكية */
+@media(max-width: 768px) {
+    .header-container {
+        flex-direction: column;
+        align-items: stretch;
     }
+    
+    .logo-area {
+        justify-content: center;
+    }
+
+    .search-box {
+        max-width: 100%;
+    }
+
+    .user-actions {
+        justify-content: center;
+    }
+
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-content h2 {
+        font-size: 1.4rem;
+    }
+
+    .admin-tabs {
+        justify-content: center;
+    }
+}
