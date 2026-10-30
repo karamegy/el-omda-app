@@ -37,10 +37,6 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
 
-      - name: Initialize Android Studio Project
-        run: |
-          bubblewrap init --manifest=twa-manifest.json
-
       - name: Build Android App Bundle (AAB) & APK
         run: |
           bubblewrap build --keyPath=release.keystore --keyAlias="${{ secrets.KEY_ALIAS }}" --keyPassword="${{ secrets.KEY_PASSWORD }}" --storePassword="${{ secrets.KEYSTORE_PASSWORD }}" --skipAppVersionCheck
