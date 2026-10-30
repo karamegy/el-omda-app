@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1078714497381",
+    "project_id": "omda-a750f",
+    "storage_bucket": "omda-a750f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1078714497381:android:9430672b84226b0a46898c",
+        "android_client_info": {
+          "package_name": "io.github.karamegy.omda"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCU--Klxwfg7pDinUgS0UEde9cpmmsrDRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
