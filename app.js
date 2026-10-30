@@ -1076,7 +1076,7 @@ function initUserMap() {
         keepBuffer: 3
     });
 
-    // تفعيل التدوير الحر والحرية الكاملة للاتجاهات
+    // تفعيل التدوير الحر والحرية الكاملة للاتجاهات بدون اهتزاز تلقائي
     userMap = L.map('userMap', {
         center: [selectedLat, selectedLng],
         zoom: 14,
@@ -1113,23 +1113,13 @@ function initUserMap() {
         selectedLng = pos.lng;
     });
 
-    // ميزة جديدة: الضغط في أي مكان على الخريطة لنقل الدبوس فوراً
+    // الضغط في أي مكان على الخريطة لنقل الدبوس فوراً
     userMap.on('click', (e) => {
         selectedLat = e.latlng.lat;
         selectedLng = e.latlng.lng;
         userMarker.setLatLng([selectedLat, selectedLng]);
         userMap.panTo([selectedLat, selectedLng]);
     });
-
-    // الربط مع مستشعر اتجاه بوصلة الجوال لتدوير الخريطة تلقائياً مع حركة المستخدم
-    if (window.DeviceOrientationEvent) {
-        window.addEventListener('deviceorientation', (e) => {
-            if (e.alpha !== null && userMap && typeof userMap.setBearing === 'function') {
-                const compassHeading = e.webkitCompassHeading || (360 - e.alpha);
-                userMap.setBearing(compassHeading);
-            }
-        }, true);
-    }
 
     // حل المشكلة الرمادية نهائياً عند اكتمال العرض
     setTimeout(() => {
