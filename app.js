@@ -81,52 +81,51 @@ const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
 // ==========================================
-// === دالة فائقة السرعة لتحديد الموقع الفوري (خلال لحظة) ===
+// === دالة تحديد الموقع الفوري المحدثة والآمنة للتطبيقات والـ Native ===
 // ==========================================
 async function getCurrentDeviceLocation() {
     const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
     
-    // 1. استخدام كاباسيتر إذا كان متوفراً بمهلة سريعة
+    // 1. استخدام إضافة Capacitor Geolocation إذا كانت مفعلة بالـ Native
     if (isNative && window.Capacitor?.Plugins?.Geolocation) {
         try {
             await window.Capacitor.Plugins.Geolocation.requestPermissions();
             const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
-                enableHighAccuracy: false, // جلب سريع عبر الشبكة
-                timeout: 3000
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
             });
             return { lat: position.coords.latitude, lng: position.coords.longitude };
         } catch (e) {
-            console.log("الانتقال إلى الجلب السريع عبر المتصفح...");
+            console.log("الانتقال إلى الجلب عبر المتصفح/TWA...");
         }
     }
 
-    // 2. الجلب الفوري عبر المتصفح/TWA (يعتمد أولاً على الشبكة والموقع المخزن بالهاتف)
+    // 2. الجلب الفوري عبر navigator.geolocation مع دقة عالية ومهلة كافية
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
             return;
         }
 
-        // المحاولة 1: جلب فوري (خلال أقل من ثانية) عبر أبراج المحمول/الواي فاي
         navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            () => {
-                // المحاولة 2: إذا تعذر الجلب السريع، يتم طلب الـ GPS بمهلة 6 ثوانٍ فقط
-                navigator.geolocation.getCurrentPosition(
-                    (posAccurate) => resolve({ lat: posAccurate.coords.latitude, lng: posAccurate.coords.longitude }),
-                    (err) => {
-                        let msg = 'تعذر التقاط الموقع الفوري.';
-                        if (err.code === err.PERMISSION_DENIED) {
-                            msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
-                        } else if (err.code === err.POSITION_UNAVAILABLE) {
-                            msg = 'تأكد من تشغيل زر الـ GPS في شريط الإشعارات العلوي بالهاتف.';
-                        }
-                        reject(new Error(msg));
-                    },
-                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
-                );
+            (err) => {
+                let msg = 'تعذر التقاط الموقع الفوري.';
+                if (err.code === err.PERMISSION_DENIED) {
+                    msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
+                } else if (err.code === err.POSITION_UNAVAILABLE) {
+                    msg = 'موقعك غير متاح حالياً. تأكد من تشغيل زر الـ GPS وشبكة البيانات بالهاتف.';
+                } else if (err.code === err.TIMEOUT) {
+                    msg = 'استغرق تحديد الموقع وقتاً أطول من المتوقع. تأكد من تشغيل الـ GPS وأعد المحاولة.';
+                }
+                reject(new Error(msg));
             },
-            { enableHighAccuracy: false, timeout: 2500, maximumAge: 300000 } // استخدام آخر موقع معروف خلال 5 دقائق
+            {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 0
+            }
         );
     });
 }
