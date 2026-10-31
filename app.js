@@ -685,6 +685,7 @@ async function loadCategoriesForAdmin() {
     }
 }
 
+// === تحديد موقع سيارة الأسطول بالطريقة المباشرة الموثوقة ===
 document.addEventListener('click', (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         if (navigator.geolocation) {
@@ -1216,6 +1217,7 @@ function initUserMap() {
     }, 250);
 }
 
+// === تحديد موقع العميل المباشر والموثوق ===
 locateMeBtn?.addEventListener('click', () => {
     if (navigator.geolocation) {
         locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
@@ -1228,10 +1230,10 @@ locateMeBtn?.addEventListener('click', () => {
                 userMap.invalidateSize();
             }
             alert('تم تحديد موقعك بنجاح!');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي تلقائياً (GPS)';
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
         }, () => {
             alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي تلقائياً (GPS)';
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
         }, { enableHighAccuracy: true, timeout: 10000 });
     } else {
         alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
