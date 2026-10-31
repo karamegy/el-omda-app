@@ -2,21 +2,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === التسجيل التلقائي وتحديث الـ Service Worker ===
+// === التسجيل التلقائي والـ Service Worker ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).then((registration) => {
-      registration.onupdatefound = () => {
-        const installingWorker = registration.installing;
-        if (installingWorker) {
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              window.location.reload();
-            }
-          };
-        }
-      };
-    }).catch((error) => console.log('ServiceWorker registration failed: ', error));
+    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).catch((error) => console.log('ServiceWorker registration error: ', error));
   });
 }
 
@@ -36,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تفعيل وضع العمل بدون انترنت
+// تفعيل وضع العمل بدون إنترنت
 enableIndexedDbPersistence(db).catch((err) => {
     console.warn("تنبيه وضع الأوفلاين لـ Firestore: ", err.code);
 });
@@ -53,7 +42,7 @@ let allCategoriesCache = JSON.parse(localStorage.getItem('allaf_categories_cache
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
-let adminMapMarkersGroup = null; 
+let adminMapMarkersGroup = null;
 let selectedLat = 30.0444; 
 let selectedLng = 31.2357;
 let carouselInterval = null;
@@ -91,38 +80,53 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
-// === دالة جلب الموقع المباشر السريع لتطبيق كاباسيتور Native ===
-async function getCurrentGPSLocation() {
-    // 1. المحاولة عبر بلاجن Capacitor Native إن وجد
-    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Geolocation) {
+// ==========================================
+// === دالة فائقة السرعة لتحديد الموقع الفوري (خلال لحظة) ===
+// ==========================================
+async function getCurrentDeviceLocation() {
+    const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+    
+    // 1. استخدام كاباسيتر إذا كان متوفراً بمهلة سريعة
+    if (isNative && window.Capacitor?.Plugins?.Geolocation) {
         try {
-            if (Capacitor.Plugins.Geolocation.requestPermissions) {
-                await Capacitor.Plugins.Geolocation.requestPermissions();
-            }
-            const pos = await Capacitor.Plugins.Geolocation.getCurrentPosition({
-                enableHighAccuracy: false,
-                timeout: 5000,
-                maximumAge: 60000
+            await window.Capacitor.Plugins.Geolocation.requestPermissions();
+            const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
+                enableHighAccuracy: false, // جلب سريع عبر الشبكة
+                timeout: 3000
             });
-            return { lat: pos.coords.latitude, lng: pos.coords.longitude };
-        } catch (err) {
-            console.warn('Capacitor Geolocation Native warning:', err);
+            return { lat: position.coords.latitude, lng: position.coords.longitude };
+        } catch (e) {
+            console.log("الانتقال إلى الجلب السريع عبر المتصفح...");
         }
     }
 
-    // 2. المحاولة السريعة المباشرة لمتصفح الـ WebView
+    // 2. الجلب الفوري عبر المتصفح/TWA (يعتمد أولاً على الشبكة والموقع المخزن بالهاتف)
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            return reject(new Error('خدمة تحديد الموقع غير مدعومة في جهازك'));
+            reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
+            return;
         }
+
+        // المحاولة 1: جلب فوري (خلال أقل من ثانية) عبر أبراج المحمول/الواي فاي
         navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => reject(err),
-            {
-                enableHighAccuracy: false, // لضمان الاستجابة اللحظية
-                timeout: 5000,
-                maximumAge: 60000
-            }
+            () => {
+                // المحاولة 2: إذا تعذر الجلب السريع، يتم طلب الـ GPS بمهلة 6 ثوانٍ فقط
+                navigator.geolocation.getCurrentPosition(
+                    (posAccurate) => resolve({ lat: posAccurate.coords.latitude, lng: posAccurate.coords.longitude }),
+                    (err) => {
+                        let msg = 'تعذر التقاط الموقع الفوري.';
+                        if (err.code === err.PERMISSION_DENIED) {
+                            msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
+                        } else if (err.code === err.POSITION_UNAVAILABLE) {
+                            msg = 'تأكد من تشغيل زر الـ GPS في شريط الإشعارات العلوي بالهاتف.';
+                        }
+                        reject(new Error(msg));
+                    },
+                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+                );
+            },
+            { enableHighAccuracy: false, timeout: 2500, maximumAge: 300000 } // استخدام آخر موقع معروف خلال 5 دقائق
         );
     });
 }
@@ -731,25 +735,27 @@ async function loadCategoriesForAdmin() {
     }
 }
 
-// === تحديد موقع سيارة الأسطول الفوري المباشر لتطبيق كاباسيتور ===
+// === تحديد موقع سيارة الأسطول الفوري ===
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
-        const btn = document.getElementById('locateVehicleBtn');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+        const btn = e.target.closest('#locateVehicleBtn') || e.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+
         try {
-            const loc = await getCurrentGPSLocation();
+            const loc = await getCurrentDeviceLocation();
             newVehLat = loc.lat;
             newVehLng = loc.lng;
             const display = document.getElementById('vehCoordsDisplay');
             if (display) {
-                display.textContent = `تم تحديد الإحداثيات بنجاح: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
+                display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
                 display.style.color = "green";
             }
             alert('تم تحديد موقع السيارة الحالي بنجاح!');
         } catch (err) {
-            alert('تعذر تحديد موقع السيارة. يرجى تفعيل الـ GPS وإعطاء تطبيقك صلاحية الموقع من إعدادات الهاتف.');
+            alert(err.message);
         } finally {
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً';
+            btn.innerHTML = originalText;
         }
     }
 });
@@ -1264,11 +1270,11 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل الفوري المباشر السريع لتطبيق كاباسيتور ===
+// === تحديد موقع العميل الفوري عند الضغط على الزر ===
 locateMeBtn?.addEventListener('click', async () => {
     locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
     try {
-        const loc = await getCurrentGPSLocation();
+        const loc = await getCurrentDeviceLocation();
         selectedLat = loc.lat;
         selectedLng = loc.lng;
         if (userMap) {
@@ -1276,9 +1282,9 @@ locateMeBtn?.addEventListener('click', async () => {
             if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
             userMap.invalidateSize();
         }
-        alert('تم تحديد موقعك الحالي بنجاح!');
+        alert('تم تحديد موقعك بنجاح!');
     } catch (err) {
-        alert('تعذر تحديد الموقع. يرجى التأكد من تفعيل الـ GPS وإعطاء تطبيقك صلاحية الموقع من إعدادات الهاتف.');
+        alert(err.message);
     } finally {
         locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
     }
