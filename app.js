@@ -2,10 +2,21 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === التسجيل التلقائي والـ Service Worker ===
+// === التسجيل التلقائي وتحديث الـ Service Worker ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).catch((error) => console.log('ServiceWorker registration error: ', error));
+    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).then((registration) => {
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker) {
+          installingWorker.onstatechange = () => {
+            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              window.location.reload();
+            }
+          };
+        }
+      };
+    }).catch((error) => console.log('ServiceWorker registration failed: ', error));
   });
 }
 
@@ -25,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تفعيل وضع العمل بدون إنترنت
+// تفعيل وضع العمل بدون انترنت
 enableIndexedDbPersistence(db).catch((err) => {
     console.warn("تنبيه وضع الأوفلاين لـ Firestore: ", err.code);
 });
@@ -42,7 +53,7 @@ let allCategoriesCache = JSON.parse(localStorage.getItem('allaf_categories_cache
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
-let adminMapMarkersGroup = null;
+let adminMapMarkersGroup = null; 
 let selectedLat = 30.0444; 
 let selectedLng = 31.2357;
 let carouselInterval = null;
@@ -79,67 +90,6 @@ const sendNotificationForm = document.getElementById('sendNotificationForm');
 const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
-
-// ==========================================
-// === دالة تحديد الموقع الفوري المحدثة والآمنة للتطبيقات والـ Native ===
-// ==========================================
-async function getCurrentDeviceLocation() {
-    const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
-    
-    // 1. استخدام إضافة Capacitor Geolocation إذا كانت مفعلة بالـ Native
-    if (isNative && window.Capacitor?.Plugins?.Geolocation) {
-        try {
-            await window.Capacitor.Plugins.Geolocation.requestPermissions();
-            const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
-            return { lat: position.coords.latitude, lng: position.coords.longitude };
-        } catch (e) {
-            console.log("الانتقال إلى الجلب عبر المتصفح/TWA...");
-        }
-    }
-
-    // 2. الجلب عبر navigator.geolocation مع المحاولة الأولى (دقة عالية) والمحاولة الثانية الاحتياطية (دقة عادية)
-    const getPositionPromise = (options) => {
-        return new Promise((resolve, reject) => {
-            if (!navigator.geolocation) {
-                reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(
-                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                (err) => reject(err),
-                options
-            );
-        });
-    };
-
-    try {
-        // محاولة أولى: GPS عالي الدقة مع مهلة 10 ثوانٍ
-        return await getPositionPromise({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-    } catch (firstErr) {
-        if (firstErr.code === firstErr.PERMISSION_DENIED) {
-            throw new Error('تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.');
-        }
-        
-        // محاولة ثانية احتياطية: دقة عادية (أسرع وتعمل بنجاح داخل المباني عبر شبكة المحمول والواي فاي)
-        try {
-            return await getPositionPromise({ enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 });
-        } catch (secondErr) {
-            let msg = 'تعذر التقاط الموقع الفوري.';
-            if (secondErr.code === secondErr.PERMISSION_DENIED) {
-                msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
-            } else if (secondErr.code === secondErr.POSITION_UNAVAILABLE) {
-                msg = 'موقعك غير متاح حالياً. تأكد من تشغيل زر الـ GPS وشبكة البيانات بالهاتف.';
-            } else if (secondErr.code === secondErr.TIMEOUT) {
-                msg = 'استغرق تحديد الموقع وقتاً أطول من المتوقع. تأكد من تشغيل الـ GPS وأعد المحاولة.';
-            }
-            throw new Error(msg);
-        }
-    }
-}
 
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -745,27 +695,24 @@ async function loadCategoriesForAdmin() {
     }
 }
 
-// === تحديد موقع سيارة الأسطول الفوري ===
-document.addEventListener('click', async (e) => {
+// === تحديد موقع سيارة الأسطول الفوري المباشر السريع ===
+document.addEventListener('click', (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
-        const btn = e.target.closest('#locateVehicleBtn') || e.target;
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
-
-        try {
-            const loc = await getCurrentDeviceLocation();
-            newVehLat = loc.lat;
-            newVehLng = loc.lng;
-            const display = document.getElementById('vehCoordsDisplay');
-            if (display) {
-                display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
-                display.style.color = "green";
-            }
-            alert('تم تحديد موقع السيارة الحالي بنجاح!');
-        } catch (err) {
-            alert(err.message);
-        } finally {
-            btn.innerHTML = originalText;
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                newVehLat = position.coords.latitude;
+                newVehLng = position.coords.longitude;
+                const display = document.getElementById('vehCoordsDisplay');
+                if (display) {
+                    display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
+                    display.style.color = "green";
+                }
+                alert('تم تحديد موقع السيارة الحالي بنجاح!');
+            }, () => {
+                alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
+            });
+        } else {
+            alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
         }
     }
 });
@@ -1280,23 +1227,26 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل الفوري عند الضغط على الزر ===
-locateMeBtn?.addEventListener('click', async () => {
-    locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
-    try {
-        const loc = await getCurrentDeviceLocation();
-        selectedLat = loc.lat;
-        selectedLng = loc.lng;
-        if (userMap) {
-            userMap.setView([selectedLat, selectedLng], 15);
-            if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
-            userMap.invalidateSize();
-        }
-        alert('تم تحديد موقعك بنجاح!');
-    } catch (err) {
-        alert(err.message);
-    } finally {
-        locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+// === تحديد موقع العميل الفوري المباشر السريع (مطابق لـ app_2.js) ===
+locateMeBtn?.addEventListener('click', () => {
+    if (navigator.geolocation) {
+        locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+        navigator.geolocation.getCurrentPosition(position => {
+            selectedLat = position.coords.latitude;
+            selectedLng = position.coords.longitude;
+            if (userMap) {
+                userMap.setView([selectedLat, selectedLng], 15);
+                if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
+                userMap.invalidateSize();
+            }
+            alert('تم تحديد موقعك بنجاح!');
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+        }, () => {
+            alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    } else {
+        alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
     }
 });
 
