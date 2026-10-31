@@ -91,6 +91,42 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
+// === دالة جلب الموقع المباشر السريع لتطبيق كاباسيتور Native ===
+async function getCurrentGPSLocation() {
+    // 1. المحاولة عبر بلاجن Capacitor Native إن وجد
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Geolocation) {
+        try {
+            if (Capacitor.Plugins.Geolocation.requestPermissions) {
+                await Capacitor.Plugins.Geolocation.requestPermissions();
+            }
+            const pos = await Capacitor.Plugins.Geolocation.getCurrentPosition({
+                enableHighAccuracy: false,
+                timeout: 5000,
+                maximumAge: 60000
+            });
+            return { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        } catch (err) {
+            console.warn('Capacitor Geolocation Native warning:', err);
+        }
+    }
+
+    // 2. المحاولة السريعة المباشرة لمتصفح الـ WebView
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            return reject(new Error('خدمة تحديد الموقع غير مدعومة في جهازك'));
+        }
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            (err) => reject(err),
+            {
+                enableHighAccuracy: false, // لضمان الاستجابة اللحظية
+                timeout: 5000,
+                maximumAge: 60000
+            }
+        );
+    });
+}
+
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
         const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
@@ -695,24 +731,25 @@ async function loadCategoriesForAdmin() {
     }
 }
 
-// === تحديد موقع سيارة الأسطول الفوري المباشر السريع ===
-document.addEventListener('click', (e) => {
+// === تحديد موقع سيارة الأسطول الفوري المباشر لتطبيق كاباسيتور ===
+document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                newVehLat = position.coords.latitude;
-                newVehLng = position.coords.longitude;
-                const display = document.getElementById('vehCoordsDisplay');
-                if (display) {
-                    display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
-                    display.style.color = "green";
-                }
-                alert('تم تحديد موقع السيارة الحالي بنجاح!');
-            }, () => {
-                alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            });
-        } else {
-            alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
+        const btn = document.getElementById('locateVehicleBtn');
+        if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+        try {
+            const loc = await getCurrentGPSLocation();
+            newVehLat = loc.lat;
+            newVehLng = loc.lng;
+            const display = document.getElementById('vehCoordsDisplay');
+            if (display) {
+                display.textContent = `تم تحديد الإحداثيات بنجاح: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
+                display.style.color = "green";
+            }
+            alert('تم تحديد موقع السيارة الحالي بنجاح!');
+        } catch (err) {
+            alert('تعذر تحديد موقع السيارة. يرجى تفعيل الـ GPS وإعطاء تطبيقك صلاحية الموقع من إعدادات الهاتف.');
+        } finally {
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً';
         }
     }
 });
@@ -1227,26 +1264,23 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل الفوري المباشر السريع (مطابق لـ app_2.js) ===
-locateMeBtn?.addEventListener('click', () => {
-    if (navigator.geolocation) {
-        locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
-        navigator.geolocation.getCurrentPosition(position => {
-            selectedLat = position.coords.latitude;
-            selectedLng = position.coords.longitude;
-            if (userMap) {
-                userMap.setView([selectedLat, selectedLng], 15);
-                if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
-                userMap.invalidateSize();
-            }
-            alert('تم تحديد موقعك بنجاح!');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
-        }, () => {
-            alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
-        }, { enableHighAccuracy: true, timeout: 10000 });
-    } else {
-        alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
+// === تحديد موقع العميل الفوري المباشر السريع لتطبيق كاباسيتور ===
+locateMeBtn?.addEventListener('click', async () => {
+    locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+    try {
+        const loc = await getCurrentGPSLocation();
+        selectedLat = loc.lat;
+        selectedLng = loc.lng;
+        if (userMap) {
+            userMap.setView([selectedLat, selectedLng], 15);
+            if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
+            userMap.invalidateSize();
+        }
+        alert('تم تحديد موقعك الحالي بنجاح!');
+    } catch (err) {
+        alert('تعذر تحديد الموقع. يرجى التأكد من تفعيل الـ GPS وإعطاء تطبيقك صلاحية الموقع من إعدادات الهاتف.');
+    } finally {
+        locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
     }
 });
 
