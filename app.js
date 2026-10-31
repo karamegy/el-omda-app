@@ -81,58 +81,52 @@ const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
 // ==========================================
-// === دالة موحدة ومتطورة لتحديد الموقع (Capacitor Native + Web) ===
+// === دالة فائقة السرعة لتحديد الموقع الفوري (خلال لحظة) ===
 // ==========================================
 async function getCurrentDeviceLocation() {
     const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
     
-    // 1. تجربة إضافة Capacitor Geolocation النيتف أولاً
+    // 1. استخدام كاباسيتر إذا كان متوفراً بمهلة سريعة
     if (isNative && window.Capacitor?.Plugins?.Geolocation) {
         try {
             await window.Capacitor.Plugins.Geolocation.requestPermissions();
             const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
-                enableHighAccuracy: true,
-                timeout: 20000
+                enableHighAccuracy: false, // جلب سريع عبر الشبكة
+                timeout: 3000
             });
-            return {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-        } catch (nativeErr) {
-            console.warn("تنبيه: فشل جلب الموقع عبر Capacitor Native Plugin، الجاري الانتقال للـ Navigator Web API", nativeErr);
+            return { lat: position.coords.latitude, lng: position.coords.longitude };
+        } catch (e) {
+            console.log("الانتقال إلى الجلب السريع عبر المتصفح...");
         }
     }
 
-    // 2. تجربة Navigator Geolocation الخاصة بالمتصفح/الويب
+    // 2. الجلب الفوري عبر المتصفح/TWA (يعتمد أولاً على الشبكة والموقع المخزن بالهاتف)
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
-            reject(new Error('خاصية تحديد الموقع غير مدعومة في متصفحك أو جهازك.'));
+            reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
             return;
         }
 
+        // المحاولة 1: جلب فوري (خلال أقل من ثانية) عبر أبراج المحمول/الواي فاي
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                resolve({
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                });
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            () => {
+                // المحاولة 2: إذا تعذر الجلب السريع، يتم طلب الـ GPS بمهلة 6 ثوانٍ فقط
+                navigator.geolocation.getCurrentPosition(
+                    (posAccurate) => resolve({ lat: posAccurate.coords.latitude, lng: posAccurate.coords.longitude }),
+                    (err) => {
+                        let msg = 'تعذر التقاط الموقع الفوري.';
+                        if (err.code === err.PERMISSION_DENIED) {
+                            msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
+                        } else if (err.code === err.POSITION_UNAVAILABLE) {
+                            msg = 'تأكد من تشغيل زر الـ GPS في شريط الإشعارات العلوي بالهاتف.';
+                        }
+                        reject(new Error(msg));
+                    },
+                    { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
+                );
             },
-            (error) => {
-                let msg = 'فشل تحديد الموقع.';
-                if (error.code === error.PERMISSION_DENIED) {
-                    msg = 'تم رفض الإذن! يرجى السماح لصلاحية الموقع من إعدادات الهاتف -> التطبيقات -> العمدة -> الأذونات -> الموقع.';
-                } else if (error.code === error.POSITION_UNAVAILABLE) {
-                    msg = 'تعذر تحديد الموقع الحالي، تأكد من تفعيل الـ GPS في جهازك.';
-                } else if (error.code === error.TIMEOUT) {
-                    msg = 'استغرقت العملية وقتاً طويلاً لالتقاط إشارة الـ GPS، أعد المحاولة.';
-                }
-                reject(new Error(msg));
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 20000,
-                maximumAge: 0
-            }
+            { enableHighAccuracy: false, timeout: 2500, maximumAge: 300000 } // استخدام آخر موقع معروف خلال 5 دقائق
         );
     });
 }
@@ -461,7 +455,7 @@ window.openProductModal = function(product) {
     document.getElementById('productDetailModal').style.display = 'flex';
 };
 
-// === تحديث السلة وعرضها ببطاقات منسقة وعصرية ===
+// === تحديث السلة ===
 function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalSpan = document.getElementById('cartTotalPrice');
@@ -543,7 +537,7 @@ window.removeGroupFromCart = function(identifier) {
     updateCartUI();
 };
 
-// === إتمام الطلب وإصدار الفاتورة ===
+// === إتمام الطلب ===
 checkoutBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -741,7 +735,7 @@ async function loadCategoriesForAdmin() {
     }
 }
 
-// === تحديد موقع سيارة الأسطول (محدّث ومطوّر) ===
+// === تحديد موقع سيارة الأسطول الفوري ===
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         const btn = e.target.closest('#locateVehicleBtn') || e.target;
@@ -1276,7 +1270,7 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل المباشر والموثوق (محدّث لـ Capacitor) ===
+// === تحديد موقع العميل الفوري عند الضغط على الزر ===
 locateMeBtn?.addEventListener('click', async () => {
     locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
     try {
@@ -1359,7 +1353,7 @@ window.switchAdminTab = function(tabName) {
 };
 
 // ==========================================
-// === إعداد خريطة الإدارة والأسطول المحدثة ===
+// === إعداد خريطة الإدارة والأسطول ===
 // ==========================================
 async function initAdminMap() {
     const adminMapElem = document.getElementById('adminMap');
