@@ -80,6 +80,63 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
+// ==========================================
+// === دالة موحدة ومتطورة لتحديد الموقع (Capacitor Native + Web) ===
+// ==========================================
+async function getCurrentDeviceLocation() {
+    const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
+    
+    // 1. تجربة إضافة Capacitor Geolocation النيتف أولاً
+    if (isNative && window.Capacitor?.Plugins?.Geolocation) {
+        try {
+            await window.Capacitor.Plugins.Geolocation.requestPermissions();
+            const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
+                enableHighAccuracy: true,
+                timeout: 20000
+            });
+            return {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+        } catch (nativeErr) {
+            console.warn("تنبيه: فشل جلب الموقع عبر Capacitor Native Plugin، الجاري الانتقال للـ Navigator Web API", nativeErr);
+        }
+    }
+
+    // 2. تجربة Navigator Geolocation الخاصة بالمتصفح/الويب
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            reject(new Error('خاصية تحديد الموقع غير مدعومة في متصفحك أو جهازك.'));
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                resolve({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+            },
+            (error) => {
+                let msg = 'فشل تحديد الموقع.';
+                if (error.code === error.PERMISSION_DENIED) {
+                    msg = 'تم رفض الإذن! يرجى السماح لصلاحية الموقع من إعدادات الهاتف -> التطبيقات -> العمدة -> الأذونات -> الموقع.';
+                } else if (error.code === error.POSITION_UNAVAILABLE) {
+                    msg = 'تعذر تحديد الموقع الحالي، تأكد من تفعيل الـ GPS في جهازك.';
+                } else if (error.code === error.TIMEOUT) {
+                    msg = 'استغرقت العملية وقتاً طويلاً لالتقاط إشارة الـ GPS، أعد المحاولة.';
+                }
+                reject(new Error(msg));
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 20000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
 if (searchInput) {
     searchInput.addEventListener('input', (e) => {
         const activeCat = document.querySelector('.cat-chip.active') ? document.querySelector('.cat-chip.active').dataset.cat : 'all';
@@ -428,7 +485,6 @@ function updateCartUI() {
         return;
     }
 
-    // تجميع المنتجات المتشابهة وحساب الكميات
     const groupedCart = {};
     cart.forEach(item => {
         const key = item.id || item.name;
@@ -685,24 +741,27 @@ async function loadCategoriesForAdmin() {
     }
 }
 
-// === تحديد موقع سيارة الأسطول بالطريقة المباشرة الموثوقة ===
-document.addEventListener('click', (e) => {
+// === تحديد موقع سيارة الأسطول (محدّث ومطوّر) ===
+document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(position => {
-                newVehLat = position.coords.latitude;
-                newVehLng = position.coords.longitude;
-                const display = document.getElementById('vehCoordsDisplay');
-                if (display) {
-                    display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
-                    display.style.color = "green";
-                }
-                alert('تم تحديد موقع السيارة الحالي بنجاح!');
-            }, () => {
-                alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            });
-        } else {
-            alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
+        const btn = e.target.closest('#locateVehicleBtn') || e.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+
+        try {
+            const loc = await getCurrentDeviceLocation();
+            newVehLat = loc.lat;
+            newVehLng = loc.lng;
+            const display = document.getElementById('vehCoordsDisplay');
+            if (display) {
+                display.textContent = `تم بنجاح تحديد الإحداثيات: (${newVehLat.toFixed(4)}, ${newVehLng.toFixed(4)})`;
+                display.style.color = "green";
+            }
+            alert('تم تحديد موقع السيارة الحالي بنجاح!');
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            btn.innerHTML = originalText;
         }
     }
 });
@@ -1217,26 +1276,23 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل المباشر والموثوق ===
-locateMeBtn?.addEventListener('click', () => {
-    if (navigator.geolocation) {
-        locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
-        navigator.geolocation.getCurrentPosition(position => {
-            selectedLat = position.coords.latitude;
-            selectedLng = position.coords.longitude;
-            if (userMap) {
-                userMap.setView([selectedLat, selectedLng], 15);
-                if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
-                userMap.invalidateSize();
-            }
-            alert('تم تحديد موقعك بنجاح!');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
-        }, () => {
-            alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
-        }, { enableHighAccuracy: true, timeout: 10000 });
-    } else {
-        alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
+// === تحديد موقع العميل المباشر والموثوق (محدّث لـ Capacitor) ===
+locateMeBtn?.addEventListener('click', async () => {
+    locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
+    try {
+        const loc = await getCurrentDeviceLocation();
+        selectedLat = loc.lat;
+        selectedLng = loc.lng;
+        if (userMap) {
+            userMap.setView([selectedLat, selectedLng], 15);
+            if (userMarker) userMarker.setLatLng([selectedLat, selectedLng]);
+            userMap.invalidateSize();
+        }
+        alert('تم تحديد موقعك بنجاح!');
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
     }
 });
 
