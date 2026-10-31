@@ -2,21 +2,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// === التسجيل التلقائي وتحديث الـ Service Worker ===
+// === التسجيل التلقائي والـ Service Worker ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).then((registration) => {
-      registration.onupdatefound = () => {
-        const installingWorker = registration.installing;
-        if (installingWorker) {
-          installingWorker.onstatechange = () => {
-            if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              window.location.reload();
-            }
-          };
-        }
-      };
-    }).catch((error) => console.log('ServiceWorker registration failed: ', error));
+    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).catch((error) => console.log('ServiceWorker registration error: ', error));
   });
 }
 
@@ -36,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// تفعيل وضع العمل بدون انترنت
+// تفعيل وضع العمل بدون إنترنت
 enableIndexedDbPersistence(db).catch((err) => {
     console.warn("تنبيه وضع الأوفلاين لـ Firestore: ", err.code);
 });
@@ -53,7 +42,7 @@ let allCategoriesCache = JSON.parse(localStorage.getItem('allaf_categories_cache
 let userMap = null;
 let adminMap = null;
 let userMarker = null;
-let adminMapMarkersGroup = null; // لمسح وعرض العلامات بسلاسة
+let adminMapMarkersGroup = null;
 let selectedLat = 30.0444; 
 let selectedLng = 31.2357;
 let carouselInterval = null;
@@ -71,7 +60,7 @@ const loginForm = document.getElementById('loginForm');
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 const adminBtn = document.getElementById('adminBtn');
 const profileBtn = document.getElementById('profileBtn');
-const cartBtn = document.getElementById('cartBtn');
+const cartBtnHeader = document.getElementById('cartBtnHeader');
 const cartModal = document.getElementById('cartModal');
 const closeModal = document.querySelector('.close-modal');
 const productsGrid = document.getElementById('productsGrid');
@@ -107,7 +96,7 @@ authBtn?.addEventListener('click', () => {
 });
 
 closeAuthModal?.addEventListener('click', () => authModal.style.display = 'none');
-cartBtn?.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
+cartBtnHeader?.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
 closeModal?.addEventListener('click', () => cartModal.style.display = 'none');
 document.querySelector('.close-invoice-modal')?.addEventListener('click', () => invoiceModal.style.display = 'none');
 document.querySelector('.close-prod-modal')?.addEventListener('click', () => document.getElementById('productDetailModal').style.display = 'none');
@@ -250,10 +239,10 @@ function listenRealtimeData() {
         snapshot.forEach(docSnap => allCategoriesCache.push({ id: docSnap.id, ...docSnap.data() }));
         if (allCategoriesCache.length === 0) {
             allCategoriesCache = [
-                { id: 'concentrates', name: 'أعلاف مركزة', icon: 'fa-solid fa-boxes-stacked' },
-                { id: 'grains', name: 'حبوب وبقوليات', icon: 'fa-solid fa-seedling' },
-                { id: 'supplements', name: 'مكملات وفيتامينات', icon: 'fa-solid fa-pills' },
-                { id: 'veterinary', name: 'أدوية بيطرية', icon: 'fa-solid fa-kit-medical' }
+                { id: 'cattle', name: 'علف مواشي', icon: 'fa-solid fa-cow' },
+                { id: 'poultry', name: 'علف دواجن', icon: 'fa-solid fa-egg' },
+                { id: 'sheep', name: 'علف غنم', icon: 'fa-solid fa-wheat-awn' },
+                { id: 'supplements', name: 'مكملات بيطرية', icon: 'fa-solid fa-pills' }
             ];
         }
         localStorage.setItem('allaf_categories_cache', JSON.stringify(allCategoriesCache));
@@ -290,9 +279,9 @@ function renderCategoriesUI() {
             if (fullCategoriesGrid) {
                 fullCategoriesGrid.innerHTML += `
                     <div class="product-card" style="text-align:center; padding:20px; cursor:pointer;" onclick="switchSection('productsSection'); renderProducts('${cat.id}', '');">
-                        <i class="${cat.icon || 'fa-solid fa-wheat-awn'}" style="font-size:2.5rem; color:var(--primary); margin-bottom:10px;"></i>
-                        <h3>${cat.name}</h3>
-                        <p style="font-size:0.85rem; color:#666;">تصفح منتجات ${cat.name}</p>
+                        <i class="${cat.icon || 'fa-solid fa-wheat-awn'}" style="font-size:2.2rem; color:var(--primary); margin-bottom:10px;"></i>
+                        <h3 style="font-size:1rem;">${cat.name}</h3>
+                        <p style="font-size:0.8rem; color:#666;">تصفح قسم ${cat.name}</p>
                     </div>`;
             }
         });
@@ -316,17 +305,17 @@ function startProductCarousel() {
     
     const updateCarouselItem = () => {
         const prod = allProductsCache[index];
-        let mediaThumb = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80'}" style="width:65px; height:65px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
+        let mediaThumb = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80'}" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
         if (prod.mediaType === 'video') {
-            mediaThumb = `<video src="${prod.mediaUrl}" style="width:65px; height:65px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
+            mediaThumb = `<video src="${prod.mediaUrl}" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
         }
         
         bannerContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 15px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick='openProductModal(${JSON.stringify(prod)})'>
+            <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick='openProductModal(${JSON.stringify(prod)})'>
                 ${mediaThumb}
                 <div style="flex: 1; min-width: 0;">
-                    <h4 style="color: var(--primary); font-size: 1.05rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prod.name}</h4>
-                    <p style="font-size: 0.9rem; color: var(--accent); font-weight: bold;">السعر: ${prod.price} ج.م</p>
+                    <h4 style="color: var(--primary); font-size: 0.98rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prod.name}</h4>
+                    <p style="font-size: 0.88rem; color: var(--accent); font-weight: bold;">السعر المميز: ${prod.price} ج.م</p>
                 </div>
             </div>
         `;
@@ -347,54 +336,67 @@ window.renderProducts = function(category, searchTerm) {
     });
 
     if (filtered.length === 0) {
-        productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">لا توجد منتجات مطابقة.</p>';
+        productsGrid.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:#777; padding:20px;">لا توجد منتجات مطابقة للبحث.</p>';
         return;
     }
 
     filtered.forEach(prod => {
         let mediaHtml = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" alt="${prod.name}">`;
         if (prod.mediaType === 'video') {
-            mediaHtml = `<video src="${prod.mediaUrl}" style="width:100%; height:180px; object-fit:cover;"></video>`;
+            mediaHtml = `<video src="${prod.mediaUrl}" style="width:100%; height:100%; object-fit:cover;"></video>`;
         }
 
         productsGrid.innerHTML += `
             <div class="product-card" onclick='openProductModal(${JSON.stringify(prod)})'>
-                ${mediaHtml}
+                <div class="product-media-wrapper">
+                    ${mediaHtml}
+                </div>
                 <div class="product-info">
                     <h3>${prod.name}</h3>
-                    <p class="product-price">${prod.price} ج.م</p>
-                    <button class="btn-primary-action" onclick='event.stopPropagation(); openProductModal(${JSON.stringify(prod)})'>عرض التفاصيل والحجز</button>
+                    <div class="product-price-row">
+                        <span class="product-price">${prod.price} <small style="font-size:0.75rem;">ج.م</small></span>
+                        <button class="btn-add-cart-icon" onclick='event.stopPropagation(); addToCartDirect(${JSON.stringify(prod)})' title="إضافة للسلة">
+                            <i class="fa-solid fa-cart-plus"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
     });
 };
 
+window.addToCartDirect = function(product) {
+    cart.push(product);
+    localStorage.setItem('omda_cart', JSON.stringify(cart));
+    updateCartUI();
+};
+
 window.openProductModal = function(product) {
     document.getElementById('modalProdTitle').textContent = product.name;
     const body = document.getElementById('modalProdBody');
     
-    let mediaHtml = `<img src="${product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" style="width:100%; height:250px; border-radius:8px; object-fit:cover; margin-bottom:15px;">`;
+    let mediaHtml = `<img src="${product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" style="width:100%; height:220px; border-radius:12px; object-fit:cover; margin-bottom:12px;">`;
     if (product.mediaType === 'video') {
-        mediaHtml = `<video src="${product.mediaUrl}" controls autoplay style="width:100%; height:250px; border-radius:8px; object-fit:cover; margin-bottom:15px;"></video>`;
+        mediaHtml = `<video src="${product.mediaUrl}" controls autoplay style="width:100%; height:220px; border-radius:12px; object-fit:cover; margin-bottom:12px;"></video>`;
     }
 
     body.innerHTML = `
         ${mediaHtml}
-        <h3 style="color:var(--primary); margin-bottom:8px;">${product.name}</h3>
-        <p style="font-size:1.3rem; font-weight:bold; color:var(--accent); margin-bottom:15px;">السعر: ${product.price} ج.م</p>
+        <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${product.name}</h3>
+        <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">السعر: ${product.price} ج.م</p>
         <div class="input-group" style="margin-bottom:15px;">
             <label>حدد الكمية المطلوبة للحجز:</label>
             <input type="number" id="modalQtyInput" value="1" min="1" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
         </div>
-        <button id="modalAddToCartBtn" class="btn-submit" style="background:var(--primary);">إضافة للسلة وحجز الكمية</button>
+        <button id="modalAddToCartBtn" class="btn-submit" style="background:var(--primary); padding:12px; font-size:0.95rem;">
+            <i class="fa-solid fa-cart-plus"></i> إضافة للسلة وحجز الكمية
+        </button>
     `;
 
     document.getElementById('modalAddToCartBtn').onclick = () => {
         const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
         for (let i = 0; i < qty; i++) { cart.push(product); }
         localStorage.setItem('omda_cart', JSON.stringify(cart));
-        alert(`تمت إضافة ${qty} قطعة من (${product.name}) إلى السلة بنجاح!`);
         updateCartUI();
         document.getElementById('productDetailModal').style.display = 'none';
     };
@@ -402,35 +404,90 @@ window.openProductModal = function(product) {
     document.getElementById('productDetailModal').style.display = 'flex';
 };
 
+// === تحديث السلة وعرضها ببطاقات منسقة وعصرية ===
 function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalSpan = document.getElementById('cartTotalPrice');
+    const totalCountElem = document.getElementById('cartTotalItemsCount');
+    const cartCountNav = document.getElementById('cartCount');
+    const cartCountHeader = document.getElementById('cartCountHeader');
+
+    if (cartCountNav) cartCountNav.textContent = cart.length;
+    if (cartCountHeader) cartCountHeader.textContent = cart.length;
+    if (totalCountElem) totalCountElem.textContent = cart.length;
+
     if (!list || !totalSpan) return;
-    list.innerHTML = '';
-    let total = 0;
-    cart.forEach((item, index) => {
-        total += Number(item.price);
-        list.innerHTML += `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
-                <span>${item.name}</span> 
-                <div>
-                    <strong>${item.price} ج.م</strong>
-                    <button onclick="removeFromCart(${index})" style="background:none; border:none; color:red; cursor:pointer; margin-right:8px;"><i class="fa-solid fa-trash"></i></button>
-                </div>
+
+    if (cart.length === 0) {
+        list.innerHTML = `
+            <div style="text-align:center; padding:30px 10px; color:#888;">
+                <i class="fa-solid fa-cart-arrow-down" style="font-size:3rem; color:#ccc; margin-bottom:10px;"></i>
+                <p>سلة المشتريات فارغة حالياً</p>
             </div>`;
+        totalSpan.textContent = '0';
+        return;
+    }
+
+    // تجميع المنتجات المتشابهة وحساب الكميات
+    const groupedCart = {};
+    cart.forEach(item => {
+        const key = item.id || item.name;
+        if (!groupedCart[key]) {
+            groupedCart[key] = { ...item, qty: 0 };
+        }
+        groupedCart[key].qty += 1;
     });
-    totalSpan.textContent = total;
-    const cartCountElem = document.getElementById('cartCount');
-    if (cartCountElem) cartCountElem.textContent = cart.length;
+
+    list.innerHTML = '';
+    let totalSum = 0;
+
+    Object.values(groupedCart).forEach(item => {
+        const itemTotal = Number(item.price) * item.qty;
+        totalSum += itemTotal;
+
+        const imgUrl = item.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=150&q=80';
+
+        list.innerHTML += `
+            <div class="cart-item-card">
+                <img src="${imgUrl}" class="cart-item-img" alt="${item.name}">
+                <div class="cart-item-details">
+                    <h4 class="cart-item-title">${item.name}</h4>
+                    <span class="cart-item-price">${item.price} ج.م</span>
+                </div>
+                <div class="cart-qty-controls">
+                    <button class="btn-qty" onclick="changeItemQty('${item.id || item.name}', -1)">-</button>
+                    <span class="qty-val">${item.qty}</span>
+                    <button class="btn-qty" onclick="changeItemQty('${item.id || item.name}', 1)">+</button>
+                </div>
+                <button class="btn-remove-item" onclick="removeGroupFromCart('${item.id || item.name}')" title="حذف">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `;
+    });
+
+    totalSpan.textContent = totalSum;
 }
 
-window.removeFromCart = function(index) {
-    cart.splice(index, 1);
+window.changeItemQty = function(identifier, delta) {
+    if (delta === 1) {
+        const item = cart.find(i => (i.id || i.name) === identifier);
+        if (item) cart.push({ ...item });
+    } else if (delta === -1) {
+        const index = cart.findIndex(i => (i.id || i.name) === identifier);
+        if (index !== -1) cart.splice(index, 1);
+    }
     localStorage.setItem('omda_cart', JSON.stringify(cart));
     updateCartUI();
 };
 
-// === إتمام الطلب وإصدار الفاتورة مع تجريد وسائط السلة الثقيلة لتجنب تجاوز 1MB ===
+window.removeGroupFromCart = function(identifier) {
+    cart = cart.filter(i => (i.id || i.name) !== identifier);
+    localStorage.setItem('omda_cart', JSON.stringify(cart));
+    updateCartUI();
+};
+
+// === إتمام الطلب وإصدار الفاتورة ===
 checkoutBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -443,7 +500,6 @@ checkoutBtn?.addEventListener('click', async () => {
     }
     const paymentType = document.getElementById('paymentTypeSelect').value;
     try {
-        // تجريد عناصر السلة من الصور والوسائط الثقيلة لتخفيف حجم الوثيقة
         const sanitizedItems = cart.map(item => ({
             id: item.id || '',
             name: item.name || '',
@@ -452,7 +508,7 @@ checkoutBtn?.addEventListener('click', async () => {
 
         const orderRef = await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
-            items: sanitizedItems, // إرسال البيانات الخفيفة فقط
+            items: sanitizedItems,
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
             status: 'قيد المراجعة والشحن',
             paymentType: paymentType,
@@ -472,6 +528,7 @@ checkoutBtn?.addEventListener('click', async () => {
     }
 });
 
+// إدراج وحفظ المنتجات
 addProductForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -505,7 +562,7 @@ addProductForm?.addEventListener('submit', async (e) => {
             alert('تم تحديث المنتج بنجاح!');
             document.getElementById('editProductId').value = '';
             editingOldMediaUrl = '';
-            document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
+            document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد';
             document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
             if(cancelEditBtn) cancelEditBtn.style.display = 'none';
         } else {
@@ -526,13 +583,12 @@ if(cancelEditBtn) {
         addProductForm.reset();
         document.getElementById('editProductId').value = '';
         editingOldMediaUrl = '';
-        document.getElementById('productFormTitle').textContent = 'إضافة منتج أو منشور جديد للمتجر';
+        document.getElementById('productFormTitle').textContent = 'إضافة منتج جديد';
         document.getElementById('saveProductBtn').textContent = 'نشر المنتج الآن';
         cancelEditBtn.style.display = 'none';
     });
 }
 
-// تحسين: الاستفادة من الذاكرة المحلية أولاً بدلاً من إعادة جلب كل المنتجات بـ getDocs
 async function loadAdminProductsList() {
     const list = document.getElementById('adminProductsList');
     if (!list) return;
@@ -608,7 +664,6 @@ addCategoryForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// تحسين: استغلال الذاكرة المؤقتة للأقسام لتقليل القراءات
 async function loadCategoriesForAdmin() {
     const list = document.getElementById('adminCategoriesList');
     if (!list) return;
@@ -665,8 +720,8 @@ addVehicleForm?.addEventListener('submit', async (e) => {
             await updateDoc(doc(db, "vehicles", editVehicleId), vehicleData);
             alert('تم تحديث بيانات سيارة الأسطول بنجاح!');
             document.getElementById('editVehicleId').value = '';
-            document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
-            document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
+            document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة وتعيين السائق';
+            document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة';
             if(cancelVehicleEditBtn) cancelVehicleEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "vehicles"), vehicleData);
@@ -678,7 +733,7 @@ addVehicleForm?.addEventListener('submit', async (e) => {
         newVehLng = 31.2357;
         const display = document.getElementById('vehCoordsDisplay');
         if (display) {
-            display.textContent = 'الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)';
+            display.textContent = 'الإحداثيات: لم يتم التحديد';
             display.style.color = "#666";
         }
         loadVehiclesList();
@@ -691,8 +746,8 @@ if(cancelVehicleEditBtn) {
     cancelVehicleEditBtn.addEventListener('click', () => {
         addVehicleForm.reset();
         document.getElementById('editVehicleId').value = '';
-        document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
-        document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
+        document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة وتعيين السائق';
+        document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة';
         cancelVehicleEditBtn.style.display = 'none';
     });
 }
@@ -920,14 +975,12 @@ async function loadUserProfile() {
     if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
 }
 
-// تحسين البحث عن الشحنات: استخدام getDoc أولاً لجلب المستند المحدد بقراءة واحدة فقط
 trackInvoiceBtn?.addEventListener('click', async () => {
     const invId = document.getElementById('trackInvoiceInput').value.trim();
     const resultBox = document.getElementById('trackResultBox');
     if (!invId) return;
     resultBox.innerHTML = 'جاري البحث...';
     try {
-        // البحث المباشر بـ getDoc عند إدخال معرف المستند الكامل (1 Read)
         const orderDocRef = doc(db, "orders", invId);
         const docSnap = await getDoc(orderDocRef);
 
@@ -941,7 +994,6 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                     <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
                 </div>`;
         } else {
-            // بحث احتياطي في طلبات المستخدم الحالي فقط لتقليل نطاق البحث
             const q = query(collection(db, "orders"), where("userEmail", "==", currentUser?.email || ""));
             const querySnap = await getDocs(q);
             let found = null;
@@ -978,7 +1030,7 @@ window.previewInvoice = function(orderId, order) {
 
     content.innerHTML = `
         <div id="invoiceCanvasArea" style="background:#fff; padding:15px; text-align:right;">
-            <h2 style="color:var(--primary); text-align:center; font-size:1.3rem; margin-bottom:5px;">منصة العمدة للأعلاف والحبوب</h2>
+            <h2 style="color:var(--primary); text-align:center; font-size:1.3rem; margin-bottom:5px;">منصة الإخلاص للأعلاف والحبوب</h2>
             <p style="text-align:center; color:#666; font-size:0.85rem; margin-bottom:10px;">فاتورة مبيعات رسمية</p>
             <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
             <p style="font-size:0.85rem; margin-bottom:4px;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
@@ -992,7 +1044,6 @@ window.previewInvoice = function(orderId, order) {
 
     if (invoiceModal) invoiceModal.style.display = 'flex';
 
-    // ربط الأزرار بالفعاليات الحية
     const closeBtn = document.getElementById('closeInvoiceModalBtn');
     const printBtn = document.getElementById('printInvoiceBtn');
     const saveImgBtn = document.getElementById('saveInvoiceImgBtn');
@@ -1002,7 +1053,7 @@ window.previewInvoice = function(orderId, order) {
     if (saveImgBtn) saveImgBtn.onclick = saveInvoiceAsImage;
 };
 
-// === حفظ الفاتورة كصورة والتنزيل المباشر مع استدعاء نافذة جوجل أندرويد المعتمده ===
+// === حفظ الفاتورة كصورة والتنزيل المباشر ===
 async function saveInvoiceAsImage() {
     const canvasArea = document.getElementById('invoiceCanvasArea');
     if (!canvasArea) return;
@@ -1023,17 +1074,15 @@ async function saveInvoiceAsImage() {
             logging: false
         });
 
-        const fileName = `فاتورة_العمدة_${Date.now()}.png`;
+        const fileName = `فاتورة_الإخلاص_${Date.now()}.png`;
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
         
         if (!blob) throw new Error('فشل معالجة الصورة');
 
         const file = new File([blob], fileName, { type: 'image/png' });
 
-        // 1. تنزيل الصورة مباشرة إلى جهاز المستخدم دون فتح نافذة متصفح
         downloadBlobFallback(blob, fileName);
 
-        // 2. تفعيل نافذة النظام المعتمده للشارية لأندرويد (Android Share Sheet)
         if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share) {
             const reader = new FileReader();
             reader.readAsDataURL(blob);
@@ -1047,7 +1096,7 @@ async function saveInvoiceAsImage() {
                     });
                     await Capacitor.Plugins.Share.share({
                         title: 'الفاتورة الإلكترونية',
-                        text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب',
+                        text: 'الفاتورة الإلكترونية - منصة الإخلاص للأعلاف والحبوب',
                         url: savedFile.uri,
                         dialogTitle: 'مشاركة الفاتورة'
                     });
@@ -1055,7 +1104,7 @@ async function saveInvoiceAsImage() {
                     await navigator.share({
                         files: [file],
                         title: 'الفاتورة الإلكترونية',
-                        text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب'
+                        text: 'الفاتورة الإلكترونية - منصة الإخلاص للأعلاف والحبوب'
                     });
                 }
             };
@@ -1063,7 +1112,7 @@ async function saveInvoiceAsImage() {
             await navigator.share({
                 files: [file],
                 title: 'الفاتورة الإلكترونية',
-                text: 'الفاتورة الإلكترونية - منصة العمدة للأعلاف والحبوب'
+                text: 'الفاتورة الإلكترونية - منصة الإخلاص للأعلاف والحبوب'
             });
         }
 
@@ -1076,12 +1125,10 @@ async function saveInvoiceAsImage() {
     }
 }
 
-// === تشغيل زر الطباعة لفتح نافذة مشاركة وطباعة الأندرويد النظامية ===
 function triggerAndroidPrintOrShare() {
     saveInvoiceAsImage();
 }
 
-// تنزيل ملف الصورة مباشرة في التخزين المحلي
 function downloadBlobFallback(blob, fileName) {
     const url = URL.createObjectURL ? URL.createObjectURL(blob) : window.webkitURL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1094,7 +1141,7 @@ function downloadBlobFallback(blob, fileName) {
 }
 
 // ==========================================
-// === إعداد خريطة العميل المحدثة وحرة الاتجاهات ===
+// === إعداد خريطة العميل المحدثة ===
 // ==========================================
 function initUserMap() {
     const userMapElem = document.getElementById('userMap');
@@ -1112,7 +1159,6 @@ function initUserMap() {
         return; 
     }
 
-    // طبقات خريطة سريعة وخفيفة جداً
     const streetLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
         maxZoom: 19,
         keepBuffer: 3,
@@ -1124,16 +1170,15 @@ function initUserMap() {
         keepBuffer: 3
     });
 
-    // تفعيل التدوير الحر والحرية الكاملة للاتجاهات بدون اهتزاز تلقائي
     userMap = L.map('userMap', {
         center: [selectedLat, selectedLng],
         zoom: 14,
         layers: [streetLayer],
         preferCanvas: true,
-        rotate: true,          // تفعيل محرك التدوير
-        touchRotate: true,     // تدوير الخريطة بأصبعين على شاشات اللمس
-        rotateControl: true,   // زر البوصلة للعودة للشمال
-        bearing: 0             // زاوية الاتجاه الابتدائية
+        rotate: true,
+        touchRotate: true,
+        rotateControl: true,
+        bearing: 0
     });
 
     const baseMaps = {
@@ -1142,7 +1187,6 @@ function initUserMap() {
     };
     L.control.layers(baseMaps).addTo(userMap);
 
-    // أيقونة دبوس مميزة وسريعة الاستجابة
     const userIcon = L.divIcon({
         className: 'custom-user-marker',
         html: `<div style="background:#2c5e3b; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #fff;"><i class="fa-solid fa-location-dot" style="font-size:18px;"></i></div>`,
@@ -1154,14 +1198,12 @@ function initUserMap() {
     userMarker = L.marker([selectedLat, selectedLng], { draggable: true, icon: userIcon }).addTo(userMap);
     userMarker.bindPopup('موقع التوصيل المحدد').openPopup();
 
-    // تحديث الموقع عند سحب الدبوس
     userMarker.on('dragend', () => {
         const pos = userMarker.getLatLng();
         selectedLat = pos.lat;
         selectedLng = pos.lng;
     });
 
-    // الضغط في أي مكان على الخريطة لنقل الدبوس فوراً
     userMap.on('click', (e) => {
         selectedLat = e.latlng.lat;
         selectedLng = e.latlng.lng;
@@ -1169,7 +1211,6 @@ function initUserMap() {
         userMap.panTo([selectedLat, selectedLng]);
     });
 
-    // حل المشكلة الرمادية نهائياً عند اكتمال العرض
     setTimeout(() => {
         if (userMap) userMap.invalidateSize();
     }, 250);
@@ -1187,10 +1228,10 @@ locateMeBtn?.addEventListener('click', () => {
                 userMap.invalidateSize();
             }
             alert('تم تحديد موقعك بنجاح!');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي تلقائياً (GPS)';
         }, () => {
             alert('فشل تحديد الموقع، تأكد من تفعيل الـ GPS وصلاحيات المتصفح.');
-            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)';
+            locateMeBtn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي تلقائياً (GPS)';
         }, { enableHighAccuracy: true, timeout: 10000 });
     } else {
         alert('خاصية تحديد الموقع غير مدعومة في متصفحك.');
@@ -1215,7 +1256,7 @@ saveLocationBtn?.addEventListener('click', async () => {
             locationUpdated: new Date().toISOString()
         }, { merge: true });
 
-        alert(`تم حفظ موقع التوصيل الخاص بك بنجاح! الإحداثيات: (${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)})`);
+        alert(`تم حفظ موقع التوصيل بنجاح! الإحداثيات: (${selectedLat.toFixed(4)}, ${selectedLng.toFixed(4)})`);
     } catch (err) {
         alert('خطأ أثناء حفظ الموقع: ' + err.message);
     }
@@ -1300,7 +1341,6 @@ async function initAdminMap() {
     };
     L.control.layers(baseMaps).addTo(adminMap);
 
-    // مجموعة لترتيب وتحديث دبابيس سيارات الأسطول بدون تكرار
     adminMapMarkersGroup = L.layerGroup().addTo(adminMap);
 
     await refreshAdminMapMarkers();
@@ -1309,7 +1349,7 @@ async function initAdminMap() {
 
 async function refreshAdminMapMarkers() {
     if (!adminMap || !adminMapMarkersGroup) return;
-    adminMapMarkersGroup.clearLayers(); // تنظيف العلامات القديمة
+    adminMapMarkersGroup.clearLayers();
 
     try {
         const snapshot = await getDocs(collection(db, "vehicles"));
@@ -1333,7 +1373,6 @@ async function refreshAdminMapMarkers() {
             }
         });
 
-        // احتواء وتقريب تلقائي يضمن ظهور كل شاحنات الأسطول
         if (bounds.length > 0) {
             adminMap.fitBounds(bounds, { padding: [40, 40] });
         }
@@ -1354,7 +1393,6 @@ if (refreshAdminMapBtn) {
     });
 }
 
-// إعادة ضبط وتكييف حجم الخريطة فور تغيير أبعاد النافذة تلقائياً
 window.addEventListener('resize', () => {
     if (userMap) userMap.invalidateSize();
     if (adminMap) adminMap.invalidateSize();
