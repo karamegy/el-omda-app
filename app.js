@@ -92,7 +92,7 @@ async function getCurrentDeviceLocation() {
             await window.Capacitor.Plugins.Geolocation.requestPermissions();
             const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
                 enableHighAccuracy: true,
-                timeout: 15000,
+                timeout: 10000,
                 maximumAge: 0
             });
             return { lat: position.coords.latitude, lng: position.coords.longitude };
@@ -101,33 +101,44 @@ async function getCurrentDeviceLocation() {
         }
     }
 
-    // 2. الجلب الفوري عبر navigator.geolocation مع دقة عالية ومهلة كافية
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-            (err) => {
-                let msg = 'تعذر التقاط الموقع الفوري.';
-                if (err.code === err.PERMISSION_DENIED) {
-                    msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
-                } else if (err.code === err.POSITION_UNAVAILABLE) {
-                    msg = 'موقعك غير متاح حالياً. تأكد من تشغيل زر الـ GPS وشبكة البيانات بالهاتف.';
-                } else if (err.code === err.TIMEOUT) {
-                    msg = 'استغرق تحديد الموقع وقتاً أطول من المتوقع. تأكد من تشغيل الـ GPS وأعد المحاولة.';
-                }
-                reject(new Error(msg));
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 15000,
-                maximumAge: 0
+    // 2. الجلب عبر navigator.geolocation مع المحاولة الأولى (دقة عالية) والمحاولة الثانية الاحتياطية (دقة عادية)
+    const getPositionPromise = (options) => {
+        return new Promise((resolve, reject) => {
+            if (!navigator.geolocation) {
+                reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
+                return;
             }
-        );
-    });
+            navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                (err) => reject(err),
+                options
+            );
+        });
+    };
+
+    try {
+        // محاولة أولى: GPS عالي الدقة مع مهلة 10 ثوانٍ
+        return await getPositionPromise({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+    } catch (firstErr) {
+        if (firstErr.code === firstErr.PERMISSION_DENIED) {
+            throw new Error('تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.');
+        }
+        
+        // محاولة ثانية احتياطية: دقة عادية (أسرع وتعمل بنجاح داخل المباني عبر شبكة المحمول والواي فاي)
+        try {
+            return await getPositionPromise({ enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 });
+        } catch (secondErr) {
+            let msg = 'تعذر التقاط الموقع الفوري.';
+            if (secondErr.code === secondErr.PERMISSION_DENIED) {
+                msg = 'تم رفض الإذن! يرجى التوجه لإعدادات الهاتف -> التطبيقات -> العمدة -> تفعيل إذن الموقع.';
+            } else if (secondErr.code === secondErr.POSITION_UNAVAILABLE) {
+                msg = 'موقعك غير متاح حالياً. تأكد من تشغيل زر الـ GPS وشبكة البيانات بالهاتف.';
+            } else if (secondErr.code === secondErr.TIMEOUT) {
+                msg = 'استغرق تحديد الموقع وقتاً أطول من المتوقع. تأكد من تشغيل الـ GPS وأعد المحاولة.';
+            }
+            throw new Error(msg);
+        }
+    }
 }
 
 if (searchInput) {
