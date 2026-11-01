@@ -1497,6 +1497,7 @@ async function loadNotifications() {
     });
 }
 
+// === دالة جلب الملف الشخصي وعرض فواتير الشراء وطلبات التصدير B2B المكتملة ===
 async function loadUserProfile() {
     if (!currentUser) return;
     const userEmailDisplay = document.getElementById('userEmailDisplay');
@@ -1514,11 +1515,13 @@ async function loadUserProfile() {
         }
     } catch (e) { console.warn(e); }
 
-    const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
-    const querySnapshot = await getDocs(q);
     let invoicesHtml = '';
+
+    // 1. جلب طلبات الشراء العادية (orders)
+    const qOrders = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
+    const ordersSnap = await getDocs(qOrders);
     
-    querySnapshot.forEach((docSnap) => {
+    ordersSnap.forEach((docSnap) => {
         const orderId = docSnap.id;
         const order = docSnap.data();
         invoicesHtml += `
@@ -1528,8 +1531,25 @@ async function loadUserProfile() {
                 <button onclick='previewInvoice("${orderId}", ${JSON.stringify(order)})' style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> معاينة الفاتورة</button>
             </div>`;
     });
+
+    // 2. جلب طلبات عرض سعر التصدير (rfq_orders)
+    const qRfq = query(collection(db, "rfq_orders"), where("userEmail", "==", currentUser.email));
+    const rfqSnap = await getDocs(qRfq);
+
+    rfqSnap.forEach((docSnap) => {
+        const rfqId = docSnap.id;
+        const rfq = docSnap.data();
+        invoicesHtml += `
+            <div style="background:#f0f7f4; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #1e3d2f;">
+                <span style="background:#1e3d2f; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid fa-ship"></i> طلب تصدير B2B</span>
+                <p style="margin-top:5px; margin-bottom:3px;">المنتج: <strong>${rfq.productTitle}</strong> | الكمية: <strong>${rfq.quantity} طن (${rfq.incoterm})</strong></p>
+                <p style="margin-bottom:3px; font-size:0.85rem; color:#555;">الوجهة: ${rfq.destination} | التاريخ: ${rfq.date || ''}</p>
+                الحالة: <span style="color:#d4a373; font-weight:bold;">${rfq.status || 'قيد المراجعة والدراسة'}</span>
+            </div>`;
+    });
+
     const userInvoicesList = document.getElementById('userInvoicesList');
-    if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير سابقة</p>';
+    if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير أو طلبات تصدير سابقة</p>';
 }
 
 trackInvoiceBtn?.addEventListener('click', async () => {
