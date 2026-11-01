@@ -21,9 +21,9 @@ const firebaseConfig = {
 
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
-// بيانات التواصل المباشر للتصدير B2B
-const EXPORT_WHATSAPP_NUMBER = "201000000000"; 
-const EXPORT_PHONE_NUMBER = "+201000000000";
+// بيانات التواصل المباشر للتصدير B2B (تم تحديث الرقم إلى الرقم الصحيح)
+const EXPORT_WHATSAPP_NUMBER = "201114099799"; 
+const EXPORT_PHONE_NUMBER = "+201114099799";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -1375,7 +1375,7 @@ async function loadAllOrders() {
                 </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
-                    <button onclick='assignVehicleToOrder("${id}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
+                    <button onclick='assignVehicleToOrder("${orderId}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
                     <button onclick='updateOrderStatus("${id}", "تم التسليم بنجاح")' style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
                 </div>
             </div>`;
