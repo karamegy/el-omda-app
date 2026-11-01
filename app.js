@@ -21,6 +21,10 @@ const firebaseConfig = {
 
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
+// بيانات التواصل المباشر للتصدير B2B (يمكنك تغيير الأرقام)
+const EXPORT_WHATSAPP_NUMBER = "201000000000"; 
+const EXPORT_PHONE_NUMBER = "+201000000000";
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -81,17 +85,16 @@ const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
 // ==========================================
-// === دالة فائقة السرعة لتحديد الموقع الفوري (خلال لحظة) ===
+// === دالة فائقة السرعة لتحديد الموقع الفوري ===
 // ==========================================
 async function getCurrentDeviceLocation() {
     const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
     
-    // 1. استخدام كاباسيتر إذا كان متوفراً بمهلة سريعة
     if (isNative && window.Capacitor?.Plugins?.Geolocation) {
         try {
             await window.Capacitor.Plugins.Geolocation.requestPermissions();
             const position = await window.Capacitor.Plugins.Geolocation.getCurrentPosition({
-                enableHighAccuracy: false, // جلب سريع عبر الشبكة
+                enableHighAccuracy: false,
                 timeout: 3000
             });
             return { lat: position.coords.latitude, lng: position.coords.longitude };
@@ -100,18 +103,15 @@ async function getCurrentDeviceLocation() {
         }
     }
 
-    // 2. الجلب الفوري عبر المتصفح/TWA (يعتمد أولاً على الشبكة والموقع المخزن بالهاتف)
     return new Promise((resolve, reject) => {
         if (!navigator.geolocation) {
             reject(new Error('خاصية تحديد الموقع غير مدعومة في جهازك.'));
             return;
         }
 
-        // المحاولة 1: جلب فوري (خلال أقل من ثانية) عبر أبراج المحمول/الواي فاي
         navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
             () => {
-                // المحاولة 2: إذا تعذر الجلب السريع، يتم طلب الـ GPS بمهلة 6 ثوانٍ فقط
                 navigator.geolocation.getCurrentPosition(
                     (posAccurate) => resolve({ lat: posAccurate.coords.latitude, lng: posAccurate.coords.longitude }),
                     (err) => {
@@ -126,7 +126,7 @@ async function getCurrentDeviceLocation() {
                     { enableHighAccuracy: true, timeout: 6000, maximumAge: 60000 }
                 );
             },
-            { enableHighAccuracy: false, timeout: 2500, maximumAge: 300000 } // استخدام آخر موقع معروف خلال 5 دقائق
+            { enableHighAccuracy: false, timeout: 2500, maximumAge: 300000 }
         );
     });
 }
@@ -290,6 +290,7 @@ function listenRealtimeData() {
         snapshot.forEach(docSnap => allCategoriesCache.push({ id: docSnap.id, ...docSnap.data() }));
         if (allCategoriesCache.length === 0) {
             allCategoriesCache = [
+                { id: 'export_feed', name: 'التصدير والجملة B2B', icon: 'fa-solid fa-ship' },
                 { id: 'cattle', name: 'علف مواشي', icon: 'fa-solid fa-cow' },
                 { id: 'poultry', name: 'علف دواجن', icon: 'fa-solid fa-egg' },
                 { id: 'sheep', name: 'علف غنم', icon: 'fa-solid fa-wheat-awn' },
@@ -361,12 +362,14 @@ function startProductCarousel() {
             mediaThumb = `<video src="${prod.mediaUrl}" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
         }
         
+        const isExportProd = prod.category === 'export_feed' || prod.category === 'export' || prod.isExport;
+
         bannerContainer.innerHTML = `
             <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick='openProductModal(${JSON.stringify(prod)})'>
                 ${mediaThumb}
                 <div style="flex: 1; min-width: 0;">
                     <h4 style="color: var(--primary); font-size: 0.98rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prod.name}</h4>
-                    <p style="font-size: 0.88rem; color: var(--accent); font-weight: bold;">السعر المميز: ${prod.price} ج.م</p>
+                    <p style="font-size: 0.88rem; color: var(--accent); font-weight: bold;">${isExportProd ? 'قسم التصدير والجملة B2B' : 'السعر المميز: ' + prod.price + ' ج.م'}</p>
                 </div>
             </div>
         `;
@@ -376,6 +379,76 @@ function startProductCarousel() {
     updateCarouselItem();
     carouselInterval = setInterval(updateCarouselItem, 3500);
 }
+
+// ==========================================
+// === B2B RFQ Export Handlers (تصدير بالجملة) ===
+// ==========================================
+window.openExportRfqModal = function(product) {
+    const rfqModal = document.getElementById('exportRfqModal');
+    if (!rfqModal) return;
+
+    document.getElementById('rfqProdTitle').textContent = product ? product.name : 'منتج تصدير';
+    document.getElementById('rfqMinQty').textContent = product?.minQty || '20 طن (حاوية)';
+    document.getElementById('rfqProdId').value = product ? product.id : '';
+
+    const waMsg = encodeURIComponent(`السلام عليكم، أرغب في الاستفسار عن عرض سعر B2B لمنتج: ${product ? product.name : 'الأعلاف والحبوب'}`);
+    const waBtn = document.getElementById('rfqWhatsAppBtn');
+    if (waBtn) waBtn.href = `https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${waMsg}`;
+
+    const callBtn = document.getElementById('rfqCallBtn');
+    if (callBtn) callBtn.href = `tel:${EXPORT_PHONE_NUMBER}`;
+
+    rfqModal.style.display = 'flex';
+};
+
+document.querySelector('.close-rfq-modal')?.addEventListener('click', () => {
+    const rfqModal = document.getElementById('exportRfqModal');
+    if (rfqModal) rfqModal.style.display = 'none';
+});
+
+const rfqForm = document.getElementById('rfqForm');
+rfqForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const companyName = document.getElementById('rfqCompanyName').value;
+    const destination = document.getElementById('rfqDestination').value;
+    const quantity = document.getElementById('rfqQuantity').value;
+    const incoterm = document.getElementById('rfqIncoterm').value;
+    const phone = document.getElementById('rfqPhone').value;
+    const prodTitle = document.getElementById('rfqProdTitle').textContent;
+
+    try {
+        await addDoc(collection(db, "rfq_orders"), {
+            companyName,
+            destination,
+            quantity: Number(quantity),
+            incoterm,
+            phone,
+            productTitle: prodTitle,
+            userEmail: currentUser ? currentUser.email : 'زائر / مستورد دولي',
+            date: new Date().toLocaleDateString('ar-EG'),
+            createdAt: new Date().toISOString(),
+            status: 'جديد - طلب تسعير B2B'
+        });
+
+        const fullMsg = `*طلب عرض سعر B2B جديد - منصة الإخلاص للتصدير*\n\n` +
+            `🏢 *الشركة:* ${companyName}\n` +
+            `📦 *المنتج:* ${prodTitle}\n` +
+            `⚖️ *الكمية:* ${quantity} طن\n` +
+            `🚢 *الشرط اللوجستي:* ${incoterm}\n` +
+            `📍 *وجهة الوصول:* ${destination}\n` +
+            `📞 *هاتف التواصل:* ${phone}`;
+
+        alert('تم إرسال طلب عرض السعر بنجاح! جاري تحويلك لمحادثة الواتساب المباشرة...');
+        
+        const rfqModal = document.getElementById('exportRfqModal');
+        if (rfqModal) rfqModal.style.display = 'none';
+        rfqForm.reset();
+
+        window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMsg)}`, '_blank');
+    } catch (err) {
+        alert('حدث خطأ أثناء حفظ طلب التسعير: ' + err.message);
+    }
+});
 
 window.renderProducts = function(category, searchTerm) {
     if (!productsGrid) return;
@@ -397,22 +470,44 @@ window.renderProducts = function(category, searchTerm) {
             mediaHtml = `<video src="${prod.mediaUrl}" style="width:100%; height:100%; object-fit:cover;"></video>`;
         }
 
-        productsGrid.innerHTML += `
-            <div class="product-card" onclick='openProductModal(${JSON.stringify(prod)})'>
-                <div class="product-media-wrapper">
-                    ${mediaHtml}
-                </div>
-                <div class="product-info">
-                    <h3>${prod.name}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">${prod.price} <small style="font-size:0.75rem;">ج.م</small></span>
-                        <button class="btn-add-cart-icon" onclick='event.stopPropagation(); addToCartDirect(${JSON.stringify(prod)})' title="إضافة للسلة">
-                            <i class="fa-solid fa-cart-plus"></i>
-                        </button>
+        const isExportCategory = prod.category === 'export_feed' || prod.category === 'export' || prod.isExport;
+
+        if (isExportCategory) {
+            productsGrid.innerHTML += `
+                <div class="product-card" onclick='openProductModal(${JSON.stringify(prod)})'>
+                    <div class="product-media-wrapper">
+                        <span style="position:absolute; top:8px; right:8px; background:#1e3d2f; color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; z-index:2;"><i class="fa-solid fa-ship"></i> تصدير B2B</span>
+                        ${mediaHtml}
+                    </div>
+                    <div class="product-info">
+                        <h3>${prod.name}</h3>
+                        <div class="product-price-row">
+                            <span class="product-price" style="font-size:0.85rem; color:#1e3d2f;">طلب تسعير بالجملة</span>
+                            <button class="btn-add-cart-icon" style="background:#1e3d2f;" onclick='event.stopPropagation(); openExportRfqModal(${JSON.stringify(prod)})' title="طلب عرض سعر B2B">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            productsGrid.innerHTML += `
+                <div class="product-card" onclick='openProductModal(${JSON.stringify(prod)})'>
+                    <div class="product-media-wrapper">
+                        ${mediaHtml}
+                    </div>
+                    <div class="product-info">
+                        <h3>${prod.name}</h3>
+                        <div class="product-price-row">
+                            <span class="product-price">${prod.price} <small style="font-size:0.75rem;">ج.م</small></span>
+                            <button class="btn-add-cart-icon" onclick='event.stopPropagation(); addToCartDirect(${JSON.stringify(prod)})' title="إضافة للسلة">
+                                <i class="fa-solid fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     });
 };
 
@@ -431,26 +526,44 @@ window.openProductModal = function(product) {
         mediaHtml = `<video src="${product.mediaUrl}" controls autoplay style="width:100%; height:220px; border-radius:12px; object-fit:cover; margin-bottom:12px;"></video>`;
     }
 
-    body.innerHTML = `
-        ${mediaHtml}
-        <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${product.name}</h3>
-        <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">السعر: ${product.price} ج.م</p>
-        <div class="input-group" style="margin-bottom:15px;">
-            <label>حدد الكمية المطلوبة للحجز:</label>
-            <input type="number" id="modalQtyInput" value="1" min="1" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
-        </div>
-        <button id="modalAddToCartBtn" class="btn-submit" style="background:var(--primary); padding:12px; font-size:0.95rem;">
-            <i class="fa-solid fa-cart-plus"></i> إضافة للسلة وحجز الكمية
-        </button>
-    `;
+    const isExportCategory = product.category === 'export_feed' || product.category === 'export' || product.isExport;
 
-    document.getElementById('modalAddToCartBtn').onclick = () => {
-        const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
-        for (let i = 0; i < qty; i++) { cart.push(product); }
-        localStorage.setItem('omda_cart', JSON.stringify(cart));
-        updateCartUI();
-        document.getElementById('productDetailModal').style.display = 'none';
-    };
+    if (isExportCategory) {
+        body.innerHTML = `
+            ${mediaHtml}
+            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${product.name}</h3>
+            <p style="font-size:0.95rem; font-weight:bold; color:#1e3d2f; margin-bottom:14px;"><i class="fa-solid fa-ship"></i> مخصص للتصدير والكميات الكبيرة (B2B)</p>
+            <button id="modalRfqBtn" class="btn-submit" style="background:#1e3d2f; padding:12px; font-size:0.95rem;">
+                <i class="fa-solid fa-file-signature"></i> طلب عرض سعر جملة (RFQ)
+            </button>
+        `;
+
+        document.getElementById('modalRfqBtn').onclick = () => {
+            document.getElementById('productDetailModal').style.display = 'none';
+            openExportRfqModal(product);
+        };
+    } else {
+        body.innerHTML = `
+            ${mediaHtml}
+            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${product.name}</h3>
+            <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">السعر: ${product.price} ج.م</p>
+            <div class="input-group" style="margin-bottom:15px;">
+                <label>حدد الكمية المطلوبة للحجز:</label>
+                <input type="number" id="modalQtyInput" value="1" min="1" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
+            </div>
+            <button id="modalAddToCartBtn" class="btn-submit" style="background:var(--primary); padding:12px; font-size:0.95rem;">
+                <i class="fa-solid fa-cart-plus"></i> إضافة للسلة وحجز الكمية
+            </button>
+        `;
+
+        document.getElementById('modalAddToCartBtn').onclick = () => {
+            const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
+            for (let i = 0; i < qty; i++) { cart.push(product); }
+            localStorage.setItem('omda_cart', JSON.stringify(cart));
+            updateCartUI();
+            document.getElementById('productDetailModal').style.display = 'none';
+        };
+    }
 
     document.getElementById('productDetailModal').style.display = 'flex';
 };
@@ -1270,7 +1383,6 @@ function initUserMap() {
     }, 250);
 }
 
-// === تحديد موقع العميل الفوري عند الضغط على الزر ===
 locateMeBtn?.addEventListener('click', async () => {
     locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
     try {
