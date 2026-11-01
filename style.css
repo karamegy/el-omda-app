@@ -28,7 +28,7 @@ body {
     min-height: 100vh;
     position: relative;
     overflow-x: hidden;
-    padding-bottom: 100px; /* زيادة الهامش السفلي لمنع التداخل مع زر السلة العائم */
+    padding-bottom: 100px; /* هامش سفلي لشريط التنقل وزر السلة */
 }
 
 /* ==========================================
@@ -1041,9 +1041,91 @@ body::after {
 ========================================== */
 .admin-chat-layout {
     display: grid;
-    grid-template-columns: minmax(220px, 280px) 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 15px;
     margin-top: 15px;
+}
+
+.admin-conversations-card {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-conversations-card h4 {
+    font-size: 0.9rem;
+    color: var(--primary);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+#adminConversationsList {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.admin-chat-box {
+    background: var(--white);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    height: 500px;
+    overflow: hidden;
+}
+
+.admin-chat-header {
+    background: var(--primary);
+    color: var(--white);
+    padding: 12px 15px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.admin-client-phone-badge {
+    font-size: 0.8rem;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.admin-chat-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f8faf9;
+}
+
+.admin-chat-footer {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    background: var(--white);
+    border-top: 1px solid var(--border-color);
+}
+
+.admin-chat-footer input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    outline: none;
+}
+
+.admin-chat-footer button {
+    width: auto;
+    padding: 10px 20px;
 }
 
 #userChatMessages, 
@@ -1208,11 +1290,11 @@ body::after {
         grid-template-columns: 1fr;
     }
 
-    #adminActiveChatBox, #userChatContainer {
-        height: 400px !important;
+    .admin-conversations-card {
+        height: 200px;
     }
-    
-    #adminConversationsList {
-        max-height: 160px;
+
+    .admin-chat-box, #userChatContainer {
+        height: 420px !important;
     }
 }
