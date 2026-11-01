@@ -156,15 +156,15 @@
                         <input type="hidden" id="editCatId" value="">
                         <div class="input-group">
                             <label>معرف القسم بالإنجليزية (Slug)</label>
-                            <input type="text" id="catIdInput" placeholder="مثال: poultry_feed" required>
+                            <input type="text" id="catIdInput" placeholder="مثال: export_feed" required>
                         </div>
                         <div class="input-group">
                             <label>اسم القسم بالعربي</label>
-                            <input type="text" id="catNameInput" placeholder="مثال: أعلاف دواجن" required>
+                            <input type="text" id="catNameInput" placeholder="مثال: التصدير والجملة" required>
                         </div>
                         <div class="input-group">
                             <label>أيقونة القسم (FontAwesome)</label>
-                            <input type="text" id="catIconInput" value="fa-solid fa-wheat-awn" required>
+                            <input type="text" id="catIconInput" value="fa-solid fa-ship" required>
                         </div>
                         <button type="submit" class="btn-submit" id="saveCatBtn">حفظ القسم الجديد</button>
                         <button type="button" id="cancelCatEditBtn" class="btn-submit" style="background:#666; margin-top:5px; display:none;">إلغاء التعديل</button>
@@ -214,7 +214,7 @@
             <div id="adminMapTab" class="admin-panel" style="display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap:10px;">
                     <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
-                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والمواقع</button>
+                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والم مواقع</button>
                 </div>
                 <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 5px; border: 2px solid #ddd;"></div>
             </div>
@@ -350,6 +350,68 @@
                 <button id="checkoutBtn" class="btn-checkout">
                     <i class="fa-solid fa-check-circle"></i> إتمام الطلب وإصدار الفاتورة
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة طلب عرض سعر تصدير (B2B Request for Quote) -->
+    <div id="exportRfqModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container" style="max-width: 550px;">
+            <div class="modal-header" style="background-color: #1e3d2f; color: #fff;">
+                <h3><i class="fa-solid fa-ship"></i> طلب عرض سعر تصدير (B2B)</h3>
+                <span class="close-rfq-modal" style="cursor:pointer; font-size: 1.5rem;">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <div id="rfqProductDetails" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-right: 4px solid #1e3d2f;">
+                    <h4 id="rfqProdTitle" style="margin: 0 0 5px 0; color: #1e3d2f;">منتج تصدير</h4>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;">الحد الأدنى للطلب: <strong id="rfqMinQty">20 طن (حاوية)</strong></p>
+                </div>
+
+                <!-- أزرار التواصل المباشر الفوري -->
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <a id="rfqWhatsAppBtn" href="#" target="_blank" class="btn-submit" style="background: #25D366; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
+                        <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> واتساب التصدير
+                    </a>
+                    <a id="rfqCallBtn" href="tel:+201000000000" class="btn-submit" style="background: #0284c7; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
+                        <i class="fa-solid fa-phone"></i> اتصال مباشر
+                    </a>
+                </div>
+
+                <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.85rem;">أو أرسل تفاصيل طلبك رسمياً وسيتم التواصل معك</div>
+
+                <!-- نموذج طلب التسعير الرسمي -->
+                <form id="rfqForm">
+                    <input type="hidden" id="rfqProdId" value="">
+                    <div class="input-group">
+                        <label>اسم الشركة / الجهة المستوردة</label>
+                        <input type="text" id="rfqCompanyName" placeholder="مثال: شركة الخليج للتنمية الزراعية" required>
+                    </div>
+                    <div class="input-group">
+                        <label>دولة وميناء الوصول المستهدف</label>
+                        <input type="text" id="rfqDestination" placeholder="مثال: السعودية - ميناء جدة الإسلامي" required>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div class="input-group" style="flex: 1;">
+                            <label>الكمية المطلوبة (بالطن)</label>
+                            <input type="number" id="rfqQuantity" min="10" value="25" required>
+                        </div>
+                        <div class="input-group" style="flex: 1;">
+                            <label>شرط التسليم المفضّل</label>
+                            <select id="rfqIncoterm" class="styled-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
+                                <option value="FOB">FOB (تسليم ميناء التحميل)</option>
+                                <option value="CIF">CIF (شامل الشحن والتأمين)</option>
+                                <option value="EXW">EXW (تسليم أرض المصنع)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>رقم هاتف التواصل (مع الكود الدولي)</label>
+                        <input type="tel" id="rfqPhone" placeholder="+966 50 000 0000" required>
+                    </div>
+                    <button type="submit" class="btn-submit" style="background: #1e3d2f; font-weight: bold; margin-top: 10px;">
+                        <i class="fa-solid fa-paper-plane"></i> إرسال طلب عرض السعر
+                    </button>
+                </form>
             </div>
         </div>
     </div>
