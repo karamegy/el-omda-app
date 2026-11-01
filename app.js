@@ -38,6 +38,7 @@ const googleProvider = new GoogleAuthProvider();
 
 let currentUser = null;
 let currentUserRole = 'customer';
+let userSavedPhone = '';
 
 let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
 let allProductsCache = JSON.parse(localStorage.getItem('allaf_products_cache') || '[]');
@@ -55,6 +56,12 @@ let editingOldMediaUrl = '';
 let editingOldMediaType = 'image';
 let newVehLat = 30.0444;
 let newVehLng = 31.2357;
+
+// متغيّرات الشات اللحظي المباشر
+let activeAdminChatEmail = null;
+let unsubscribeUserChat = null;
+let unsubscribeAdminChats = null;
+let allChatsCache = [];
 
 // DOM Elements
 const authBtn = document.getElementById('authBtn');
@@ -83,7 +90,10 @@ const sendNotificationForm = document.getElementById('sendNotificationForm');
 const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
-const clientContactForm = document.getElementById('clientContactForm');
+
+// عناصر الشات المباشر
+const userSendChatForm = document.getElementById('userSendChatForm');
+const adminSendChatForm = document.getElementById('adminSendChatForm');
 
 // ==========================================
 // === دالة فائقة السرعة لتحديد الموقع الفوري ===
@@ -181,6 +191,7 @@ window.switchSection = function(sectionId) {
     if (sectionId === 'categoriesSection') document.getElementById('navCatBtn')?.classList.add('active');
     if (sectionId === 'profileSection') {
         document.getElementById('navProfileBtn')?.classList.add('active');
+        loadUserProfile();
         setTimeout(() => { if (userMap) userMap.invalidateSize(); else initUserMap(); }, 200);
     }
 };
@@ -213,7 +224,8 @@ googleLoginBtn?.addEventListener('click', async () => {
                 name: user.displayName || 'عميل جوجل',
                 role: "customer",
                 rol: "customer",
-                col: "customer"
+                col: "customer",
+                phone: ""
             });
         }
         alert('تم تسجيل الدخول بحساب جوجل بنجاح!');
@@ -240,6 +252,7 @@ onAuthStateChanged(auth, async (user) => {
             } else if (userDoc.exists()) {
                 const userData = userDoc.data();
                 currentUserRole = userData.role || userData.rol || userData.col || "customer";
+                userSavedPhone = userData.phone || "";
             }
             
             if (adminBtn) {
@@ -248,9 +261,13 @@ onAuthStateChanged(auth, async (user) => {
         } catch (err) {
             if (adminBtn) adminBtn.style.display = 'none';
         }
+
+        // بدء استماع المحادثة المباشرة الخاصة بالعميل
+        listenUserChat();
     } else {
         currentUser = null;
         currentUserRole = 'customer';
+        userSavedPhone = '';
         if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول';
         if (adminBtn) adminBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
@@ -273,7 +290,8 @@ loginForm?.addEventListener('submit', async (e) => {
                 name: "عميل",
                 role: "customer",
                 rol: "customer",
-                col: "customer"
+                col: "customer",
+                phone: ""
             });
         }
 
@@ -458,29 +476,198 @@ rfqForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// التواصل المباشر بين العميل والإدارة
-clientContactForm?.addEventListener('submit', async (e) => {
+// ==========================================
+// === نظام الشات والمحادثات اللحظية المباشرة (Real-time Live Chat) ===
+// ==========================================
+
+// 1. استماع واستقبال محادثة العميل مع الإدارة من صفحة "حسابي"
+function listenUserChat() {
+    if (!currentUser) return;
+    const userChatBox = document.getElementById('userChatMessages');
+    if (!userChatBox) return;
+
+    if (unsubscribeUserChat) unsubscribeUserChat();
+
+    const qChat = query(collection(db, "chats"), where("userEmail", "==", currentUser.email));
+    unsubscribeUserChat = onSnapshot(qChat, (snapshot) => {
+        const chatList = [];
+        snapshot.forEach(docSnap => chatList.push({ id: docSnap.id, ...docSnap.data() }));
+
+        // ترتيب المحادثات زمنياً
+        chatList.sort((a, b) => new Date(a.createdAt || a.timestamp || 0) - new Date(b.createdAt || b.timestamp || 0));
+
+        if (chatList.length === 0) {
+            userChatBox.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.85rem; margin-top: 20px;">أهلاً بك! اكتب رسالتك هنا لبدء محادثة مباشرة مع الإدارة.</p>';
+            return;
+        }
+
+        userChatBox.innerHTML = '';
+        chatList.forEach(c => {
+            const isClient = c.sender === 'client';
+            userChatBox.innerHTML += `
+                <div style="display: flex; justify-content: ${isClient ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;">
+                    <div style="max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; ${isClient ? 'background: var(--primary); color: #fff; border-bottom-left-radius: 2px;' : 'background: #e2ece7; color: var(--text-dark); border-bottom-right-radius: 2px;'}">
+                        <div style="font-size: 0.72rem; opacity: 0.8; margin-bottom: 3px; font-weight: bold;">${isClient ? 'أنت' : 'إدارة منصة العمدة'}</div>
+                        <div>${c.message}</div>
+                        <div style="font-size: 0.65rem; opacity: 0.7; text-align: left; margin-top: 4px;">${c.date || ''}</div>
+                    </div>
+                </div>`;
+        });
+        userChatBox.scrollTop = userChatBox.scrollHeight;
+    });
+}
+
+// إرسال رسالة من العميل للإدارة
+userSendChatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!currentUser) {
-        alert('الرجاء تسجيل الدخول أولاً لإرسال استفسارك لمتابعة الردود.');
+        alert('الرجاء تسجيل الدخول أولاً لبدء المحادثة.');
         if (authModal) authModal.style.display = 'flex';
         return;
     }
-    const subject = document.getElementById('contactSubject').value;
-    const message = document.getElementById('contactMessage').value;
+
+    const input = document.getElementById('userChatMessageInput');
+    const msgText = input.value.trim();
+    if (!msgText) return;
 
     try {
-        await addDoc(collection(db, "messages"), {
+        await addDoc(collection(db, "chats"), {
             userEmail: currentUser.email,
-            subject,
-            message,
-            date: new Date().toLocaleString('ar-EG'),
-            status: 'قيد الانتظار'
+            userPhone: userSavedPhone || '',
+            sender: 'client',
+            message: msgText,
+            timestamp: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            date: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
         });
-        alert('تم إرسال رسالتك إلى إدارة التطبيق بنجاح! سيتم التواصل معك قريباً.');
-        clientContactForm.reset();
+        input.value = '';
     } catch (err) {
         alert('خطأ أثناء إرسال الرسالة: ' + err.message);
+    }
+});
+
+// 2. استماع وتصفح شات كافة العملاء داخل لوحة التحكم للإدارة
+function listenAdminChats() {
+    if (unsubscribeAdminChats) unsubscribeAdminChats();
+
+    unsubscribeAdminChats = onSnapshot(collection(db, "chats"), (snapshot) => {
+        allChatsCache = [];
+        snapshot.forEach(docSnap => allChatsCache.push({ id: docSnap.id, ...docSnap.data() }));
+
+        renderAdminConversationsList();
+        if (activeAdminChatEmail) {
+            renderAdminActiveChat(activeAdminChatEmail);
+        }
+    });
+}
+
+function renderAdminConversationsList() {
+    const listElem = document.getElementById('adminConversationsList');
+    if (!listElem) return;
+
+    // تجميع المحادثات حسب بريد العميل
+    const clientMap = {};
+    allChatsCache.forEach(c => {
+        if (!c.userEmail) return;
+        if (!clientMap[c.userEmail]) {
+            clientMap[c.userEmail] = {
+                userEmail: c.userEmail,
+                userPhone: c.userPhone || '',
+                lastMsg: c.message,
+                lastTime: c.createdAt || c.timestamp || 0,
+                unreadCount: 0
+            };
+        }
+        if (new Date(c.createdAt || c.timestamp || 0) > new Date(clientMap[c.userEmail].lastTime)) {
+            clientMap[c.userEmail].lastMsg = c.message;
+            clientMap[c.userEmail].lastTime = c.createdAt || c.timestamp || 0;
+        }
+        if (c.userPhone && !clientMap[c.userEmail].userPhone) {
+            clientMap[c.userEmail].userPhone = c.userPhone;
+        }
+    });
+
+    const clients = Object.values(clientMap).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
+
+    if (clients.length === 0) {
+        listElem.innerHTML = '<p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">لا توجد محادثات جارية حالياً.</p>';
+        return;
+    }
+
+    listElem.innerHTML = '';
+    clients.forEach(cl => {
+        const isActive = activeAdminChatEmail === cl.userEmail;
+        listElem.innerHTML += `
+            <div onclick="selectClientForAdminChat('${cl.userEmail}', '${cl.userPhone}')" style="padding: 10px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: 0.2s; background: ${isActive ? '#eef7f2' : '#f9fafb'}; border: 1px solid ${isActive ? 'var(--primary)' : '#eee'};">
+                <div style="font-weight: bold; font-size: 0.85rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="fa-solid fa-user"></i> ${cl.userEmail}</div>
+                <div style="font-size: 0.78rem; color: #666; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cl.lastMsg}</div>
+                ${cl.userPhone ? `<div style="font-size: 0.7rem; color: var(--accent); margin-top: 2px;"><i class="fa-solid fa-phone"></i> ${cl.userPhone}</div>` : ''}
+            </div>`;
+    });
+}
+
+window.selectClientForAdminChat = function(email, phone) {
+    activeAdminChatEmail = email;
+    document.getElementById('adminActiveClientEmail').textContent = email;
+    document.getElementById('adminActiveClientEmailInput').value = email;
+    document.getElementById('adminActiveClientPhone').textContent = phone ? `هاتف: ${phone}` : 'بدون هاتف';
+
+    renderAdminConversationsList();
+    renderAdminActiveChat(email);
+};
+
+function renderAdminActiveChat(email) {
+    const chatMessagesBox = document.getElementById('adminChatMessages');
+    if (!chatMessagesBox) return;
+
+    const clientMsgs = allChatsCache.filter(c => c.userEmail === email);
+    clientMsgs.sort((a, b) => new Date(a.createdAt || a.timestamp || 0) - new Date(b.createdAt || b.timestamp || 0));
+
+    if (clientMsgs.length === 0) {
+        chatMessagesBox.innerHTML = '<p style="text-align: center; color: #888; margin-top: 40px;">لا توجد رسائل سابقة مع هذا العميل.</p>';
+        return;
+    }
+
+    chatMessagesBox.innerHTML = '';
+    clientMsgs.forEach(c => {
+        const isAdmin = c.sender === 'admin';
+        chatMessagesBox.innerHTML += `
+            <div style="display: flex; justify-content: ${isAdmin ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;">
+                <div style="max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; ${isAdmin ? 'background: var(--primary); color: #fff; border-bottom-left-radius: 2px;' : 'background: #fff; color: var(--text-dark); border: 1px solid #e2ece7; border-bottom-right-radius: 2px;'}">
+                    <div style="font-size: 0.72rem; opacity: 0.8; margin-bottom: 3px; font-weight: bold;">${isAdmin ? 'الإدارة (أنت)' : c.userEmail}</div>
+                    <div>${c.message}</div>
+                    <div style="font-size: 0.65rem; opacity: 0.7; text-align: left; margin-top: 4px;">${c.date || ''}</div>
+                </div>
+            </div>`;
+    });
+    chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
+}
+
+// إرسال رد الإدارة للعميل المختار
+adminSendChatForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const targetEmail = document.getElementById('adminActiveClientEmailInput').value;
+    const input = document.getElementById('adminChatMessageInput');
+    const msgText = input.value.trim();
+
+    if (!targetEmail) {
+        alert('الرجاء اختيار عميل من القائمة أولاً لبدء المحادثة معه.');
+        return;
+    }
+    if (!msgText) return;
+
+    try {
+        await addDoc(collection(db, "chats"), {
+            userEmail: targetEmail,
+            sender: 'admin',
+            message: msgText,
+            timestamp: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+            date: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+        });
+        input.value = '';
+    } catch (err) {
+        alert('خطأ أثناء إرسال الرد: ' + err.message);
     }
 });
 
@@ -602,17 +789,23 @@ window.openProductModal = function(product) {
     document.getElementById('productDetailModal').style.display = 'flex';
 };
 
-// === تحديث السلة ===
+// === تحديث السلة تلقائياً واستدعاء رقم الهاتف المحفوظ ===
 function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalSpan = document.getElementById('cartTotalPrice');
     const totalCountElem = document.getElementById('cartTotalItemsCount');
     const cartCountNav = document.getElementById('cartCount');
     const cartCountHeader = document.getElementById('cartCountHeader');
+    const phoneInput = document.getElementById('checkoutPhoneInput');
 
     if (cartCountNav) cartCountNav.textContent = cart.length;
     if (cartCountHeader) cartCountHeader.textContent = cart.length;
     if (totalCountElem) totalCountElem.textContent = cart.length;
+
+    // تعبئة رقم الهاتف تلقائياً من الحساب المحفوظ
+    if (phoneInput && userSavedPhone && !phoneInput.value) {
+        phoneInput.value = userSavedPhone;
+    }
 
     if (!list || !totalSpan) return;
 
@@ -684,7 +877,7 @@ window.removeGroupFromCart = function(identifier) {
     updateCartUI();
 };
 
-// === إتمام الطلب ===
+// === إتمام الطلب وحفظ رقم الهاتف في حساب العميل والفاتورة ===
 checkoutBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -695,16 +888,33 @@ checkoutBtn?.addEventListener('click', async () => {
         alert('السلة فارغة!');
         return;
     }
+
+    const phoneInput = document.getElementById('checkoutPhoneInput');
+    const phoneVal = phoneInput ? phoneInput.value.trim() : '';
+
+    if (!phoneVal) {
+        alert('الرجاء إدخال رقم الهاتف للتواصل والشحن قبل إتمام الطلب.');
+        if (phoneInput) phoneInput.focus();
+        return;
+    }
+
     const paymentType = document.getElementById('paymentTypeSelect').value;
     try {
+        // 1. حفظ وتحديث رقم الهاتف تلقائياً في حساب العميل دائمًا لاستدعائه مستقبلاً
+        userSavedPhone = phoneVal;
+        const userRef = doc(db, "users", currentUser.email);
+        await setDoc(userRef, { phone: phoneVal }, { merge: true });
+
         const sanitizedItems = cart.map(item => ({
             id: item.id || '',
             name: item.name || '',
             price: item.price || 0
         }));
 
+        // 2. إنشاء الطلب وإرفاق رقم الهاتف في بيانات الفاتورة (orders)
         const orderRef = await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
+            phone: phoneVal,
             items: sanitizedItems,
             total: cart.reduce((sum, item) => sum + Number(item.price), 0),
             status: 'قيد المراجعة والشحن',
@@ -715,6 +925,7 @@ checkoutBtn?.addEventListener('click', async () => {
             assignedDriver: 'غير محدد',
             date: new Date().toLocaleDateString('ar-EG')
         });
+
         alert(`تم إرسال الطلب وإصدار الفاتورة برقم: #${orderRef.id.slice(0,6)} بنجاح!`);
         cart = [];
         localStorage.removeItem('omda_cart');
@@ -1066,7 +1277,7 @@ window.switchAdminTab = function(tabName) {
         const msgTab = document.getElementById('adminMessagesTab');
         if (msgTab) msgTab.style.display = 'block';
         document.getElementById('tabMessagesBtn')?.classList.add('active');
-        loadAdminMessages();
+        listenAdminChats();
     } else if (tabName === 'fleet') {
         document.getElementById('adminFleetTab').style.display = 'block';
         document.getElementById('tabFleetBtn').classList.add('active');
@@ -1135,50 +1346,7 @@ window.deleteRfqOrder = async function(id) {
     }
 };
 
-// 2. إدارة المحادثات واستفسارات العملاء المباشرة
-async function loadAdminMessages() {
-    const list = document.getElementById('adminMessagesList');
-    if (!list) return;
-    list.innerHTML = 'جاري التحميل...';
-    try {
-        const snapshot = await getDocs(collection(db, "messages"));
-        list.innerHTML = '';
-        if (snapshot.empty) {
-            list.innerHTML = '<p style="color:#888;">لا توجد رسائل جديدة من العملاء.</p>';
-            return;
-        }
-        snapshot.forEach(docSnap => {
-            const m = docSnap.data();
-            const id = docSnap.id;
-            list.innerHTML += `
-                <div class="data-item">
-                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
-                        <div>
-                            <strong>المستثمر/العميل:</strong> ${m.userEmail}<br>
-                            <strong>الموضوع:</strong> ${m.subject}<br>
-                            <p style="background:#f4f6f5; padding:8px; border-radius:6px; margin:5px 0;">${m.message}</p>
-                            <small style="color:#888;">التاريخ: ${m.date || ''}</small>
-                        </div>
-                        <div>
-                            <button onclick="deleteClientMessage('${id}')" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف الرسالة</button>
-                        </div>
-                    </div>
-                </div>`;
-        });
-    } catch (e) {
-        list.innerHTML = 'خطأ في التحميل: ' + e.message;
-    }
-}
-
-window.deleteClientMessage = async function(id) {
-    if (confirm('هل أنت متأكد من حذف هذه الرسالة؟')) {
-        await deleteDoc(doc(db, "messages", id));
-        alert('تم حذف الرسالة بنجاح');
-        loadAdminMessages();
-    }
-};
-
-// 3. إدارة الفواتير والطلبات الكلية
+// 2. إدارة الفواتير والطلبات الكلية وعرض رقم هاتف الشحن
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
@@ -1197,8 +1365,8 @@ async function loadAllOrders() {
             <div class="data-item">
                 <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                     <div>
-                         طلب #${id.slice(0,6)} | العميل: <strong>${o.userEmail}</strong> | الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType})<br>
-                        الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
+                         طلب #${id.slice(0,6)} | العميل: <strong>${o.userEmail}</strong> | الهاتف: <strong style="color:var(--primary);">${o.phone || 'غير مسجل'}</strong><br>
+                         الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType}) | الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
                     </div>
                     <div>
                         <button onclick='previewInvoice("${id}", ${JSON.stringify(o)})' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
@@ -1258,7 +1426,7 @@ async function loadAllUsers() {
         const userRole = u.role || u.rol || u.col || 'customer';
         list.innerHTML += `
             <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>الاسم: ${u.name || 'مستخدم'} | البريد: ${email} | الرتبة الحالية: <strong style="color:var(--accent);">${userRole}</strong></div>
+                <div>الاسم: ${u.name || 'مستخدم'} | البريد: ${email} | الهاتف: <strong>${u.phone || 'غير مسجل'}</strong> | الرتبة الحالية: <strong style="color:var(--accent);">${userRole}</strong></div>
                 <div>
                     <select id="roleSelect_${email.replace(/[@.]/g, '_')}" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
                         <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>مدير</option>
@@ -1328,8 +1496,18 @@ async function loadUserProfile() {
     if (!currentUser) return;
     const userEmailDisplay = document.getElementById('userEmailDisplay');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
+    const userPhoneDisplay = document.getElementById('userPhoneDisplay');
+
     if (userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
     if (userRoleDisplay) userRoleDisplay.textContent = currentUserRole;
+
+    try {
+        const userSnap = await getDoc(doc(db, "users", currentUser.email));
+        if (userSnap.exists() && userSnap.data().phone) {
+            userSavedPhone = userSnap.data().phone;
+            if (userPhoneDisplay) userPhoneDisplay.textContent = userSavedPhone;
+        }
+    } catch (e) { console.warn(e); }
 
     const q = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
     const querySnapshot = await getDocs(q);
@@ -1364,6 +1542,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                 <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                     <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
                     <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
+                    <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
                     <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
                     <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
                 </div>`;
@@ -1380,6 +1559,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                     <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                         <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
                         <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
+                        <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
                         <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
                         <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
                     </div>`;
@@ -1392,7 +1572,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     }
 });
 
-// === معاينة الفاتورة وعرض زر الصورة والطباعة ===
+// === معاينة الفاتورة وعرض رقم الهاتف وزر الصورة والطباعة ===
 window.previewInvoice = function(orderId, order) {
     const content = document.getElementById('printableInvoiceContent');
     let itemsHtml = '';
@@ -1408,7 +1588,8 @@ window.previewInvoice = function(orderId, order) {
             <p style="text-align:center; color:#666; font-size:0.85rem; margin-bottom:10px;">فاتورة مبيعات رسمية</p>
             <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
             <p style="font-size:0.85rem; margin-bottom:4px;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
-            <p style="font-size:0.85rem; margin-bottom:8px;"><strong>العميل:</strong> ${order.userEmail}</p>
+            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>العميل:</strong> ${order.userEmail}</p>
+            <p style="font-size:0.85rem; margin-bottom:8px;"><strong>رقم الهاتف المحفوظ:</strong> ${order.phone || 'غير مسجل'}</p>
             <table style="width:100%; border-collapse:collapse; margin:12px 0;">
                 <tr style="background:var(--primary); color:#fff;"><th style="padding:6px; border:1px solid #ddd;">المنتج</th><th style="padding:6px; border:1px solid #ddd;">الكمية</th><th style="padding:6px; border:1px solid #ddd;">السعر</th></tr>
                 ${itemsHtml}
