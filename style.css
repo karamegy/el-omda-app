@@ -767,16 +767,44 @@ body::after {
     align-items: center;
 }
 
-.close-modal, .close-auth-modal, .close-prod-modal, .close-invoice-modal, .close-notif-modal {
+.close-modal, .close-auth-modal, .close-prod-modal, .close-invoice-modal, .close-notif-modal, .close-rfq-modal {
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--white);
+    transition: opacity 0.2s;
+}
+
+.close-modal:hover, .close-auth-modal:hover, .close-prod-modal:hover, .close-invoice-modal:hover, .close-notif-modal:hover, .close-rfq-modal:hover {
+    opacity: 0.8;
 }
 
 .modal-body {
     padding: 18px;
     max-height: 60vh;
     overflow-y: auto;
+}
+
+/* ==========================================
+   قسم التصدير للجملة B2B أزرار التواصل
+========================================== */
+#exportRfqModal .modal-container {
+    max-width: 550px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 14px 45px rgba(0,0,0,0.25);
+}
+
+#rfqWhatsAppBtn, #rfqCallBtn {
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+#rfqWhatsAppBtn:hover, #rfqCallBtn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.08);
+}
+
+#rfqWhatsAppBtn:active, #rfqCallBtn:active {
+    transform: translateY(0);
 }
 
 /* زر تسجيل الدخول بجوجل */
@@ -1095,5 +1123,10 @@ body::after {
 
     .admin-tabs {
         justify-content: center;
+    }
+
+    #exportRfqModal .modal-container {
+        width: 95%;
+        margin: 10px;
     }
 }
