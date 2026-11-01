@@ -190,27 +190,27 @@
             <!-- تبويب الشات والمحادثات المباشرة التفاعلية مع العملاء -->
             <div id="adminMessagesTab" class="admin-panel" style="display:none;">
                 <h3><i class="fa-solid fa-comments"></i> مركز المحادثات المباشرة والشات الحي مع العملاء</h3>
-                <div class="admin-chat-layout" style="display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: 15px; margin-top: 15px;">
+                <div class="admin-chat-layout">
                     <!-- قائمة العملاء أصحاب المحادثات -->
-                    <div style="background: #fff; border-radius: 12px; border: 1px solid var(--border-color); padding: 12px; height: 480px; display: flex; flex-direction: column;">
-                        <h4 style="font-size: 0.9rem; color: var(--primary); margin-bottom: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border-color);"><i class="fa-solid fa-users"></i> قائمة العملاء</h4>
-                        <div id="adminConversationsList" class="data-list" style="flex: 1; overflow-y: auto;">
+                    <div class="admin-conversations-card">
+                        <h4><i class="fa-solid fa-users"></i> قائمة العملاء</h4>
+                        <div id="adminConversationsList" class="data-list">
                             <p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">جاري تحميل المحادثات...</p>
                         </div>
                     </div>
                     <!-- صندوق الشات المباشر المختار -->
-                    <div id="adminActiveChatBox" style="background: #fff; border-radius: 12px; border: 1px solid var(--border-color); display: flex; flex-direction: column; height: 480px; overflow: hidden;">
-                        <div id="adminChatHeader" style="background: var(--primary); color: #fff; padding: 12px 15px; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div id="adminActiveChatBox" class="admin-chat-box">
+                        <div id="adminChatHeader" class="admin-chat-header">
                             <span>محادثة العميل: <strong id="adminActiveClientEmail">لم يتم الاختيار</strong></span>
-                            <span id="adminActiveClientPhone" style="font-size: 0.8rem; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px;">-</span>
+                            <span id="adminActiveClientPhone" class="admin-client-phone-badge">-</span>
                         </div>
-                        <div id="adminChatMessages" style="flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f8faf9;">
+                        <div id="adminChatMessages" class="admin-chat-body">
                             <p style="text-align: center; color: #888; margin-top: 40px;">اختر عميلاً من القائمة لبدء المحادثة معه فوراً.</p>
                         </div>
-                        <form id="adminSendChatForm" style="display: flex; gap: 8px; padding: 10px; background: #fff; border-top: 1px solid var(--border-color);">
+                        <form id="adminSendChatForm" class="admin-chat-footer">
                             <input type="hidden" id="adminActiveClientEmailInput" value="">
-                            <input type="text" id="adminChatMessageInput" placeholder="اكتب ردك للعميل..." required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
-                            <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;"><i class="fa-solid fa-paper-plane"></i> إرسال الرد</button>
+                            <input type="text" id="adminChatMessageInput" placeholder="اكتب ردك للعميل..." required>
+                            <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> إرسال الرد</button>
                         </form>
                     </div>
                 </div>
