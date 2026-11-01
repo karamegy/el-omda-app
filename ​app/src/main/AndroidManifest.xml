@@ -3,19 +3,50 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="io.github.karamegy.omda">
 
-    <!-- الأذونات المطلوبة للتطبيق -->
+    <!-- الأذونات الأساسية للتطبيق والشبكة -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     
     <!-- إذن الكاميرا لتمكين التقاط الصور المباشرة عند الرفع -->
     <uses-permission android:name="android.permission.CAMERA" />
 
+    <!-- أذونات قراءة وحفظ الصور والفيديوهات (متوافقة مع Android 13+ والأجهزة القديمة) -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+    <uses-permission 
+        android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="32" />
+    <uses-permission 
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" 
+        tools:ignore="ScopedStorage" />
+
     <!-- تحسين توافقية أجهزة الـ GPS والكاميرا -->
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <!-- السماح للتطبيق بالتفاعل مع التطبيقات الخارجية (الواتساب، الهاتف، والمتصفح) - Android 11+ -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="whatsapp" />
+        </intent>
+        <package android:name="com.whatsapp" />
+        <package android:name="com.whatsapp.w4b" />
+    </queries>
 
     <application
         android:allowBackup="true"
@@ -125,7 +156,7 @@
             android:name="android.support.customtabs.trusted.SPLASH_SCREEN_FADE_OUT_DURATION"
             android:value="300" />
 
-        <!-- مزود الملفات للسماح برفع الصور والفيديوهات -->
+        <!-- مزود الملفات للسماح برفع وحفظ الصور والفيديوهات -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="io.github.karamegy.omda.fileprovider"
