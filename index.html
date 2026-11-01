@@ -107,13 +107,15 @@
         <section id="adminSection" class="app-section" style="display:none;">
             <div class="admin-header">
                 <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل - العمدة</h2>
-                <p>إدارة المنتجات، الأقسام، طلبات الشراء، أسطول السيارات، وصلاحيات العملاء بالرتب المختلفة.</p>
+                <p>إدارة المنتجات، الأقسام، طلبات الشراء، طلبات التصدير B2B، رسائل العملاء، أسطول السيارات، وصلاحيات العملاء بالرتب المختلفة.</p>
             </div>
 
             <div class="admin-tabs">
                 <button onclick="switchAdminTab('products')" class="tab-btn active" id="tabProdBtn"><i class="fa-solid fa-box"></i> المنتجات</button>
                 <button onclick="switchAdminTab('categories')" class="tab-btn" id="tabCatBtn"><i class="fa-solid fa-folder-plus"></i> الأقسام</button>
+                <button onclick="switchAdminTab('export_rfq')" class="tab-btn" id="tabExportBtn"><i class="fa-solid fa-ship"></i> طلبات التصدير B2B</button>
                 <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> طلبات الشراء</button>
+                <button onclick="switchAdminTab('messages')" class="tab-btn" id="tabMessagesBtn"><i class="fa-solid fa-comments"></i> رسائل العملاء</button>
                 <button onclick="switchAdminTab('fleet')" class="tab-btn" id="tabFleetBtn"><i class="fa-solid fa-car"></i> سيارتي والأسطول</button>
                 <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة الشحنات</button>
                 <button onclick="switchAdminTab('messaging')" class="tab-btn" id="tabMsgBtn"><i class="fa-solid fa-paper-plane"></i> الإشعارات</button>
@@ -174,9 +176,21 @@
                 <div id="adminCategoriesList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
+            <!-- تبويب طلبات التصدير B2B -->
+            <div id="adminExportTab" class="admin-panel" style="display:none;">
+                <h3>طلبات عروض الأسعار والتصدير بالجملة (B2B)</h3>
+                <div id="adminExportRfqList" class="data-list" style="margin-top: 15px;"></div>
+            </div>
+
             <div id="adminOrdersTab" class="admin-panel" style="display:none;">
                 <h3>طلبات الشراء والتحكم الإداري الكامل وتعيين السيارات والسائقين</h3>
                 <div id="adminOrdersList" class="data-list"></div>
+            </div>
+
+            <!-- تبويب رسائل واستفسارات العملاء -->
+            <div id="adminMessagesTab" class="admin-panel" style="display:none;">
+                <h3>استفسارات ورسائل العملاء المباشرة</h3>
+                <div id="adminMessagesList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
             <div id="adminFleetTab" class="admin-panel" style="display:none;">
@@ -214,7 +228,7 @@
             <div id="adminMapTab" class="admin-panel" style="display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap:10px;">
                     <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
-                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والم مواقع</button>
+                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والمواقع</button>
                 </div>
                 <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 5px; border: 2px solid #ddd;"></div>
             </div>
@@ -272,6 +286,22 @@
                     <div id="userMap" style="height: 250px; border-radius: 8px;"></div>
                     <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;">حفظ موقع التوصيل</button>
                 </div>
+            </div>
+
+            <!-- نموذج التواصل المباشر للعميل مع الإدارة -->
+            <div class="profile-box" style="margin-top: 20px;">
+                <h3><i class="fa-solid fa-envelope"></i> تواصل مباشر مع الإدارة</h3>
+                <form id="clientContactForm">
+                    <div class="input-group">
+                        <label>عنوان الاستفسار أو الرسالة</label>
+                        <input type="text" id="contactSubject" placeholder="مثال: استفسار عن كمية علف تسمين" required>
+                    </div>
+                    <div class="input-group">
+                        <label>تفاصيل الرسالة</label>
+                        <textarea id="contactMessage" rows="3" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ccc;" placeholder="اكتب تفاصيل استفسارك هنا..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit" style="margin-top:10px;"><i class="fa-solid fa-paper-plane"></i> إرسال الرسالة للإدارة</button>
+                </form>
             </div>
         </section>
 
@@ -416,7 +446,7 @@
         </div>
     </div>
 
-    <!-- نافذة الفاتورة (مجهزة بزر الحفظ كصورة وزر الطباعة فقط) -->
+    <!-- نافذة الفاتورة (مجهزةزر الحفظ كصورة وزر الطباعة فقط) -->
     <div id="invoiceModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 650px;">
             <div class="modal-header">
