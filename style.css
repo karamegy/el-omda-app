@@ -1037,6 +1037,36 @@ body::after {
 }
 
 /* ==========================================
+   مركز المحادثات والشات المباشر (Live Chat System)
+========================================== */
+.admin-chat-layout {
+    display: grid;
+    grid-template-columns: minmax(220px, 280px) 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+#userChatMessages, 
+#adminChatMessages, 
+#adminConversationsList {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+#userChatMessages::-webkit-scrollbar, 
+#adminChatMessages::-webkit-scrollbar, 
+#adminConversationsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+#userChatMessages::-webkit-scrollbar-thumb, 
+#adminChatMessages::-webkit-scrollbar-thumb, 
+#adminConversationsList::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 10px;
+}
+
+/* ==========================================
    حساب العميل والخرائط (Leaflet)
 ========================================== */
 .profile-card-header {
@@ -1171,5 +1201,18 @@ body::after {
     #exportRfqModal .modal-container {
         width: 95%;
         margin: 10px;
+    }
+
+    /* تجاوب الشات المباشر على الهاتف */
+    .admin-chat-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #adminActiveChatBox, #userChatContainer {
+        height: 400px !important;
+    }
+    
+    #adminConversationsList {
+        max-height: 160px;
     }
 }
