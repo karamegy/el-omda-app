@@ -206,6 +206,7 @@ body::after {
     transition: 0.3s;
     white-space: nowrap;
     position: relative;
+    text-decoration: none;
 }
 
 .action-btn:hover {
