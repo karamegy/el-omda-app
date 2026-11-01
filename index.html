@@ -36,6 +36,10 @@
             </div>
 
             <div class="user-actions">
+                <a href="privacy-policy.html" target="_blank" class="action-btn" title="سياسة الخصوصية" style="text-decoration: none;">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>الخصوصية</span>
+                </a>
                 <button id="notificationsBtn" class="action-btn" title="الإشعارات والرسائل">
                     <i class="fa-solid fa-bell"></i>
                     <span>الإشعارات</span>
@@ -288,6 +292,11 @@
                     <p><strong>رقم الهاتف المحفوظ:</strong> <span id="userPhoneDisplay">غير محدد</span></p>
                     <p><strong>رتبة الحساب:</strong> <span id="userRoleDisplay">عميل</span></p>
                 </div>
+                <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
+                    <a href="privacy-policy.html" target="_blank" style="color: var(--primary); font-weight: bold; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-shield-halved"></i> سياسة الخصوصية وأمان البيانات
+                    </a>
+                </div>
             </div>
 
             <div class="profile-box" style="margin-bottom: 20px;">
@@ -397,7 +406,7 @@
                     <!-- إدخال رقم الهاتف الإلزامي للطلب -->
                     <div class="input-group" style="margin-top: 10px;">
                         <label style="font-weight: bold; color: var(--primary); font-size: 0.85rem;"><i class="fa-solid fa-phone"></i> رقم الهاتف للتواصل والشحن (مطلوب):</label>
-                        <input type="tel" id="checkoutPhoneInput" placeholder="مثال: 01000000000" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                        <input type="tel" id="checkoutPhoneInput" placeholder="مثال: 01114099799" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
                     </div>
 
                     <div class="payment-method-box">
@@ -430,10 +439,10 @@
 
                 <!-- أزرار التواصل المباشر الفوري -->
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <a id="rfqWhatsAppBtn" href="#" target="_blank" class="btn-submit" style="background: #25D366; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
+                    <a id="rfqWhatsAppBtn" href="https://wa.me/201114099799" target="_blank" class="btn-submit" style="background: #25D366; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
                         <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> واتساب التصدير
                     </a>
-                    <a id="rfqCallBtn" href="tel:+201000000000" class="btn-submit" style="background: #0284c7; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
+                    <a id="rfqCallBtn" href="tel:+201114099799" class="btn-submit" style="background: #0284c7; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
                         <i class="fa-solid fa-phone"></i> اتصال مباشر
                     </a>
                 </div>
@@ -467,7 +476,7 @@
                     </div>
                     <div class="input-group">
                         <label>رقم هاتف التواصل (مع الكود الدولي)</label>
-                        <input type="tel" id="rfqPhone" placeholder="+966 50 000 0000" required>
+                        <input type="tel" id="rfqPhone" placeholder="+20 111 409 9799" required>
                     </div>
                     <button type="submit" class="btn-submit" style="background: #1e3d2f; font-weight: bold; margin-top: 10px;">
                         <i class="fa-solid fa-paper-plane"></i> إرسال طلب عرض السعر
@@ -477,7 +486,7 @@
         </div>
     </div>
 
-    <!-- نافذة الفاتورة (مجهزة بزر الحفظ كصورة وزر الطباعة فقط) -->
+    <!-- نافذة الفاتورة (مجهزةزر الحفظ كصورة وزر الطباعة فقط) -->
     <div id="invoiceModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 650px;">
             <div class="modal-header">
@@ -537,6 +546,9 @@
                     </div>
                     <button type="submit" class="btn-submit">تسجيل الدخول</button>
                 </form>
+                <div style="text-align: center; margin-top: 15px; font-size: 0.82rem;">
+                    <a href="privacy-policy.html" target="_blank" style="color: var(--text-muted); text-decoration: underline;">سياسة الخصوصية وأمان البيانات</a>
+                </div>
             </div>
         </div>
     </div>
