@@ -21,7 +21,7 @@ const firebaseConfig = {
 
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
-// بيانات التواصل المباشر للتصدير B2B (تم تحديث الرقم إلى الرقم الصحيح)
+// بيانات التواصل المباشر للتصدير B2B
 const EXPORT_WHATSAPP_NUMBER = "201114099799"; 
 const EXPORT_PHONE_NUMBER = "+201114099799";
 
@@ -1346,7 +1346,7 @@ window.deleteRfqOrder = async function(id) {
     }
 };
 
-// 2. إدارة الفواتير والطلبات الكلية وعرض رقم هاتف الشحن
+// 2. إدارة الفواتير والطلبات الكلية وعرض رقم هاتف الشحن (تم إصلاح خطأ orderId لتنسيق المتغير id الصحيح)
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
@@ -1358,6 +1358,11 @@ async function loadAllOrders() {
     });
 
     list.innerHTML = '';
+    if (snapshot.empty) {
+        list.innerHTML = '<p style="color:#888; text-align:center; padding:15px;">لا توجد طلبات شراء حالياً.</p>';
+        return;
+    }
+
     snapshot.forEach(docSnap => {
         const o = docSnap.data();
         const id = docSnap.id;
@@ -1375,7 +1380,7 @@ async function loadAllOrders() {
                 </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
-                    <button onclick='assignVehicleToOrder("${orderId}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
+                    <button onclick='assignVehicleToOrder("${id}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
                     <button onclick='updateOrderStatus("${id}", "تم التسليم بنجاح")' style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
                 </div>
             </div>`;
