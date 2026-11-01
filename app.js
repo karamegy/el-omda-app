@@ -21,7 +21,7 @@ const firebaseConfig = {
 
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
-// بيانات التواصل المباشر للتصدير B2B (يمكنك تغيير الأرقام)
+// بيانات التواصل المباشر للتصدير B2B
 const EXPORT_WHATSAPP_NUMBER = "201000000000"; 
 const EXPORT_PHONE_NUMBER = "+201000000000";
 
@@ -83,6 +83,7 @@ const sendNotificationForm = document.getElementById('sendNotificationForm');
 const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
+const clientContactForm = document.getElementById('clientContactForm');
 
 // ==========================================
 // === دالة فائقة السرعة لتحديد الموقع الفوري ===
@@ -284,19 +285,20 @@ loginForm?.addEventListener('submit', async (e) => {
     }
 });
 
+// ==========================================
+// === المزامنة اللحظية مع الفلترة الذكية وإجبار قسم التصدير ===
+// ==========================================
 function listenRealtimeData() {
     onSnapshot(collection(db, "categories"), (snapshot) => {
         allCategoriesCache = [];
         snapshot.forEach(docSnap => allCategoriesCache.push({ id: docSnap.id, ...docSnap.data() }));
-        if (allCategoriesCache.length === 0) {
-            allCategoriesCache = [
-                { id: 'export_feed', name: 'التصدير والجملة B2B', icon: 'fa-solid fa-ship' },
-                { id: 'cattle', name: 'علف مواشي', icon: 'fa-solid fa-cow' },
-                { id: 'poultry', name: 'علف دواجن', icon: 'fa-solid fa-egg' },
-                { id: 'sheep', name: 'علف غنم', icon: 'fa-solid fa-wheat-awn' },
-                { id: 'supplements', name: 'مكملات بيطرية', icon: 'fa-solid fa-pills' }
-            ];
+        
+        // إجبار وجود قسم التصدير والجملة B2B
+        const hasExport = allCategoriesCache.some(c => c.id === 'export_feed');
+        if (!hasExport) {
+            allCategoriesCache.unshift({ id: 'export_feed', name: 'التصدير والجملة B2B', icon: 'fa-solid fa-ship' });
         }
+        
         localStorage.setItem('allaf_categories_cache', JSON.stringify(allCategoriesCache));
         renderCategoriesUI();
     }, () => {
@@ -324,9 +326,15 @@ function renderCategoriesUI() {
         if (prodCategorySelect) prodCategorySelect.innerHTML = '';
         if (fullCategoriesGrid) fullCategoriesGrid.innerHTML = '';
 
+        if (prodCategorySelect) {
+            prodCategorySelect.innerHTML += `<option value="export_feed">التصدير والجملة B2B</option>`;
+        }
+
         allCategoriesCache.forEach(cat => {
             catContainer.innerHTML += `<button class="cat-chip" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${cat.name}</button>`;
-            if (prodCategorySelect) prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            if (prodCategorySelect && cat.id !== 'export_feed') {
+                prodCategorySelect.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            }
             
             if (fullCategoriesGrid) {
                 fullCategoriesGrid.innerHTML += `
@@ -447,6 +455,32 @@ rfqForm?.addEventListener('submit', async (e) => {
         window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMsg)}`, '_blank');
     } catch (err) {
         alert('حدث خطأ أثناء حفظ طلب التسعير: ' + err.message);
+    }
+});
+
+// التواصل المباشر بين العميل والإدارة
+clientContactForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!currentUser) {
+        alert('الرجاء تسجيل الدخول أولاً لإرسال استفسارك لمتابعة الردود.');
+        if (authModal) authModal.style.display = 'flex';
+        return;
+    }
+    const subject = document.getElementById('contactSubject').value;
+    const message = document.getElementById('contactMessage').value;
+
+    try {
+        await addDoc(collection(db, "messages"), {
+            userEmail: currentUser.email,
+            subject,
+            message,
+            date: new Date().toLocaleString('ar-EG'),
+            status: 'قيد الانتظار'
+        });
+        alert('تم إرسال رسالتك إلى إدارة التطبيق بنجاح! سيتم التواصل معك قريباً.');
+        clientContactForm.reset();
+    } catch (err) {
+        alert('خطأ أثناء إرسال الرسالة: ' + err.message);
     }
 });
 
@@ -762,7 +796,7 @@ async function loadAdminProductsList() {
             const id = p.id;
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div><strong>${p.name}</strong> - <span style="color:var(--accent); font-weight:bold;">${p.price} ج.م</span></div>
+                    <div><strong>${p.name}</strong> - <span style="color:var(--accent); font-weight:bold;">${p.price} ج.م</span> (${p.category})</div>
                     <div>
                         <button onclick='editProduct("${id}", ${JSON.stringify(p.name)}, "${p.price}", "${p.category}", "${p.mediaUrl || ''}", "${p.mediaType || 'image'}")' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick='deleteProduct("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
@@ -801,7 +835,7 @@ window.editProduct = function(id, name, price, category, mediaUrl, mediaType) {
 };
 
 window.deleteProduct = async function(id) {
-    if (confirm('هل أنت متأكد من الحذف؟')) {
+    if (confirm('هل أنت متأكد من حذف هذا المنتج نهائياً؟')) {
         try {
             await deleteDoc(doc(db, "products", id));
             alert('تم الحذف بنجاح');
@@ -834,7 +868,11 @@ async function loadCategoriesForAdmin() {
     const renderList = (categories) => {
         list.innerHTML = '';
         categories.forEach(c => {
-            list.innerHTML += `<div class="data-item"><i class="${c.icon}"></i> <strong>${c.name}</strong> (${c.id})</div>`;
+            list.innerHTML += `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div><i class="${c.icon}"></i> <strong>${c.name}</strong> (${c.id})</div>
+                    <button onclick='deleteCategory("${c.id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
+                </div>`;
         });
     };
 
@@ -847,6 +885,18 @@ async function loadCategoriesForAdmin() {
         renderList(fetched);
     }
 }
+
+window.deleteCategory = async function(id) {
+    if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+        try {
+            await deleteDoc(doc(db, "categories", id));
+            alert('تم حذف القسم بنجاح');
+            loadCategoriesForAdmin();
+        } catch (e) {
+            alert('خطأ في الحذف: ' + e.message);
+        }
+    }
+};
 
 // === تحديد موقع سيارة الأسطول الفوري ===
 document.addEventListener('click', async (e) => {
@@ -988,6 +1038,147 @@ async function loadDriversDropdown() {
     });
 }
 
+// ==========================================
+// === لوحة التحكم بالمدير الكاملة (كل التبويبات والتصنيفات) ===
+// ==========================================
+window.switchAdminTab = function(tabName) {
+    document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    if (tabName === 'products') {
+        document.getElementById('adminProductsTab').style.display = 'block';
+        document.getElementById('tabProdBtn').classList.add('active');
+        loadAdminProductsList();
+    } else if (tabName === 'categories') {
+        document.getElementById('adminCategoriesTab').style.display = 'block';
+        document.getElementById('tabCatBtn').classList.add('active');
+        loadCategoriesForAdmin();
+    } else if (tabName === 'export_rfq') {
+        const expTab = document.getElementById('adminExportTab');
+        if (expTab) expTab.style.display = 'block';
+        document.getElementById('tabExportBtn')?.classList.add('active');
+        loadAdminExportRfqs();
+    } else if (tabName === 'orders') {
+        document.getElementById('adminOrdersTab').style.display = 'block';
+        document.getElementById('tabOrdBtn').classList.add('active');
+        loadAllOrders();
+    } else if (tabName === 'messages') {
+        const msgTab = document.getElementById('adminMessagesTab');
+        if (msgTab) msgTab.style.display = 'block';
+        document.getElementById('tabMessagesBtn')?.classList.add('active');
+        loadAdminMessages();
+    } else if (tabName === 'fleet') {
+        document.getElementById('adminFleetTab').style.display = 'block';
+        document.getElementById('tabFleetBtn').classList.add('active');
+        loadDriversDropdown();
+        loadVehiclesList();
+    } else if (tabName === 'map') {
+        document.getElementById('adminMapTab').style.display = 'block';
+        document.getElementById('tabMapBtn').classList.add('active');
+        setTimeout(() => { 
+            initAdminMap(); 
+            if (adminMap) adminMap.invalidateSize();
+        }, 200);
+    } else if (tabName === 'messaging') {
+        document.getElementById('adminMessagingTab').style.display = 'block';
+        document.getElementById('tabMsgBtn').classList.add('active');
+    } else if (tabName === 'users') {
+        document.getElementById('adminUsersTab').style.display = 'block';
+        document.getElementById('tabUserBtn').classList.add('active');
+        loadAllUsers();
+    }
+};
+
+// 1. إدارة طلبات التصدير والجملة B2B
+async function loadAdminExportRfqs() {
+    const list = document.getElementById('adminExportRfqList');
+    if (!list) return;
+    list.innerHTML = 'جاري الجلب...';
+    try {
+        const snapshot = await getDocs(collection(db, "rfq_orders"));
+        list.innerHTML = '';
+        if (snapshot.empty) {
+            list.innerHTML = '<p style="color:#888;">لا توجد طلبات تصدير حالياً.</p>';
+            return;
+        }
+        snapshot.forEach(docSnap => {
+            const r = docSnap.data();
+            const id = docSnap.id;
+            const waMsg = encodeURIComponent(`أهلاً بك شركة ${r.companyName}، بخصوص طلب التصدير لمنتج ${r.productTitle} بكمية ${r.quantity} طن...`);
+            list.innerHTML += `
+                <div class="data-item" style="border-right-color:#1e3d2f;">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <h4 style="color:#1e3d2f; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${r.companyName}</h4>
+                            <p><strong>المنتج:</strong> ${r.productTitle} | <strong>الكمية:</strong> ${r.quantity} طن (${r.incoterm})</p>
+                            <p><strong>الوجهة:</strong> ${r.destination} | <strong>الهاتف:</strong> ${r.phone}</p>
+                            <p style="font-size:0.8rem; color:#777;">البريد: ${r.userEmail} | التاريخ: ${r.date || ''}</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:5px; justify-content:center;">
+                            <a href="https://wa.me/${r.phone?.replace(/[^0-9]/g, '')}?text=${waMsg}" target="_blank" style="background:#25D366; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-brands fa-whatsapp"></i> تواصل واتساب</a>
+                            <a href="tel:${r.phone}" style="background:#0284c7; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-phone"></i> اتصال مباشر</a>
+                            <button onclick="deleteRfqOrder('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px; border-radius:5px; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    } catch (e) {
+        list.innerHTML = 'خطأ في تحميل طلبات التصدير: ' + e.message;
+    }
+}
+
+window.deleteRfqOrder = async function(id) {
+    if (confirm('هل أنت متأكد من حذف طلب التصدير هذا؟')) {
+        await deleteDoc(doc(db, "rfq_orders", id));
+        alert('تم حذف طلب التصدير بنجاح');
+        loadAdminExportRfqs();
+    }
+};
+
+// 2. إدارة المحادثات واستفسارات العملاء المباشرة
+async function loadAdminMessages() {
+    const list = document.getElementById('adminMessagesList');
+    if (!list) return;
+    list.innerHTML = 'جاري التحميل...';
+    try {
+        const snapshot = await getDocs(collection(db, "messages"));
+        list.innerHTML = '';
+        if (snapshot.empty) {
+            list.innerHTML = '<p style="color:#888;">لا توجد رسائل جديدة من العملاء.</p>';
+            return;
+        }
+        snapshot.forEach(docSnap => {
+            const m = docSnap.data();
+            const id = docSnap.id;
+            list.innerHTML += `
+                <div class="data-item">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <strong>المستثمر/العميل:</strong> ${m.userEmail}<br>
+                            <strong>الموضوع:</strong> ${m.subject}<br>
+                            <p style="background:#f4f6f5; padding:8px; border-radius:6px; margin:5px 0;">${m.message}</p>
+                            <small style="color:#888;">التاريخ: ${m.date || ''}</small>
+                        </div>
+                        <div>
+                            <button onclick="deleteClientMessage('${id}')" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف الرسالة</button>
+                        </div>
+                    </div>
+                </div>`;
+        });
+    } catch (e) {
+        list.innerHTML = 'خطأ في التحميل: ' + e.message;
+    }
+}
+
+window.deleteClientMessage = async function(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الرسالة؟')) {
+        await deleteDoc(doc(db, "messages", id));
+        alert('تم حذف الرسالة بنجاح');
+        loadAdminMessages();
+    }
+};
+
+// 3. إدارة الفواتير والطلبات الكلية
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
@@ -1004,8 +1195,16 @@ async function loadAllOrders() {
         const id = docSnap.id;
         list.innerHTML += `
             <div class="data-item">
-                طلب #${id.slice(0,6)} | العميل: ${o.userEmail} | الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType})<br>
-                الحالة: <span style="color:#2c5e3b">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
+                <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div>
+                         طلب #${id.slice(0,6)} | العميل: <strong>${o.userEmail}</strong> | الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType})<br>
+                        الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
+                    </div>
+                    <div>
+                        <button onclick='previewInvoice("${id}", ${JSON.stringify(o)})' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
+                        <button onclick='deleteOrderAdmin("${id}")' style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
+                    </div>
+                </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
                     <button onclick='assignVehicleToOrder("${id}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
@@ -1014,6 +1213,14 @@ async function loadAllOrders() {
             </div>`;
     });
 }
+
+window.deleteOrderAdmin = async function(id) {
+    if (confirm('هل أنت متأكد من حذف هذه الفاتورة نهائياً؟')) {
+        await deleteDoc(doc(db, "orders", id));
+        alert('تم حذف الفاتورة بنجاح');
+        loadAllOrders();
+    }
+};
 
 window.assignVehicleToOrder = async function(orderId) {
     const veh = document.getElementById(`assignVeh_${orderId}`).value;
@@ -1426,44 +1633,6 @@ saveLocationBtn?.addEventListener('click', async () => {
     }
 });
 
-window.switchAdminTab = function(tabName) {
-    document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    if (tabName === 'products') {
-        document.getElementById('adminProductsTab').style.display = 'block';
-        document.getElementById('tabProdBtn').classList.add('active');
-        loadAdminProductsList();
-    } else if (tabName === 'categories') {
-        document.getElementById('adminCategoriesTab').style.display = 'block';
-        document.getElementById('tabCatBtn').classList.add('active');
-        loadCategoriesForAdmin();
-    } else if (tabName === 'orders') {
-        document.getElementById('adminOrdersTab').style.display = 'block';
-        document.getElementById('tabOrdBtn').classList.add('active');
-        loadAllOrders();
-    } else if (tabName === 'fleet') {
-        document.getElementById('adminFleetTab').style.display = 'block';
-        document.getElementById('tabFleetBtn').classList.add('active');
-        loadDriversDropdown();
-        loadVehiclesList();
-    } else if (tabName === 'map') {
-        document.getElementById('adminMapTab').style.display = 'block';
-        document.getElementById('tabMapBtn').classList.add('active');
-        setTimeout(() => { 
-            initAdminMap(); 
-            if (adminMap) adminMap.invalidateSize();
-        }, 200);
-    } else if (tabName === 'messaging') {
-        document.getElementById('adminMessagingTab').style.display = 'block';
-        document.getElementById('tabMsgBtn').classList.add('active');
-    } else if (tabName === 'users') {
-        document.getElementById('adminUsersTab').style.display = 'block';
-        document.getElementById('tabUserBtn').classList.add('active');
-        loadAllUsers();
-    }
-};
-
 // ==========================================
 // === إعداد خريطة الإدارة والأسطول ===
 // ==========================================
@@ -1562,5 +1731,6 @@ window.addEventListener('resize', () => {
     if (adminMap) adminMap.invalidateSize();
 });
 
+// بدء المزامنة والتطبيق
 listenRealtimeData();
 updateCartUI();
