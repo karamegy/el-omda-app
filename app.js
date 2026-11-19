@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 // === التسجيل التلقائي والـ Service Worker ===
 if ('serviceWorker' in navigator) {
@@ -20,6 +19,10 @@ const firebaseConfig = {
   appId: "1:1078714497381:android:9430672b84226b0a46898c"
 };
 
+// === إعدادات Cloudinary المجانية لرفع الصور والفيديوهات ===
+const CLOUDINARY_CLOUD_NAME = "s5gtspg0";
+const CLOUDINARY_UPLOAD_PRESET = "omda_media";
+
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
 
 // بيانات التواصل المباشر للتصدير B2B
@@ -29,7 +32,6 @@ const EXPORT_PHONE_NUMBER = "+201114099799";
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 
 // ==========================================
 // === محرك IndexedDB للفتح اللحظي وتوفير القراءات (أونلاين وأوفلاين) ===
@@ -96,6 +98,7 @@ let userSavedPhone = '';
 let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
 let allProductsCache = [];
 let allCategoriesCache = [];
+let ordersCache = {};
 
 let userMap = null;
 let adminMap = null;
@@ -153,6 +156,52 @@ function resolveProduct(prodOrId) {
     if (!prodOrId) return null;
     if (typeof prodOrId === 'object') return prodOrId;
     return allProductsCache.find(p => p.id === prodOrId) || null;
+}
+
+// ==========================================
+// === دالة رفع الصور والفيديوهات إلى Cloudinary مع عداد النسبة % ===
+// ==========================================
+function uploadMediaToCloudinary(file, onProgress) {
+    return new Promise((resolve, reject) => {
+        const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable && typeof onProgress === "function") {
+                const percent = Math.round((event.loaded / event.total) * 100);
+                onProgress(percent);
+            }
+        };
+
+        xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve({
+                        url: response.secure_url,
+                        type: response.resource_type === "video" ? "video" : "image"
+                    });
+                } catch (e) {
+                    reject(new Error("تعذر قراءة استجابة خادم Cloudinary."));
+                }
+            } else {
+                let errMsg = "فشل رفع الملف إلى Cloudinary.";
+                try {
+                    const errResp = JSON.parse(xhr.responseText);
+                    if (errResp?.error?.message) errMsg += " السبب: " + errResp.error.message;
+                } catch (_) {}
+                reject(new Error(errMsg));
+            }
+        };
+
+        xhr.onerror = () => reject(new Error("تعذر الاتصال بخادم Cloudinary. تأكد من اتصال الإنترنت."));
+        xhr.send(formData);
+    });
 }
 
 // ==========================================
@@ -220,8 +269,17 @@ authBtn?.addEventListener('click', () => {
 closeAuthModal?.addEventListener('click', () => authModal.style.display = 'none');
 cartBtnHeader?.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
 closeModal?.addEventListener('click', () => cartModal.style.display = 'none');
-document.querySelector('.close-invoice-modal')?.addEventListener('click', () => invoiceModal.style.display = 'none');
-document.querySelector('.close-prod-modal')?.addEventListener('click', () => document.getElementById('productDetailModal').style.display = 'none');
+document.querySelector('.close-invoice-modal')?.addEventListener('click', () => {
+    if (invoiceModal) invoiceModal.style.display = 'none';
+});
+document.querySelector('.close-prod-modal')?.addEventListener('click', () => {
+    const prodModal = document.getElementById('productDetailModal');
+    if (prodModal) {
+        const activeVideo = prodModal.querySelector('video');
+        if (activeVideo) activeVideo.pause();
+        prodModal.style.display = 'none';
+    }
+});
 
 notificationsBtn?.addEventListener('click', () => {
     if (notificationsModal) notificationsModal.style.display = 'flex';
@@ -367,7 +425,6 @@ loginForm?.addEventListener('submit', async (e) => {
 // === العرض اللحظي عبر IndexedDB + المزامنة الذكية ===
 // ==========================================
 async function listenRealtimeData() {
-    // تنظيف كاش localStorage القديم لمنع امتلاء الذاكرة
     try {
         localStorage.removeItem('allaf_products_cache');
         localStorage.removeItem('allaf_categories_cache');
@@ -393,9 +450,8 @@ async function listenRealtimeData() {
         startProductCarousel();
     }
 
-    // 2. المزامنة الحية الخفيفة من Firestore (تجلب التغييرات فقط وتحدث IndexedDB)
+    // 2. المزامنة الحية الخفيفة من Firestore
     onSnapshot(collection(db, "categories"), (snapshot) => {
-        // تجاهل التحديث إذا لم يتغير شيء فعلياً
         if (snapshot.metadata.fromCache && allCategoriesCache.length > 1) return;
 
         const freshCats = [];
@@ -864,6 +920,8 @@ window.openProductModal = function(prodOrId) {
         `;
 
         document.getElementById('modalRfqBtn').onclick = () => {
+            const v = document.getElementById('productDetailModal')?.querySelector('video');
+            if (v) v.pause();
             document.getElementById('productDetailModal').style.display = 'none';
             openExportRfqModal(product);
         };
@@ -882,6 +940,8 @@ window.openProductModal = function(prodOrId) {
         `;
 
         document.getElementById('modalAddToCartBtn').onclick = () => {
+            const v = document.getElementById('productDetailModal')?.querySelector('video');
+            if (v) v.pause();
             const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
             for (let i = 0; i < qty; i++) { cart.push(product); }
             localStorage.setItem('omda_cart', JSON.stringify(cart));
@@ -1038,7 +1098,7 @@ checkoutBtn?.addEventListener('click', async () => {
 });
 
 // ==========================================
-// === رفع الفيديوهات والصور بجودة عالية عبر Firebase Storage ===
+// === رفع الفيديوهات والصور بجودة عالية عبر Cloudinary ===
 // ==========================================
 addProductForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1054,31 +1114,14 @@ addProductForm?.addEventListener('submit', async (e) => {
     try {
         if (fileInput.files && fileInput.files[0]) {
             const file = fileInput.files[0];
-            mediaType = file.type.startsWith('video') ? 'video' : 'image';
+            const isVideo = file.type.startsWith('video');
 
-            const ext = file.name.split('.').pop() || (mediaType === 'video' ? 'mp4' : 'jpg');
-            const storageRef = ref(storage, `products/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`);
-            const uploadTask = uploadBytesResumable(storageRef, file, { contentType: file.type });
-
-            mediaUrl = await new Promise((resolve, reject) => {
-                uploadTask.on('state_changed',
-                    (snapshot) => {
-                        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                        saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> جاري رفع ${mediaType === 'video' ? 'الفيديو' : 'الصورة'} (${progress}%)...`;
-                    },
-                    (error) => {
-                        if (error.code === 'storage/unauthorized') {
-                            reject(new Error('صلاحيات Firebase Storage مغلقة. افتح Storage -> Rules في لوحة تحكم Firebase واسمح بالرفع.'));
-                        } else {
-                            reject(error);
-                        }
-                    },
-                    async () => {
-                        const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                        resolve(downloadURL);
-                    }
-                );
+            const uploaded = await uploadMediaToCloudinary(file, (percent) => {
+                saveBtn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up fa-bounce"></i> جاري رفع ${isVideo ? 'الفيديو' : 'الصورة'} (${percent}%)...`;
             });
+
+            mediaUrl = uploaded.url;
+            mediaType = uploaded.type;
         }
 
         saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ بيانات المنتج...`;
@@ -1184,15 +1227,6 @@ window.editProduct = function(id, name, price, category, mediaUrl, mediaType) {
 window.deleteProduct = async function(id) {
     if (confirm('هل أنت متأكد من حذف هذا المنتج نهائياً؟')) {
         try {
-            const targetProd = resolveProduct(id);
-            if (targetProd?.mediaUrl && targetProd.mediaUrl.includes('firebasestorage')) {
-                try {
-                    const fileRef = ref(storage, targetProd.mediaUrl);
-                    await deleteObject(fileRef);
-                } catch (storageErr) {
-                    console.warn('تنبيه حذف الملف من التخزين:', storageErr);
-                }
-            }
             await deleteDoc(doc(db, "products", id));
             alert('تم الحذف بنجاح');
             loadAdminProductsList();
@@ -1491,7 +1525,7 @@ window.deleteRfqOrder = async function(id) {
     }
 };
 
-// 2. إدارة الفواتير والطلبات الكلية
+// 2. إدارة الفواتير والطلبات الكلية (مُصلح لفتح الفاتورة فوراً)
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
@@ -1511,6 +1545,7 @@ async function loadAllOrders() {
     snapshot.forEach(docSnap => {
         const o = docSnap.data();
         const id = docSnap.id;
+        ordersCache[id] = o;
         list.innerHTML += `
             <div class="data-item">
                 <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
@@ -1519,14 +1554,14 @@ async function loadAllOrders() {
                          الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType}) | الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
                     </div>
                     <div>
-                        <button onclick='previewInvoice("${id}", ${JSON.stringify(o)})' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
-                        <button onclick='deleteOrderAdmin("${id}")' style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
+                        <button onclick="previewInvoice('${id}')" style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
+                        <button onclick="deleteOrderAdmin('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
                     </div>
                 </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
-                    <button onclick='assignVehicleToOrder("${id}")' style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
-                    <button onclick='updateOrderStatus("${id}", "تم التسليم بنجاح")' style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
+                    <button onclick="assignVehicleToOrder('${id}')" style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
+                    <button onclick="updateOrderStatus('${id}', 'تم التسليم بنجاح')" style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
                 </div>
             </div>`;
     });
@@ -1535,6 +1570,7 @@ async function loadAllOrders() {
 window.deleteOrderAdmin = async function(id) {
     if (confirm('هل أنت متأكد من حذف هذه الفاتورة نهائياً؟')) {
         await deleteDoc(doc(db, "orders", id));
+        delete ordersCache[id];
         alert('تم حذف الفاتورة بنجاح');
         loadAllOrders();
     }
@@ -1668,11 +1704,12 @@ async function loadUserProfile() {
     ordersSnap.forEach((docSnap) => {
         const orderId = docSnap.id;
         const order = docSnap.data();
+        ordersCache[orderId] = order;
         invoicesHtml += `
             <div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid var(--primary);">
                 رقم الفاتورة: <strong>#${orderId.slice(0,6)}</strong> | الإجمالي: <strong>${order.total} ج.م</strong><br>
                 الحالة: <span style="color:green">${order.status}</span> | سيارة التوصيل: <strong>${order.assignedVehicle || 'قريباً'}</strong><br>
-                <button onclick='previewInvoice("${orderId}", ${JSON.stringify(order)})' style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> معاينة الفاتورة</button>
+                <button onclick="previewInvoice('${orderId}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> معاينة الفاتورة</button>
             </div>`;
     });
 
@@ -1705,6 +1742,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
 
         if (docSnap.exists()) {
             const found = { id: docSnap.id, ...docSnap.data() };
+            ordersCache[found.id] = found;
             resultBox.innerHTML = `
                 <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                     <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
@@ -1712,6 +1750,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                     <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
                     <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
                     <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
+                    <button onclick="previewInvoice('${found.id}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:6px;"><i class="fa-solid fa-eye"></i> فتح الفاتورة</button>
                 </div>`;
         } else {
             const q = query(collection(db, "orders"), where("userEmail", "==", currentUser?.email || ""));
@@ -1722,6 +1761,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             });
 
             if (found) {
+                ordersCache[found.id] = found;
                 resultBox.innerHTML = `
                     <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
                         <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
@@ -1729,6 +1769,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                         <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
                         <p><strong>سيارة التوصيل:</strong> ${found.assignedVehicle || 'قيد التحديد'}</p>
                         <p><strong>الإجمالي:</strong> ${found.total} ج.م</p>
+                        <button onclick="previewInvoice('${found.id}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:6px;"><i class="fa-solid fa-eye"></i> فتح الفاتورة</button>
                     </div>`;
             } else {
                 resultBox.innerHTML = '<p style="color:red;">لم يتم العثور على شحنة بهذا الرقم.</p>';
@@ -1739,13 +1780,36 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     }
 });
 
-// === معاينة الفاتورة وعرض رقم الهاتف وزر الصورة والطباعة ===
-window.previewInvoice = function(orderId, order) {
+// === معاينة الفاتورة وعرض رقم الهاتف وزر الصورة والطباعة (مُصلح 100%) ===
+window.previewInvoice = async function(orderId, orderObj = null) {
+    let order = orderObj || ordersCache[orderId];
+
+    if (!order && orderId) {
+        try {
+            const snap = await getDoc(doc(db, "orders", orderId));
+            if (snap.exists()) {
+                order = snap.data();
+                ordersCache[orderId] = order;
+            }
+        } catch (err) {
+            alert('تعذر تحميل الفاتورة: ' + err.message);
+            return;
+        }
+    }
+
+    if (!order) {
+        alert('تعذر العثور على بيانات هذه الفاتورة.');
+        return;
+    }
+
+    const modal = document.getElementById('invoiceModal');
     const content = document.getElementById('printableInvoiceContent');
+    if (!modal || !content) return;
+
     let itemsHtml = '';
-    if (order.items) {
+    if (Array.isArray(order.items)) {
         order.items.forEach(item => {
-            itemsHtml += `<tr><td style="padding:8px; border:1px solid #ddd;">${item.name}</td><td style="padding:8px; border:1px solid #ddd;">1</td><td style="padding:8px; border:1px solid #ddd;">${item.price} ج.م</td></tr>`;
+            itemsHtml += `<tr><td style="padding:8px; border:1px solid #ddd;">${item.name || ''}</td><td style="padding:8px; border:1px solid #ddd;">1</td><td style="padding:8px; border:1px solid #ddd;">${item.price || 0} ج.م</td></tr>`;
         });
     }
 
@@ -1755,22 +1819,22 @@ window.previewInvoice = function(orderId, order) {
             <p style="text-align:center; color:#666; font-size:0.85rem; margin-bottom:10px;">فاتورة مبيعات رسمية</p>
             <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
             <p style="font-size:0.85rem; margin-bottom:4px;"><strong>رقم الفاتورة:</strong> #${orderId}</p>
-            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>العميل:</strong> ${order.userEmail}</p>
+            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>العميل:</strong> ${order.userEmail || ''}</p>
             <p style="font-size:0.85rem; margin-bottom:8px;"><strong>رقم الهاتف المحفوظ:</strong> ${order.phone || 'غير مسجل'}</p>
             <table style="width:100%; border-collapse:collapse; margin:12px 0;">
                 <tr style="background:var(--primary); color:#fff;"><th style="padding:6px; border:1px solid #ddd;">المنتج</th><th style="padding:6px; border:1px solid #ddd;">الكمية</th><th style="padding:6px; border:1px solid #ddd;">السعر</th></tr>
                 ${itemsHtml}
             </table>
-            <h3 style="font-size:1.1rem; color:var(--primary); margin-top:10px;">الإجمالي النهائي: ${order.total} ج.م</h3>
+            <h3 style="font-size:1.1rem; color:var(--primary); margin-top:10px;">الإجمالي النهائي: ${order.total || 0} ج.م</h3>
         </div>`;
 
-    if (invoiceModal) invoiceModal.style.display = 'flex';
+    modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('closeInvoiceModalBtn');
     const printBtn = document.getElementById('printInvoiceBtn');
     const saveImgBtn = document.getElementById('saveInvoiceImgBtn');
 
-    if (closeBtn) closeBtn.onclick = () => { invoiceModal.style.display = 'none'; };
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
     if (printBtn) printBtn.onclick = () => { triggerAndroidPrintOrShare(); };
     if (saveImgBtn) saveImgBtn.onclick = saveInvoiceAsImage;
 };
