@@ -20,7 +20,7 @@ const firebaseConfig = {
 };
 
 // === إعدادات Cloudinary المجانية لرفع الصور والفيديوهات ===
-const CLOUDINARY_CLOUD_NAME = "s5gtspg0";
+const CLOUDINARY_CLOUD_NAME = "s5gtapg0";
 const CLOUDINARY_UPLOAD_PRESET = "omda_media";
 
 const GOOGLE_WEB_CLIENT_ID = "1078714497381-i2q7tsf02r39dq5m1mp5ndd66sltmced.apps.googleusercontent.com";
