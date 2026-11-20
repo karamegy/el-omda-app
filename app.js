@@ -979,7 +979,7 @@ rfqForm?.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// === نظام الشات المباشر السريع والموفر للقراءات ===
+// === نظام الشات المباشر المطور (chat_threads) ===
 // ==========================================
 function renderChatBubbles(container, messages, isCurrentUserAdmin) {
     if (!container) return;
@@ -1010,7 +1010,6 @@ function listenUserChat() {
 
     if (unsubscribeUserChat) unsubscribeUserChat();
 
-    // تحديد الحد بـ 60 رسالة فقط لتقليل القراءات وتسريع التحميل
     const qChat = query(
         collection(db, "chats"),
         where("userEmail", "==", currentUser.email),
@@ -1048,38 +1047,99 @@ userSendChatForm?.addEventListener('submit', async (e) => {
     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
     input.value = '';
 
+    const threadPayload = {
+        userEmail: currentUser.email,
+        lastMsg: msgText,
+        lastSender: 'client',
+        lastDateLabel: timeStr,
+        updatedAt: nowIso,
+        unreadAdmin: true
+    };
+    if (userSavedPhone) {
+        threadPayload.userPhone = userSavedPhone;
+    }
+
     try {
-        await addDoc(collection(db, "chats"), {
-            userEmail: currentUser.email,
-            userPhone: userSavedPhone || '',
-            sender: 'client',
-            message: msgText,
-            timestamp: nowIso,
-            createdAt: nowIso,
-            date: timeStr
-        });
+        await Promise.all([
+            addDoc(collection(db, "chats"), {
+                userEmail: currentUser.email,
+                userPhone: userSavedPhone || '',
+                sender: 'client',
+                message: msgText,
+                timestamp: nowIso,
+                createdAt: nowIso,
+                date: timeStr
+            }),
+            setDoc(doc(db, "chat_threads", currentUser.email), threadPayload, { merge: true })
+        ]);
     } catch (err) {
         alert(t('خطأ أثناء إرسال الرسالة: ', 'Error sending message: ') + err.message);
     }
 });
 
-// الاستماع لآخر 150 رسالة فقط لتجميع قائمة العملاء النشطين (بدلاً من قراءة ملايين الرسائل التاريخية)
+// الاستماع لقائمة المحادثات المختصرة (قراءة واحدة لكل عميل بدلاً من مئات الرسائل)
 function listenAdminChats() {
     if (unsubscribeAdminRecentChats) unsubscribeAdminRecentChats();
 
-    const qRecent = query(
-        collection(db, "chats"),
-        orderBy("createdAt", "desc"),
-        limit(150)
+    const qThreads = query(
+        collection(db, "chat_threads"),
+        orderBy("updatedAt", "desc"),
+        limit(60)
     );
 
-    unsubscribeAdminRecentChats = onSnapshot(qRecent, (snapshot) => {
+    unsubscribeAdminRecentChats = onSnapshot(qThreads, async (snapshot) => {
+        if (snapshot.empty && !localStorage.getItem('omda_chat_threads_migrated_v1')) {
+            await migrateLegacyChatsToThreads();
+            return;
+        }
+
         recentAdminChatsCache = [];
-        snapshot.forEach(docSnap => recentAdminChatsCache.push({ id: docSnap.id, ...docSnap.data() }));
+        snapshot.forEach(docSnap => {
+            recentAdminChatsCache.push({ id: docSnap.id, ...docSnap.data() });
+        });
         renderAdminConversationsList();
     }, (err) => {
         console.warn("تنبيه تحميل المحادثات:", err.message);
     });
+}
+
+// ترحيل تلقائي لمرة واحدة للمحادثات القديمة الموجودة في chats قبل تفعيل chat_threads
+async function migrateLegacyChatsToThreads() {
+    try {
+        localStorage.setItem('omda_chat_threads_migrated_v1', '1');
+        const oldSnap = await getDocs(query(collection(db, "chats"), orderBy("createdAt", "desc"), limit(150)));
+        if (oldSnap.empty) {
+            renderAdminConversationsList();
+            return;
+        }
+
+        const threadsMap = {};
+        oldSnap.forEach(d => {
+            const c = d.data();
+            if (!c.userEmail) return;
+            if (!threadsMap[c.userEmail]) {
+                threadsMap[c.userEmail] = {
+                    userEmail: c.userEmail,
+                    userPhone: c.userPhone || '',
+                    lastMsg: c.message || '',
+                    lastSender: c.sender || 'client',
+                    lastDateLabel: c.date || '',
+                    updatedAt: c.createdAt || c.timestamp || new Date().toISOString(),
+                    unreadAdmin: c.sender === 'client'
+                };
+            } else if (c.userPhone && !threadsMap[c.userEmail].userPhone) {
+                threadsMap[c.userEmail].userPhone = c.userPhone;
+            }
+        });
+
+        await Promise.all(
+            Object.values(threadsMap).map(th =>
+                setDoc(doc(db, "chat_threads", th.userEmail), th, { merge: true })
+            )
+        );
+    } catch (e) {
+        console.warn("تعذر ترحيل المحادثات القديمة:", e.message);
+    }
 }
 
 function renderAdminConversationsList() {
@@ -1088,33 +1148,13 @@ function renderAdminConversationsList() {
 
     const searchFilter = (adminChatSearchInput?.value || '').trim().toLowerCase();
 
-    const clientMap = {};
-    recentAdminChatsCache.forEach(c => {
-        if (!c.userEmail) return;
-        if (!clientMap[c.userEmail]) {
-            clientMap[c.userEmail] = {
-                userEmail: c.userEmail,
-                userPhone: c.userPhone || '',
-                lastMsg: c.message || '',
-                lastTime: c.createdAt || c.timestamp || 0,
-                lastDateLabel: c.date || ''
-            };
-        }
-        if (new Date(c.createdAt || c.timestamp || 0) > new Date(clientMap[c.userEmail].lastTime)) {
-            clientMap[c.userEmail].lastMsg = c.message || '';
-            clientMap[c.userEmail].lastTime = c.createdAt || c.timestamp || 0;
-            clientMap[c.userEmail].lastDateLabel = c.date || '';
-        }
-        if (c.userPhone && !clientMap[c.userEmail].userPhone) {
-            clientMap[c.userEmail].userPhone = c.userPhone;
-        }
-    });
-
-    let clients = Object.values(clientMap).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
+    let clients = [...recentAdminChatsCache].sort(
+        (a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0)
+    );
 
     if (searchFilter) {
         clients = clients.filter(cl =>
-            cl.userEmail.toLowerCase().includes(searchFilter) ||
+            (cl.userEmail || '').toLowerCase().includes(searchFilter) ||
             (cl.userPhone && cl.userPhone.toLowerCase().includes(searchFilter)) ||
             (cl.lastMsg && cl.lastMsg.toLowerCase().includes(searchFilter))
         );
@@ -1127,15 +1167,20 @@ function renderAdminConversationsList() {
 
     listElem.innerHTML = clients.map(cl => {
         const isActive = activeAdminChatEmail === cl.userEmail;
+        const isUnread = Boolean(cl.unreadAdmin) && !isActive;
         const safeEmail = escapeHtml(cl.userEmail);
-        const safePhone = escapeHtml(cl.userPhone);
+        const safePhone = escapeHtml(cl.userPhone || '');
+        const unreadDot = isUnread
+            ? `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#22c55e; margin-inline-start:6px;" title="رسالة جديدة"></span>`
+            : '';
+
         return `
-            <div class="conv-item ${isActive ? 'active' : ''}" data-email="${safeEmail}" data-phone="${safePhone}">
+            <div class="conv-item ${isActive ? 'active' : ''}" style="${isUnread ? 'border-color: var(--accent); background: #fffdf5;' : ''}" data-email="${safeEmail}" data-phone="${safePhone}">
                 <div class="conv-item-top">
-                    <span class="conv-item-email"><i class="fa-solid fa-user"></i> ${safeEmail}</span>
-                    <span class="conv-item-time">${escapeHtml(cl.lastDateLabel)}</span>
+                    <span class="conv-item-email"><i class="fa-solid fa-user"></i> ${safeEmail}${unreadDot}</span>
+                    <span class="conv-item-time">${escapeHtml(cl.lastDateLabel || '')}</span>
                 </div>
-                <div class="conv-item-preview">${escapeHtml(cl.lastMsg)}</div>
+                <div class="conv-item-preview" style="${isUnread ? 'font-weight:700; color:#173627;' : ''}">${escapeHtml(cl.lastMsg || '')}</div>
                 ${safePhone ? `<div class="conv-item-phone"><i class="fa-solid fa-phone"></i> ${safePhone}</div>` : ''}
             </div>`;
     }).join('');
@@ -1152,6 +1197,7 @@ adminChatSearchInput?.addEventListener('input', () => {
 });
 
 adminBackToClientsBtn?.addEventListener('click', () => {
+    activeAdminChatEmail = null;
     const layout = document.getElementById('adminChatLayout');
     if (layout) {
         layout.classList.remove('show-chat');
@@ -1161,6 +1207,7 @@ adminBackToClientsBtn?.addEventListener('click', () => {
         unsubscribeActiveAdminThread();
         unsubscribeActiveAdminThread = null;
     }
+    renderAdminConversationsList();
 });
 
 window.selectClientForAdminChat = function(email, phone) {
@@ -1178,6 +1225,13 @@ window.selectClientForAdminChat = function(email, phone) {
         layout.classList.add('show-chat');
     }
 
+    // تصفير حالة عدم القراءة لهذا العميل إذا كانت مفعلة (بدون كتابة زائدة)
+    const threadObj = recentAdminChatsCache.find(c => c.userEmail === email);
+    if (threadObj && threadObj.unreadAdmin) {
+        threadObj.unreadAdmin = false;
+        updateDoc(doc(db, "chat_threads", email), { unreadAdmin: false }).catch(() => {});
+    }
+
     renderAdminConversationsList();
 
     const chatMessagesBox = document.getElementById('adminChatMessages');
@@ -1187,7 +1241,7 @@ window.selectClientForAdminChat = function(email, phone) {
 
     if (unsubscribeActiveAdminThread) unsubscribeActiveAdminThread();
 
-    // فتح استماع مخصص لرسائل هذا العميل فقط (بحد أقصى 60 رسالة) لتوفير القراءات
+    // فتح استماع مخصص لرسائل هذا العميل فقط (بحد أقصى 60 رسالة)
     const qClientThread = query(
         collection(db, "chats"),
         where("userEmail", "==", email),
@@ -1224,16 +1278,31 @@ adminSendChatForm?.addEventListener('submit', async (e) => {
     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
     input.value = '';
 
+    const threadUpdate = {
+        userEmail: targetEmail,
+        lastMsg: msgText,
+        lastSender: 'admin',
+        lastDateLabel: timeStr,
+        updatedAt: nowIso,
+        unreadAdmin: false
+    };
+    if (activeAdminChatPhone) {
+        threadUpdate.userPhone = activeAdminChatPhone;
+    }
+
     try {
-        await addDoc(collection(db, "chats"), {
-            userEmail: targetEmail,
-            userPhone: activeAdminChatPhone || '',
-            sender: 'admin',
-            message: msgText,
-            timestamp: nowIso,
-            createdAt: nowIso,
-            date: timeStr
-        });
+        await Promise.all([
+            addDoc(collection(db, "chats"), {
+                userEmail: targetEmail,
+                userPhone: activeAdminChatPhone || '',
+                sender: 'admin',
+                message: msgText,
+                timestamp: nowIso,
+                createdAt: nowIso,
+                date: timeStr
+            }),
+            setDoc(doc(db, "chat_threads", targetEmail), threadUpdate, { merge: true })
+        ]);
     } catch (err) {
         alert('خطأ أثناء إرسال الرد: ' + err.message);
     }
