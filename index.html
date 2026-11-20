@@ -2,8 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- تثبيت حجم التطبيق ومنع التكبير التلقائي عند الكتابة في الشات أو البحث -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title data-i18n="page_title">منصة العمدة للأعلاف والحبوب - المتجر المتكامل</title>
+
+    <!-- تسريع الاتصال المسبق بالخوادم والخطوط لفتح فوري -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://www.gstatic.com">
+
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -12,8 +20,8 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.css" />
     
-    <!-- مكتبة التقاط الشاشة وحفظ الفاتورة كصورة -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- تحميل مكتبة الفواتير بشكل غير معطل لواجهة المستخدم (defer) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#173627">
@@ -26,9 +34,15 @@
     <!-- الهيدر الملكي المنحني النظيف -->
     <header class="royal-header">
         <div class="royal-top-bar">
-            <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
-                <i class="fa-solid fa-user"></i>
-            </button>
+            <div style="display: flex; gap: 6px; align-items: center;">
+                <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
+                    <i class="fa-solid fa-user"></i>
+                </button>
+                <!-- مؤشر حالة الاتصال (أونلاين / أوفلاين) -->
+                <span id="networkStatusBadge" class="network-status-pill online" title="حالة الاتصال">
+                    <span class="status-dot"></span>
+                </span>
+            </div>
 
             <div style="display: flex; gap: 8px; align-items: center;">
                 <button id="langToggleBtn" onclick="toggleAppLanguage()" class="header-icon-btn" style="width: auto; padding: 0 12px; border-radius: 20px; font-size: 0.82rem; font-weight: bold; gap: 5px; display: flex; align-items: center;">
@@ -145,6 +159,13 @@
             </div>
 
             <div id="productsGrid" class="products-grid"></div>
+
+            <!-- زر تحميل دفعة إضافية عند الحاجة لتقليل قراءات Firestore لملايين المستخدمين -->
+            <div id="loadMoreProductsWrapper" style="text-align: center; margin-top: 18px; display: none;">
+                <button id="loadMoreProductsBtn" class="btn-submit" style="width: auto; padding: 10px 24px; border-radius: 25px;">
+                    <i class="fa-solid fa-angles-down"></i> <span data-i18n="load_more_btn">عرض المزيد من المنتجات</span>
+                </button>
+            </div>
         </section>
 
         <!-- قسم الأقسام للتنقل السريع -->
@@ -247,27 +268,40 @@
                 <div id="adminOrdersList" class="data-list"></div>
             </div>
 
+            <!-- مركز شات الإدارة المحكم والثابت المقاس -->
             <div id="adminMessagesTab" class="admin-panel" style="display:none;">
-                <h3><i class="fa-solid fa-comments"></i> مركز المحادثات المباشرة والشات الحي مع العملاء</h3>
-                <div class="admin-chat-layout">
+                <div id="adminChatLayout" class="admin-chat-layout show-list">
+                    <!-- قائمة العملاء -->
                     <div class="admin-conversations-card">
-                        <h4><i class="fa-solid fa-users"></i> قائمة العملاء</h4>
+                        <div class="admin-conv-header">
+                            <h4><i class="fa-solid fa-users"></i> محادثات العملاء</h4>
+                            <input type="text" id="adminChatSearchInput" class="admin-chat-search" placeholder="ابحث بالبريد أو الهاتف...">
+                        </div>
                         <div id="adminConversationsList" class="data-list">
                             <p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">جاري تحميل المحادثات...</p>
                         </div>
                     </div>
+
+                    <!-- نافذة المحادثة النشطة -->
                     <div id="adminActiveChatBox" class="admin-chat-box">
                         <div id="adminChatHeader" class="admin-chat-header">
-                            <span>محادثة العميل: <strong id="adminActiveClientEmail">لم يتم الاختيار</strong></span>
-                            <span id="adminActiveClientPhone" class="admin-client-phone-badge">-</span>
+                            <div class="admin-chat-header-info">
+                                <button type="button" id="adminBackToClientsBtn" class="admin-chat-back-btn" title="العودة لقائمة العملاء">
+                                    <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                                <div class="admin-chat-client-meta">
+                                    <strong id="adminActiveClientEmail">اختر عميلاً</strong>
+                                    <span id="adminActiveClientPhone" class="admin-client-phone-badge">-</span>
+                                </div>
+                            </div>
                         </div>
                         <div id="adminChatMessages" class="admin-chat-body">
                             <p style="text-align: center; color: #888; margin-top: 40px;">اختر عميلاً من القائمة لبدء المحادثة معه فوراً.</p>
                         </div>
                         <form id="adminSendChatForm" class="admin-chat-footer">
                             <input type="hidden" id="adminActiveClientEmailInput" value="">
-                            <input type="text" id="adminChatMessageInput" placeholder="اكتب ردك للعميل..." required>
-                            <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> إرسال الرد</button>
+                            <input type="text" id="adminChatMessageInput" placeholder="اكتب ردك للعميل..." autocomplete="off" required>
+                            <button type="submit" class="btn-submit" aria-label="إرسال"><i class="fa-solid fa-paper-plane"></i></button>
                         </form>
                     </div>
                 </div>
@@ -383,7 +417,7 @@
                         <p style="text-align: center; color: #888; font-size: 0.85rem; margin-top: 20px;">جاري تحميل المحادثة...</p>
                     </div>
                     <form id="userSendChatForm" style="display: flex; gap: 8px; padding: 10px; background: #fff; border-top: 1px solid var(--border-color);">
-                        <input type="text" id="userChatMessageInput" data-i18n-placeholder="chat_input_ph" placeholder="اكتب رسالتك للإدارة هنا..." required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; font-size: 0.9rem;">
+                        <input type="text" id="userChatMessageInput" data-i18n-placeholder="chat_input_ph" placeholder="اكتب رسالتك للإدارة هنا..." autocomplete="off" required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; font-size: 0.9rem;">
                         <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="send_btn">إرسال</span></button>
                     </form>
                 </div>
@@ -604,9 +638,9 @@
         </div>
     </div>
 
-    <!-- استدعاء سكريبت Leaflet ومكتبة التدوير ثم تطبيقك الرئيسي -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js"></script>
+    <!-- استدعاء سكريبت Leaflet ومكتبة التدوير (defer لفتح أسرع) ثم تطبيقك الرئيسي -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+    <script src="https://unpkg.com/leaflet-rotate@0.2.8/dist/leaflet-rotate.js" defer></script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
