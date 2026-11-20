@@ -34,7 +34,31 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==========================================
-// === محرك IndexedDB للفتح اللحظي وتوفير القراءات (أونلاين وأوفلاين) ===
+// === التحكم في القائمة الجانبية (Drawer Menu) ===
+// ==========================================
+window.openSideMenu = function() {
+    document.getElementById('sideMenuDrawer')?.classList.add('open');
+    document.getElementById('drawerOverlay')?.classList.add('open');
+};
+
+window.closeSideMenu = function() {
+    document.getElementById('sideMenuDrawer')?.classList.remove('open');
+    document.getElementById('drawerOverlay')?.classList.remove('open');
+};
+
+document.getElementById('closeDrawerBtn')?.addEventListener('click', closeSideMenu);
+document.getElementById('drawerOverlay')?.addEventListener('click', closeSideMenu);
+
+document.getElementById('toggleSearchBtn')?.addEventListener('click', () => {
+    const searchInputElem = document.getElementById('searchInput');
+    if (searchInputElem) {
+        searchInputElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        searchInputElem.focus();
+    }
+});
+
+// ==========================================
+// === محرك IndexedDB للفتح اللحظي وتوفير القراءات ===
 // ==========================================
 const OmdaLocalDB = {
     dbName: 'OmdaSpeedDB',
@@ -65,7 +89,6 @@ const OmdaLocalDB = {
                 tx.onerror = () => resolve(false);
             });
         } catch (e) {
-            console.warn('IndexedDB Save Error:', e);
             return false;
         }
     },
@@ -84,7 +107,6 @@ const OmdaLocalDB = {
     }
 };
 
-// تفعيل الكاش المحلي المدمج في Firestore لمنع تكرار قراءة المستندات
 enableIndexedDbPersistence(db, { forceOwnership: false }).catch((err) => {
     console.warn("تنبيه وضع الأوفلاين لـ Firestore: ", err.code);
 });
@@ -113,7 +135,6 @@ let editingOldMediaType = 'image';
 let newVehLat = 30.0444;
 let newVehLng = 31.2357;
 
-// متغيّرات الشات اللحظي المباشر
 let activeAdminChatEmail = null;
 let unsubscribeUserChat = null;
 let unsubscribeAdminChats = null;
@@ -147,20 +168,15 @@ const addVehicleForm = document.getElementById('addVehicleForm');
 const cancelVehicleEditBtn = document.getElementById('cancelVehicleEditBtn');
 const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
-// عناصر الشات المباشر
 const userSendChatForm = document.getElementById('userSendChatForm');
 const adminSendChatForm = document.getElementById('adminSendChatForm');
 
-// دالة مساعدة لجلب المنتج سواء بالمعرف أو الكائن
 function resolveProduct(prodOrId) {
     if (!prodOrId) return null;
     if (typeof prodOrId === 'object') return prodOrId;
     return allProductsCache.find(p => p.id === prodOrId) || null;
 }
 
-// ==========================================
-// === دالة رفع الصور والفيديوهات إلى Cloudinary مع عداد النسبة % ===
-// ==========================================
 function uploadMediaToCloudinary(file, onProgress) {
     return new Promise((resolve, reject) => {
         const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
@@ -204,9 +220,6 @@ function uploadMediaToCloudinary(file, onProgress) {
     });
 }
 
-// ==========================================
-// === دالة فائقة السرعة لتحديد الموقع الفوري ===
-// ==========================================
 async function getCurrentDeviceLocation() {
     const isNative = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform && Capacitor.isNativePlatform();
     
@@ -259,6 +272,7 @@ if (searchInput) {
 }
 
 authBtn?.addEventListener('click', () => {
+    closeSideMenu();
     if (currentUser) {
         signOut(auth).then(() => { location.reload(); });
     } else {
@@ -266,8 +280,17 @@ authBtn?.addEventListener('click', () => {
     }
 });
 
+// === دالة فتح السلة الموحدة ===
+window.openCartModal = function() {
+    closeSideMenu();
+    if (cartModal) {
+        cartModal.style.display = 'flex';
+        updateCartUI();
+    }
+};
+
+cartBtnHeader?.addEventListener('click', openCartModal);
 closeAuthModal?.addEventListener('click', () => authModal.style.display = 'none');
-cartBtnHeader?.addEventListener('click', () => { cartModal.style.display = 'flex'; updateCartUI(); });
 closeModal?.addEventListener('click', () => cartModal.style.display = 'none');
 document.querySelector('.close-invoice-modal')?.addEventListener('click', () => {
     if (invoiceModal) invoiceModal.style.display = 'none';
@@ -282,24 +305,24 @@ document.querySelector('.close-prod-modal')?.addEventListener('click', () => {
 });
 
 notificationsBtn?.addEventListener('click', () => {
+    closeSideMenu();
     if (notificationsModal) notificationsModal.style.display = 'flex';
     loadNotifications();
 });
 document.querySelector('.close-notif-modal')?.addEventListener('click', () => notificationsModal.style.display = 'none');
 
 profileBtn?.addEventListener('click', () => {
+    closeSideMenu();
     switchSection('profileSection');
-    loadUserProfile();
-    setTimeout(() => { initUserMap(); }, 200);
 });
 
 adminBtn?.addEventListener('click', () => {
+    closeSideMenu();
     switchSection('adminSection');
-    loadCategoriesForAdmin();
-    loadAdminProductsList();
 });
 
 window.switchSection = function(sectionId) {
+    closeSideMenu();
     document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
     const targetSection = document.getElementById(sectionId);
     if (targetSection) targetSection.style.display = 'block';
@@ -311,6 +334,10 @@ window.switchSection = function(sectionId) {
         document.getElementById('navProfileBtn')?.classList.add('active');
         loadUserProfile();
         setTimeout(() => { if (userMap) userMap.invalidateSize(); else initUserMap(); }, 200);
+    }
+    if (sectionId === 'adminSection') {
+        loadCategoriesForAdmin();
+        loadAdminProductsList();
     }
 };
 
@@ -357,7 +384,7 @@ googleLoginBtn?.addEventListener('click', async () => {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> خروج';
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> تسجيل الخروج';
         if (authModal) authModal.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'flex';
         checkUnreadNotifications();
@@ -380,13 +407,12 @@ onAuthStateChanged(auth, async (user) => {
             if (adminBtn) adminBtn.style.display = 'none';
         }
 
-        // بدء استماع المحادثة المباشرة الخاصة بالعميل
         listenUserChat();
     } else {
         currentUser = null;
         currentUserRole = 'customer';
         userSavedPhone = '';
-        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> دخول';
+        if (authBtn) authBtn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول';
         if (adminBtn) adminBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
     }
@@ -421,16 +447,12 @@ loginForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// ==========================================
-// === العرض اللحظي عبر IndexedDB + المزامنة الذكية ===
-// ==========================================
 async function listenRealtimeData() {
     try {
         localStorage.removeItem('allaf_products_cache');
         localStorage.removeItem('allaf_categories_cache');
     } catch (e) {}
 
-    // 1. الجلب اللحظي الفوري من IndexedDB (0 مللي ثانية - يعمل أونلاين وأوفلاين)
     const [cachedCats, cachedProds] = await Promise.all([
         OmdaLocalDB.get('categories', []),
         OmdaLocalDB.get('products', [])
@@ -450,7 +472,6 @@ async function listenRealtimeData() {
         startProductCarousel();
     }
 
-    // 2. المزامنة الحية الخفيفة من Firestore
     onSnapshot(collection(db, "categories"), (snapshot) => {
         if (snapshot.metadata.fromCache && allCategoriesCache.length > 1) return;
 
@@ -561,9 +582,6 @@ function startProductCarousel() {
     carouselInterval = setInterval(updateCarouselItem, 3500);
 }
 
-// ==========================================
-// === B2B RFQ Export Handlers (تصدير بالجملة) ===
-// ==========================================
 window.openExportRfqModal = function(prodOrId) {
     const product = resolveProduct(prodOrId);
     const rfqModal = document.getElementById('exportRfqModal');
@@ -632,9 +650,6 @@ rfqForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// ==========================================
-// === نظام الشات والمحادثات اللحظية المباشرة (Real-time Live Chat) ===
-// ==========================================
 function listenUserChat() {
     if (!currentUser) return;
     const userChatBox = document.getElementById('userChatMessages');
@@ -820,7 +835,7 @@ adminSendChatForm?.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// === عرض المنتجات (صور عالية الجودة + معاينة فيديو ذكية) ===
+// === عرض المنتجات ===
 // ==========================================
 window.renderProducts = function(category, searchTerm) {
     if (!productsGrid) return;
@@ -852,14 +867,14 @@ window.renderProducts = function(category, searchTerm) {
             productsGrid.innerHTML += `
                 <div class="product-card" onclick="openProductModal('${prod.id}')">
                     <div class="product-media-wrapper">
-                        <span style="position:absolute; top:8px; right:8px; background:#1e3d2f; color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; z-index:2;"><i class="fa-solid fa-ship"></i> تصدير B2B</span>
+                        <span style="position:absolute; top:8px; right:8px; background:#173627; color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; z-index:2;"><i class="fa-solid fa-ship"></i> تصدير B2B</span>
                         ${mediaHtml}
                     </div>
                     <div class="product-info">
                         <h3>${prod.name}</h3>
                         <div class="product-price-row">
-                            <span class="product-price" style="font-size:0.85rem; color:#1e3d2f;">طلب تسعير بالجملة</span>
-                            <button class="btn-add-cart-icon" style="background:#1e3d2f;" onclick="event.stopPropagation(); openExportRfqModal('${prod.id}')" title="طلب عرض سعر B2B">
+                            <span class="product-price" style="font-size:0.85rem; color:#173627;">طلب تسعير بالجملة</span>
+                            <button class="btn-add-cart-icon" style="background:#173627;" onclick="event.stopPropagation(); openExportRfqModal('${prod.id}')" title="طلب عرض سعر B2B">
                                 <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </div>
@@ -913,8 +928,8 @@ window.openProductModal = function(prodOrId) {
         body.innerHTML = `
             ${mediaHtml}
             <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${product.name}</h3>
-            <p style="font-size:0.95rem; font-weight:bold; color:#1e3d2f; margin-bottom:14px;"><i class="fa-solid fa-ship"></i> مخصص للتصدير والكميات الكبيرة (B2B)</p>
-            <button id="modalRfqBtn" class="btn-submit" style="background:#1e3d2f; padding:12px; font-size:0.95rem;">
+            <p style="font-size:0.95rem; font-weight:bold; color:#173627; margin-bottom:14px;"><i class="fa-solid fa-ship"></i> مخصص للتصدير والكميات الكبيرة (B2B)</p>
+            <button id="modalRfqBtn" class="btn-submit" style="background:#173627; padding:12px; font-size:0.95rem;">
                 <i class="fa-solid fa-file-signature"></i> طلب عرض سعر جملة (RFQ)
             </button>
         `;
@@ -953,7 +968,6 @@ window.openProductModal = function(prodOrId) {
     document.getElementById('productDetailModal').style.display = 'flex';
 };
 
-// === تحديث السلة تلقائياً واستدعاء رقم الهاتف المحفوظ ===
 function updateCartUI() {
     const list = document.getElementById('cartItemsList');
     const totalSpan = document.getElementById('cartTotalPrice');
@@ -1040,7 +1054,6 @@ window.removeGroupFromCart = function(identifier) {
     updateCartUI();
 };
 
-// === إتمام الطلب وحفظ رقم الهاتف في حساب العميل والفاتورة ===
 checkoutBtn?.addEventListener('click', async () => {
     if (!currentUser) {
         alert('الرجاء تسجيل الدخول أولاً لإتمام الطلب');
@@ -1097,9 +1110,6 @@ checkoutBtn?.addEventListener('click', async () => {
     }
 });
 
-// ==========================================
-// === رفع الفيديوهات والصور بجودة عالية عبر Cloudinary ===
-// ==========================================
 addProductForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('editProductId').value;
@@ -1169,7 +1179,7 @@ if(cancelEditBtn) {
     });
 }
 
-async function loadAdminProductsList() {
+window.loadAdminProductsList = async function() {
     const list = document.getElementById('adminProductsList');
     if (!list) return;
     
@@ -1177,12 +1187,12 @@ async function loadAdminProductsList() {
         list.innerHTML = '';
         products.forEach(p => {
             const id = p.id;
-            const mediaBadge = p.mediaType === 'video' ? '<span style="background:#1e3d2f; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-right:5px;">فيديو</span>' : '';
+            const mediaBadge = p.mediaType === 'video' ? '<span style="background:#173627; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-right:5px;">فيديو</span>' : '';
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <div><strong>${p.name}</strong> ${mediaBadge} - <span style="color:var(--accent); font-weight:bold;">${p.price} ج.م</span> (${p.category})</div>
                     <div>
-                        <button onclick="editProductById('${id}')" style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick="editProductById('${id}')" style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick="deleteProduct('${id}')" style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
@@ -1202,7 +1212,7 @@ async function loadAdminProductsList() {
             list.innerHTML = 'خطأ في التحميل.';
         }
     }
-}
+};
 
 window.editProductById = function(id) {
     const p = resolveProduct(id);
@@ -1251,7 +1261,7 @@ addCategoryForm?.addEventListener('submit', async (e) => {
     }
 });
 
-async function loadCategoriesForAdmin() {
+window.loadCategoriesForAdmin = async function() {
     const list = document.getElementById('adminCategoriesList');
     if (!list) return;
 
@@ -1274,7 +1284,7 @@ async function loadCategoriesForAdmin() {
         snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
         renderList(fetched);
     }
-}
+};
 
 window.deleteCategory = async function(id) {
     if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
@@ -1288,7 +1298,6 @@ window.deleteCategory = async function(id) {
     }
 };
 
-// === تحديد موقع سيارة الأسطول الفوري ===
 document.addEventListener('click', async (e) => {
     if (e.target && (e.target.id === 'locateVehicleBtn' || e.target.closest('#locateVehicleBtn'))) {
         const btn = e.target.closest('#locateVehicleBtn') || e.target;
@@ -1372,7 +1381,7 @@ async function loadVehiclesList() {
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div>سيارة: <strong>${v.plate}</strong> (${v.model}) | السائق المسؤول: <span style="color:var(--primary); font-weight:bold;">${v.driver}</span></div>
                     <div>
-                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate)}, ${JSON.stringify(v.model)}, ${JSON.stringify(v.driver)}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#2c5e3b; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate)}, ${JSON.stringify(v.model)}, ${JSON.stringify(v.driver)}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick='deleteVehicle("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
@@ -1428,9 +1437,6 @@ async function loadDriversDropdown() {
     });
 }
 
-// ==========================================
-// === لوحة التحكم بالمدير الكاملة ===
-// ==========================================
 window.switchAdminTab = function(tabName) {
     document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1479,7 +1485,6 @@ window.switchAdminTab = function(tabName) {
     }
 };
 
-// 1. إدارة طلبات التصدير والجملة B2B
 async function loadAdminExportRfqs() {
     const list = document.getElementById('adminExportRfqList');
     if (!list) return;
@@ -1496,10 +1501,10 @@ async function loadAdminExportRfqs() {
             const id = docSnap.id;
             const waMsg = encodeURIComponent(`أهلاً بك شركة ${r.companyName}، بخصوص طلب التصدير لمنتج ${r.productTitle} بكمية ${r.quantity} طن...`);
             list.innerHTML += `
-                <div class="data-item" style="border-right-color:#1e3d2f;">
+                <div class="data-item" style="border-right-color:#173627;">
                     <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                         <div>
-                            <h4 style="color:#1e3d2f; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${r.companyName}</h4>
+                            <h4 style="color:#173627; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${r.companyName}</h4>
                             <p><strong>المنتج:</strong> ${r.productTitle} | <strong>الكمية:</strong> ${r.quantity} طن (${r.incoterm})</p>
                             <p><strong>الوجهة:</strong> ${r.destination} | <strong>الهاتف:</strong> ${r.phone}</p>
                             <p style="font-size:0.8rem; color:#777;">البريد: ${r.userEmail} | التاريخ: ${r.date || ''}</p>
@@ -1525,7 +1530,6 @@ window.deleteRfqOrder = async function(id) {
     }
 };
 
-// 2. إدارة الفواتير والطلبات الكلية (مُصلح لفتح الفاتورة فوراً)
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
@@ -1554,13 +1558,13 @@ async function loadAllOrders() {
                          الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType}) | الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
                     </div>
                     <div>
-                        <button onclick="previewInvoice('${id}')" style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
+                        <button onclick="previewInvoice('${id}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
                         <button onclick="deleteOrderAdmin('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
                     </div>
                 </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
                     <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
-                    <button onclick="assignVehicleToOrder('${id}')" style="background:#1e3d2f; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
+                    <button onclick="assignVehicleToOrder('${id}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
                     <button onclick="updateOrderStatus('${id}', 'تم التسليم بنجاح')" style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
                 </div>
             </div>`;
@@ -1622,7 +1626,7 @@ async function loadAllUsers() {
                         <option value="driver" ${userRole === 'driver' ? 'selected' : ''}>سائق</option>
                         <option value="customer" ${userRole === 'customer' ? 'selected' : ''}>عميل</option>
                     </select>
-                    <button onclick='changeUserRole("${email}")' style="background:#2c5e3b; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
+                    <button onclick='changeUserRole("${email}")' style="background:#234d39; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
                 </div>
             </div>`;
     });
@@ -1663,11 +1667,13 @@ async function checkUnreadNotifications() {
         let count = 0;
         snapshot.forEach(docSnap => { if (!docSnap.data().read) count++; });
         const notifCountElem = document.getElementById('notifCount');
+        const drawerNotifElem = document.getElementById('drawerNotifCount');
         if (notifCountElem) notifCountElem.textContent = count;
+        if (drawerNotifElem) drawerNotifElem.textContent = count;
     } catch (e) { console.error(e); }
 }
 
-async function loadNotifications() {
+window.loadNotifications = async function() {
     const list = document.getElementById('notificationsListContent');
     if (!list) return;
     const snapshot = await getDocs(collection(db, "notifications"));
@@ -1676,10 +1682,9 @@ async function loadNotifications() {
         const n = docSnap.data();
         list.innerHTML += `<div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:8px; border-right:4px solid var(--accent);"><h4>${n.title}</h4><p>${n.body}</p></div>`;
     });
-}
+};
 
-// === دالة جلب الملف الشخصي وعرض فواتير الشراء وطلبات التصدير B2B المكتملة ===
-async function loadUserProfile() {
+window.loadUserProfile = async function() {
     if (!currentUser) return;
     const userEmailDisplay = document.getElementById('userEmailDisplay');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
@@ -1719,17 +1724,17 @@ async function loadUserProfile() {
     rfqSnap.forEach((docSnap) => {
         const rfq = docSnap.data();
         invoicesHtml += `
-            <div style="background:#f0f7f4; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #1e3d2f;">
-                <span style="background:#1e3d2f; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid fa-ship"></i> طلب تصدير B2B</span>
+            <div style="background:#f0f7f4; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #173627;">
+                <span style="background:#173627; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid fa-ship"></i> طلب تصدير B2B</span>
                 <p style="margin-top:5px; margin-bottom:3px;">المنتج: <strong>${rfq.productTitle}</strong> | الكمية: <strong>${rfq.quantity} طن (${rfq.incoterm})</strong></p>
                 <p style="margin-bottom:3px; font-size:0.85rem; color:#555;">الوجهة: ${rfq.destination} | التاريخ: ${rfq.date || ''}</p>
-                الحالة: <span style="color:#d4a373; font-weight:bold;">${rfq.status || 'قيد المراجعة والدراسة'}</span>
+                الحالة: <span style="color:#d4af37; font-weight:bold;">${rfq.status || 'قيد المراجعة والدراسة'}</span>
             </div>`;
     });
 
     const userInvoicesList = document.getElementById('userInvoicesList');
     if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || '<p>لا توجد فواتير أو طلبات تصدير سابقة</p>';
-}
+};
 
 trackInvoiceBtn?.addEventListener('click', async () => {
     const invId = document.getElementById('trackInvoiceInput').value.trim();
@@ -1744,7 +1749,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             const found = { id: docSnap.id, ...docSnap.data() };
             ordersCache[found.id] = found;
             resultBox.innerHTML = `
-                <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
+                <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #234d39;">
                     <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
                     <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
                     <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
@@ -1763,7 +1768,7 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             if (found) {
                 ordersCache[found.id] = found;
                 resultBox.innerHTML = `
-                    <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #2c5e3b;">
+                    <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #234d39;">
                         <p><strong>رقم الفاتورة:</strong> #${found.id}</p>
                         <p><strong>حالة الشحنة:</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
                         <p><strong>هاتف المشتري:</strong> ${found.phone || 'غير مسجل'}</p>
@@ -1780,7 +1785,6 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     }
 });
 
-// === معاينة الفاتورة وعرض رقم الهاتف وزر الصورة والطباعة (مُصلح 100%) ===
 window.previewInvoice = async function(orderId, orderObj = null) {
     let order = orderObj || ordersCache[orderId];
 
@@ -1839,7 +1843,6 @@ window.previewInvoice = async function(orderId, orderObj = null) {
     if (saveImgBtn) saveImgBtn.onclick = saveInvoiceAsImage;
 };
 
-// === حفظ الفاتورة كصورة والتنزيل المباشر ===
 async function saveInvoiceAsImage() {
     const canvasArea = document.getElementById('invoiceCanvasArea');
     if (!canvasArea) return;
@@ -1926,10 +1929,7 @@ function downloadBlobFallback(blob, fileName) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// ==========================================
-// === إعداد خريطة العميل المحدثة ===
-// ==========================================
-function initUserMap() {
+window.initUserMap = function() {
     const userMapElem = document.getElementById('userMap');
     if (!userMapElem) return;
 
@@ -1975,7 +1975,7 @@ function initUserMap() {
 
     const userIcon = L.divIcon({
         className: 'custom-user-marker',
-        html: `<div style="background:#2c5e3b; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #fff;"><i class="fa-solid fa-location-dot" style="font-size:18px;"></i></div>`,
+        html: `<div style="background:#173627; color:#fff; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 3px 8px rgba(0,0,0,0.4); border:2px solid #fff;"><i class="fa-solid fa-location-dot" style="font-size:18px;"></i></div>`,
         iconSize: [34, 34],
         iconAnchor: [17, 34],
         popupAnchor: [0, -34]
@@ -2000,7 +2000,7 @@ function initUserMap() {
     setTimeout(() => {
         if (userMap) userMap.invalidateSize();
     }, 250);
-}
+};
 
 locateMeBtn?.addEventListener('click', async () => {
     locateMeBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التحديد...';
@@ -2045,9 +2045,6 @@ saveLocationBtn?.addEventListener('click', async () => {
     }
 });
 
-// ==========================================
-// === إعداد خريطة الإدارة والأسطول ===
-// ==========================================
 async function initAdminMap() {
     const adminMapElem = document.getElementById('adminMap');
     if (!adminMapElem) return;
