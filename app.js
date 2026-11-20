@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInWithCredential, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, query, where, orderBy, limit, enableIndexedDbPersistence, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // === التسجيل التلقائي والـ Service Worker ===
 if ('serviceWorker' in navigator) {
@@ -34,6 +34,38 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==========================================
+// === دالة حماية النصوص ومنع كسر التصميم (XSS Guard) ===
+// ==========================================
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// ==========================================
+// === مراقبة حالة الاتصال (أونلاين / أوفلاين) ===
+// ==========================================
+function updateNetworkBadge() {
+    const badge = document.getElementById('networkStatusBadge');
+    if (!badge) return;
+    if (navigator.onLine) {
+        badge.classList.remove('offline');
+        badge.classList.add('online');
+        badge.title = t('متصل بالإنترنت - مزامنة فورية', 'Online - Live Sync');
+    } else {
+        badge.classList.remove('online');
+        badge.classList.add('offline');
+        badge.title = t('وضع الأوفلاين - البيانات محفوظة محلياً', 'Offline Mode - Local Cache Active');
+    }
+}
+window.addEventListener('online', updateNetworkBadge);
+window.addEventListener('offline', updateNetworkBadge);
+
+// ==========================================
 // === نظام الترجمة الموحد المتوافق مع index.html ===
 // ==========================================
 let currentLang = localStorage.getItem('omda_lang') || 'ar';
@@ -59,6 +91,7 @@ const UI_TEXT_MAP = {
         featured_badge: "عرض متطور",
         featured_products: "المنتجات المميزة والمنشورات الحالية",
         featured_sub: "انقر على أي منتج لمشاهدة الصور/الفيديوهات، التفاصيل، وحجز الكمية",
+        load_more_btn: "عرض المزيد من المنتجات",
         browse_cats_title: "تصفح حسب أقسام الأعلاف والحبوب",
         browse_cats_sub: "اختر القسم لعرض المنتجات التابعة له مباشرة",
         profile_header: "حسابي الشخصي وتتبع الشحنات",
@@ -130,6 +163,7 @@ const UI_TEXT_MAP = {
         featured_badge: "Featured Offer",
         featured_products: "Featured Products & Current Posts",
         featured_sub: "Click any product to view photos/videos, details, and reserve quantity",
+        load_more_btn: "Load More Products",
         browse_cats_title: "Browse by Feed & Grain Categories",
         browse_cats_sub: "Select a category to view its products directly",
         profile_header: "My Account & Shipment Tracking",
@@ -260,6 +294,7 @@ window.applyAppLanguage = function(lang) {
     }
 
     updateAuthButtonLabel();
+    updateNetworkBadge();
 
     if (allCategoriesCache.length > 0) renderCategoriesUI();
     if (allProductsCache.length > 0) {
@@ -365,6 +400,8 @@ let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
 let allProductsCache = [];
 let allCategoriesCache = [];
 let ordersCache = {};
+let productsBatchLimit = 40;
+let unsubscribeProducts = null;
 
 let userMap = null;
 let adminMap = null;
@@ -379,10 +416,14 @@ let editingOldMediaType = 'image';
 let newVehLat = 30.0444;
 let newVehLng = 31.2357;
 
+// متغيرات نظام الشات المحسن والموفر للقراءات
 let activeAdminChatEmail = null;
+let activeAdminChatPhone = '';
 let unsubscribeUserChat = null;
-let unsubscribeAdminChats = null;
-let allChatsCache = [];
+let unsubscribeAdminRecentChats = null;
+let unsubscribeActiveAdminThread = null;
+let recentAdminChatsCache = [];
+let activeAdminThreadMessages = [];
 
 // DOM Elements
 const authBtn = document.getElementById('authBtn');
@@ -415,6 +456,8 @@ const refreshAdminMapBtn = document.getElementById('refreshAdminMapBtn');
 
 const userSendChatForm = document.getElementById('userSendChatForm');
 const adminSendChatForm = document.getElementById('adminSendChatForm');
+const adminBackToClientsBtn = document.getElementById('adminBackToClientsBtn');
+const adminChatSearchInput = document.getElementById('adminChatSearchInput');
 
 function resolveProduct(prodOrId) {
     if (!prodOrId) return null;
@@ -525,7 +568,6 @@ authBtn?.addEventListener('click', () => {
     }
 });
 
-// === دالة فتح السلة الموحدة ===
 window.openCartModal = function() {
     closeSideMenu();
     if (cartModal) {
@@ -566,8 +608,23 @@ adminBtn?.addEventListener('click', () => {
     switchSection('adminSection');
 });
 
+function stopAdminChatListeners() {
+    if (unsubscribeAdminRecentChats) {
+        unsubscribeAdminRecentChats();
+        unsubscribeAdminRecentChats = null;
+    }
+    if (unsubscribeActiveAdminThread) {
+        unsubscribeActiveAdminThread();
+        unsubscribeActiveAdminThread = null;
+    }
+}
+
 window.switchSection = function(sectionId) {
     closeSideMenu();
+    if (sectionId !== 'adminSection') {
+        stopAdminChatListeners();
+    }
+
     document.querySelectorAll('.app-section').forEach(sec => sec.style.display = 'none');
     const targetSection = document.getElementById(sectionId);
     if (targetSection) targetSection.style.display = 'block';
@@ -578,7 +635,12 @@ window.switchSection = function(sectionId) {
     if (sectionId === 'profileSection') {
         document.getElementById('navProfileBtn')?.classList.add('active');
         loadUserProfile();
-        setTimeout(() => { if (userMap) userMap.invalidateSize(); else initUserMap(); }, 200);
+        setTimeout(() => {
+            if (typeof L !== 'undefined') {
+                if (userMap) userMap.invalidateSize();
+                else initUserMap();
+            }
+        }, 250);
     }
     if (sectionId === 'adminSection') {
         loadCategoriesForAdmin();
@@ -692,12 +754,42 @@ loginForm?.addEventListener('submit', async (e) => {
     }
 });
 
-async function listenRealtimeData() {
-    try {
-        localStorage.removeItem('allaf_products_cache');
-        localStorage.removeItem('allaf_categories_cache');
-    } catch (e) {}
+// ==========================================
+// === مزامنة المنتجات والأقسام بذكاء وتوفير القراءات ===
+// ==========================================
+function subscribeProductsBatch(batchSize) {
+    if (unsubscribeProducts) unsubscribeProducts();
 
+    const qProds = query(collection(db, "products"), limit(batchSize));
+    unsubscribeProducts = onSnapshot(qProds, (snapshot) => {
+        if (snapshot.metadata.fromCache && allProductsCache.length > 0 && snapshot.size === allProductsCache.length) return;
+
+        const freshProds = [];
+        snapshot.forEach(docSnap => freshProds.push({ id: docSnap.id, ...docSnap.data() }));
+        
+        allProductsCache = freshProds;
+        OmdaLocalDB.set('products', freshProds);
+
+        const loadMoreWrapper = document.getElementById('loadMoreProductsWrapper');
+        if (loadMoreWrapper) {
+            loadMoreWrapper.style.display = (freshProds.length >= batchSize) ? 'block' : 'none';
+        }
+
+        const activeCat = document.querySelector('.cat-chip.active')?.dataset.cat || 'all';
+        const currentSearch = searchInput ? searchInput.value : '';
+        renderProducts(activeCat, currentSearch);
+        startProductCarousel();
+    }, (err) => {
+        console.warn("استخدام بيانات المنتجات من IndexedDB (وضع الأوفلاين):", err.message);
+    });
+}
+
+document.getElementById('loadMoreProductsBtn')?.addEventListener('click', () => {
+    productsBatchLimit += 40;
+    subscribeProductsBatch(productsBatchLimit);
+});
+
+async function listenRealtimeData() {
     const [cachedCats, cachedProds] = await Promise.all([
         OmdaLocalDB.get('categories', []),
         OmdaLocalDB.get('products', [])
@@ -717,7 +809,7 @@ async function listenRealtimeData() {
         startProductCarousel();
     }
 
-    onSnapshot(collection(db, "categories"), (snapshot) => {
+    onSnapshot(query(collection(db, "categories"), limit(50)), (snapshot) => {
         if (snapshot.metadata.fromCache && allCategoriesCache.length > 1) return;
 
         const freshCats = [];
@@ -735,22 +827,7 @@ async function listenRealtimeData() {
         console.warn("استخدام بيانات الأقسام من IndexedDB (وضع الأوفلاين):", err.message);
     });
 
-    onSnapshot(collection(db, "products"), (snapshot) => {
-        if (snapshot.metadata.fromCache && allProductsCache.length > 0) return;
-
-        const freshProds = [];
-        snapshot.forEach(docSnap => freshProds.push({ id: docSnap.id, ...docSnap.data() }));
-        
-        allProductsCache = freshProds;
-        OmdaLocalDB.set('products', freshProds);
-
-        const activeCat = document.querySelector('.cat-chip.active')?.dataset.cat || 'all';
-        const currentSearch = searchInput ? searchInput.value : '';
-        renderProducts(activeCat, currentSearch);
-        startProductCarousel();
-    }, (err) => {
-        console.warn("استخدام بيانات المنتجات من IndexedDB (وضع الأوفلاين):", err.message);
-    });
+    subscribeProductsBatch(productsBatchLimit);
 }
 
 function renderCategoriesUI() {
@@ -769,16 +846,19 @@ function renderCategoriesUI() {
         }
 
         allCategoriesCache.forEach(cat => {
-            const catLabel = getCatDisplayName(cat);
-            catContainer.innerHTML += `<button class="cat-chip ${activeCatBefore === cat.id ? 'active' : ''}" data-cat="${cat.id}"><i class="${cat.icon || 'fa-solid fa-wheat-awn'}"></i> ${catLabel}</button>`;
+            const catLabel = escapeHtml(getCatDisplayName(cat));
+            const safeCatId = escapeHtml(cat.id);
+            const safeIcon = escapeHtml(cat.icon || 'fa-solid fa-wheat-awn');
+
+            catContainer.innerHTML += `<button class="cat-chip ${activeCatBefore === cat.id ? 'active' : ''}" data-cat="${safeCatId}"><i class="${safeIcon}"></i> ${catLabel}</button>`;
             if (prodCategorySelect && cat.id !== 'export_feed') {
-                prodCategorySelect.innerHTML += `<option value="${cat.id}">${catLabel}</option>`;
+                prodCategorySelect.innerHTML += `<option value="${safeCatId}">${catLabel}</option>`;
             }
             
             if (fullCategoriesGrid) {
                 fullCategoriesGrid.innerHTML += `
-                    <div class="product-card" style="text-align:center; padding:20px; cursor:pointer;" onclick="switchSection('productsSection'); renderProducts('${cat.id}', '');">
-                        <i class="${cat.icon || 'fa-solid fa-wheat-awn'}" style="font-size:2.2rem; color:var(--primary); margin-bottom:10px;"></i>
+                    <div class="product-card" style="text-align:center; padding:20px; cursor:pointer;" onclick="switchSection('productsSection'); renderProducts('${safeCatId}', '');">
+                        <i class="${safeIcon}" style="font-size:2.2rem; color:var(--primary); margin-bottom:10px;"></i>
                         <h3 style="font-size:1rem;">${catLabel}</h3>
                         <p style="font-size:0.8rem; color:#666;">${t('تصفح قسم ' + catLabel, 'Browse ' + catLabel)}</p>
                     </div>`;
@@ -805,16 +885,16 @@ function startProductCarousel() {
     const updateCarouselItem = () => {
         const prod = allProductsCache[index];
         if (!prod) return;
-        const prodTitle = getProdDisplayName(prod);
-        let mediaThumb = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80'}" loading="lazy" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
+        const prodTitle = escapeHtml(getProdDisplayName(prod));
+        let mediaThumb = `<img src="${escapeHtml(prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80')}" loading="lazy" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
         if (prod.mediaType === 'video') {
-            mediaThumb = `<video src="${prod.mediaUrl}#t=0.1" preload="metadata" muted playsinline style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
+            mediaThumb = `<video src="${escapeHtml(prod.mediaUrl)}#t=0.1" preload="metadata" muted playsinline style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
         }
         
         const isExportProd = prod.category === 'export_feed' || prod.category === 'export' || prod.isExport;
 
         bannerContainer.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick="openProductModal('${prod.id}')">
+            <div style="display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; width: 100%; min-width:0;" onclick="openProductModal('${escapeHtml(prod.id)}')">
                 ${mediaThumb}
                 <div style="flex: 1; min-width: 0;">
                     <h4 style="color: var(--primary); font-size: 0.98rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prodTitle}</h4>
@@ -898,6 +978,31 @@ rfqForm?.addEventListener('submit', async (e) => {
     }
 });
 
+// ==========================================
+// === نظام الشات المباشر السريع والموفر للقراءات ===
+// ==========================================
+function renderChatBubbles(container, messages, isCurrentUserAdmin) {
+    if (!container) return;
+    const html = messages.map(c => {
+        const isMine = isCurrentUserAdmin ? (c.sender === 'admin') : (c.sender === 'client');
+        const senderLabel = isCurrentUserAdmin
+            ? (isMine ? 'الإدارة (أنت)' : escapeHtml(c.userEmail || 'العميل'))
+            : (isMine ? t('أنت', 'You') : t('إدارة منصة العمدة', 'Al-Omda Management'));
+
+        return `
+            <div class="chat-msg-row ${isMine ? 'mine' : 'theirs'}">
+                <div class="chat-bubble">
+                    <div class="chat-sender">${senderLabel}</div>
+                    <div>${escapeHtml(c.message)}</div>
+                    <div class="chat-time">${escapeHtml(c.date || '')}</div>
+                </div>
+            </div>`;
+    }).join('');
+
+    container.innerHTML = html;
+    container.scrollTop = container.scrollHeight;
+}
+
 function listenUserChat() {
     if (!currentUser) return;
     const userChatBox = document.getElementById('userChatMessages');
@@ -905,7 +1010,13 @@ function listenUserChat() {
 
     if (unsubscribeUserChat) unsubscribeUserChat();
 
-    const qChat = query(collection(db, "chats"), where("userEmail", "==", currentUser.email));
+    // تحديد الحد بـ 60 رسالة فقط لتقليل القراءات وتسريع التحميل
+    const qChat = query(
+        collection(db, "chats"),
+        where("userEmail", "==", currentUser.email),
+        limit(60)
+    );
+
     unsubscribeUserChat = onSnapshot(qChat, (snapshot) => {
         const chatList = [];
         snapshot.forEach(docSnap => chatList.push({ id: docSnap.id, ...docSnap.data() }));
@@ -917,19 +1028,7 @@ function listenUserChat() {
             return;
         }
 
-        userChatBox.innerHTML = '';
-        chatList.forEach(c => {
-            const isClient = c.sender === 'client';
-            userChatBox.innerHTML += `
-                <div style="display: flex; justify-content: ${isClient ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;">
-                    <div style="max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; ${isClient ? 'background: var(--primary); color: #fff; border-bottom-left-radius: 2px;' : 'background: #e2ece7; color: var(--text-dark); border-bottom-right-radius: 2px;'}">
-                        <div style="font-size: 0.72rem; opacity: 0.8; margin-bottom: 3px; font-weight: bold;">${isClient ? t('أنت', 'You') : t('إدارة منصة العمدة', 'Al-Omda Management')}</div>
-                        <div>${c.message}</div>
-                        <div style="font-size: 0.65rem; opacity: 0.7; text-align: left; margin-top: 4px;">${c.date || ''}</div>
-                    </div>
-                </div>`;
-        });
-        userChatBox.scrollTop = userChatBox.scrollHeight;
+        renderChatBubbles(userChatBox, chatList, false);
     });
 }
 
@@ -945,33 +1044,41 @@ userSendChatForm?.addEventListener('submit', async (e) => {
     const msgText = input.value.trim();
     if (!msgText) return;
 
+    const nowIso = new Date().toISOString();
+    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    input.value = '';
+
     try {
         await addDoc(collection(db, "chats"), {
             userEmail: currentUser.email,
             userPhone: userSavedPhone || '',
             sender: 'client',
             message: msgText,
-            timestamp: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            date: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+            timestamp: nowIso,
+            createdAt: nowIso,
+            date: timeStr
         });
-        input.value = '';
     } catch (err) {
         alert(t('خطأ أثناء إرسال الرسالة: ', 'Error sending message: ') + err.message);
     }
 });
 
+// الاستماع لآخر 150 رسالة فقط لتجميع قائمة العملاء النشطين (بدلاً من قراءة ملايين الرسائل التاريخية)
 function listenAdminChats() {
-    if (unsubscribeAdminChats) unsubscribeAdminChats();
+    if (unsubscribeAdminRecentChats) unsubscribeAdminRecentChats();
 
-    unsubscribeAdminChats = onSnapshot(collection(db, "chats"), (snapshot) => {
-        allChatsCache = [];
-        snapshot.forEach(docSnap => allChatsCache.push({ id: docSnap.id, ...docSnap.data() }));
+    const qRecent = query(
+        collection(db, "chats"),
+        orderBy("createdAt", "desc"),
+        limit(150)
+    );
 
+    unsubscribeAdminRecentChats = onSnapshot(qRecent, (snapshot) => {
+        recentAdminChatsCache = [];
+        snapshot.forEach(docSnap => recentAdminChatsCache.push({ id: docSnap.id, ...docSnap.data() }));
         renderAdminConversationsList();
-        if (activeAdminChatEmail) {
-            renderAdminActiveChat(activeAdminChatEmail);
-        }
+    }, (err) => {
+        console.warn("تنبيه تحميل المحادثات:", err.message);
     });
 }
 
@@ -979,81 +1086,127 @@ function renderAdminConversationsList() {
     const listElem = document.getElementById('adminConversationsList');
     if (!listElem) return;
 
+    const searchFilter = (adminChatSearchInput?.value || '').trim().toLowerCase();
+
     const clientMap = {};
-    allChatsCache.forEach(c => {
+    recentAdminChatsCache.forEach(c => {
         if (!c.userEmail) return;
         if (!clientMap[c.userEmail]) {
             clientMap[c.userEmail] = {
                 userEmail: c.userEmail,
                 userPhone: c.userPhone || '',
-                lastMsg: c.message,
-                lastTime: c.createdAt || c.timestamp || 0
+                lastMsg: c.message || '',
+                lastTime: c.createdAt || c.timestamp || 0,
+                lastDateLabel: c.date || ''
             };
         }
         if (new Date(c.createdAt || c.timestamp || 0) > new Date(clientMap[c.userEmail].lastTime)) {
-            clientMap[c.userEmail].lastMsg = c.message;
+            clientMap[c.userEmail].lastMsg = c.message || '';
             clientMap[c.userEmail].lastTime = c.createdAt || c.timestamp || 0;
+            clientMap[c.userEmail].lastDateLabel = c.date || '';
         }
         if (c.userPhone && !clientMap[c.userEmail].userPhone) {
             clientMap[c.userEmail].userPhone = c.userPhone;
         }
     });
 
-    const clients = Object.values(clientMap).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
+    let clients = Object.values(clientMap).sort((a, b) => new Date(b.lastTime) - new Date(a.lastTime));
+
+    if (searchFilter) {
+        clients = clients.filter(cl =>
+            cl.userEmail.toLowerCase().includes(searchFilter) ||
+            (cl.userPhone && cl.userPhone.toLowerCase().includes(searchFilter)) ||
+            (cl.lastMsg && cl.lastMsg.toLowerCase().includes(searchFilter))
+        );
+    }
 
     if (clients.length === 0) {
-        listElem.innerHTML = '<p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">لا توجد محادثات جارية حالياً.</p>';
+        listElem.innerHTML = '<p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">لا توجد محادثات مطابقة حالياً.</p>';
         return;
     }
 
-    listElem.innerHTML = '';
-    clients.forEach(cl => {
+    listElem.innerHTML = clients.map(cl => {
         const isActive = activeAdminChatEmail === cl.userEmail;
-        listElem.innerHTML += `
-            <div onclick="selectClientForAdminChat('${cl.userEmail}', '${cl.userPhone}')" style="padding: 10px; border-radius: 8px; margin-bottom: 6px; cursor: pointer; transition: 0.2s; background: ${isActive ? '#eef7f2' : '#f9fafb'}; border: 1px solid ${isActive ? 'var(--primary)' : '#eee'};">
-                <div style="font-weight: bold; font-size: 0.85rem; color: var(--primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><i class="fa-solid fa-user"></i> ${cl.userEmail}</div>
-                <div style="font-size: 0.78rem; color: #666; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${cl.lastMsg}</div>
-                ${cl.userPhone ? `<div style="font-size: 0.7rem; color: var(--accent); margin-top: 2px;"><i class="fa-solid fa-phone"></i> ${cl.userPhone}</div>` : ''}
+        const safeEmail = escapeHtml(cl.userEmail);
+        const safePhone = escapeHtml(cl.userPhone);
+        return `
+            <div class="conv-item ${isActive ? 'active' : ''}" data-email="${safeEmail}" data-phone="${safePhone}">
+                <div class="conv-item-top">
+                    <span class="conv-item-email"><i class="fa-solid fa-user"></i> ${safeEmail}</span>
+                    <span class="conv-item-time">${escapeHtml(cl.lastDateLabel)}</span>
+                </div>
+                <div class="conv-item-preview">${escapeHtml(cl.lastMsg)}</div>
+                ${safePhone ? `<div class="conv-item-phone"><i class="fa-solid fa-phone"></i> ${safePhone}</div>` : ''}
             </div>`;
+    }).join('');
+
+    listElem.querySelectorAll('.conv-item').forEach(item => {
+        item.addEventListener('click', () => {
+            selectClientForAdminChat(item.dataset.email, item.dataset.phone);
+        });
     });
 }
 
+adminChatSearchInput?.addEventListener('input', () => {
+    renderAdminConversationsList();
+});
+
+adminBackToClientsBtn?.addEventListener('click', () => {
+    const layout = document.getElementById('adminChatLayout');
+    if (layout) {
+        layout.classList.remove('show-chat');
+        layout.classList.add('show-list');
+    }
+    if (unsubscribeActiveAdminThread) {
+        unsubscribeActiveAdminThread();
+        unsubscribeActiveAdminThread = null;
+    }
+});
+
 window.selectClientForAdminChat = function(email, phone) {
     activeAdminChatEmail = email;
+    activeAdminChatPhone = phone || '';
+
     document.getElementById('adminActiveClientEmail').textContent = email;
     document.getElementById('adminActiveClientEmailInput').value = email;
     document.getElementById('adminActiveClientPhone').textContent = phone ? `هاتف: ${phone}` : 'بدون هاتف';
 
-    renderAdminConversationsList();
-    renderAdminActiveChat(email);
-};
-
-function renderAdminActiveChat(email) {
-    const chatMessagesBox = document.getElementById('adminChatMessages');
-    if (!chatMessagesBox) return;
-
-    const clientMsgs = allChatsCache.filter(c => c.userEmail === email);
-    clientMsgs.sort((a, b) => new Date(a.createdAt || a.timestamp || 0) - new Date(b.createdAt || b.timestamp || 0));
-
-    if (clientMsgs.length === 0) {
-        chatMessagesBox.innerHTML = '<p style="text-align: center; color: #888; margin-top: 40px;">لا توجد رسائل سابقة مع هذا العميل.</p>';
-        return;
+    // التبديل إلى عرض المحادثة على الهواتف
+    const layout = document.getElementById('adminChatLayout');
+    if (layout) {
+        layout.classList.remove('show-list');
+        layout.classList.add('show-chat');
     }
 
-    chatMessagesBox.innerHTML = '';
-    clientMsgs.forEach(c => {
-        const isAdmin = c.sender === 'admin';
-        chatMessagesBox.innerHTML += `
-            <div style="display: flex; justify-content: ${isAdmin ? 'flex-end' : 'flex-start'}; margin-bottom: 8px;">
-                <div style="max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.88rem; line-height: 1.4; ${isAdmin ? 'background: var(--primary); color: #fff; border-bottom-left-radius: 2px;' : 'background: #fff; color: var(--text-dark); border: 1px solid #e2ece7; border-bottom-right-radius: 2px;'}">
-                    <div style="font-size: 0.72rem; opacity: 0.8; margin-bottom: 3px; font-weight: bold;">${isAdmin ? 'الإدارة (أنت)' : c.userEmail}</div>
-                    <div>${c.message}</div>
-                    <div style="font-size: 0.65rem; opacity: 0.7; text-align: left; margin-top: 4px;">${c.date || ''}</div>
-                </div>
-            </div>`;
+    renderAdminConversationsList();
+
+    const chatMessagesBox = document.getElementById('adminChatMessages');
+    if (chatMessagesBox) {
+        chatMessagesBox.innerHTML = '<p style="text-align: center; color: #888; margin-top: 30px;">جاري تحميل الرسائل...</p>';
+    }
+
+    if (unsubscribeActiveAdminThread) unsubscribeActiveAdminThread();
+
+    // فتح استماع مخصص لرسائل هذا العميل فقط (بحد أقصى 60 رسالة) لتوفير القراءات
+    const qClientThread = query(
+        collection(db, "chats"),
+        where("userEmail", "==", email),
+        limit(60)
+    );
+
+    unsubscribeActiveAdminThread = onSnapshot(qClientThread, (snapshot) => {
+        activeAdminThreadMessages = [];
+        snapshot.forEach(docSnap => activeAdminThreadMessages.push({ id: docSnap.id, ...docSnap.data() }));
+        activeAdminThreadMessages.sort((a, b) => new Date(a.createdAt || a.timestamp || 0) - new Date(b.createdAt || b.timestamp || 0));
+
+        if (!chatMessagesBox) return;
+        if (activeAdminThreadMessages.length === 0) {
+            chatMessagesBox.innerHTML = '<p style="text-align: center; color: #888; margin-top: 40px;">لا توجد رسائل سابقة مع هذا العميل.</p>';
+            return;
+        }
+        renderChatBubbles(chatMessagesBox, activeAdminThreadMessages, true);
     });
-    chatMessagesBox.scrollTop = chatMessagesBox.scrollHeight;
-}
+};
 
 adminSendChatForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1067,16 +1220,20 @@ adminSendChatForm?.addEventListener('submit', async (e) => {
     }
     if (!msgText) return;
 
+    const nowIso = new Date().toISOString();
+    const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+    input.value = '';
+
     try {
         await addDoc(collection(db, "chats"), {
             userEmail: targetEmail,
+            userPhone: activeAdminChatPhone || '',
             sender: 'admin',
             message: msgText,
-            timestamp: new Date().toISOString(),
-            createdAt: new Date().toISOString(),
-            date: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+            timestamp: nowIso,
+            createdAt: nowIso,
+            date: timeStr
         });
-        input.value = '';
     } catch (err) {
         alert('خطأ أثناء إرسال الرد: ' + err.message);
     }
@@ -1101,12 +1258,13 @@ window.renderProducts = function(category, searchTerm) {
     }
 
     filtered.forEach(prod => {
-        const prodTitle = getProdDisplayName(prod);
-        let mediaHtml = `<img src="${prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80'}" alt="${prodTitle}" loading="lazy" decoding="async">`;
+        const prodTitle = escapeHtml(getProdDisplayName(prod));
+        const safeId = escapeHtml(prod.id);
+        let mediaHtml = `<img src="${escapeHtml(prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80')}" alt="${prodTitle}" loading="lazy" decoding="async">`;
         if (prod.mediaType === 'video') {
             mediaHtml = `
                 <div style="position:relative; width:100%; height:100%; background:#000;">
-                    <video src="${prod.mediaUrl}#t=0.1" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                    <video src="${escapeHtml(prod.mediaUrl)}#t=0.1" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
                     <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.7); color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; pointer-events:none;"><i class="fa-solid fa-play"></i></span>
                 </div>`;
         }
@@ -1115,7 +1273,7 @@ window.renderProducts = function(category, searchTerm) {
 
         if (isExportCategory) {
             productsGrid.innerHTML += `
-                <div class="product-card" onclick="openProductModal('${prod.id}')">
+                <div class="product-card" onclick="openProductModal('${safeId}')">
                     <div class="product-media-wrapper">
                         <span style="position:absolute; top:8px; right:8px; background:#173627; color:#fff; padding:3px 8px; border-radius:6px; font-size:0.75rem; font-weight:bold; z-index:2;"><i class="fa-solid fa-ship"></i> ${t('تصدير B2B', 'Export B2B')}</span>
                         ${mediaHtml}
@@ -1124,7 +1282,7 @@ window.renderProducts = function(category, searchTerm) {
                         <h3>${prodTitle}</h3>
                         <div class="product-price-row">
                             <span class="product-price" style="font-size:0.85rem; color:#173627;">${t('طلب تسعير بالجملة', 'Request Wholesale Quote')}</span>
-                            <button class="btn-add-cart-icon" style="background:#173627;" onclick="event.stopPropagation(); openExportRfqModal('${prod.id}')" title="${t('طلب عرض سعر B2B', 'Request B2B Quote')}">
+                            <button class="btn-add-cart-icon" style="background:#173627;" onclick="event.stopPropagation(); openExportRfqModal('${safeId}')" title="${t('طلب عرض سعر B2B', 'Request B2B Quote')}">
                                 <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </div>
@@ -1133,15 +1291,15 @@ window.renderProducts = function(category, searchTerm) {
             `;
         } else {
             productsGrid.innerHTML += `
-                <div class="product-card" onclick="openProductModal('${prod.id}')">
+                <div class="product-card" onclick="openProductModal('${safeId}')">
                     <div class="product-media-wrapper">
                         ${mediaHtml}
                     </div>
                     <div class="product-info">
                         <h3>${prodTitle}</h3>
                         <div class="product-price-row">
-                            <span class="product-price">${prod.price} <small style="font-size:0.75rem;">${t('ج.م', 'EGP')}</small></span>
-                            <button class="btn-add-cart-icon" onclick="event.stopPropagation(); addToCartDirect('${prod.id}')" title="${t('إضافة للسلة', 'Add to Cart')}">
+                            <span class="product-price">${escapeHtml(prod.price)} <small style="font-size:0.75rem;">${t('ج.م', 'EGP')}</small></span>
+                            <button class="btn-add-cart-icon" onclick="event.stopPropagation(); addToCartDirect('${safeId}')" title="${t('إضافة للسلة', 'Add to Cart')}">
                                 <i class="fa-solid fa-cart-plus"></i>
                             </button>
                         </div>
@@ -1165,12 +1323,13 @@ window.openProductModal = function(prodOrId) {
     if (!product) return;
 
     const prodTitle = getProdDisplayName(product);
+    const safeTitle = escapeHtml(prodTitle);
     document.getElementById('modalProdTitle').textContent = prodTitle;
     const body = document.getElementById('modalProdBody');
     
-    let mediaHtml = `<img src="${product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=90'}" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; background:#f8faf9; margin-bottom:12px;">`;
+    let mediaHtml = `<img src="${escapeHtml(product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=90')}" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; background:#f8faf9; margin-bottom:12px;">`;
     if (product.mediaType === 'video') {
-        mediaHtml = `<video src="${product.mediaUrl}" controls autoplay playsinline preload="auto" style="width:100%; max-height:320px; border-radius:12px; object-fit:contain; background:#000; margin-bottom:12px;"></video>`;
+        mediaHtml = `<video src="${escapeHtml(product.mediaUrl)}" controls autoplay playsinline preload="auto" style="width:100%; max-height:320px; border-radius:12px; object-fit:contain; background:#000; margin-bottom:12px;"></video>`;
     }
 
     const isExportCategory = product.category === 'export_feed' || product.category === 'export' || product.isExport;
@@ -1178,7 +1337,7 @@ window.openProductModal = function(prodOrId) {
     if (isExportCategory) {
         body.innerHTML = `
             ${mediaHtml}
-            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${prodTitle}</h3>
+            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${safeTitle}</h3>
             <p style="font-size:0.95rem; font-weight:bold; color:#173627; margin-bottom:14px;"><i class="fa-solid fa-ship"></i> ${t('مخصص للتصدير والكميات الكبيرة (B2B)', 'Dedicated for Export & Bulk Quantities (B2B)')}</p>
             <button id="modalRfqBtn" class="btn-submit" style="background:#173627; padding:12px; font-size:0.95rem;">
                 <i class="fa-solid fa-file-signature"></i> ${t('طلب عرض سعر جملة (RFQ)', 'Request Bulk Quotation (RFQ)')}
@@ -1194,8 +1353,8 @@ window.openProductModal = function(prodOrId) {
     } else {
         body.innerHTML = `
             ${mediaHtml}
-            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${prodTitle}</h3>
-            <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">${t('السعر: ' + product.price + ' ج.م', 'Price: ' + product.price + ' EGP')}</p>
+            <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${safeTitle}</h3>
+            <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">${t('السعر: ' + escapeHtml(product.price) + ' ج.م', 'Price: ' + escapeHtml(product.price) + ' EGP')}</p>
             <div class="input-group" style="margin-bottom:15px;">
                 <label>${t('حدد الكمية المطلوبة للحجز:', 'Specify required quantity:')}</label>
                 <input type="number" id="modalQtyInput" value="1" min="1" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
@@ -1262,23 +1421,24 @@ function updateCartUI() {
     Object.values(groupedCart).forEach(item => {
         const itemTotal = Number(item.price) * item.qty;
         totalSum += itemTotal;
-        const itemTitle = getProdDisplayName(item);
+        const itemTitle = escapeHtml(getProdDisplayName(item));
+        const safeKey = escapeHtml(item.id || item.name);
 
         const imgUrl = (item.mediaType !== 'video' && item.mediaUrl) ? item.mediaUrl : 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=150&q=80';
 
         list.innerHTML += `
             <div class="cart-item-card">
-                <img src="${imgUrl}" class="cart-item-img" alt="${itemTitle}">
+                <img src="${escapeHtml(imgUrl)}" class="cart-item-img" alt="${itemTitle}">
                 <div class="cart-item-details">
                     <h4 class="cart-item-title">${itemTitle}</h4>
-                    <span class="cart-item-price">${item.price} ${t('ج.م', 'EGP')}</span>
+                    <span class="cart-item-price">${escapeHtml(item.price)} ${t('ج.م', 'EGP')}</span>
                 </div>
                 <div class="cart-qty-controls">
-                    <button class="btn-qty" onclick="changeItemQty('${item.id || item.name}', -1)">-</button>
+                    <button class="btn-qty" onclick="changeItemQty('${safeKey}', -1)">-</button>
                     <span class="qty-val">${item.qty}</span>
-                    <button class="btn-qty" onclick="changeItemQty('${item.id || item.name}', 1)">+</button>
+                    <button class="btn-qty" onclick="changeItemQty('${safeKey}', 1)">+</button>
                 </div>
-                <button class="btn-remove-item" onclick="removeGroupFromCart('${item.id || item.name}')" title="${t('حذف', 'Remove')}">
+                <button class="btn-remove-item" onclick="removeGroupFromCart('${safeKey}')" title="${t('حذف', 'Remove')}">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
@@ -1350,7 +1510,8 @@ checkoutBtn?.addEventListener('click', async () => {
             lng: selectedLng,
             assignedVehicle: 'غير محدد',
             assignedDriver: 'غير محدد',
-            date: new Date().toLocaleDateString('ar-EG')
+            date: new Date().toLocaleDateString('ar-EG'),
+            createdAt: new Date().toISOString()
         });
 
         alert(t(`تم إرسال الطلب وإصدار الفاتورة برقم: #${orderRef.id.slice(0,6)} بنجاح!`, `Order submitted and invoice #${orderRef.id.slice(0,6)} issued successfully!`));
@@ -1441,11 +1602,11 @@ window.loadAdminProductsList = async function() {
     const renderList = (products) => {
         list.innerHTML = '';
         products.forEach(p => {
-            const id = p.id;
+            const id = escapeHtml(p.id);
             const mediaBadge = p.mediaType === 'video' ? '<span style="background:#173627; color:#fff; font-size:0.7rem; padding:2px 6px; border-radius:4px; margin-right:5px;">فيديو</span>' : '';
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <div><strong>${p.name}</strong> ${p.nameEn ? `(${p.nameEn})` : ''} ${mediaBadge} - <span style="color:var(--accent); font-weight:bold;">${p.price} ج.م</span> (${p.category})</div>
+                    <div><strong>${escapeHtml(p.name)}</strong> ${p.nameEn ? `(${escapeHtml(p.nameEn)})` : ''} ${mediaBadge} - <span style="color:var(--accent); font-weight:bold;">${escapeHtml(p.price)} ج.م</span> (${escapeHtml(p.category)})</div>
                     <div>
                         <button onclick="editProductById('${id}')" style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick="deleteProduct('${id}')" style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
@@ -1459,7 +1620,7 @@ window.loadAdminProductsList = async function() {
     } else {
         list.innerHTML = 'جاري التحميل...';
         try {
-            const snapshot = await getDocs(collection(db, "products"));
+            const snapshot = await getDocs(query(collection(db, "products"), limit(100)));
             const fetched = [];
             snapshot.forEach(docSnap => fetched.push({ id: docSnap.id, ...docSnap.data() }));
             renderList(fetched);
@@ -1561,12 +1722,13 @@ window.loadCategoriesForAdmin = async function() {
     const renderList = (categories) => {
         list.innerHTML = '';
         categories.forEach(c => {
+            const safeId = escapeHtml(c.id);
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                    <div><i class="${c.icon}"></i> <strong>${c.name}</strong> ${c.nameEn ? `(${c.nameEn})` : ''} - <code>${c.id}</code></div>
+                    <div><i class="${escapeHtml(c.icon)}"></i> <strong>${escapeHtml(c.name)}</strong> ${c.nameEn ? `(${escapeHtml(c.nameEn)})` : ''} - <code>${safeId}</code></div>
                     <div>
-                        <button onclick='editCategory("${c.id}")' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
-                        <button onclick='deleteCategory("${c.id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
+                        <button onclick='editCategory("${safeId}")' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='deleteCategory("${safeId}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
         });
@@ -1672,12 +1834,12 @@ async function loadVehiclesList() {
         list.innerHTML = '';
         snapshot.forEach(docSnap => {
             const v = docSnap.data();
-            const id = docSnap.id;
+            const id = escapeHtml(docSnap.id);
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div>سيارة: <strong>${v.plate}</strong> (${v.model}) | السائق المسؤول: <span style="color:var(--primary); font-weight:bold;">${v.driver}</span></div>
+                    <div>سيارة: <strong>${escapeHtml(v.plate)}</strong> (${escapeHtml(v.model)}) | السائق المسؤول: <span style="color:var(--primary); font-weight:bold;">${escapeHtml(v.driver)}</span></div>
                     <div>
-                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate)}, ${JSON.stringify(v.model)}, ${JSON.stringify(v.driver)}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate || '')}, ${JSON.stringify(v.model || '')}, ${JSON.stringify(v.driver || '')}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
                         <button onclick='deleteVehicle("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
@@ -1722,18 +1884,22 @@ window.deleteVehicle = async function(id) {
 async function loadDriversDropdown() {
     const select = document.getElementById('vehDriverSelect');
     if (!select) return;
-    const snapshot = await getDocs(collection(db, "users"));
+    const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
     select.innerHTML = '<option value="">اختر السائق الموظف</option>';
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
         const userRole = u.role || u.rol || u.col;
         if (['driver', 'employee', 'admin', 'assistant_manager'].includes(userRole)) {
-            select.innerHTML += `<option value="${u.email}">${u.name || u.email} (${userRole})</option>`;
+            select.innerHTML += `<option value="${escapeHtml(u.email)}">${escapeHtml(u.name || u.email)} (${escapeHtml(userRole)})</option>`;
         }
     });
 }
 
 window.switchAdminTab = function(tabName) {
+    if (tabName !== 'messages') {
+        stopAdminChatListeners();
+    }
+
     document.querySelectorAll('.admin-panel').forEach(panel => panel.style.display = 'none');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     
@@ -1758,6 +1924,11 @@ window.switchAdminTab = function(tabName) {
         const msgTab = document.getElementById('adminMessagesTab');
         if (msgTab) msgTab.style.display = 'block';
         document.getElementById('tabMessagesBtn')?.classList.add('active');
+        const layout = document.getElementById('adminChatLayout');
+        if (layout) {
+            layout.classList.remove('show-chat');
+            layout.classList.add('show-list');
+        }
         listenAdminChats();
     } else if (tabName === 'fleet') {
         document.getElementById('adminFleetTab').style.display = 'block';
@@ -1768,9 +1939,11 @@ window.switchAdminTab = function(tabName) {
         document.getElementById('adminMapTab').style.display = 'block';
         document.getElementById('tabMapBtn').classList.add('active');
         setTimeout(() => { 
-            initAdminMap(); 
-            if (adminMap) adminMap.invalidateSize();
-        }, 200);
+            if (typeof L !== 'undefined') {
+                initAdminMap(); 
+                if (adminMap) adminMap.invalidateSize();
+            }
+        }, 250);
     } else if (tabName === 'messaging') {
         document.getElementById('adminMessagingTab').style.display = 'block';
         document.getElementById('tabMsgBtn').classList.add('active');
@@ -1786,7 +1959,7 @@ async function loadAdminExportRfqs() {
     if (!list) return;
     list.innerHTML = 'جاري الجلب...';
     try {
-        const snapshot = await getDocs(collection(db, "rfq_orders"));
+        const snapshot = await getDocs(query(collection(db, "rfq_orders"), limit(60)));
         list.innerHTML = '';
         if (snapshot.empty) {
             list.innerHTML = '<p style="color:#888;">لا توجد طلبات تصدير حالياً.</p>';
@@ -1794,27 +1967,27 @@ async function loadAdminExportRfqs() {
         }
         snapshot.forEach(docSnap => {
             const r = docSnap.data();
-            const id = docSnap.id;
+            const id = escapeHtml(docSnap.id);
             const waMsg = encodeURIComponent(`أهلاً بك شركة ${r.companyName}، بخصوص طلب التصدير لمنتج ${r.productTitle} بكمية ${r.quantity} طن...`);
             list.innerHTML += `
                 <div class="data-item" style="border-right-color:#173627;">
                     <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                         <div>
-                            <h4 style="color:#173627; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${r.companyName}</h4>
-                            <p><strong>المنتج:</strong> ${r.productTitle} | <strong>الكمية:</strong> ${r.quantity} طن (${r.incoterm})</p>
-                            <p><strong>الوجهة:</strong> ${r.destination} | <strong>الهاتف:</strong> ${r.phone}</p>
-                            <p style="font-size:0.8rem; color:#777;">البريد: ${r.userEmail} | التاريخ: ${r.date || ''}</p>
+                            <h4 style="color:#173627; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${escapeHtml(r.companyName)}</h4>
+                            <p><strong>المنتج:</strong> ${escapeHtml(r.productTitle)} | <strong>الكمية:</strong> ${escapeHtml(r.quantity)} طن (${escapeHtml(r.incoterm)})</p>
+                            <p><strong>الوجهة:</strong> ${escapeHtml(r.destination)} | <strong>الهاتف:</strong> ${escapeHtml(r.phone)}</p>
+                            <p style="font-size:0.8rem; color:#777;">البريد: ${escapeHtml(r.userEmail)} | التاريخ: ${escapeHtml(r.date || '')}</p>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:5px; justify-content:center;">
-                            <a href="https://wa.me/${r.phone?.replace(/[^0-9]/g, '')}?text=${waMsg}" target="_blank" style="background:#25D366; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-brands fa-whatsapp"></i> تواصل واتساب</a>
-                            <a href="tel:${r.phone}" style="background:#0284c7; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-phone"></i> اتصال مباشر</a>
+                            <a href="https://wa.me/${(r.phone || '').replace(/[^0-9]/g, '')}?text=${waMsg}" target="_blank" style="background:#25D366; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-brands fa-whatsapp"></i> تواصل واتساب</a>
+                            <a href="tel:${escapeHtml(r.phone)}" style="background:#0284c7; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-phone"></i> اتصال مباشر</a>
                             <button onclick="deleteRfqOrder('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px; border-radius:5px; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
                         </div>
                     </div>
                 </div>`;
         });
     } catch (e) {
-        list.innerHTML = 'خطأ في تحميل طلبات التصدير: ' + e.message;
+        list.innerHTML = 'خطأ في تحميل طلبات التصدير: ' + escapeHtml(e.message);
     }
 }
 
@@ -1829,11 +2002,14 @@ window.deleteRfqOrder = async function(id) {
 async function loadAllOrders() {
     const list = document.getElementById('adminOrdersList');
     if (!list) return;
-    const snapshot = await getDocs(collection(db, "orders"));
-    const vehiclesSnap = await getDocs(collection(db, "vehicles"));
+    const [snapshot, vehiclesSnap] = await Promise.all([
+        getDocs(query(collection(db, "orders"), limit(80))),
+        getDocs(collection(db, "vehicles"))
+    ]);
+
     let vehicleOptions = '<option value="">اختر السيارة للأسطول</option>';
     vehiclesSnap.forEach(v => {
-        vehicleOptions += `<option value="${v.data().plate}">${v.data().plate} (سائق: ${v.data().driver})</option>`;
+        vehicleOptions += `<option value="${escapeHtml(v.data().plate)}">${escapeHtml(v.data().plate)} (سائق: ${escapeHtml(v.data().driver)})</option>`;
     });
 
     list.innerHTML = '';
@@ -1845,23 +2021,24 @@ async function loadAllOrders() {
     snapshot.forEach(docSnap => {
         const o = docSnap.data();
         const id = docSnap.id;
+        const safeId = escapeHtml(id);
         ordersCache[id] = o;
         list.innerHTML += `
             <div class="data-item">
                 <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                     <div>
-                         طلب #${id.slice(0,6)} | العميل: <strong>${o.userEmail}</strong> | الهاتف: <strong style="color:var(--primary);">${o.phone || 'غير مسجل'}</strong><br>
-                         الإجمالي: <strong>${o.total} ج.م</strong> (${o.paymentType}) | الحالة: <span style="color:green; font-weight:bold;">${o.status}</span> | السيارة المعينة: <strong>${o.assignedVehicle || 'غير محدد'}</strong>
+                         طلب #${safeId.slice(0,6)} | العميل: <strong>${escapeHtml(o.userEmail)}</strong> | الهاتف: <strong style="color:var(--primary);">${escapeHtml(o.phone || 'غير مسجل')}</strong><br>
+                         الإجمالي: <strong>${escapeHtml(o.total)} ج.م</strong> (${escapeHtml(o.paymentType)}) | الحالة: <span style="color:green; font-weight:bold;">${escapeHtml(o.status)}</span> | السيارة المعينة: <strong>${escapeHtml(o.assignedVehicle || 'غير محدد')}</strong>
                     </div>
                     <div>
-                        <button onclick="previewInvoice('${id}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
-                        <button onclick="deleteOrderAdmin('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
+                        <button onclick="previewInvoice('${safeId}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-file-invoice"></i> معاينة وتنزيل الفاتورة</button>
+                        <button onclick="deleteOrderAdmin('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:4px;"><i class="fa-solid fa-trash"></i> حذف الفاتورة</button>
                     </div>
                 </div>
                 <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                    <select id="assignVeh_${id}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
-                    <button onclick="assignVehicleToOrder('${id}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
-                    <button onclick="updateOrderStatus('${id}', 'تم التسليم بنجاح')" style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
+                    <select id="assignVeh_${safeId}" style="padding:5px; border-radius:5px; border:1px solid #ccc;">${vehicleOptions}</select>
+                    <button onclick="assignVehicleToOrder('${safeId}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تعيين السيارة للشحنة</button>
+                    <button onclick="updateOrderStatus('${safeId}', 'تم التسليم بنجاح')" style="background:green; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">تم التسليم</button>
                 </div>
             </div>`;
     });
@@ -1904,15 +2081,16 @@ window.updateOrderStatus = async function(orderId, newStatus) {
 async function loadAllUsers() {
     const list = document.getElementById('adminUsersList');
     if (!list) return;
-    const snapshot = await getDocs(collection(db, "users"));
+    const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
         const u = docSnap.data();
         const email = docSnap.id;
+        const safeEmail = escapeHtml(email);
         const userRole = u.role || u.rol || u.col || 'customer';
         list.innerHTML += `
             <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>الاسم: ${u.name || 'مستخدم'} | البريد: ${email} | الهاتف: <strong>${u.phone || 'غير مسجل'}</strong> | الرتبة الحالية: <strong style="color:var(--accent);">${userRole}</strong></div>
+                <div>الاسم: ${escapeHtml(u.name || 'مستخدم')} | البريد: ${safeEmail} | الهاتف: <strong>${escapeHtml(u.phone || 'غير مسجل')}</strong> | الرتبة الحالية: <strong style="color:var(--accent);">${escapeHtml(userRole)}</strong></div>
                 <div>
                     <select id="roleSelect_${email.replace(/[@.]/g, '_')}" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
                         <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>مدير</option>
@@ -1922,7 +2100,7 @@ async function loadAllUsers() {
                         <option value="driver" ${userRole === 'driver' ? 'selected' : ''}>سائق</option>
                         <option value="customer" ${userRole === 'customer' ? 'selected' : ''}>عميل</option>
                     </select>
-                    <button onclick='changeUserRole("${email}")' style="background:#234d39; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
+                    <button onclick='changeUserRole("${safeEmail}")' style="background:#234d39; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
                 </div>
             </div>`;
     });
@@ -1959,9 +2137,8 @@ sendNotificationForm?.addEventListener('submit', async (e) => {
 
 async function checkUnreadNotifications() {
     try {
-        const snapshot = await getDocs(collection(db, "notifications"));
-        let count = 0;
-        snapshot.forEach(docSnap => { if (!docSnap.data().read) count++; });
+        const snapshot = await getDocs(query(collection(db, "notifications"), where("read", "==", false), limit(25)));
+        const count = snapshot.size;
         const notifCountElem = document.getElementById('notifCount');
         const drawerNotifElem = document.getElementById('drawerNotifCount');
         if (notifCountElem) notifCountElem.textContent = count;
@@ -1972,7 +2149,7 @@ async function checkUnreadNotifications() {
 window.loadNotifications = async function() {
     const list = document.getElementById('notificationsListContent');
     if (!list) return;
-    const snapshot = await getDocs(collection(db, "notifications"));
+    const snapshot = await getDocs(query(collection(db, "notifications"), limit(30)));
     if (snapshot.empty) {
         list.innerHTML = `<p style="text-align:center; color:#888;" data-i18n="no_notifs">${t('لا توجد إشعارات حالياً.', 'No notifications currently.')}</p>`;
         return;
@@ -1980,7 +2157,7 @@ window.loadNotifications = async function() {
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
         const n = docSnap.data();
-        list.innerHTML += `<div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:8px; border-right:4px solid var(--accent);"><h4>${n.title}</h4><p>${n.body}</p></div>`;
+        list.innerHTML += `<div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:8px; border-right:4px solid var(--accent);"><h4>${escapeHtml(n.title)}</h4><p>${escapeHtml(n.body)}</p></div>`;
     });
 };
 
@@ -2003,22 +2180,23 @@ window.loadUserProfile = async function() {
 
     let invoicesHtml = '';
 
-    const qOrders = query(collection(db, "orders"), where("userEmail", "==", currentUser.email));
+    const qOrders = query(collection(db, "orders"), where("userEmail", "==", currentUser.email), limit(40));
     const ordersSnap = await getDocs(qOrders);
     
     ordersSnap.forEach((docSnap) => {
         const orderId = docSnap.id;
+        const safeId = escapeHtml(orderId);
         const order = docSnap.data();
         ordersCache[orderId] = order;
         invoicesHtml += `
             <div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid var(--primary);">
-                ${t('رقم الفاتورة:', 'Invoice #:')} <strong>#${orderId.slice(0,6)}</strong> | ${t('الإجمالي:', 'Total:')} <strong>${order.total} ${t('ج.م', 'EGP')}</strong><br>
-                ${t('الحالة:', 'Status:')} <span style="color:green">${order.status}</span> | ${t('سيارة التوصيل:', 'Delivery Vehicle:')} <strong>${order.assignedVehicle || t('قريباً', 'Soon')}</strong><br>
-                <button onclick="previewInvoice('${orderId}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> ${t('معاينة الفاتورة', 'Preview Invoice')}</button>
+                ${t('رقم الفاتورة:', 'Invoice #:')} <strong>#${safeId.slice(0,6)}</strong> | ${t('الإجمالي:', 'Total:')} <strong>${escapeHtml(order.total)} ${t('ج.م', 'EGP')}</strong><br>
+                ${t('الحالة:', 'Status:')} <span style="color:green">${escapeHtml(order.status)}</span> | ${t('سيارة التوصيل:', 'Delivery Vehicle:')} <strong>${escapeHtml(order.assignedVehicle || t('قريباً', 'Soon'))}</strong><br>
+                <button onclick="previewInvoice('${safeId}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:5px;"><i class="fa-solid fa-eye"></i> ${t('معاينة الفاتورة', 'Preview Invoice')}</button>
             </div>`;
     });
 
-    const qRfq = query(collection(db, "rfq_orders"), where("userEmail", "==", currentUser.email));
+    const qRfq = query(collection(db, "rfq_orders"), where("userEmail", "==", currentUser.email), limit(30));
     const rfqSnap = await getDocs(qRfq);
 
     rfqSnap.forEach((docSnap) => {
@@ -2026,9 +2204,9 @@ window.loadUserProfile = async function() {
         invoicesHtml += `
             <div style="background:#f0f7f4; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #173627;">
                 <span style="background:#173627; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid fa-ship"></i> ${t('طلب تصدير B2B', 'Export B2B Request')}</span>
-                <p style="margin-top:5px; margin-bottom:3px;">${t('المنتج:', 'Product:')} <strong>${rfq.productTitle}</strong> | ${t('الكمية:', 'Qty:')} <strong>${rfq.quantity} ${t('طن', 'Tons')} (${rfq.incoterm})</strong></p>
-                <p style="margin-bottom:3px; font-size:0.85rem; color:#555;">${t('الوجهة:', 'Destination:')} ${rfq.destination} | ${t('التاريخ:', 'Date:')} ${rfq.date || ''}</p>
-                ${t('الحالة:', 'Status:')} <span style="color:#d4af37; font-weight:bold;">${rfq.status || t('قيد المراجعة والدراسة', 'Under Review')}</span>
+                <p style="margin-top:5px; margin-bottom:3px;">${t('المنتج:', 'Product:')} <strong>${escapeHtml(rfq.productTitle)}</strong> | ${t('الكمية:', 'Qty:')} <strong>${escapeHtml(rfq.quantity)} ${t('طن', 'Tons')} (${escapeHtml(rfq.incoterm)})</strong></p>
+                <p style="margin-bottom:3px; font-size:0.85rem; color:#555;">${t('الوجهة:', 'Destination:')} ${escapeHtml(rfq.destination)} | ${t('التاريخ:', 'Date:')} ${escapeHtml(rfq.date || '')}</p>
+                ${t('الحالة:', 'Status:')} <span style="color:#d4af37; font-weight:bold;">${escapeHtml(rfq.status || t('قيد المراجعة والدراسة', 'Under Review'))}</span>
             </div>`;
     });
 
@@ -2036,50 +2214,70 @@ window.loadUserProfile = async function() {
     if (userInvoicesList) userInvoicesList.innerHTML = invoicesHtml || `<p>${t('لا توجد فواتير أو طلبات تصدير سابقة', 'No previous invoices or export orders')}</p>`;
 };
 
+function renderTrackResultCard(found) {
+    const safeId = escapeHtml(found.id);
+    return `
+        <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #234d39;">
+            <p><strong>${t('رقم الفاتورة:', 'Invoice #:')}</strong> #${safeId}</p>
+            <p><strong>${t('حالة الشحنة:', 'Shipment Status:')}</strong> <span style="color:green; font-weight:bold;">${escapeHtml(found.status)}</span></p>
+            <p><strong>${t('هاتف المشتري:', 'Buyer Phone:')}</strong> ${escapeHtml(found.phone || t('غير مسجل', 'Not registered'))}</p>
+            <p><strong>${t('سيارة التوصيل:', 'Delivery Vehicle:')}</strong> ${escapeHtml(found.assignedVehicle || t('قيد التحديد', 'Pending'))}</p>
+            <p><strong>${t('الإجمالي:', 'Total:')}</strong> ${escapeHtml(found.total)} ${t('ج.م', 'EGP')}</p>
+            <button onclick="previewInvoice('${safeId}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:6px;"><i class="fa-solid fa-eye"></i> ${t('فتح الفاتورة', 'Open Invoice')}</button>
+        </div>`;
+}
+
 trackInvoiceBtn?.addEventListener('click', async () => {
-    const invId = document.getElementById('trackInvoiceInput').value.trim();
+    const rawInput = document.getElementById('trackInvoiceInput').value.trim();
+    const cleanId = rawInput.replace(/^#/, '');
     const resultBox = document.getElementById('trackResultBox');
-    if (!invId) return;
+    if (!cleanId) return;
     resultBox.innerHTML = t('جاري البحث...', 'Searching...');
+
     try {
-        const orderDocRef = doc(db, "orders", invId);
+        // 1. البحث السريع في الذاكرة المحلية أولاً (0 قراءات)
+        const cachedMatchKey = Object.keys(ordersCache).find(k => k.toLowerCase().startsWith(cleanId.toLowerCase()));
+        if (cachedMatchKey) {
+            resultBox.innerHTML = renderTrackResultCard({ id: cachedMatchKey, ...ordersCache[cachedMatchKey] });
+            return;
+        }
+
+        // 2. البحث بالمعرف الكامل
+        const orderDocRef = doc(db, "orders", cleanId);
         const docSnap = await getDoc(orderDocRef);
 
         if (docSnap.exists()) {
             const found = { id: docSnap.id, ...docSnap.data() };
             ordersCache[found.id] = found;
-            resultBox.innerHTML = `
-                <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #234d39;">
-                    <p><strong>${t('رقم الفاتورة:', 'Invoice #:')}</strong> #${found.id}</p>
-                    <p><strong>${t('حالة الشحنة:', 'Shipment Status:')}</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
-                    <p><strong>${t('هاتف المشتري:', 'Buyer Phone:')}</strong> ${found.phone || t('غير مسجل', 'Not registered')}</p>
-                    <p><strong>${t('سيارة التوصيل:', 'Delivery Vehicle:')}</strong> ${found.assignedVehicle || t('قيد التحديد', 'Pending')}</p>
-                    <p><strong>${t('الإجمالي:', 'Total:')}</strong> ${found.total} ${t('ج.م', 'EGP')}</p>
-                    <button onclick="previewInvoice('${found.id}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:6px;"><i class="fa-solid fa-eye"></i> ${t('فتح الفاتورة', 'Open Invoice')}</button>
-                </div>`;
-        } else {
-            const q = query(collection(db, "orders"), where("userEmail", "==", currentUser?.email || ""));
-            const querySnap = await getDocs(q);
+            resultBox.innerHTML = renderTrackResultCard(found);
+            return;
+        }
+
+        // 3. البحث بالرقم المختصر (6 أحرف) ضمن طلبات العميل أو الإدارة
+        let qSearch;
+        if (["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole)) {
+            qSearch = query(collection(db, "orders"), limit(100));
+        } else if (currentUser?.email) {
+            qSearch = query(collection(db, "orders"), where("userEmail", "==", currentUser.email), limit(50));
+        }
+
+        if (qSearch) {
+            const querySnap = await getDocs(qSearch);
             let found = null;
             querySnap.forEach(d => {
-                if (d.id.includes(invId)) found = { id: d.id, ...d.data() };
+                if (d.id.toLowerCase().startsWith(cleanId.toLowerCase())) {
+                    found = { id: d.id, ...d.data() };
+                }
             });
 
             if (found) {
                 ordersCache[found.id] = found;
-                resultBox.innerHTML = `
-                    <div style="background:#eef5f1; padding:12px; border-radius:8px; border:1px solid #234d39;">
-                        <p><strong>${t('رقم الفاتورة:', 'Invoice #:')}</strong> #${found.id}</p>
-                        <p><strong>${t('حالة الشحنة:', 'Shipment Status:')}</strong> <span style="color:green; font-weight:bold;">${found.status}</span></p>
-                        <p><strong>${t('هاتف المشتري:', 'Buyer Phone:')}</strong> ${found.phone || t('غير مسجل', 'Not registered')}</p>
-                        <p><strong>${t('سيارة التوصيل:', 'Delivery Vehicle:')}</strong> ${found.assignedVehicle || t('قيد التحديد', 'Pending')}</p>
-                        <p><strong>${t('الإجمالي:', 'Total:')}</strong> ${found.total} ${t('ج.م', 'EGP')}</p>
-                        <button onclick="previewInvoice('${found.id}')" style="background:var(--primary); color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; margin-top:6px;"><i class="fa-solid fa-eye"></i> ${t('فتح الفاتورة', 'Open Invoice')}</button>
-                    </div>`;
-            } else {
-                resultBox.innerHTML = `<p style="color:red;">${t('لم يتم العثور على شحنة بهذا الرقم.', 'No shipment found with this number.')}</p>`;
+                resultBox.innerHTML = renderTrackResultCard(found);
+                return;
             }
         }
+
+        resultBox.innerHTML = `<p style="color:red;">${t('لم يتم العثور على شحنة بهذا الرقم.', 'No shipment found with this number.')}</p>`;
     } catch (err) {
         resultBox.innerHTML = `<p style="color:red;">${t('حدث خطأ في البحث.', 'Error occurred while searching.')}</p>`;
     }
@@ -2127,7 +2325,7 @@ window.previewInvoice = async function(orderId, orderObj = null) {
 
         Object.values(groupedItems).forEach(item => {
             itemsHtml += `<tr>
-                <td style="padding:8px; border:1px solid #ddd;">${item.name}</td>
+                <td style="padding:8px; border:1px solid #ddd;">${escapeHtml(item.name)}</td>
                 <td style="padding:8px; border:1px solid #ddd;">${item.qty}</td>
                 <td style="padding:8px; border:1px solid #ddd;">${item.price * item.qty} ${t('ج.م', 'EGP')}</td>
             </tr>`;
@@ -2139,14 +2337,14 @@ window.previewInvoice = async function(orderId, orderObj = null) {
             <h2 style="color:var(--primary); text-align:center; font-size:1.3rem; margin-bottom:5px;">${t('مؤسسة الإخلاص للأعلاف والحبوب', 'Al-Ekhlas Feed & Grains Est.')}</h2>
             <p style="text-align:center; color:#666; font-size:0.85rem; margin-bottom:10px;">${t('فاتورة مبيعات رسمية', 'Official Sales Invoice')}</p>
             <hr style="margin:8px 0; border:0; border-top:1px solid #eee;">
-            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>${t('رقم الفاتورة:', 'Invoice #:')}</strong> #${orderId}</p>
-            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>${t('العميل:', 'Client:')}</strong> ${order.userEmail || ''}</p>
-            <p style="font-size:0.85rem; margin-bottom:8px;"><strong>${t('رقم الهاتف المحفوظ:', 'Saved Phone:')}</strong> ${order.phone || t('غير مسجل', 'Not registered')}</p>
+            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>${t('رقم الفاتورة:', 'Invoice #:')}</strong> #${escapeHtml(orderId)}</p>
+            <p style="font-size:0.85rem; margin-bottom:4px;"><strong>${t('العميل:', 'Client:')}</strong> ${escapeHtml(order.userEmail || '')}</p>
+            <p style="font-size:0.85rem; margin-bottom:8px;"><strong>${t('رقم الهاتف المحفوظ:', 'Saved Phone:')}</strong> ${escapeHtml(order.phone || t('غير مسجل', 'Not registered'))}</p>
             <table style="width:100%; border-collapse:collapse; margin:12px 0;">
                 <tr style="background:var(--primary); color:#fff;"><th style="padding:6px; border:1px solid #ddd;">${t('المنتج', 'Product')}</th><th style="padding:6px; border:1px solid #ddd;">${t('الكمية', 'Qty')}</th><th style="padding:6px; border:1px solid #ddd;">${t('السعر', 'Price')}</th></tr>
                 ${itemsHtml}
             </table>
-            <h3 style="font-size:1.1rem; color:var(--primary); margin-top:10px;">${t('الإجمالي النهائي:', 'Grand Total:')} ${order.total || 0} ${t('ج.م', 'EGP')}</h3>
+            <h3 style="font-size:1.1rem; color:var(--primary); margin-top:10px;">${t('الإجمالي النهائي:', 'Grand Total:')} ${escapeHtml(order.total || 0)} ${t('ج.م', 'EGP')}</h3>
         </div>`;
 
     modal.style.display = 'flex';
@@ -2248,7 +2446,7 @@ function downloadBlobFallback(blob, fileName) {
 
 window.initUserMap = function() {
     const userMapElem = document.getElementById('userMap');
-    if (!userMapElem) return;
+    if (!userMapElem || typeof L === 'undefined') return;
 
     const savedLat = parseFloat(localStorage.getItem('omda_user_lat')) || selectedLat;
     const savedLng = parseFloat(localStorage.getItem('omda_user_lng')) || selectedLng;
@@ -2364,7 +2562,7 @@ saveLocationBtn?.addEventListener('click', async () => {
 
 async function initAdminMap() {
     const adminMapElem = document.getElementById('adminMap');
-    if (!adminMapElem) return;
+    if (!adminMapElem || typeof L === 'undefined') return;
 
     if (adminMap) {
         adminMap.invalidateSize();
@@ -2426,7 +2624,7 @@ async function refreshAdminMapMarkers() {
             const v = docSnap.data();
             if (v.lat && v.lng) {
                 const marker = L.marker([v.lat, v.lng], { icon: vehicleIcon })
-                    .bindPopup(`<b>سيارة أسطول:</b> ${v.plate}<br><b>النوع:</b> ${v.model}<br><b>السائق:</b> ${v.driver}`);
+                    .bindPopup(`<b>سيارة أسطول:</b> ${escapeHtml(v.plate)}<br><b>النوع:</b> ${escapeHtml(v.model)}<br><b>السائق:</b> ${escapeHtml(v.driver)}`);
                 adminMapMarkersGroup.addLayer(marker);
                 bounds.push([v.lat, v.lng]);
             }
