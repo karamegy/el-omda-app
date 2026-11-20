@@ -39,6 +39,7 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     position: relative;
+    padding-top: calc(166px + env(safe-area-inset-top, 0px)); /* مساحة للهيدر العلوي المثبت */
     padding-bottom: 100px; /* هامش سفلي لشريط التنقل وزر السلة */
 }
 
@@ -134,18 +135,20 @@ body::after {
 }
 
 /* ==========================================
-   الهيدر الملكي المنحني والشعار الذهبي (حجم مدمج ومثالي)
+   الهيدر الملكي المنحني والشعار الذهبي (مثبت في الأعلى بالكامل)
 ========================================== */
 .royal-header {
     background: radial-gradient(circle at top center, #234d39 0%, #173627 65%, #10271c 100%);
     color: var(--white);
-    padding: 8px 14px 16px 14px;
+    padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 16px 14px;
     border-bottom-left-radius: 50% 18px;
     border-bottom-right-radius: 50% 18px;
     border-bottom: 2.5px solid var(--accent);
     box-shadow: 0 4px 16px rgba(16, 39, 28, 0.25);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
     width: 100%;
 }
@@ -1792,8 +1795,12 @@ body::after {
    التجاوب المحسّن والشامل مع الهواتف المحمولة
 ========================================== */
 @media(max-width: 768px) {
+    body {
+        padding-top: max(182px, calc(162px + env(safe-area-inset-top, 0px)));
+    }
+
     .royal-header {
-        padding: 8px 12px 14px 12px;
+        padding: max(30px, calc(10px + env(safe-area-inset-top, 0px))) 12px 14px 12px;
     }
 
     .royal-brand-title {
