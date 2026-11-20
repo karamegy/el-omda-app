@@ -16,54 +16,96 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1e3d2f">
+    <meta name="theme-color" content="#173627">
 </head>
 <body>
 
     <div class="smoke-bg"></div>
     <div class="bg-logo-watermark"></div>
 
-    <header class="main-header">
-        <div class="header-container">
-            <div class="logo-area" onclick="switchSection('productsSection')" style="cursor: pointer;">
-                <i class="fa-solid fa-wheat-awn"></i>
-                <h1>مؤسسة الإخلاص للأعلاف</h1>
-            </div>
-            
-            <div class="search-box">
-                <i class="fa-solid fa-search search-icon"></i>
-                <input type="text" id="searchInput" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
-            </div>
+    <!-- الهيدر الملكي المنحني النظيف (بدون أزرار مزدحمة) -->
+    <header class="royal-header">
+        <div class="royal-top-bar">
+            <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
+                <i class="fa-solid fa-user"></i>
+            </button>
 
-            <div class="user-actions">
-                <a href="privacy-policy.html" target="_blank" class="action-btn" title="سياسة الخصوصية" style="text-decoration: none;">
-                    <i class="fa-solid fa-shield-halved"></i>
-                    <span>الخصوصية</span>
-                </a>
-                <button id="notificationsBtn" class="action-btn" title="الإشعارات والرسائل">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="toggleSearchBtn" class="header-icon-btn" title="بحث">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </button>
+                <button id="notificationsBtn" class="header-icon-btn" title="الإشعارات">
                     <i class="fa-solid fa-bell"></i>
-                    <span>الإشعارات</span>
-                    <span class="badge" id="notifCount">0</span>
-                </button>
-                <button id="cartBtnHeader" class="action-btn">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span>السلة</span>
-                    <span class="badge" id="cartCountHeader">0</span>
-                </button>
-                <button id="profileBtn" class="action-btn" style="display:none;">
-                    <i class="fa-solid fa-user-shield"></i>
-                    <span>حسابي</span>
-                </button>
-                <button id="adminBtn" class="action-btn admin-badge" style="display:none;">
-                    <i class="fa-solid fa-gauge-high"></i>
-                    <span>لوحة التحكم</span>
-                </button>
-                <button id="authBtn" class="btn-login-main">
-                    <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+                    <span class="header-notif-dot" id="notifCount">0</span>
                 </button>
             </div>
         </div>
+
+        <div class="royal-brand-center" onclick="switchSection('productsSection')">
+            <div class="royal-emblem-ring">
+                <i class="fa-solid fa-wheat-awn"></i>
+            </div>
+            <span class="royal-brand-sub">مؤسسة</span>
+            <h1 class="royal-brand-title">الإخلاص</h1>
+            <span class="royal-brand-tagline">للأعلاف الطبيعية والحبوب</span>
+        </div>
+
+        <div id="royalSearchContainer" class="royal-search-wrapper">
+            <i class="fa-solid fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
+        </div>
     </header>
+
+    <!-- القائمة الجانبية (تحتوي على الخصوصية، الإشعارات، لوحة التحكم، حسابي، والدخول/الخروج) -->
+    <div id="drawerOverlay" class="drawer-overlay"></div>
+    <aside id="sideMenuDrawer" class="side-drawer">
+        <div class="drawer-header">
+            <div class="drawer-brand">
+                <i class="fa-solid fa-wheat-awn"></i>
+                <h3>مؤسسة الإخلاص</h3>
+            </div>
+            <button id="closeDrawerBtn" class="drawer-close-btn" aria-label="إغلاق القائمة">&times;</button>
+        </div>
+
+        <div class="drawer-links">
+            <button class="drawer-item" onclick="closeSideMenu(); switchSection('productsSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-house"></i> الرئيسية والمتجر</span>
+            </button>
+
+            <button class="drawer-item" onclick="closeSideMenu(); switchSection('categoriesSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-layer-group"></i> أقسام الأعلاف والحبوب</span>
+            </button>
+
+            <button id="profileBtn" class="drawer-item" style="display:none;" onclick="closeSideMenu(); switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 200);">
+                <span class="drawer-item-left"><i class="fa-solid fa-user-shield"></i> حسابي وتتبع الشحنات</span>
+            </button>
+
+            <button id="adminBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('adminSection'); loadCategoriesForAdmin(); loadAdminProductsList();">
+                <span class="drawer-item-left"><i class="fa-solid fa-gauge-high"></i> لوحة تحكم الإدارة</span>
+            </button>
+
+            <button id="drawerNotifBtn" class="drawer-item" onclick="closeSideMenu(); document.getElementById('notificationsModal').style.display='flex'; loadNotifications();">
+                <span class="drawer-item-left"><i class="fa-solid fa-bell"></i> الإشعارات والرسائل</span>
+                <span class="drawer-badge" id="drawerNotifCount">0</span>
+            </button>
+
+            <button class="drawer-item" onclick="closeSideMenu(); document.getElementById('cartModal').style.display='flex'; updateCartUI();">
+                <span class="drawer-item-left"><i class="fa-solid fa-cart-shopping"></i> سلة المشتريات</span>
+                <span class="drawer-badge" id="cartCountHeader" style="background: var(--accent); color: var(--primary-dark);">0</span>
+            </button>
+
+            <a href="privacy-policy.html" target="_blank" class="drawer-item" onclick="closeSideMenu();">
+                <span class="drawer-item-left"><i class="fa-solid fa-shield-halved"></i> سياسة الخصوصية والأمان</span>
+                <i class="fa-solid fa-arrow-up-left-from-square" style="font-size: 0.78rem; opacity: 0.7;"></i>
+            </a>
+        </div>
+
+        <div class="drawer-footer">
+            <button id="authBtn" class="drawer-auth-btn">
+                <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول
+            </button>
+        </div>
+    </aside>
 
     <nav class="categories-nav">
         <div class="cat-container" id="categoriesContainer">
@@ -180,7 +222,6 @@
                 <div id="adminCategoriesList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
-            <!-- تبويب طلبات التصدير B2B -->
             <div id="adminExportTab" class="admin-panel" style="display:none;">
                 <h3>طلبات عروض الأسعار والتصدير بالجملة (B2B)</h3>
                 <div id="adminExportRfqList" class="data-list" style="margin-top: 15px;"></div>
@@ -191,18 +232,15 @@
                 <div id="adminOrdersList" class="data-list"></div>
             </div>
 
-            <!-- تبويب الشات والمحادثات المباشرة التفاعلية مع العملاء -->
             <div id="adminMessagesTab" class="admin-panel" style="display:none;">
                 <h3><i class="fa-solid fa-comments"></i> مركز المحادثات المباشرة والشات الحي مع العملاء</h3>
                 <div class="admin-chat-layout">
-                    <!-- قائمة العملاء أصحاب المحادثات -->
                     <div class="admin-conversations-card">
                         <h4><i class="fa-solid fa-users"></i> قائمة العملاء</h4>
                         <div id="adminConversationsList" class="data-list">
                             <p style="color:#888; font-size: 0.85rem; text-align: center; margin-top: 20px;">جاري تحميل المحادثات...</p>
                         </div>
                     </div>
-                    <!-- صندوق الشات المباشر المختار -->
                     <div id="adminActiveChatBox" class="admin-chat-box">
                         <div id="adminChatHeader" class="admin-chat-header">
                             <span>محادثة العميل: <strong id="adminActiveClientEmail">لم يتم الاختيار</strong></span>
@@ -239,7 +277,7 @@
                         </div>
                         <div class="input-group">
                             <label>موقع السيارة الحالي (GPS)</label>
-                            <button type="button" id="locateVehicleBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 8px; padding: 8px;">
+                            <button type="button" id="locateVehicleBtn" class="btn-submit" style="background: var(--accent); color: var(--primary-dark); margin-bottom: 8px; padding: 8px;">
                                 <i class="fa-solid fa-location-crosshairs"></i> جلب موقع السيارة الحالي تلقائياً
                             </button>
                             <p id="vehCoordsDisplay" style="font-size: 0.85rem; color: #666;">الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)</p>
@@ -255,7 +293,7 @@
             <div id="adminMapTab" class="admin-panel" style="display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap:10px;">
                     <h3>خريطة تتبع الشحنات وأسطول سيارات النقل الحية</h3>
-                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والمواقع</button>
+                    <button type="button" id="refreshAdminMapBtn" class="btn-submit" style="width: auto; padding: 8px 15px; background: var(--accent); color: var(--primary-dark);"><i class="fa-solid fa-rotate"></i> تحديث الخريطة والمواقع</button>
                 </div>
                 <div id="adminMap" style="height: 450px; border-radius: 12px; margin-top: 5px; border: 2px solid #ddd;"></div>
             </div>
@@ -315,13 +353,12 @@
                 </div>
                 <div class="profile-box">
                     <h3><i class="fa-solid fa-map-marked-alt"></i> تحديد موقع التوصيل الخاص بك</h3>
-                    <button id="locateMeBtn" class="btn-submit" style="background: var(--accent); margin-bottom: 10px; padding: 8px;"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)</button>
+                    <button id="locateMeBtn" class="btn-submit" style="background: var(--accent); color: var(--primary-dark); margin-bottom: 10px; padding: 8px;"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)</button>
                     <div id="userMap" style="height: 250px; border-radius: 8px;"></div>
                     <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;">حفظ موقع التوصيل</button>
                 </div>
             </div>
 
-            <!-- نظام الشات والمحادثات اللحظية المباشرة مع الإدارة -->
             <div class="profile-box" style="margin-top: 20px;">
                 <h3><i class="fa-solid fa-comments"></i> المحادثة المباشرة مع إدارة المنصة</h3>
                 <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">يمكنك كتابة استفساراتك واستقبال الردود المباشرة واللحظية من الإدارة هنا.</p>
@@ -340,18 +377,19 @@
 
     </main>
 
-    <!-- شريط التنقل السفلي للتطبيق (Bottom Navigation Bar) -->
+    <!-- شريط التنقل السفلي للتطبيق (الرئيسية + زر القائمة بجوارها + السلة الذهبية + الأقسام + حسابي) -->
     <nav class="bottom-nav">
         <button id="navHomeBtn" class="nav-item active" onclick="switchSection('productsSection')">
             <i class="fa-solid fa-house"></i>
             <span>الرئيسية</span>
         </button>
-        <button id="navCatBtn" class="nav-item" onclick="switchSection('categoriesSection')">
-            <i class="fa-solid fa-layer-group"></i>
-            <span>الأقسام</span>
+
+        <button id="navMenuBtn" class="nav-item" onclick="openSideMenu()">
+            <i class="fa-solid fa-bars"></i>
+            <span>القائمة</span>
         </button>
         
-        <!-- زر السلة الدائري العائم البارز في المنتصف -->
+        <!-- زر السلة الدائري العائم الذهبي في المنتصف -->
         <div class="nav-cart-floating-wrapper">
             <button id="navCartBtn" class="nav-cart-floating" onclick="document.getElementById('cartModal').style.display='flex'; updateCartUI();">
                 <i class="fa-solid fa-cart-shopping"></i>
@@ -359,10 +397,11 @@
             </button>
         </div>
 
-        <button id="navNotifBtn" class="nav-item" onclick="document.getElementById('notificationsModal').style.display='flex'; loadNotifications();">
-            <i class="fa-solid fa-bell"></i>
-            <span>الإشعارات</span>
+        <button id="navCatBtn" class="nav-item" onclick="switchSection('categoriesSection')">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>الأقسام</span>
         </button>
+
         <button id="navProfileBtn" class="nav-item" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
             <i class="fa-solid fa-user"></i>
             <span>حسابي</span>
@@ -380,7 +419,7 @@
         </div>
     </div>
 
-    <!-- نافذة سلة المشتريات المنسقة والمطورة مع حقل رقم الهاتف الإلزامي -->
+    <!-- نافذة سلة المشتريات -->
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-container cart-modal-container">
             <div class="modal-header">
@@ -403,7 +442,6 @@
                         <strong class="total-price"><span id="cartTotalPrice">0</span> ج.م</strong>
                     </div>
 
-                    <!-- إدخال رقم الهاتف الإلزامي للطلب -->
                     <div class="input-group" style="margin-top: 10px;">
                         <label style="font-weight: bold; color: var(--primary); font-size: 0.85rem;"><i class="fa-solid fa-phone"></i> رقم الهاتف للتواصل والشحن (مطلوب):</label>
                         <input type="tel" id="checkoutPhoneInput" placeholder="مثال: 01114099799" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
@@ -424,20 +462,19 @@
         </div>
     </div>
 
-    <!-- نافذة طلب عرض سعر تصدير (B2B Request for Quote) -->
+    <!-- نافذة طلب عرض سعر تصدير B2B -->
     <div id="exportRfqModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 550px;">
-            <div class="modal-header" style="background-color: #1e3d2f; color: #fff;">
+            <div class="modal-header" style="background-color: #173627; color: #fff;">
                 <h3><i class="fa-solid fa-ship"></i> طلب عرض سعر تصدير (B2B)</h3>
                 <span class="close-rfq-modal" style="cursor:pointer; font-size: 1.5rem;">&times;</span>
             </div>
             <div class="modal-body" style="padding: 20px;">
-                <div id="rfqProductDetails" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-right: 4px solid #1e3d2f;">
-                    <h4 id="rfqProdTitle" style="margin: 0 0 5px 0; color: #1e3d2f;">منتج تصدير</h4>
+                <div id="rfqProductDetails" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-right: 4px solid #173627;">
+                    <h4 id="rfqProdTitle" style="margin: 0 0 5px 0; color: #173627;">منتج تصدير</h4>
                     <p style="margin: 0; color: #666; font-size: 0.9rem;">الحد الأدنى للطلب: <strong id="rfqMinQty">20 طن (حاوية)</strong></p>
                 </div>
 
-                <!-- أزرار التواصل المباشر الفوري -->
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <a id="rfqWhatsAppBtn" href="https://wa.me/201114099799" target="_blank" class="btn-submit" style="background: #25D366; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
                         <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> واتساب التصدير
@@ -449,7 +486,6 @@
 
                 <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.85rem;">أو أرسل تفاصيل طلبك رسمياً وسيتم التواصل معك</div>
 
-                <!-- نموذج طلب التسعير الرسمي -->
                 <form id="rfqForm">
                     <input type="hidden" id="rfqProdId" value="">
                     <div class="input-group">
@@ -478,7 +514,7 @@
                         <label>رقم هاتف التواصل (مع الكود الدولي)</label>
                         <input type="tel" id="rfqPhone" placeholder="+20 111 409 9799" required>
                     </div>
-                    <button type="submit" class="btn-submit" style="background: #1e3d2f; font-weight: bold; margin-top: 10px;">
+                    <button type="submit" class="btn-submit" style="background: #173627; font-weight: bold; margin-top: 10px;">
                         <i class="fa-solid fa-paper-plane"></i> إرسال طلب عرض السعر
                     </button>
                 </form>
@@ -486,7 +522,7 @@
         </div>
     </div>
 
-    <!-- نافذة الفاتورة (مجهزةزر الحفظ كصورة وزر الطباعة فقط) -->
+    <!-- نافذة الفاتورة -->
     <div id="invoiceModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 650px;">
             <div class="modal-header">
