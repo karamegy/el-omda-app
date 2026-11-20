@@ -422,6 +422,7 @@ let activeAdminChatPhone = '';
 let unsubscribeUserChat = null;
 let unsubscribeAdminRecentChats = null;
 let unsubscribeActiveAdminThread = null;
+let unsubscribeAdminUnreadCount = null;
 let recentAdminChatsCache = [];
 let activeAdminThreadMessages = [];
 
@@ -707,8 +708,16 @@ onAuthStateChanged(auth, async (user) => {
                 userSavedPhone = userData.phone || "";
             }
             
+            const isStaffUser = ["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole);
             if (adminBtn) {
-                adminBtn.style.display = ["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole) ? 'flex' : 'none';
+                adminBtn.style.display = isStaffUser ? 'flex' : 'none';
+            }
+            if (isStaffUser) {
+                listenAdminUnreadChatsCount();
+            } else if (unsubscribeAdminUnreadCount) {
+                unsubscribeAdminUnreadCount();
+                unsubscribeAdminUnreadCount = null;
+                updateAdminUnreadBadge(0);
             }
         } catch (err) {
             if (adminBtn) adminBtn.style.display = 'none';
@@ -722,6 +731,11 @@ onAuthStateChanged(auth, async (user) => {
         updateAuthButtonLabel();
         if (adminBtn) adminBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
+        if (unsubscribeAdminUnreadCount) {
+            unsubscribeAdminUnreadCount();
+            unsubscribeAdminUnreadCount = null;
+        }
+        updateAdminUnreadBadge(0);
     }
 });
 
@@ -981,6 +995,49 @@ rfqForm?.addEventListener('submit', async (e) => {
 // ==========================================
 // === نظام الشات المباشر المطور (chat_threads) ===
 // ==========================================
+function updateAdminUnreadBadge(count) {
+    const tabBtn = document.getElementById('tabMessagesBtn');
+    if (!tabBtn) return;
+
+    let badge = document.getElementById('adminUnreadChatsBadge');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'adminUnreadChatsBadge';
+        badge.style.cssText = 'display:none; background:#e63946; color:#fff; font-size:0.75rem; font-weight:bold; padding:1px 7px; border-radius:999px; margin-inline-start:6px; vertical-align:middle;';
+        tabBtn.appendChild(badge);
+    }
+
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : String(count);
+        badge.style.display = 'inline-block';
+    } else {
+        badge.textContent = '0';
+        badge.style.display = 'none';
+    }
+}
+
+function listenAdminUnreadChatsCount() {
+    if (unsubscribeAdminUnreadCount) unsubscribeAdminUnreadCount();
+
+    const qUnread = query(
+        collection(db, "chat_threads"),
+        where("unreadAdmin", "==", true),
+        limit(50)
+    );
+
+    unsubscribeAdminUnreadCount = onSnapshot(qUnread, (snapshot) => {
+        let unreadCount = 0;
+        snapshot.forEach(docSnap => {
+            if (docSnap.id !== activeAdminChatEmail) {
+                unreadCount++;
+            }
+        });
+        updateAdminUnreadBadge(unreadCount);
+    }, (err) => {
+        console.warn("تنبيه عداد الرسائل غير المقروءة:", err.message);
+    });
+}
+
 function renderChatBubbles(container, messages, isCurrentUserAdmin) {
     if (!container) return;
     const html = messages.map(c => {
