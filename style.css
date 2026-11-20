@@ -34,6 +34,10 @@ body {
     padding-bottom: 100px; /* هامش سفلي لشريط التنقل وزر السلة */
 }
 
+[dir="ltr"] body {
+    direction: ltr;
+}
+
 /* ==========================================
    خلفيات متحركة وتأثيرات بصرية شاملة (محفوظة بالكامل)
 ========================================== */
@@ -138,6 +142,8 @@ body::after {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    position: relative;
+    z-index: 2;
 }
 
 .header-icon-btn {
@@ -160,6 +166,11 @@ body::after {
     background: var(--accent);
     color: var(--primary-dark);
     transform: scale(1.06);
+}
+
+#langToggleBtn {
+    white-space: nowrap;
+    min-width: 56px;
 }
 
 .header-notif-dot {
@@ -188,6 +199,8 @@ body::after {
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
+    position: relative;
+    z-index: 1;
 }
 
 .royal-emblem-ring {
@@ -259,6 +272,11 @@ body::after {
     margin-left: 8px;
 }
 
+[dir="ltr"] .royal-search-wrapper .search-icon {
+    margin-left: 0;
+    margin-right: 8px;
+}
+
 .royal-search-wrapper input {
     width: 100%;
     border: none;
@@ -298,7 +316,7 @@ body::after {
     background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     z-index: 2600;
-    transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1), left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     box-shadow: -6px 0 28px rgba(0, 0, 0, 0.38);
@@ -307,6 +325,20 @@ body::after {
 
 .side-drawer.open {
     right: 0;
+}
+
+/* دعم القائمة الجانبية في الوضع الإنجليزي LTR */
+[dir="ltr"] .side-drawer {
+    right: auto;
+    left: -310px;
+    box-shadow: 6px 0 28px rgba(0, 0, 0, 0.38);
+    border-left: none;
+    border-right: 2px solid var(--accent);
+}
+
+[dir="ltr"] .side-drawer.open {
+    right: auto;
+    left: 0;
 }
 
 .drawer-header {
@@ -381,6 +413,10 @@ body::after {
     text-align: right;
 }
 
+[dir="ltr"] .drawer-item {
+    text-align: left;
+}
+
 .drawer-item-left {
     display: flex;
     align-items: center;
@@ -394,10 +430,19 @@ body::after {
     text-align: center;
 }
 
+[dir="ltr"] .drawer-item .fa-arrow-up-left-from-square {
+    transform: scaleX(-1);
+}
+
 .drawer-item:hover, .drawer-item:active {
     background: rgba(212, 175, 55, 0.2);
     border-color: var(--accent);
     transform: translateX(-3px);
+}
+
+[dir="ltr"] .drawer-item:hover,
+[dir="ltr"] .drawer-item:active {
+    transform: translateX(3px);
 }
 
 .drawer-item.admin-highlight {
@@ -534,6 +579,11 @@ body::after {
     gap: 15px;
 }
 
+[dir="ltr"] .dynamic-carousel-card {
+    border-right: none;
+    border-left: 5px solid var(--accent);
+}
+
 .carousel-icon-box {
     font-size: 1.8rem;
     color: var(--accent);
@@ -547,6 +597,7 @@ body::after {
     font-size: 0.75rem;
     font-weight: bold;
     border: 1px solid rgba(212, 175, 55, 0.4);
+    white-space: nowrap;
 }
 
 .section-title {
@@ -1012,6 +1063,11 @@ body::after {
     box-shadow: 0 14px 45px rgba(0,0,0,0.25);
 }
 
+[dir="ltr"] #rfqProductDetails {
+    border-right: none !important;
+    border-left: 4px solid #173627 !important;
+}
+
 #rfqWhatsAppBtn, #rfqCallBtn {
     transition: transform 0.2s ease, filter 0.2s ease;
 }
@@ -1252,6 +1308,11 @@ body::after {
     box-shadow: var(--shadow);
     border-right: 4px solid var(--primary);
     font-size: 0.9rem;
+}
+
+[dir="ltr"] .data-item {
+    border-right: none;
+    border-left: 4px solid var(--primary);
 }
 
 /* ==========================================
