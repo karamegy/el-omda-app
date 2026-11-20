@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة العمدة للأعلاف والحبوب - المتجر المتكامل</title>
+    <title data-i18n="page_title">منصة العمدة للأعلاف والحبوب - المتجر المتكامل</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
     <div class="smoke-bg"></div>
     <div class="bg-logo-watermark"></div>
 
-    <!-- الهيدر الملكي المنحني النظيف (بدون أزرار مزدحمة) -->
+    <!-- الهيدر الملكي المنحني النظيف -->
     <header class="royal-header">
         <div class="royal-top-bar">
             <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
@@ -31,6 +31,9 @@
             </button>
 
             <div style="display: flex; gap: 8px; align-items: center;">
+                <button id="langToggleBtn" onclick="toggleAppLanguage()" class="header-icon-btn" style="width: auto; padding: 0 12px; border-radius: 20px; font-size: 0.82rem; font-weight: bold; gap: 5px; display: flex; align-items: center;">
+                    <i class="fa-solid fa-language"></i> EN
+                </button>
                 <button id="toggleSearchBtn" class="header-icon-btn" title="بحث">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -45,57 +48,61 @@
             <div class="royal-emblem-ring">
                 <i class="fa-solid fa-wheat-awn"></i>
             </div>
-            <span class="royal-brand-sub">مؤسسة</span>
-            <h1 class="royal-brand-title">الإخلاص</h1>
-            <span class="royal-brand-tagline">للأعلاف الطبيعية والحبوب</span>
+            <span class="royal-brand-sub" data-i18n="brand_sub">مؤسسة</span>
+            <h1 class="royal-brand-title" data-i18n="brand_title">الإخلاص</h1>
+            <span class="royal-brand-tagline" data-i18n="brand_tagline">للأعلاف الطبيعية والحبوب</span>
         </div>
 
         <div id="royalSearchContainer" class="royal-search-wrapper">
             <i class="fa-solid fa-search search-icon"></i>
-            <input type="text" id="searchInput" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
+            <input type="text" id="searchInput" data-i18n-placeholder="search_placeholder" placeholder="ابحث عن الأعلاف، الحبوب، المكملات...">
         </div>
     </header>
 
-    <!-- القائمة الجانبية (تحتوي على الخصوصية، الإشعارات، لوحة التحكم، حسابي، والدخول/الخروج) -->
+    <!-- القائمة الجانبية -->
     <div id="drawerOverlay" class="drawer-overlay"></div>
     <aside id="sideMenuDrawer" class="side-drawer">
         <div class="drawer-header">
             <div class="drawer-brand">
                 <i class="fa-solid fa-wheat-awn"></i>
-                <h3>مؤسسة الإخلاص</h3>
+                <h3 data-i18n="drawer_brand">مؤسسة الإخلاص</h3>
             </div>
             <button id="closeDrawerBtn" class="drawer-close-btn" aria-label="إغلاق القائمة">&times;</button>
         </div>
 
         <div class="drawer-links">
             <button class="drawer-item" onclick="closeSideMenu(); switchSection('productsSection');">
-                <span class="drawer-item-left"><i class="fa-solid fa-house"></i> الرئيسية والمتجر</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-house"></i> <span data-i18n="nav_home_store">الرئيسية والمتجر</span></span>
             </button>
 
             <button class="drawer-item" onclick="closeSideMenu(); switchSection('categoriesSection');">
-                <span class="drawer-item-left"><i class="fa-solid fa-layer-group"></i> أقسام الأعلاف والحبوب</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav_cats_full">أقسام الأعلاف والحبوب</span></span>
             </button>
 
             <button id="profileBtn" class="drawer-item" style="display:none;" onclick="closeSideMenu(); switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 200);">
-                <span class="drawer-item-left"><i class="fa-solid fa-user-shield"></i> حسابي وتتبع الشحنات</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-user-shield"></i> <span data-i18n="nav_profile_track">حسابي وتتبع الشحنات</span></span>
             </button>
 
             <button id="adminBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('adminSection'); loadCategoriesForAdmin(); loadAdminProductsList();">
-                <span class="drawer-item-left"><i class="fa-solid fa-gauge-high"></i> لوحة تحكم الإدارة</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_admin_panel">لوحة تحكم الإدارة</span></span>
             </button>
 
             <button id="drawerNotifBtn" class="drawer-item" onclick="closeSideMenu(); document.getElementById('notificationsModal').style.display='flex'; loadNotifications();">
-                <span class="drawer-item-left"><i class="fa-solid fa-bell"></i> الإشعارات والرسائل</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-bell"></i> <span data-i18n="nav_notifs">الإشعارات والرسائل</span></span>
                 <span class="drawer-badge" id="drawerNotifCount">0</span>
             </button>
 
             <button class="drawer-item" onclick="closeSideMenu(); document.getElementById('cartModal').style.display='flex'; updateCartUI();">
-                <span class="drawer-item-left"><i class="fa-solid fa-cart-shopping"></i> سلة المشتريات</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="cart_title">سلة المشتريات</span></span>
                 <span class="drawer-badge" id="cartCountHeader" style="background: var(--accent); color: var(--primary-dark);">0</span>
             </button>
 
+            <button class="drawer-item" onclick="toggleAppLanguage(); closeSideMenu();">
+                <span class="drawer-item-left"><i class="fa-solid fa-language"></i> <span data-i18n="switch_lang_text">Switch to English</span></span>
+            </button>
+
             <a href="privacy-policy.html" target="_blank" class="drawer-item" onclick="closeSideMenu();">
-                <span class="drawer-item-left"><i class="fa-solid fa-shield-halved"></i> سياسة الخصوصية والأمان</span>
+                <span class="drawer-item-left"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="privacy_policy">سياسة الخصوصية والأمان</span></span>
                 <i class="fa-solid fa-arrow-up-left-from-square" style="font-size: 0.78rem; opacity: 0.7;"></i>
             </a>
         </div>
@@ -109,7 +116,7 @@
 
     <nav class="categories-nav">
         <div class="cat-container" id="categoriesContainer">
-            <button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> كل المنتجات</button>
+            <button class="cat-chip active" data-cat="all"><i class="fa-solid fa-border-all"></i> <span data-i18n="all_products">كل المنتجات</span></button>
         </div>
     </nav>
 
@@ -119,8 +126,8 @@
         <section id="productsSection" class="app-section active">
             <div class="hero-banner">
                 <div class="hero-content">
-                    <h2>اجعل مشروعك الحيواني في صدارة الإنتاج</h2>
-                    <p>أجود أنواع الأعلاف والحبوب المعتمدة لتوفير أقصى تغذية وأعلى أرباح.</p>
+                    <h2 data-i18n="hero_title">اجعل مشروعك الحيواني في صدارة الإنتاج</h2>
+                    <p data-i18n="hero_desc">أجود أنواع الأعلاف والحبوب المعتمدة لتوفير أقصى تغذية وأعلى أرباح.</p>
                 </div>
             </div>
 
@@ -129,12 +136,12 @@
                     <i class="fa-solid fa-bullhorn"></i>
                 </div>
                 <div id="carouselContentArea" class="carousel-content-area" style="display: flex; align-items: center; gap: 15px; flex: 1; cursor: pointer;"></div>
-                <span class="carousel-badge">عرض متطور</span>
+                <span class="carousel-badge" data-i18n="featured_badge">عرض متطور</span>
             </div>
             
             <div class="section-title">
-                <h3>المنتجات المميزة والمنشورات الحالية</h3>
-                <span>انقر على أي منتج لمشاهدة الصور/الفيديوهات، التفاصيل، وحجز الكمية</span>
+                <h3 data-i18n="featured_products">المنتجات المميزة والمنشورات الحالية</h3>
+                <span data-i18n="featured_sub">انقر على أي منتج لمشاهدة الصور/الفيديوهات، التفاصيل، وحجز الكمية</span>
             </div>
 
             <div id="productsGrid" class="products-grid"></div>
@@ -143,8 +150,8 @@
         <!-- قسم الأقسام للتنقل السريع -->
         <section id="categoriesSection" class="app-section" style="display:none;">
             <div class="section-title">
-                <h3>تصفح حسب أقسام الأعلاف والحبوب</h3>
-                <span>اختر القسم لعرض المنتجات التابعة له مباشرة</span>
+                <h3 data-i18n="browse_cats_title">تصفح حسب أقسام الأعلاف والحبوب</h3>
+                <span data-i18n="browse_cats_sub">اختر القسم لعرض المنتجات التابعة له مباشرة</span>
             </div>
             <div id="fullCategoriesGrid" class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top:15px;"></div>
         </section>
@@ -174,8 +181,12 @@
                     <form id="addProductForm">
                         <input type="hidden" id="editProductId" value="">
                         <div class="input-group">
-                            <label>اسم المنتج</label>
+                            <label>اسم المنتج (بالعربية)</label>
                             <input type="text" id="prodName" placeholder="مثال: علف تسمين ممتاز" required>
+                        </div>
+                        <div class="input-group">
+                            <label>اسم المنتج (بالإنجليزية - اختياري للتصدير)</label>
+                            <input type="text" id="prodNameEn" placeholder="Example: Premium Fattening Feed">
                         </div>
                         <div class="input-group">
                             <label>السعر (ج.م)</label>
@@ -209,6 +220,10 @@
                         <div class="input-group">
                             <label>اسم القسم بالعربي</label>
                             <input type="text" id="catNameInput" placeholder="مثال: التصدير والجملة" required>
+                        </div>
+                        <div class="input-group">
+                            <label>اسم القسم بالإنجليزية (اختياري)</label>
+                            <input type="text" id="catNameEnInput" placeholder="Example: Export & Wholesale">
                         </div>
                         <div class="input-group">
                             <label>أيقونة القسم (FontAwesome)</label>
@@ -324,52 +339,52 @@
         <!-- بروفايل العميل وتتبع الشحنات والمحادثات الحية -->
         <section id="profileSection" class="app-section" style="display:none;">
             <div class="profile-card-header">
-                <h2><i class="fa-solid fa-id-card"></i> حسابي الشخصي وتتبع الشحنات</h2>
+                <h2><i class="fa-solid fa-id-card"></i> <span data-i18n="profile_header">حسابي الشخصي وتتبع الشحنات</span></h2>
                 <div class="user-info-box">
-                    <p><strong>البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
-                    <p><strong>رقم الهاتف المحفوظ:</strong> <span id="userPhoneDisplay">غير محدد</span></p>
-                    <p><strong>رتبة الحساب:</strong> <span id="userRoleDisplay">عميل</span></p>
+                    <p><strong data-i18n="email_label">البريد الإلكتروني:</strong> <span id="userEmailDisplay"></span></p>
+                    <p><strong data-i18n="saved_phone">رقم الهاتف المحفوظ:</strong> <span id="userPhoneDisplay">غير محدد</span></p>
+                    <p><strong data-i18n="account_role">رتبة الحساب:</strong> <span id="userRoleDisplay">عميل</span></p>
                 </div>
                 <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
                     <a href="privacy-policy.html" target="_blank" style="color: var(--primary); font-weight: bold; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
-                        <i class="fa-solid fa-shield-halved"></i> سياسة الخصوصية وأمان البيانات
+                        <i class="fa-solid fa-shield-halved"></i> <span data-i18n="privacy_policy">سياسة الخصوصية وأمان البيانات</span>
                     </a>
                 </div>
             </div>
 
             <div class="profile-box" style="margin-bottom: 20px;">
-                <h3><i class="fa-solid fa-magnifying-glass-location"></i> تتبع شحنتك وسيارة التوصيل برقم الفاتورة</h3>
+                <h3><i class="fa-solid fa-magnifying-glass-location"></i> <span data-i18n="track_shipment_title">تتبع شحنتك وسيارة التوصيل برقم الفاتورة</span></h3>
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
-                    <input type="text" id="trackInvoiceInput" placeholder="أدخل رقم الفاتورة أو الطلب" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
-                    <button id="trackInvoiceBtn" class="btn-submit" style="width: auto; padding: 10px 20px;">تتبع الشحنة</button>
+                    <input type="text" id="trackInvoiceInput" data-i18n-placeholder="track_input_ph" placeholder="أدخل رقم الفاتورة أو الطلب" style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;">
+                    <button id="trackInvoiceBtn" class="btn-submit" style="width: auto; padding: 10px 20px;" data-i18n="track_btn">تتبع الشحنة</button>
                 </div>
                 <div id="trackResultBox" style="margin-top: 15px;"></div>
             </div>
 
             <div class="profile-grid">
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> فواتيري وحساباتي السابقة</h3>
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> <span data-i18n="my_invoices_title">فواتيري وحساباتي السابقة</span></h3>
                     <div id="userInvoicesList"></div>
                 </div>
                 <div class="profile-box">
-                    <h3><i class="fa-solid fa-map-marked-alt"></i> تحديد موقع التوصيل الخاص بك</h3>
-                    <button id="locateMeBtn" class="btn-submit" style="background: var(--accent); color: var(--primary-dark); margin-bottom: 10px; padding: 8px;"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)</button>
+                    <h3><i class="fa-solid fa-map-marked-alt"></i> <span data-i18n="delivery_loc_title">تحديد موقع التوصيل الخاص بك</span></h3>
+                    <button id="locateMeBtn" data-i18n="locate_me_btn" class="btn-submit" style="background: var(--accent); color: var(--primary-dark); margin-bottom: 10px; padding: 8px;"><i class="fa-solid fa-location-crosshairs"></i> تحديد موقعي الحالي تلقائياً (GPS)</button>
                     <div id="userMap" style="height: 250px; border-radius: 8px;"></div>
-                    <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;">حفظ موقع التوصيل</button>
+                    <button id="saveLocationBtn" class="btn-submit" style="margin-top: 10px; padding: 8px;" data-i18n="save_loc_btn">حفظ موقع التوصيل</button>
                 </div>
             </div>
 
             <div class="profile-box" style="margin-top: 20px;">
-                <h3><i class="fa-solid fa-comments"></i> المحادثة المباشرة مع إدارة المنصة</h3>
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">يمكنك كتابة استفساراتك واستقبال الردود المباشرة واللحظية من الإدارة هنا.</p>
+                <h3><i class="fa-solid fa-comments"></i> <span data-i18n="live_chat_title">المحادثة المباشرة مع إدارة المنصة</span></h3>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;" data-i18n="live_chat_sub">يمكنك كتابة استفساراتك واستقبال الردود المباشرة واللحظية من الإدارة هنا.</p>
                 
                 <div id="userChatContainer" style="display: flex; flex-direction: column; height: 350px; border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; background: #f8faf9;">
                     <div id="userChatMessages" style="flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px;">
                         <p style="text-align: center; color: #888; font-size: 0.85rem; margin-top: 20px;">جاري تحميل المحادثة...</p>
                     </div>
                     <form id="userSendChatForm" style="display: flex; gap: 8px; padding: 10px; background: #fff; border-top: 1px solid var(--border-color);">
-                        <input type="text" id="userChatMessageInput" placeholder="اكتب رسالتك للإدارة هنا..." required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; font-size: 0.9rem;">
-                        <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;"><i class="fa-solid fa-paper-plane"></i> إرسال</button>
+                        <input type="text" id="userChatMessageInput" data-i18n-placeholder="chat_input_ph" placeholder="اكتب رسالتك للإدارة هنا..." required style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none; font-size: 0.9rem;">
+                        <button type="submit" class="btn-submit" style="width: auto; padding: 10px 20px;"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="send_btn">إرسال</span></button>
                     </form>
                 </div>
             </div>
@@ -377,16 +392,16 @@
 
     </main>
 
-    <!-- شريط التنقل السفلي للتطبيق (الرئيسية + زر القائمة بجوارها + السلة الذهبية + الأقسام + حسابي) -->
+    <!-- شريط التنقل السفلي للتطبيق -->
     <nav class="bottom-nav">
         <button id="navHomeBtn" class="nav-item active" onclick="switchSection('productsSection')">
             <i class="fa-solid fa-house"></i>
-            <span>الرئيسية</span>
+            <span data-i18n="bnav_home">الرئيسية</span>
         </button>
 
         <button id="navMenuBtn" class="nav-item" onclick="openSideMenu()">
             <i class="fa-solid fa-bars"></i>
-            <span>القائمة</span>
+            <span data-i18n="bnav_menu">القائمة</span>
         </button>
         
         <!-- زر السلة الدائري العائم الذهبي في المنتصف -->
@@ -399,12 +414,12 @@
 
         <button id="navCatBtn" class="nav-item" onclick="switchSection('categoriesSection')">
             <i class="fa-solid fa-layer-group"></i>
-            <span>الأقسام</span>
+            <span data-i18n="bnav_cats">الأقسام</span>
         </button>
 
         <button id="navProfileBtn" class="nav-item" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
             <i class="fa-solid fa-user"></i>
-            <span>حسابي</span>
+            <span data-i18n="bnav_profile">حسابي</span>
         </button>
     </nav>
 
@@ -412,7 +427,7 @@
     <div id="productDetailModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 520px;">
             <div class="modal-header">
-                <h3 id="modalProdTitle">تفاصيل المنتج</h3>
+                <h3 id="modalProdTitle" data-i18n="prod_details_title">تفاصيل المنتج</h3>
                 <span class="close-prod-modal">&times;</span>
             </div>
             <div class="modal-body" id="modalProdBody"></div>
@@ -423,7 +438,7 @@
     <div id="cartModal" class="modal-overlay" style="display:none;">
         <div class="modal-container cart-modal-container">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-cart-shopping"></i> سلة المشتريات</h3>
+                <h3><i class="fa-solid fa-cart-shopping"></i> <span data-i18n="cart_title">سلة المشتريات</span></h3>
                 <span class="close-modal">&times;</span>
             </div>
             
@@ -434,29 +449,29 @@
             <div class="modal-footer cart-modal-footer">
                 <div class="cart-summary-card">
                     <div class="summary-row">
-                        <span>عدد العناصر:</span>
+                        <span data-i18n="cart_items_count">عدد العناصر:</span>
                         <strong id="cartTotalItemsCount">0</strong>
                     </div>
                     <div class="summary-row total">
-                        <span>المجموع الإجمالي:</span>
-                        <strong class="total-price"><span id="cartTotalPrice">0</span> ج.م</strong>
+                        <span data-i18n="cart_grand_total">المجموع الإجمالي:</span>
+                        <strong class="total-price"><span id="cartTotalPrice">0</span> <span data-i18n="currency">ج.م</span></strong>
                     </div>
 
                     <div class="input-group" style="margin-top: 10px;">
-                        <label style="font-weight: bold; color: var(--primary); font-size: 0.85rem;"><i class="fa-solid fa-phone"></i> رقم الهاتف للتواصل والشحن (مطلوب):</label>
-                        <input type="tel" id="checkoutPhoneInput" placeholder="مثال: 01114099799" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
+                        <label style="font-weight: bold; color: var(--primary); font-size: 0.85rem;"><i class="fa-solid fa-phone"></i> <span data-i18n="checkout_phone_label">رقم الهاتف للتواصل والشحن (مطلوب):</span></label>
+                        <input type="tel" id="checkoutPhoneInput" placeholder="01114099799" required style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); outline: none;">
                     </div>
 
                     <div class="payment-method-box">
-                        <label><i class="fa-solid fa-wallet"></i> طريقة الدفع المفضلة:</label>
+                        <label><i class="fa-solid fa-wallet"></i> <span data-i18n="payment_method_label">طريقة الدفع المفضلة:</span></label>
                         <select id="paymentTypeSelect" class="styled-select">
-                            <option value="مدفوع (نقدي/إلكتروني)">نقدي عند الاستلام / إلكتروني</option>
-                            <option value="آجل (حساب ائتماني)">آجل (حساب ائتماني)</option>
+                            <option value="مدفوع (نقدي/إلكتروني)" data-i18n="pay_cash">نقدي عند الاستلام / إلكتروني</option>
+                            <option value="آجل (حساب ائتماني)" data-i18n="pay_credit">آجل (حساب ائتماني)</option>
                         </select>
                     </div>
                 </div>
                 <button id="checkoutBtn" class="btn-checkout">
-                    <i class="fa-solid fa-check-circle"></i> إتمام الطلب وإصدار الفاتورة
+                    <i class="fa-solid fa-check-circle"></i> <span data-i18n="checkout_btn">إتمام الطلب وإصدار الفاتورة</span>
                 </button>
             </div>
         </div>
@@ -466,56 +481,56 @@
     <div id="exportRfqModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 550px;">
             <div class="modal-header" style="background-color: #173627; color: #fff;">
-                <h3><i class="fa-solid fa-ship"></i> طلب عرض سعر تصدير (B2B)</h3>
+                <h3><i class="fa-solid fa-ship"></i> <span data-i18n="rfq_modal_title">طلب عرض سعر تصدير (B2B)</span></h3>
                 <span class="close-rfq-modal" style="cursor:pointer; font-size: 1.5rem;">&times;</span>
             </div>
             <div class="modal-body" style="padding: 20px;">
                 <div id="rfqProductDetails" style="background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 15px; border-right: 4px solid #173627;">
                     <h4 id="rfqProdTitle" style="margin: 0 0 5px 0; color: #173627;">منتج تصدير</h4>
-                    <p style="margin: 0; color: #666; font-size: 0.9rem;">الحد الأدنى للطلب: <strong id="rfqMinQty">20 طن (حاوية)</strong></p>
+                    <p style="margin: 0; color: #666; font-size: 0.9rem;"><span data-i18n="rfq_min_qty_label">الحد الأدنى للطلب:</span> <strong id="rfqMinQty">20 طن (حاوية)</strong></p>
                 </div>
 
                 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                     <a id="rfqWhatsAppBtn" href="https://wa.me/201114099799" target="_blank" class="btn-submit" style="background: #25D366; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
-                        <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> واتساب التصدير
+                        <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> <span data-i18n="rfq_wa_btn">واتساب التصدير</span>
                     </a>
                     <a id="rfqCallBtn" href="tel:+201114099799" class="btn-submit" style="background: #0284c7; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 8px; flex: 1;">
-                        <i class="fa-solid fa-phone"></i> اتصال مباشر
+                        <i class="fa-solid fa-phone"></i> <span data-i18n="rfq_call_btn">اتصال مباشر</span>
                     </a>
                 </div>
 
-                <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.85rem;">أو أرسل تفاصيل طلبك رسمياً وسيتم التواصل معك</div>
+                <div style="text-align: center; margin: 10px 0; color: #888; font-size: 0.85rem;" data-i18n="rfq_or_form">أو أرسل تفاصيل طلبك رسمياً وسيتم التواصل معك</div>
 
                 <form id="rfqForm">
                     <input type="hidden" id="rfqProdId" value="">
                     <div class="input-group">
-                        <label>اسم الشركة / الجهة المستوردة</label>
-                        <input type="text" id="rfqCompanyName" placeholder="مثال: شركة الخليج للتنمية الزراعية" required>
+                        <label data-i18n="rfq_company_label">اسم الشركة / الجهة المستوردة</label>
+                        <input type="text" id="rfqCompanyName" data-i18n-placeholder="rfq_company_ph" placeholder="مثال: شركة الخليج للتنمية الزراعية" required>
                     </div>
                     <div class="input-group">
-                        <label>دولة وميناء الوصول المستهدف</label>
-                        <input type="text" id="rfqDestination" placeholder="مثال: السعودية - ميناء جدة الإسلامي" required>
+                        <label data-i18n="rfq_dest_label">دولة وميناء الوصول المستهدف</label>
+                        <input type="text" id="rfqDestination" data-i18n-placeholder="rfq_dest_ph" placeholder="مثال: السعودية - ميناء جدة الإسلامي" required>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <div class="input-group" style="flex: 1;">
-                            <label>الكمية المطلوبة (بالطن)</label>
+                            <label data-i18n="rfq_qty_label">الكمية المطلوبة (بالطن)</label>
                             <input type="number" id="rfqQuantity" min="10" value="25" required>
                         </div>
                         <div class="input-group" style="flex: 1;">
-                            <label>شرط التسليم المفضّل</label>
+                            <label data-i18n="rfq_incoterm_label">شرط التسليم المفضّل</label>
                             <select id="rfqIncoterm" class="styled-select" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ccc;">
-                                <option value="FOB">FOB (تسليم ميناء التحميل)</option>
-                                <option value="CIF">CIF (شامل الشحن والتأمين)</option>
-                                <option value="EXW">EXW (تسليم أرض المصنع)</option>
+                                <option value="FOB">FOB (Free On Board)</option>
+                                <option value="CIF">CIF (Cost, Insurance & Freight)</option>
+                                <option value="EXW">EXW (Ex Works)</option>
                             </select>
                         </div>
                     </div>
                     <div class="input-group">
-                        <label>رقم هاتف التواصل (مع الكود الدولي)</label>
+                        <label data-i18n="rfq_phone_label">رقم هاتف التواصل (مع الكود الدولي)</label>
                         <input type="tel" id="rfqPhone" placeholder="+20 111 409 9799" required>
                     </div>
                     <button type="submit" class="btn-submit" style="background: #173627; font-weight: bold; margin-top: 10px;">
-                        <i class="fa-solid fa-paper-plane"></i> إرسال طلب عرض السعر
+                        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="rfq_submit_btn">إرسال طلب عرض السعر</span>
                     </button>
                 </form>
             </div>
@@ -526,20 +541,20 @@
     <div id="invoiceModal" class="modal-overlay" style="display:none;">
         <div class="modal-container" style="max-width: 650px;">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-file-invoice"></i> معاينة الفاتورة الإلكترونية</h3>
+                <h3><i class="fa-solid fa-file-invoice"></i> <span data-i18n="inv_modal_title">معاينة الفاتورة الإلكترونية</span></h3>
                 <span class="close-invoice-modal">&times;</span>
             </div>
             <div class="modal-body" id="printableInvoiceContent" style="background:#fff; padding:20px;"></div>
             <div class="modal-footer" style="padding: 10px 15px;">
                 <div class="invoice-actions-container">
                     <button id="saveInvoiceImgBtn" class="btn-invoice-action btn-save-img">
-                        <i class="fa-solid fa-image"></i> حفظ كصورة
+                        <i class="fa-solid fa-image"></i> <span data-i18n="save_img_btn">حفظ كصورة</span>
                     </button>
                     <button id="printInvoiceBtn" class="btn-invoice-action btn-print">
-                        <i class="fa-solid fa-print"></i> طباعة الفاتورة
+                        <i class="fa-solid fa-print"></i> <span data-i18n="print_inv_btn">طباعة الفاتورة</span>
                     </button>
                     <button id="closeInvoiceModalBtn" class="btn-invoice-action btn-close-inv">
-                        <i class="fa-solid fa-xmark"></i> إغلاق
+                        <i class="fa-solid fa-xmark"></i> <span data-i18n="close_btn">إغلاق</span>
                     </button>
                 </div>
             </div>
@@ -550,11 +565,11 @@
     <div id="notificationsModal" class="modal-overlay" style="display:none;">
         <div class="modal-container">
             <div class="modal-header">
-                <h3><i class="fa-solid fa-bell"></i> الإشعارات والرسائل</h3>
+                <h3><i class="fa-solid fa-bell"></i> <span data-i18n="nav_notifs">الإشعارات والرسائل</span></h3>
                 <span class="close-notif-modal">&times;</span>
             </div>
             <div class="modal-body" id="notificationsListContent">
-                <p style="text-align:center; color:#888;">لا توجد إشعارات حالياً.</p>
+                <p style="text-align:center; color:#888;" data-i18n="no_notifs">لا توجد إشعارات حالياً.</p>
             </div>
         </div>
     </div>
@@ -563,27 +578,27 @@
     <div id="authModal" class="modal-overlay" style="display:none;">
         <div class="modal-container auth-container">
             <div class="modal-header">
-                <h3>تسجيل الدخول إلى حسابك</h3>
+                <h3 data-i18n="auth_modal_title">تسجيل الدخول إلى حسابك</h3>
                 <span class="close-auth-modal">&times;</span>
             </div>
             <div class="modal-body">
                 <button id="googleLoginBtn" class="btn-google">
-                    <i class="fa-brands fa-google"></i> تسجيل الدخول باستخدام جوجل
+                    <i class="fa-brands fa-google"></i> <span data-i18n="google_login_btn">تسجيل الدخول باستخدام جوجل</span>
                 </button>
-                <div style="text-align: center; margin: 15px 0; color: #777; font-size: 0.9rem;">أو بالبريد الإلكتروني</div>
+                <div style="text-align: center; margin: 15px 0; color: #777; font-size: 0.9rem;" data-i18n="or_email">أو بالبريد الإلكتروني</div>
                 <form id="loginForm">
                     <div class="input-group">
-                        <label>البريد الإلكتروني</label>
+                        <label data-i18n="email_input_label">البريد الإلكتروني</label>
                         <input type="email" id="loginEmail" placeholder="name@example.com" required>
                     </div>
                     <div class="input-group">
-                        <label>كلمة المرور</label>
+                        <label data-i18n="password_input_label">كلمة المرور</label>
                         <input type="password" id="loginPassword" placeholder="********" required>
                     </div>
-                    <button type="submit" class="btn-submit">تسجيل الدخول</button>
+                    <button type="submit" class="btn-submit" data-i18n="login_submit_btn">تسجيل الدخول</button>
                 </form>
                 <div style="text-align: center; margin-top: 15px; font-size: 0.82rem;">
-                    <a href="privacy-policy.html" target="_blank" style="color: var(--text-muted); text-decoration: underline;">سياسة الخصوصية وأمان البيانات</a>
+                    <a href="privacy-policy.html" target="_blank" style="color: var(--text-muted); text-decoration: underline;" data-i18n="privacy_policy">سياسة الخصوصية وأمان البيانات</a>
                 </div>
             </div>
         </div>
