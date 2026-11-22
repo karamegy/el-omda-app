@@ -1296,14 +1296,14 @@ body::after {
     border-bottom: 2px solid var(--accent);
 }
 
-.close-modal, .close-auth-modal, .close-prod-modal, .close-invoice-modal, .close-notif-modal, .close-rfq-modal {
+.close-modal, .close-auth-modal, .close-prod-modal, .close-invoice-modal, .close-notif-modal, .close-rfq-modal, .close-ledger-modal {
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--white);
     transition: opacity 0.2s ease;
 }
 
-.close-modal:hover, .close-auth-modal:hover, .close-prod-modal:hover, .close-invoice-modal:hover, .close-notif-modal:hover, .close-rfq-modal:hover {
+.close-modal:hover, .close-auth-modal:hover, .close-prod-modal:hover, .close-invoice-modal:hover, .close-notif-modal:hover, .close-rfq-modal:hover, .close-ledger-modal:hover {
     opacity: 0.8;
 }
 
@@ -1580,6 +1580,111 @@ body::after {
 [dir="ltr"] .data-item {
     border-right: none;
     border-left: 4px solid var(--primary);
+}
+
+/* ==========================================
+   أزرار التحكم والتعديل في كشف مديونيات العملاء والمدفوعات
+========================================== */
+.client-debt-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.btn-debt-pay {
+    background: var(--primary);
+    color: var(--white);
+    border: none;
+    padding: 7px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s ease;
+}
+
+.btn-debt-edit {
+    background: var(--accent);
+    color: var(--primary-dark);
+    border: 1px solid #b59020;
+    padding: 7px 13px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.84rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: opacity 0.2s ease;
+}
+
+.btn-debt-pay:active,
+.btn-debt-edit:active {
+    opacity: 0.85;
+}
+
+.ledger-summary-bar {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.ledger-stat-box {
+    background: var(--white);
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.ledger-stat-box span {
+    display: block;
+    font-size: 0.76rem;
+    color: var(--text-muted);
+}
+
+.ledger-stat-box strong {
+    font-size: 0.98rem;
+    font-weight: 900;
+}
+
+.payment-history-card {
+    background: var(--white);
+    border: 1px solid var(--border-color);
+    border-right: 4px solid #16a34a;
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+[dir="ltr"] .payment-history-card {
+    border-right: 1px solid var(--border-color);
+    border-left: 4px solid #16a34a;
+}
+
+.inline-payment-editor {
+    background: #fffbeb;
+    border: 1.5px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.inline-payment-editor input,
+.inline-payment-editor select {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+    background: var(--white);
 }
 
 /* ==========================================
