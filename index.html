@@ -35,7 +35,7 @@
     <header class="royal-header">
         <div class="royal-top-bar">
             <div style="display: flex; gap: 6px; align-items: center;">
-                <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
+                <button id="headerProfileShortcut" class="header-icon-btn" title="حسابي" onclick="switchSection('profileSection')">
                     <i class="fa-solid fa-user"></i>
                 </button>
                 <!-- مؤشر حالة الاتصال (أونلاين / أوفلاين) -->
@@ -109,7 +109,7 @@
                 <span class="drawer-item-left"><i class="fa-solid fa-award"></i> <span data-i18n="nav_quality_specs">شهادات الجودة والعينات</span></span>
             </button>
 
-            <button id="profileBtn" class="drawer-item" style="display:none;" onclick="closeSideMenu(); switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 200);">
+            <button id="profileBtn" class="drawer-item" style="display:none;" onclick="closeSideMenu(); switchSection('profileSection');">
                 <span class="drawer-item-left"><i class="fa-solid fa-user-shield"></i> <span data-i18n="nav_profile_track">حسابي وتتبع الشحنات</span></span>
             </button>
 
@@ -118,7 +118,7 @@
                 <span class="drawer-item-left"><i class="fa-solid fa-truck-moving"></i> <span data-i18n="nav_driver_portal">بوابة السائق الميداني</span></span>
             </button>
 
-            <button id="adminBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('adminSection'); loadCategoriesForAdmin(); loadAdminProductsList();">
+            <button id="adminBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('adminSection');">
                 <span class="drawer-item-left"><i class="fa-solid fa-gauge-high"></i> <span data-i18n="nav_admin_panel">لوحة تحكم الإدارة</span></span>
             </button>
 
@@ -561,6 +561,20 @@
                                 <input type="text" id="qcAflatoxin" value="< 5 ppb (آمن تماماً)" required>
                             </div>
                         </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>الألياف الخام (Crude Fiber) - اختياري</label>
+                                <input type="text" id="qcFiber" placeholder="مثال: 38% - 42%">
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>الرماد الكلي (Total Ash) - اختياري</label>
+                                <input type="text" id="qcAsh" placeholder="مثال: 7% - 9%">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>الدهون الخام (Ether Extract) - اختياري</label>
+                            <input type="text" id="qcFat" placeholder="مثال: 1.2% - 1.8%">
+                        </div>
                         <button type="submit" class="btn-submit" id="saveQualityCertBtn">نشر شهادة الجودة</button>
                     </form>
                 </div>
@@ -773,7 +787,7 @@
             <span data-i18n="bnav_cats">الأقسام</span>
         </button>
 
-        <button id="navProfileBtn" class="nav-item" onclick="switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 300);">
+        <button id="navProfileBtn" class="nav-item" onclick="switchSection('profileSection')">
             <i class="fa-solid fa-user"></i>
             <span data-i18n="bnav_profile">حسابي</span>
         </button>
