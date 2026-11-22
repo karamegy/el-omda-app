@@ -1786,9 +1786,57 @@ document.getElementById('driverUpdateGpsBtn')?.addEventListener('click', async (
 document.getElementById('driverRefreshOrdersBtn')?.addEventListener('click', loadDriverPortal);
 
 // ==========================================
-// === 5. المحاسبة وكشف حساب الآجل والمديونيات ===
+// === 5. المحاسبة وكشف حساب الآجل والمديونيات (تحكم وتعديل كامل) ===
 // ==========================================
+let creditPaymentsCache = [];
+let creditOrdersCache = [];
+let currentLedgerLedgerMap = {};
+let activeLedgerModalEmail = null;
+
+function ensureAccountingDomElements() {
+    if (!document.getElementById('clientLedgerModal')) {
+        const modalDiv = document.createElement('div');
+        modalDiv.id = 'clientLedgerModal';
+        modalDiv.className = 'modal-overlay';
+        modalDiv.style.display = 'none';
+        modalDiv.innerHTML = `
+            <div class="modal-container" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-file-invoice-dollar"></i> إدارة وتعديل مدفوعات العميل</h3>
+                    <span class="close-ledger-modal" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+                </div>
+                <div class="modal-body" id="clientLedgerModalBody" style="max-height: 75vh; overflow-y: auto; background: #f8faf9;"></div>
+            </div>`;
+        document.body.appendChild(modalDiv);
+        modalDiv.querySelector('.close-ledger-modal')?.addEventListener('click', () => {
+            modalDiv.style.display = 'none';
+            activeLedgerModalEmail = null;
+        });
+    }
+
+    const listBox = document.getElementById('adminAccountingList');
+    if (listBox && !document.getElementById('adminPaymentsHistoryList')) {
+        const wrapper = document.createElement('div');
+        wrapper.style.marginTop = '24px';
+        wrapper.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                <h3 style="margin: 0;"><i class="fa-solid fa-clock-rotate-left"></i> سجل جميع المدفوعات (تعديل / حذف)</h3>
+                <input type="text" id="paymentsSearchInput" placeholder="ابحث ببريد العميل أو رقم الإيصال..." style="padding: 7px 12px; border-radius: 20px; border: 1px solid var(--border-color); min-width: 220px;">
+            </div>
+            <div id="adminPaymentsHistoryList" class="data-list"></div>`;
+        listBox.insertAdjacentElement('afterend', wrapper);
+        wrapper.querySelector('#paymentsSearchInput')?.addEventListener('input', renderAdminPaymentsHistory);
+    }
+}
+
+document.querySelector('.close-ledger-modal')?.addEventListener('click', () => {
+    const modal = document.getElementById('clientLedgerModal');
+    if (modal) modal.style.display = 'none';
+    activeLedgerModalEmail = null;
+});
+
 async function loadAdminAccounting() {
+    ensureAccountingDomElements();
     const summaryBox = document.getElementById('accountingSummaryCards');
     const listBox = document.getElementById('adminAccountingList');
     if (!summaryBox || !listBox) return;
@@ -1797,8 +1845,8 @@ async function loadAdminAccounting() {
 
     try {
         const [ordersSnap, paymentsSnap] = await Promise.all([
-            getDocs(query(collection(db, "orders"), limit(150))),
-            getDocs(query(collection(db, "credit_payments"), limit(150)))
+            getDocs(query(collection(db, "orders"), limit(200))),
+            getDocs(query(collection(db, "credit_payments"), limit(200)))
         ]);
 
         let totalSales = 0;
@@ -1806,20 +1854,24 @@ async function loadAdminAccounting() {
         let totalCreditSales = 0;
         let totalCreditPaid = 0;
         const clientLedger = {};
+        creditPaymentsCache = [];
+        creditOrdersCache = [];
 
         ordersSnap.forEach(d => {
-            const o = d.data();
+            const o = { id: d.id, ...d.data() };
             const amount = Number(o.total || 0);
             totalSales += amount;
             const isCredit = (o.paymentType || '').includes('آجل');
 
             if (isCredit) {
+                creditOrdersCache.push(o);
                 totalCreditSales += amount;
                 const email = o.userEmail || 'غير معروف';
                 if (!clientLedger[email]) {
-                    clientLedger[email] = { email, phone: o.phone || '', debit: 0, paid: 0 };
+                    clientLedger[email] = { email, phone: o.phone || '', debit: 0, paid: 0, payments: [], orders: [] };
                 }
                 clientLedger[email].debit += amount;
+                clientLedger[email].orders.push(o);
                 if (o.phone && !clientLedger[email].phone) clientLedger[email].phone = o.phone;
             } else {
                 totalCashSales += amount;
@@ -1827,16 +1879,25 @@ async function loadAdminAccounting() {
         });
 
         paymentsSnap.forEach(d => {
-            const p = d.data();
+            const p = { id: d.id, ...d.data() };
+            creditPaymentsCache.push(p);
             const amt = Number(p.amount || 0);
             totalCreditPaid += amt;
             const email = p.clientEmail || 'غير معروف';
             if (!clientLedger[email]) {
-                clientLedger[email] = { email, phone: '', debit: 0, paid: 0 };
+                clientLedger[email] = { email, phone: '', debit: 0, paid: 0, payments: [], orders: [] };
             }
             clientLedger[email].paid += amt;
+            clientLedger[email].payments.push(p);
         });
 
+        // ترتيب الدفعات من الأحدث للأقدم
+        creditPaymentsCache.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        Object.values(clientLedger).forEach(cl => {
+            cl.payments.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        });
+
+        currentLedgerLedgerMap = clientLedger;
         const netRemainingCredit = Math.max(0, totalCreditSales - totalCreditPaid);
 
         summaryBox.innerHTML = `
@@ -1862,27 +1923,341 @@ async function loadAdminAccounting() {
         const clients = Object.values(clientLedger).sort((a, b) => (b.debit - b.paid) - (a.debit - a.paid));
         if (clients.length === 0) {
             listBox.innerHTML = '<p style="color:#888;">لا توجد حسابات آجلة مسجلة حالياً.</p>';
-            return;
+        } else {
+            listBox.innerHTML = clients.map(c => {
+                const rem = Math.max(0, c.debit - c.paid);
+                const overpaid = c.paid > c.debit ? (c.paid - c.debit) : 0;
+                const safeEmail = escapeHtml(c.email);
+                const encodedEmail = encodeURIComponent(c.email);
+
+                return `
+                    <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <strong><i class="fa-solid fa-user-tie"></i> ${safeEmail}</strong> ${c.phone ? `(${escapeHtml(c.phone)})` : ''}<br>
+                            <small>
+                                إجمالي الآجل: <strong>${c.debit.toLocaleString()} ج.م</strong> | 
+                                المسدد: <strong style="color:#16a34a;">${c.paid.toLocaleString()} ج.م</strong> | 
+                                المتبقي: <strong style="color:${rem > 0 ? '#dc2626' : '#16a34a'};">${rem.toLocaleString()} ج.م</strong>
+                                ${overpaid > 0 ? `<span style="color:#d97706; font-weight:bold;"> (زيادة مسددة: ${overpaid.toLocaleString()} ج.م)</span>` : ''}
+                            </small>
+                        </div>
+                        <div class="client-debt-actions" style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button type="button" class="btn-debt-pay" onclick="prefillClientPayment(decodeURIComponent('${encodedEmail}'), ${rem})" style="background:#173627; color:#fff; border:none; padding:7px 13px; border-radius:8px; cursor:pointer; font-size:0.84rem; font-weight:700; display:inline-flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-hand-holding-dollar"></i> تسجيل سداد
+                            </button>
+                            <button type="button" class="btn-debt-edit" onclick="openClientLedgerModal(decodeURIComponent('${encodedEmail}'))" style="background:#d4af37; color:#173627; border:1px solid #b59020; padding:7px 13px; border-radius:8px; cursor:pointer; font-size:0.84rem; font-weight:800; display:inline-flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-pen-to-square"></i> تعديل (${c.payments.length})
+                            </button>
+                        </div>
+                    </div>`;
+            }).join('');
         }
 
-        listBox.innerHTML = clients.map(c => {
-            const rem = Math.max(0, c.debit - c.paid);
-            const safeEmail = escapeHtml(c.email);
-            return `
-                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                    <div>
-                        <strong><i class="fa-solid fa-user-tie"></i> ${safeEmail}</strong> ${c.phone ? `(${escapeHtml(c.phone)})` : ''}<br>
-                        <small>إجمالي الآجل: <strong>${c.debit.toLocaleString()} ج.م</strong> | المسدد: <strong style="color:#16a34a;">${c.paid.toLocaleString()} ج.م</strong> | المتبقي: <strong style="color:${rem > 0 ? '#dc2626' : '#16a34a'};">${rem.toLocaleString()} ج.م</strong></small>
-                    </div>
-                    <button onclick='prefillClientPayment(${JSON.stringify(c.email)}, ${rem})' style="background:#173627; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">
-                        <i class="fa-solid fa-hand-holding-dollar"></i> تسجيل سداد
-                    </button>
-                </div>`;
-        }).join('');
+        renderAdminPaymentsHistory();
+
+        if (activeLedgerModalEmail) {
+            renderClientLedgerModalContent(activeLedgerModalEmail);
+        }
     } catch (e) {
         listBox.innerHTML = 'خطأ في تحميل بيانات المحاسبة: ' + escapeHtml(e.message);
     }
 }
+
+function renderAdminPaymentsHistory() {
+    const historyBox = document.getElementById('adminPaymentsHistoryList');
+    if (!historyBox) return;
+
+    const term = (document.getElementById('paymentsSearchInput')?.value || '').trim().toLowerCase();
+    const filtered = term
+        ? creditPaymentsCache.filter(p =>
+            (p.clientEmail || '').toLowerCase().includes(term) ||
+            (p.note || '').toLowerCase().includes(term) ||
+            String(p.amount || '').includes(term)
+        )
+        : creditPaymentsCache;
+
+    if (filtered.length === 0) {
+        historyBox.innerHTML = '<p style="color:#888; font-size:0.88rem;">لا توجد دفعات سداد مطابقة.</p>';
+        return;
+    }
+
+    historyBox.innerHTML = filtered.slice(0, 50).map(p => {
+        const safeId = escapeHtml(p.id);
+        return `
+            <div class="payment-history-card" id="payCard_${safeId}" style="background:#fff; border:1px solid var(--border-color); border-right:4px solid #16a34a; border-radius:10px; padding:12px; margin-bottom:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong style="color:var(--primary);"><i class="fa-solid fa-receipt"></i> ${escapeHtml(p.clientEmail)}</strong>
+                        <span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:12px; font-weight:800; font-size:0.84rem; margin-inline-start:6px;">
+                            ${Number(p.amount || 0).toLocaleString()} ج.م
+                        </span><br>
+                        <small style="color:#555;">
+                            الملاحظة: <strong>${escapeHtml(p.note || '-')}</strong> | التاريخ: ${escapeHtml(p.date || '')}
+                        </small>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" onclick="toggleInlinePaymentEdit('${safeId}', 'list')" style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.82rem;">
+                            <i class="fa-solid fa-pen"></i> تعديل
+                        </button>
+                        <button type="button" onclick="deletePaymentRecord('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.82rem;">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+                <div id="inlineEditContainer_list_${safeId}"></div>
+            </div>`;
+    }).join('');
+}
+
+document.getElementById('paymentsSearchInput')?.addEventListener('input', renderAdminPaymentsHistory);
+
+window.openClientLedgerModal = function(email) {
+    ensureAccountingDomElements();
+    const modal = document.getElementById('clientLedgerModal');
+    if (!modal) return;
+    activeLedgerModalEmail = email;
+    renderClientLedgerModalContent(email);
+    modal.style.display = 'flex';
+};
+
+function renderClientLedgerModalContent(email) {
+    const body = document.getElementById('clientLedgerModalBody');
+    if (!body) return;
+
+    const ledger = currentLedgerLedgerMap[email] || { email, phone: '', debit: 0, paid: 0, payments: [], orders: [] };
+    const rem = Math.max(0, ledger.debit - ledger.paid);
+    const safeEmail = escapeHtml(email);
+    const encodedEmail = encodeURIComponent(email);
+
+    const paymentsHtml = ledger.payments.length === 0
+        ? '<p style="color:#888; font-size:0.85rem; padding:8px 0;">لا توجد دفعات سداد مسجلة لهذا العميل بعد.</p>'
+        : ledger.payments.map(p => {
+            const safeId = escapeHtml(p.id);
+            return `
+                <div class="payment-history-card" style="background:#fff; border:1px solid var(--border-color); border-right:4px solid #16a34a; border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div>
+                            <strong style="color:#16a34a; font-size:1rem;">${Number(p.amount || 0).toLocaleString()} ج.م</strong>
+                            <span style="font-size:0.78rem; color:#666; margin-inline-start:6px;">(${escapeHtml(p.date || '')})</span><br>
+                            <small style="color:#444;">${escapeHtml(p.note || 'سداد دفعة نقدية')}</small>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button type="button" onclick="toggleInlinePaymentEdit('${safeId}', 'modal')" style="background:#d4af37; color:#173627; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.82rem;">
+                                <i class="fa-solid fa-pen"></i> تعديل الدفعة
+                            </button>
+                            <button type="button" onclick="deletePaymentRecord('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.82rem;">
+                                <i class="fa-solid fa-trash"></i> حذف
+                            </button>
+                        </div>
+                    </div>
+                    <div id="inlineEditContainer_modal_${safeId}"></div>
+                </div>`;
+        }).join('');
+
+    const ordersHtml = ledger.orders.length === 0
+        ? '<p style="color:#888; font-size:0.85rem;">لا توجد فواتير آجلة.</p>'
+        : ledger.orders.map(o => {
+            const safeOid = escapeHtml(o.id);
+            return `
+                <div style="background:#fff; padding:10px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong>فاتورة #${safeOid.slice(0, 6)}</strong> — <strong style="color:var(--primary);">${Number(o.total || 0).toLocaleString()} ج.م</strong><br>
+                        <small style="color:#666;">التاريخ: ${escapeHtml(o.date || '')} | الحالة: ${escapeHtml(o.status || '')}</small>
+                    </div>
+                    <button type="button" onclick="toggleInlineOrderEdit('${safeOid}')" style="background:#173627; color:#fff; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:0.8rem;">
+                        <i class="fa-solid fa-pen"></i> تعديل الفاتورة
+                    </button>
+                    <div id="inlineOrderEdit_${safeOid}" style="width:100%;"></div>
+                </div>`;
+        }).join('');
+
+    body.innerHTML = `
+        <div style="background:#fff; padding:12px; border-radius:10px; border:1px solid var(--border-color); margin-bottom:12px;">
+            <strong style="color:var(--primary); font-size:0.95rem;"><i class="fa-solid fa-user-check"></i> العميل: ${safeEmail}</strong>
+            ${ledger.phone ? `<span style="font-size:0.82rem; color:#666; margin-inline-start:8px;">(${escapeHtml(ledger.phone)})</span>` : ''}
+        </div>
+
+        <div class="ledger-summary-bar" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; margin-bottom:14px;">
+            <div class="ledger-stat-box" style="background:#fff; padding:10px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                <span style="display:block; font-size:0.76rem; color:#666;">إجمالي الآجل</span>
+                <strong style="font-size:0.98rem; font-weight:900; color:var(--primary);">${ledger.debit.toLocaleString()} ج.م</strong>
+            </div>
+            <div class="ledger-stat-box" style="background:#fff; padding:10px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                <span style="display:block; font-size:0.76rem; color:#666;">إجمالي المسدد</span>
+                <strong style="font-size:0.98rem; font-weight:900; color:#16a34a;">${ledger.paid.toLocaleString()} ج.م</strong>
+            </div>
+            <div class="ledger-stat-box" style="background:#fff; padding:10px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                <span style="display:block; font-size:0.76rem; color:#666;">المتبقي</span>
+                <strong style="font-size:0.98rem; font-weight:900; color:${rem > 0 ? '#dc2626' : '#16a34a'};">${rem.toLocaleString()} ج.م</strong>
+            </div>
+        </div>
+
+        <h4 style="color:var(--primary); margin:12px 0 8px 0;"><i class="fa-solid fa-money-bill-wave"></i> الدفعات المسددة (تعديل أو حذف أي دفعة خاطئة)</h4>
+        ${paymentsHtml}
+
+        <div style="background:#eef7f2; padding:12px; border-radius:10px; border:1px dashed var(--primary); margin:14px 0;">
+            <strong style="color:var(--primary); font-size:0.88rem; display:block; margin-bottom:8px;"><i class="fa-solid fa-plus-circle"></i> إضافة دفعة جديدة سريعة لهذا العميل</strong>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <input type="number" id="quickModalPayAmount" min="0.01" step="0.01" placeholder="المبلغ (ج.م)" style="flex:1; min-width:110px; padding:8px; border-radius:8px; border:1px solid #ccc;">
+                <input type="text" id="quickModalPayNote" placeholder="ملاحظة / رقم الإيصال" style="flex:1; min-width:130px; padding:8px; border-radius:8px; border:1px solid #ccc;">
+                <button type="button" onclick="submitQuickModalPayment(decodeURIComponent('${encodedEmail}'))" class="btn-submit" style="width:auto; padding:8px 16px;">حفظ الدفعة</button>
+            </div>
+        </div>
+
+        <h4 style="color:var(--primary); margin:14px 0 8px 0;"><i class="fa-solid fa-file-invoice"></i> الفواتير الآجلة المسجلة على العميل</h4>
+        ${ordersHtml}
+    `;
+}
+
+window.toggleInlinePaymentEdit = function(paymentId, context) {
+    const container = document.getElementById(`inlineEditContainer_${context}_${paymentId}`);
+    if (!container) return;
+
+    if (container.innerHTML.trim() !== '') {
+        container.innerHTML = '';
+        return;
+    }
+
+    const p = creditPaymentsCache.find(item => item.id === paymentId);
+    if (!p) return;
+
+    const safeId = escapeHtml(paymentId);
+    container.innerHTML = `
+        <div class="inline-payment-editor" style="background:#fffbeb; border:1.5px solid #d4af37; border-radius:10px; padding:12px; margin-top:8px;">
+            <label style="font-size:0.8rem; font-weight:bold;">البريد الإلكتروني للعميل:</label>
+            <input type="email" id="editPayEmail_${context}_${safeId}" value="${escapeHtml(p.clientEmail || '')}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;" required>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:120px;">
+                    <label style="font-size:0.8rem; font-weight:bold;">المبلغ الصحيح (ج.م):</label>
+                    <input type="number" id="editPayAmt_${context}_${safeId}" min="0.01" step="0.01" value="${Number(p.amount || 0)}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;" required>
+                </div>
+                <div style="flex:1; min-width:120px;">
+                    <label style="font-size:0.8rem; font-weight:bold;">التاريخ:</label>
+                    <input type="text" id="editPayDate_${context}_${safeId}" value="${escapeHtml(p.date || '')}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;">
+                </div>
+            </div>
+
+            <label style="font-size:0.8rem; font-weight:bold;">ملاحظة / رقم الإيصال:</label>
+            <input type="text" id="editPayNote_${context}_${safeId}" value="${escapeHtml(p.note || '')}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;">
+
+            <div style="display:flex; gap:8px; margin-top:4px;">
+                <button type="button" onclick="saveEditedPayment('${safeId}', '${context}')" class="btn-submit" style="flex:1; padding:8px;">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديل
+                </button>
+                <button type="button" onclick="document.getElementById('inlineEditContainer_${context}_${safeId}').innerHTML=''" class="btn-submit" style="width:auto; background:#666; padding:8px 14px;">
+                    إلغاء
+                </button>
+            </div>
+        </div>`;
+};
+
+window.saveEditedPayment = async function(paymentId, context) {
+    const newEmail = document.getElementById(`editPayEmail_${context}_${paymentId}`)?.value.trim();
+    const newAmt = Number(document.getElementById(`editPayAmt_${context}_${paymentId}`)?.value);
+    const newDate = document.getElementById(`editPayDate_${context}_${paymentId}`)?.value.trim();
+    const newNote = document.getElementById(`editPayNote_${context}_${paymentId}`)?.value.trim();
+
+    if (!newEmail || !(newAmt > 0)) {
+        alert('يرجى إدخال بريد العميل ومبلغ صحيح أكبر من صفر.');
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, "credit_payments", paymentId), {
+            clientEmail: newEmail,
+            amount: newAmt,
+            date: newDate || new Date().toLocaleDateString('ar-EG'),
+            note: newNote || 'سداد دفعة نقدية (معدّلة)',
+            editedBy: currentUser?.email || 'admin',
+            editedAt: new Date().toISOString()
+        });
+        alert('تم تعديل الدفعة وتحديث رصيد العميل بنجاح!');
+        await loadAdminAccounting();
+    } catch (err) {
+        alert('خطأ أثناء تعديل الدفعة: ' + err.message);
+    }
+};
+
+window.deletePaymentRecord = async function(paymentId) {
+    if (!confirm('هل أنت متأكد من حذف هذه الدفعة نهائياً؟ سيتم إعادة المبلغ إلى مديونية العميل تلقائياً.')) return;
+    try {
+        await deleteDoc(doc(db, "credit_payments", paymentId));
+        alert('تم حذف الدفعة وإعادة احتساب الرصيد بنجاح!');
+        await loadAdminAccounting();
+    } catch (err) {
+        alert('خطأ أثناء حذف الدفعة: ' + err.message);
+    }
+};
+
+window.submitQuickModalPayment = async function(email) {
+    const amt = Number(document.getElementById('quickModalPayAmount')?.value);
+    const note = document.getElementById('quickModalPayNote')?.value.trim();
+    if (!(amt > 0)) {
+        alert('يرجى إدخال مبلغ صحيح أكبر من صفر.');
+        return;
+    }
+    try {
+        await addDoc(collection(db, "credit_payments"), {
+            clientEmail: email,
+            amount: amt,
+            note: note || 'سداد دفعة نقدية',
+            recordedBy: currentUser?.email || 'admin',
+            date: new Date().toLocaleDateString('ar-EG'),
+            createdAt: new Date().toISOString()
+        });
+        alert(`تم تسجيل دفعة بقيمة ${amt} ج.م بنجاح!`);
+        await loadAdminAccounting();
+    } catch (err) {
+        alert('خطأ أثناء تسجيل الدفعة: ' + err.message);
+    }
+};
+
+window.toggleInlineOrderEdit = function(orderId) {
+    const container = document.getElementById(`inlineOrderEdit_${orderId}`);
+    if (!container) return;
+    if (container.innerHTML.trim() !== '') {
+        container.innerHTML = '';
+        return;
+    }
+    const order = creditOrdersCache.find(o => o.id === orderId);
+    if (!order) return;
+
+    const safeId = escapeHtml(orderId);
+    container.innerHTML = `
+        <div class="inline-payment-editor" style="background:#fffbeb; border:1.5px solid #d4af37; border-radius:10px; padding:12px; margin-top:8px;">
+            <label style="font-size:0.8rem; font-weight:bold;">إجمالي الفاتورة (ج.م):</label>
+            <input type="number" id="editOrdTotal_${safeId}" min="0" step="0.01" value="${Number(order.total || 0)}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;">
+            <label style="font-size:0.8rem; font-weight:bold;">طريقة الدفع:</label>
+            <select id="editOrdPayType_${safeId}" style="width:100%; padding:8px; border:1px solid #cbd5e1; border-radius:8px; margin:4px 0 8px 0;">
+                <option value="آجل (حساب ائتماني)" ${(order.paymentType || '').includes('آجل') ? 'selected' : ''}>آجل (حساب ائتماني)</option>
+                <option value="مدفوع (نقدي/إلكتروني)" ${!(order.paymentType || '').includes('آجل') ? 'selected' : ''}>مدفوع (نقدي/إلكتروني)</option>
+            </select>
+            <div style="display:flex; gap:8px;">
+                <button type="button" onclick="saveEditedCreditOrder('${safeId}')" class="btn-submit" style="flex:1; padding:7px;">حفظ تعديل الفاتورة</button>
+                <button type="button" onclick="document.getElementById('inlineOrderEdit_${safeId}').innerHTML=''" class="btn-submit" style="width:auto; background:#666; padding:7px 12px;">إلغاء</button>
+            </div>
+        </div>`;
+};
+
+window.saveEditedCreditOrder = async function(orderId) {
+    const newTotal = Number(document.getElementById(`editOrdTotal_${orderId}`)?.value);
+    const newPayType = document.getElementById(`editOrdPayType_${orderId}`)?.value;
+    if (!(newTotal >= 0)) {
+        alert('يرجى إدخال قيمة صحيحة للفاتورة.');
+        return;
+    }
+    try {
+        await updateDoc(doc(db, "orders", orderId), {
+            total: newTotal,
+            paymentType: newPayType
+        });
+        alert('تم تحديث بيانات الفاتورة وإعادة حساب المديونية بنجاح!');
+        await loadAdminAccounting();
+    } catch (err) {
+        alert('خطأ أثناء تحديث الفاتورة: ' + err.message);
+    }
+};
 
 window.prefillClientPayment = function(email, remaining) {
     const emailInput = document.getElementById('payClientEmail');
@@ -1896,9 +2271,10 @@ window.prefillClientPayment = function(email, remaining) {
 document.getElementById('recordPaymentForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const form = e.currentTarget;
-    const submitBtn = form.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('savePaymentBtn') || form.querySelector('button[type="submit"]');
     if (submitBtn?.disabled) return;
 
+    const editPaymentId = document.getElementById('editPaymentId')?.value.trim() || '';
     const clientEmail = document.getElementById('payClientEmail').value.trim();
     const amount = Number(document.getElementById('payAmount').value);
     const note = document.getElementById('payNote').value.trim();
@@ -1910,19 +2286,31 @@ document.getElementById('recordPaymentForm')?.addEventListener('submit', async (
 
     if (submitBtn) submitBtn.disabled = true;
     try {
-        await addDoc(collection(db, "credit_payments"), {
-            clientEmail,
-            amount,
-            note: note || 'سداد دفعة نقدية',
-            recordedBy: currentUser?.email || 'admin',
-            date: new Date().toLocaleDateString('ar-EG'),
-            createdAt: new Date().toISOString()
-        });
-        alert(`تم تسجيل دفعة سداد بقيمة ${amount} ج.م للعميل ${clientEmail} بنجاح!`);
+        if (editPaymentId) {
+            await updateDoc(doc(db, "credit_payments", editPaymentId), {
+                clientEmail,
+                amount,
+                note: note || 'سداد دفعة نقدية (معدّلة)',
+                editedBy: currentUser?.email || 'admin',
+                editedAt: new Date().toISOString()
+            });
+            alert('تم حفظ تعديلات الدفعة بنجاح!');
+        } else {
+            await addDoc(collection(db, "credit_payments"), {
+                clientEmail,
+                amount,
+                note: note || 'سداد دفعة نقدية',
+                recordedBy: currentUser?.email || 'admin',
+                date: new Date().toLocaleDateString('ar-EG'),
+                createdAt: new Date().toISOString()
+            });
+            alert(`تم تسجيل دفعة سداد بقيمة ${amount} ج.م للعميل ${clientEmail} بنجاح!`);
+        }
         form.reset();
-        loadAdminAccounting();
+        if (document.getElementById('editPaymentId')) document.getElementById('editPaymentId').value = '';
+        await loadAdminAccounting();
     } catch (err) {
-        alert('خطأ أثناء تسجيل الدفعة: ' + err.message);
+        alert('خطأ أثناء حفظ الدفعة: ' + err.message);
     } finally {
         if (submitBtn) submitBtn.disabled = false;
     }
