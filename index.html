@@ -441,8 +441,9 @@
                 <div id="accountingSummaryCards" style="margin: 12px 0 18px 0;"></div>
 
                 <div class="form-card" style="margin-bottom: 20px;">
-                    <h3>تسجيل دفعة سداد نقدي من عميل (خصم من الآجل)</h3>
+                    <h3 id="paymentFormTitle">تسجيل دفعة سداد نقدي من عميل (خصم من الآجل)</h3>
                     <form id="recordPaymentForm">
+                        <input type="hidden" id="editPaymentId" value="">
                         <div class="input-group">
                             <label>البريد الإلكتروني للعميل</label>
                             <input type="email" id="payClientEmail" placeholder="client@example.com" required>
@@ -450,21 +451,32 @@
                         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                             <div class="input-group" style="flex: 1; min-width: 140px;">
                                 <label>المبلغ المسدد (ج.م)</label>
-                                <input type="number" id="payAmount" min="1" step="0.01" placeholder="0.00" required>
+                                <input type="number" id="payAmount" min="0.01" step="0.01" placeholder="0.00" required>
                             </div>
                             <div class="input-group" style="flex: 1; min-width: 140px;">
                                 <label>ملاحظة / رقم الإيصال</label>
                                 <input type="text" id="payNote" placeholder="مثال: سداد دفعة تحت الحساب">
                             </div>
                         </div>
-                        <button type="submit" class="btn-submit">
+                        <button type="submit" class="btn-submit" id="savePaymentBtn">
                             <i class="fa-solid fa-check-double"></i> تسجيل الدفعة وخصمها من الرصيد
+                        </button>
+                        <button type="button" id="cancelPaymentEditBtn" class="btn-submit" style="background:#666; margin-top:6px; display:none;">
+                            <i class="fa-solid fa-xmark"></i> إلغاء التعديل
                         </button>
                     </form>
                 </div>
 
                 <h3>كشف مديونيات العملاء (الحسابات الآجلة)</h3>
                 <div id="adminAccountingList" class="data-list" style="margin-top: 12px;"></div>
+
+                <div style="margin-top: 24px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px;">
+                        <h3 style="margin: 0;"><i class="fa-solid fa-clock-rotate-left"></i> سجل جميع المدفوعات (تعديل / حذف)</h3>
+                        <input type="text" id="paymentsSearchInput" placeholder="ابحث ببريد العميل أو رقم الإيصال..." style="padding: 7px 12px; border-radius: 20px; border: 1px solid var(--border-color); min-width: 220px;">
+                    </div>
+                    <div id="adminPaymentsHistoryList" class="data-list"></div>
+                </div>
             </div>
 
             <!-- تبويب تحديث بورصة الأسعار اليومية -->
@@ -945,6 +957,17 @@
                     <a href="privacy-policy.html" target="_blank" style="color: var(--text-muted); text-decoration: underline;" data-i18n="privacy_policy">سياسة الخصوصية وأمان البيانات</a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- نافذة تعديل وإدارة مدفوعات وحساب العميل -->
+    <div id="clientLedgerModal" class="modal-overlay" style="display:none;">
+        <div class="modal-container" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-file-invoice-dollar"></i> إدارة وتعديل مدفوعات العميل</h3>
+                <span class="close-ledger-modal" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <div class="modal-body" id="clientLedgerModalBody" style="max-height: 75vh; overflow-y: auto; background: #f8faf9;"></div>
         </div>
     </div>
 
