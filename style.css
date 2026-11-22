@@ -30,6 +30,7 @@ html, body {
     overflow-x: hidden;
     -webkit-text-size-adjust: 100%;
     touch-action: manipulation;
+    scroll-behavior: smooth;
 }
 
 body {
@@ -54,7 +55,7 @@ input, select, textarea {
 }
 
 /* ==========================================
-   خلفيات متحركة وتأثيرات بصرية شاملة (محفوظة بالكامل)
+   خلفيات متحركة وتأثيرات بصرية خفيفة ومسرّعة بعتاد الرسوميات (GPU)
 ========================================== */
 body::before {
     content: '';
@@ -66,25 +67,25 @@ body::before {
     background: radial-gradient(circle, rgba(212,175,55,0.09) 0%, rgba(23,54,39,0.04) 50%, transparent 70%);
     z-index: -3;
     pointer-events: none;
+    will-change: transform, opacity;
+    transform: translate3d(0, 0, 0);
     animation: lightPulse 8s ease-in-out infinite alternate;
 }
 
 @keyframes lightPulse {
-    0% { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.1); opacity: 1; }
+    0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
+    100% { transform: translate3d(0, 0, 0) scale(1.08); opacity: 1; }
 }
 
 body::after {
     content: '';
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background: rgba(255, 255, 255, 0.15);
     opacity: 0;
     z-index: -1;
     pointer-events: none;
+    will-change: opacity;
     animation: lightningFlash 12s infinite;
 }
 
@@ -96,42 +97,54 @@ body::after {
 
 .smoke-bg {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" opacity="0.03"><filter id="blur"><feGaussianBlur stdDeviation="20"/></filter><circle cx="200" cy="200" r="100" fill="%23173627" filter="url(%23blur)"/></svg>');
+    inset: 0;
+    background:
+        radial-gradient(circle at 25% 75%, rgba(23, 54, 39, 0.045) 0%, transparent 45%),
+        radial-gradient(circle at 75% 30%, rgba(23, 54, 39, 0.04) 0%, transparent 50%);
     z-index: -2;
     pointer-events: none;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
     animation: smokeDrift 20s linear infinite;
 }
 
 @keyframes smokeDrift {
-    0% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-20px) scale(1.05); }
-    100% { transform: translateY(0) scale(1); }
+    0% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(0, -18px, 0) scale(1.04); }
+    100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 
 .bg-logo-watermark {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    width: 350px;
-    height: 350px;
+    transform: translate3d(-50%, -50%, 0);
+    width: 340px;
+    height: 340px;
     opacity: 0.04;
-    background-image: url('logo.png');
+    background-image: url('icon1-512.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     z-index: -4;
     pointer-events: none;
+    will-change: transform;
     animation: logoFloat 10s ease-in-out infinite alternate;
 }
 
 @keyframes logoFloat {
-    0% { transform: translate(-50%, -52%) rotate(0deg) scale(1); }
-    100% { transform: translate(-50%, -48%) rotate(2deg) scale(1.03); }
+    0% { transform: translate3d(-50%, -52%, 0) rotate(0deg) scale(1); }
+    100% { transform: translate3d(-50%, -48%, 0) rotate(2deg) scale(1.03); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before,
+    body::after,
+    .smoke-bg,
+    .bg-logo-watermark,
+    .drawer-live-badge {
+        animation: none !important;
+    }
 }
 
 /* ==========================================
@@ -151,6 +164,8 @@ body::after {
     right: 0;
     z-index: 1000;
     width: 100%;
+    transform: translateZ(0);
+    contain: layout style;
 }
 
 .royal-top-bar {
@@ -175,7 +190,7 @@ body::after {
     justify-content: center;
     cursor: pointer;
     position: relative;
-    transition: all 0.25s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
     font-size: 0.9rem;
     flex-shrink: 0;
 }
@@ -205,7 +220,7 @@ body::after {
     border-radius: 50%;
     background: #22c55e;
     box-shadow: 0 0 6px rgba(34, 197, 94, 0.8);
-    transition: background 0.3s ease, box-shadow 0.3s ease;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .network-status-pill.offline .status-dot {
@@ -259,7 +274,7 @@ body::after {
     justify-content: center;
     margin-bottom: 2px;
     box-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
-    transition: transform 0.3s ease;
+    transition: transform 0.25s ease;
 }
 
 .royal-brand-center:hover .royal-emblem-ring {
@@ -303,7 +318,7 @@ body::after {
     padding: 0 12px;
     border: 1.5px solid var(--accent);
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
-    transition: all 0.3s ease;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .royal-search-wrapper:focus-within {
@@ -339,11 +354,11 @@ body::after {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.58);
-    backdrop-filter: blur(4px);
     z-index: 2500;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.3s ease;
+    will-change: opacity;
+    transition: opacity 0.25s ease;
 }
 
 .drawer-overlay.open {
@@ -362,7 +377,8 @@ body::after {
     background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     z-index: 2600;
-    transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1), left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: right, left;
+    transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1), left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     box-shadow: -6px 0 28px rgba(0, 0, 0, 0.38);
@@ -423,7 +439,7 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: 0.2s;
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .drawer-close-btn:hover {
@@ -453,7 +469,7 @@ body::after {
     font-size: 0.92rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
     width: 100%;
     text-align: right;
     gap: 8px;
@@ -520,12 +536,12 @@ body::after {
     font-weight: 800;
     letter-spacing: 0.3px;
     flex-shrink: 0;
-    animation: livePulseBadge 2s infinite;
+    animation: livePulseBadge 2.2s infinite;
 }
 
 @keyframes livePulseBadge {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.75; transform: scale(0.96); }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
 .drawer-footer {
@@ -567,6 +583,7 @@ body::after {
     scrollbar-width: none;
     margin-top: 6px;
     width: 100%;
+    contain: layout style;
 }
 
 .categories-nav::-webkit-scrollbar {
@@ -592,7 +609,7 @@ body::after {
     align-items: center;
     gap: 8px;
     color: var(--text-dark);
-    transition: all 0.25s ease;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     white-space: nowrap;
 }
 
@@ -629,6 +646,7 @@ body::after {
     margin-bottom: 20px;
     box-shadow: var(--shadow);
     border: 1px solid rgba(212, 175, 55, 0.35);
+    contain: layout style paint;
 }
 
 .hero-content h2 {
@@ -655,6 +673,7 @@ body::after {
     justify-content: space-between;
     gap: 15px;
     width: 100%;
+    contain: layout style paint;
 }
 
 [dir="ltr"] .dynamic-carousel-card {
@@ -701,7 +720,7 @@ body::after {
 }
 
 /* ==========================================
-   شبكة المنتجات وبطاقات العرض
+   شبكة المنتجات وبطاقات العرض (رسم فائق السرعة وتوفير للذاكرة)
 ========================================== */
 .products-grid {
     display: grid;
@@ -717,13 +736,16 @@ body::after {
     border: 1px solid rgba(229, 231, 235, 0.7);
     display: flex;
     flex-direction: column;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     cursor: pointer;
     position: relative;
+    contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 260px;
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: var(--shadow-hover);
     border-color: rgba(212, 175, 55, 0.55);
 }
@@ -741,11 +763,11 @@ body::after {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.5s ease;
+    transition: transform 0.35s ease;
 }
 
 .product-card:hover .product-media-wrapper img {
-    transform: scale(1.05);
+    transform: scale(1.04);
 }
 
 .product-info {
@@ -788,7 +810,7 @@ body::after {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: 0.2s ease;
+    transition: transform 0.18s ease, background-color 0.18s ease;
     box-shadow: 0 3px 8px rgba(23, 54, 39, 0.25);
     flex-shrink: 0;
 }
@@ -824,7 +846,8 @@ body::after {
 }
 
 .market-price-card {
-    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    contain: layout style paint;
 }
 
 .market-price-card:hover {
@@ -850,6 +873,12 @@ body::after {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
+}
+
+.calc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 10px;
 }
 
 .calc-result-box {
@@ -941,7 +970,7 @@ body::after {
 }
 
 /* ==========================================
-   شريط التنقل السفلي المطور وزر السلة الذهبي العائم (مقاس مدمج ومتوافق)
+   شريط التنقل السفلي المطور وزر السلة الذهبي العائم
 ========================================== */
 .bottom-nav {
     position: fixed;
@@ -961,6 +990,8 @@ body::after {
     border-top-right-radius: 16px;
     border-top: 1.5px solid var(--accent);
     padding: 5px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 6px;
+    transform: translateZ(0);
+    contain: layout style;
 }
 
 .bottom-nav .nav-item {
@@ -975,7 +1006,7 @@ body::after {
     line-height: 1.15;
     cursor: pointer;
     gap: 2px;
-    transition: all 0.2s ease;
+    transition: color 0.18s ease;
     flex: 1;
     min-width: 0;
 }
@@ -1011,7 +1042,7 @@ body::after {
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(212, 175, 55, 0.42);
-    transition: transform 0.25s ease, background 0.25s ease;
+    transition: transform 0.2s ease;
     position: relative;
 }
 
@@ -1074,6 +1105,7 @@ body::after {
     gap: 12px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.03);
     border: 1px solid #edf2f0;
+    contain: layout style;
 }
 
 .cart-item-img {
@@ -1145,7 +1177,7 @@ body::after {
     padding: 6px;
     font-size: 1rem;
     opacity: 0.8;
-    transition: 0.2s;
+    transition: opacity 0.2s ease;
 }
 
 .btn-remove-item:hover {
@@ -1224,7 +1256,7 @@ body::after {
     justify-content: center;
     gap: 8px;
     box-shadow: 0 4px 12px rgba(23, 54, 39, 0.25);
-    transition: background 0.2s;
+    transition: background-color 0.2s ease;
 }
 
 .btn-checkout:hover {
@@ -1236,12 +1268,8 @@ body::after {
 ========================================== */
 .modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(5px);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1255,6 +1283,7 @@ body::after {
     max-width: 480px;
     box-shadow: 0 12px 40px rgba(0,0,0,0.2);
     overflow: hidden;
+    contain: layout style;
 }
 
 .modal-header {
@@ -1271,7 +1300,7 @@ body::after {
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--white);
-    transition: opacity 0.2s;
+    transition: opacity 0.2s ease;
 }
 
 .close-modal:hover, .close-auth-modal:hover, .close-prod-modal:hover, .close-invoice-modal:hover, .close-notif-modal:hover, .close-rfq-modal:hover {
@@ -1327,7 +1356,7 @@ body::after {
     justify-content: center;
     gap: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: 0.3s;
+    transition: background-color 0.2s ease;
 }
 
 .btn-google:hover {
@@ -1410,7 +1439,7 @@ body::after {
     align-items: center;
     justify-content: center;
     gap: 6px;
-    transition: background 0.2s, opacity 0.2s;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
     white-space: nowrap;
 }
 
@@ -1473,7 +1502,7 @@ body::after {
     cursor: pointer;
     font-weight: 700;
     font-size: 0.82rem;
-    transition: 0.3s;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
     flex-shrink: 0;
 }
 
@@ -1524,7 +1553,7 @@ body::after {
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
-    transition: 0.2s opacity;
+    transition: opacity 0.2s ease;
 }
 
 .btn-submit:active {
@@ -1545,6 +1574,7 @@ body::after {
     border-right: 4px solid var(--primary);
     font-size: 0.9rem;
     word-break: break-word;
+    contain: layout style;
 }
 
 [dir="ltr"] .data-item {
@@ -1606,7 +1636,7 @@ body::after {
     background: #f8faf9;
     font-size: 0.85rem !important;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .admin-chat-search:focus {
@@ -1627,11 +1657,12 @@ body::after {
     border-radius: 10px;
     margin-bottom: 6px;
     cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
     background: #f9fafb;
     border: 1px solid #eceff1;
     min-width: 0;
     max-width: 100%;
+    contain: layout style;
 }
 
 .conv-item:hover {
