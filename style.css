@@ -40,7 +40,7 @@ body {
     min-height: 100dvh;
     position: relative;
     padding-top: calc(166px + env(safe-area-inset-top, 0px)); /* مساحة للهيدر العلوي المثبت */
-    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)); /* هامش سفلي لشريط التنقل وزر السلة */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)); /* هامش سفلي متناسق لشريط التنقل وزر السلة */
 }
 
 [dir="ltr"] body {
@@ -775,7 +775,7 @@ body::after {
 }
 
 /* ==========================================
-   شريط التنقل السفلي المطور وزر السلة الذهبي العائم
+   شريط التنقل السفلي المطور وزر السلة الذهبي العائم (مقاس مدمج ومتوافق)
 ========================================== */
 .bottom-nav {
     position: fixed;
@@ -784,36 +784,38 @@ body::after {
     right: 0;
     width: 100%;
     height: auto;
-    min-height: 66px;
+    min-height: 50px;
     background-color: var(--primary);
     display: flex;
     justify-content: space-around;
     align-items: center;
     z-index: 1000;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.18);
-    border-top-left-radius: 22px;
-    border-top-right-radius: 22px;
-    border-top: 2px solid var(--accent);
-    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)) 8px;
+    box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.16);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border-top: 1.5px solid var(--accent);
+    padding: 5px 6px calc(6px + env(safe-area-inset-bottom, 0px)) 6px;
 }
 
 .bottom-nav .nav-item {
     background: none;
     border: none;
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.75);
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
+    line-height: 1.15;
     cursor: pointer;
-    gap: 3px;
+    gap: 2px;
     transition: all 0.2s ease;
     flex: 1;
+    min-width: 0;
 }
 
 .bottom-nav .nav-item i {
-    font-size: 1.25rem;
+    font-size: 1.08rem;
 }
 
 .bottom-nav .nav-item.active,
@@ -824,31 +826,31 @@ body::after {
 
 .nav-cart-floating-wrapper {
     position: relative;
-    top: -18px;
+    top: -14px;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 0 6px;
+    padding: 0 4px;
 }
 
 .nav-cart-floating {
     background: linear-gradient(135deg, #e5c158 0%, #d4af37 60%, #b59020 100%);
     color: var(--primary-dark);
-    border: 4px solid var(--primary);
-    width: 60px;
-    height: 60px;
+    border: 3px solid var(--primary);
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 6px 18px rgba(212, 175, 55, 0.45);
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.42);
     transition: transform 0.25s ease, background 0.25s ease;
     position: relative;
 }
 
 .nav-cart-floating i {
-    font-size: 1.38rem;
+    font-size: 1.15rem;
 }
 
 .nav-cart-floating:active {
@@ -861,15 +863,15 @@ body::after {
     right: -2px;
     background: #ef4444;
     color: #fff;
-    font-size: 0.7rem;
+    font-size: 0.64rem;
     font-weight: 900;
-    width: 20px;
-    height: 20px;
+    width: 17px;
+    height: 17px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px solid var(--white);
+    border: 1.5px solid var(--white);
 }
 
 /* ==========================================
@@ -1798,7 +1800,7 @@ body::after {
 @media(max-width: 768px) {
     body {
         padding-top: max(182px, calc(162px + env(safe-area-inset-top, 0px)));
-        padding-bottom: max(145px, calc(110px + env(safe-area-inset-bottom, 0px)));
+        padding-bottom: max(115px, calc(85px + env(safe-area-inset-bottom, 0px)));
     }
 
     .royal-header {
@@ -1806,7 +1808,7 @@ body::after {
     }
 
     .bottom-nav {
-        padding-bottom: max(48px, calc(10px + env(safe-area-inset-bottom, 0px)));
+        padding: 5px 6px max(36px, calc(6px + env(safe-area-inset-bottom, 0px))) 6px;
     }
 
     .royal-brand-title {
@@ -1896,5 +1898,18 @@ body::after {
 
     .admin-chat-back-btn {
         display: inline-flex;
+    }
+}
+
+@media(max-width: 360px) {
+    .bottom-nav .nav-item {
+        font-size: 0.63rem;
+    }
+    .bottom-nav .nav-item i {
+        font-size: 1rem;
+    }
+    .nav-cart-floating {
+        width: 44px;
+        height: 44px;
     }
 }
