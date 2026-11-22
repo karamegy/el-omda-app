@@ -34,7 +34,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // ==========================================
-// === دالة حماية النصوص ومنع كسر التصميم (XSS Guard) ===
+// === دوال الحماية وتنقية النصوص والروابط (Security Guards) ===
 // ==========================================
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
@@ -44,6 +44,23 @@ function escapeHtml(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function sanitizeUrl(url, fallback = '') {
+    if (!url || typeof url !== 'string') return fallback;
+    const trimmed = url.trim();
+    if (/^(https?:\/\/|\.\/|\/)/i.test(trimmed)) {
+        return escapeHtml(trimmed);
+    }
+    return fallback;
+}
+
+function isStaffRole(role) {
+    return ["admin", "assistant_manager", "accountant", "employee"].includes(role);
+}
+
+function isDriverRole(role) {
+    return ["driver", "admin", "assistant_manager"].includes(role);
 }
 
 // ==========================================
@@ -500,10 +517,20 @@ let currentUser = null;
 let currentUserRole = 'customer';
 let userSavedPhone = '';
 
-let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
+let cart = [];
+try {
+    const rawCart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
+    if (Array.isArray(rawCart)) {
+        cart = rawCart.filter(item => item && typeof item === 'object' && Number(item.price) > 0);
+    }
+} catch (_) {
+    cart = [];
+}
+
 let allProductsCache = [];
 let allCategoriesCache = [];
 let ordersCache = {};
+let vehiclesCache = [];
 let marketPricesCache = [];
 let qualityCertsCache = [];
 let lastCalcResult = null;
@@ -574,8 +601,24 @@ function resolveProduct(prodOrId) {
     return allProductsCache.find(p => p.id === prodOrId) || null;
 }
 
+const ALLOWED_MEDIA_TYPES = [
+    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
+    'video/mp4', 'video/webm', 'video/quicktime'
+];
+
 function uploadMediaToCloudinary(file, onProgress) {
     return new Promise((resolve, reject) => {
+        if (!ALLOWED_MEDIA_TYPES.includes(file.type)) {
+            reject(new Error("نوع الملف غير مدعوم! يُسمح فقط بالصور (JPG, PNG, WEBP) والفيديو (MP4, WEBM)."));
+            return;
+        }
+        const isVideo = file.type.startsWith('video/');
+        const maxBytes = isVideo ? (50 * 1024 * 1024) : (10 * 1024 * 1024);
+        if (file.size > maxBytes) {
+            reject(new Error(isVideo ? "حجم الفيديو يتجاوز الحد الأقصى (50 ميجابايت)." : "حجم الصورة يتجاوز الحد الأقصى (10 ميجابايت)."));
+            return;
+        }
+
         const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`;
         const formData = new FormData();
         formData.append("file", file);
@@ -702,6 +745,10 @@ document.querySelector('.close-prod-modal')?.addEventListener('click', () => {
 
 notificationsBtn?.addEventListener('click', () => {
     closeSideMenu();
+    if (!currentUser) {
+        if (authModal) authModal.style.display = 'flex';
+        return;
+    }
     if (notificationsModal) notificationsModal.style.display = 'flex';
     loadNotifications();
 });
@@ -732,6 +779,14 @@ window.switchSection = function(sectionId) {
     closeSideMenu();
     if (sectionId === 'profileSection' && !currentUser) {
         if (authModal) authModal.style.display = 'flex';
+        return;
+    }
+    if (sectionId === 'adminSection' && (!currentUser || !isStaffRole(currentUserRole))) {
+        alert(t('عذراً، هذه اللوحة مخصصة للإدارة والموظفين فقط.', 'Access restricted to staff and administrators only.'));
+        return;
+    }
+    if (sectionId === 'driverSection' && (!currentUser || !isDriverRole(currentUserRole))) {
+        alert(t('عذراً، هذه البوابة مخصصة للسائقين المعتمدين فقط.', 'Access restricted to authorized drivers only.'));
         return;
     }
     if (sectionId !== 'adminSection') {
@@ -829,8 +884,8 @@ onAuthStateChanged(auth, async (user) => {
                 userSavedPhone = userData.phone || "";
             }
             
-            const isStaffUser = ["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole);
-            const isDriverUser = ["driver", "admin", "assistant_manager"].includes(currentUserRole);
+            const isStaffUser = isStaffRole(currentUserRole);
+            const isDriverUser = isDriverRole(currentUserRole);
 
             if (adminBtn) {
                 adminBtn.style.display = isStaffUser ? 'flex' : 'none';
@@ -869,7 +924,7 @@ onAuthStateChanged(auth, async (user) => {
 
 loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const email = document.getElementById('loginEmail').value;
+    const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -1024,13 +1079,16 @@ function startProductCarousel() {
     const bannerContainer = document.getElementById('carouselContentArea');
     if (!bannerContainer) return;
     
+    const fallbackImg = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80';
+
     const updateCarouselItem = () => {
         const prod = allProductsCache[index];
         if (!prod) return;
         const prodTitle = escapeHtml(getProdDisplayName(prod));
-        let mediaThumb = `<img src="${escapeHtml(prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=100&q=80')}" loading="lazy" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
-        if (prod.mediaType === 'video') {
-            mediaThumb = `<video src="${escapeHtml(prod.mediaUrl)}#t=0.1" preload="metadata" muted playsinline style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
+        const safeMedia = sanitizeUrl(prod.mediaUrl, fallbackImg);
+        let mediaThumb = `<img src="${safeMedia}" loading="lazy" style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;">`;
+        if (prod.mediaType === 'video' && safeMedia !== fallbackImg) {
+            mediaThumb = `<video src="${safeMedia}#t=0.1" preload="metadata" muted playsinline style="width:60px; height:60px; border-radius:10px; object-fit:cover; flex-shrink:0;"></video>`;
         }
         
         const isExportProd = prod.category === 'export_feed' || prod.category === 'export' || prod.isExport;
@@ -1040,7 +1098,7 @@ function startProductCarousel() {
                 ${mediaThumb}
                 <div style="flex: 1; min-width: 0;">
                     <h4 style="color: var(--primary); font-size: 0.98rem; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prodTitle}</h4>
-                    <p style="font-size: 0.88rem; color: var(--accent); font-weight: bold;">${isExportProd ? t('قسم التصدير والجملة B2B', 'Export & Wholesale B2B') : t('السعر المميز: ' + prod.price + ' ج.م', 'Special Price: ' + prod.price + ' EGP')}</p>
+                    <p style="font-size: 0.88rem; color: var(--accent); font-weight: bold;">${isExportProd ? t('قسم التصدير والجملة B2B', 'Export & Wholesale B2B') : t('السعر المميز: ' + escapeHtml(prod.price) + ' ج.م', 'Special Price: ' + escapeHtml(prod.price) + ' EGP')}</p>
                 </div>
             </div>
         `;
@@ -1079,21 +1137,30 @@ document.querySelector('.close-rfq-modal')?.addEventListener('click', () => {
 const rfqForm = document.getElementById('rfqForm');
 rfqForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const companyName = document.getElementById('rfqCompanyName').value;
-    const destination = document.getElementById('rfqDestination').value;
-    const quantity = document.getElementById('rfqQuantity').value;
-    const incoterm = document.getElementById('rfqIncoterm').value;
-    const phone = document.getElementById('rfqPhone').value;
-    const prodTitle = document.getElementById('rfqProdTitle').textContent;
+    const submitBtn = rfqForm.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
 
+    const companyName = document.getElementById('rfqCompanyName').value.trim();
+    const destination = document.getElementById('rfqDestination').value.trim();
+    const quantity = Number(document.getElementById('rfqQuantity').value);
+    const incoterm = document.getElementById('rfqIncoterm').value;
+    const phone = document.getElementById('rfqPhone').value.trim();
+    const prodTitle = document.getElementById('rfqProdTitle').textContent.trim();
+
+    if (companyName.length < 2 || phone.length < 6 || !(quantity > 0)) {
+        alert(t('يرجى إدخال بيانات الشركة والكمية ورقم الهاتف بشكل صحيح.', 'Please enter valid company, quantity, and phone details.'));
+        return;
+    }
+
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await addDoc(collection(db, "rfq_orders"), {
-            companyName,
-            destination,
-            quantity: Number(quantity),
+            companyName: companyName.slice(0, 200),
+            destination: destination.slice(0, 200),
+            quantity,
             incoterm,
-            phone,
-            productTitle: prodTitle,
+            phone: phone.slice(0, 30),
+            productTitle: prodTitle.slice(0, 200),
             userEmail: currentUser ? currentUser.email : 'زائر / مستورد دولي',
             date: new Date().toLocaleDateString('ar-EG'),
             createdAt: new Date().toISOString(),
@@ -1117,6 +1184,8 @@ rfqForm?.addEventListener('submit', async (e) => {
         window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMsg)}`, '_blank');
     } catch (err) {
         alert(t('حدث خطأ أثناء حفظ طلب التسعير: ', 'Error saving quotation request: ') + err.message);
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
@@ -1250,11 +1319,20 @@ window.deleteMarketPriceItem = async function(id) {
 
 document.getElementById('updateMarketPriceForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = document.getElementById('saveMarketPriceBtn');
+    if (saveBtn?.disabled) return;
+
+    const priceVal = Number(document.getElementById('mpPrice').value);
+    if (!(priceVal > 0)) {
+        alert('يرجى إدخال سعر صحيح أكبر من صفر.');
+        return;
+    }
+
     const editId = document.getElementById('editMarketItemId').value.trim();
     const payload = {
         nameAr: document.getElementById('mpNameAr').value.trim(),
         nameEn: document.getElementById('mpNameEn').value.trim(),
-        price: Number(document.getElementById('mpPrice').value),
+        price: priceVal,
         unit: document.getElementById('mpUnit').value.trim(),
         trend: document.getElementById('mpTrend').value,
         change: document.getElementById('mpChange').value.trim() || 'ثبات',
@@ -1262,6 +1340,7 @@ document.getElementById('updateMarketPriceForm')?.addEventListener('submit', asy
         updatedAt: new Date().toISOString()
     };
 
+    if (saveBtn) saveBtn.disabled = true;
     try {
         if (editId) {
             await updateDoc(doc(db, "market_prices", editId), payload);
@@ -1272,10 +1351,12 @@ document.getElementById('updateMarketPriceForm')?.addEventListener('submit', asy
         }
         e.target.reset();
         document.getElementById('editMarketItemId').value = '';
-        document.getElementById('saveMarketPriceBtn').textContent = 'حفظ ونشر في البورصة';
+        if (saveBtn) saveBtn.textContent = 'حفظ ونشر في البورصة';
         loadAdminMarketPrices();
     } catch (err) {
         alert('خطأ أثناء الحفظ: ' + err.message);
+    } finally {
+        if (saveBtn) saveBtn.disabled = false;
     }
 });
 
@@ -1304,7 +1385,6 @@ document.getElementById('feedCalculatorForm')?.addEventListener('submit', (e) =>
     const totalTons = cycleTotalKg / 1000;
     const totalBags = Math.ceil(cycleTotalKg / bagWeight);
 
-    // البحث عن أقرب منتج مطابق في المتجر لأخذ سعره الحقيقي إن وجد
     const matchedProd = allProductsCache.find(p =>
         (p.name && (p.name.includes('تسمين') && type === 'broiler' || p.name.includes('بياض') && type === 'layer' || p.name.includes('ماشية') && type === 'cattle' || p.name.includes('حلاب') && type === 'dairy' || p.name.includes('أسماك') && type === 'fish'))
     );
@@ -1437,21 +1517,31 @@ async function loadQualitySpecsSection() {
 
 document.getElementById('sampleRequestForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
     const prodName = document.getElementById('sampleProductInput').value.trim();
     const companyName = document.getElementById('sampleCompanyInput').value.trim();
     const weight = document.getElementById('sampleWeightInput').value;
     const phone = document.getElementById('samplePhoneInput').value.trim();
     const address = document.getElementById('sampleAddressInput').value.trim();
 
+    if (companyName.length < 2 || phone.length < 6) {
+        alert(t('يرجى إدخال اسم الجهة ورقم الهاتف بشكل صحيح.', 'Please enter valid company/farm name and phone number.'));
+        return;
+    }
+
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await addDoc(collection(db, "rfq_orders"), {
             type: 'sample_request',
-            companyName,
-            destination: address,
-            quantity: weight,
+            companyName: companyName.slice(0, 200),
+            destination: address.slice(0, 200),
+            quantity: String(weight).slice(0, 100),
             incoterm: 'SAMPLE',
-            phone,
-            productTitle: `[طلب عينة فحص] ${prodName}`,
+            phone: phone.slice(0, 30),
+            productTitle: `[طلب عينة فحص] ${prodName}`.slice(0, 200),
             userEmail: currentUser ? currentUser.email : 'زائر / مزرعة',
             date: new Date().toLocaleDateString('ar-EG'),
             createdAt: new Date().toISOString(),
@@ -1466,10 +1556,12 @@ document.getElementById('sampleRequestForm')?.addEventListener('submit', async (
             `📞 *الهاتف:* ${phone}`;
 
         alert(t('تم تسجيل طلب العينة بنجاح! سيتم التواصل معك لتحديد موعد شحن العينة.', 'Sample request submitted! We will contact you shortly.'));
-        e.target.reset();
+        form.reset();
         window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`, '_blank');
     } catch (err) {
         alert(t('حدث خطأ أثناء إرسال طلب العينة: ', 'Error submitting sample request: ') + err.message);
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
@@ -1519,6 +1611,11 @@ window.deleteQualityCert = async function(id) {
 
 document.getElementById('addQualityCertForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await addDoc(collection(db, "quality_certs"), {
             title: document.getElementById('qcTitle').value.trim(),
@@ -1531,10 +1628,12 @@ document.getElementById('addQualityCertForm')?.addEventListener('submit', async 
             createdAt: new Date().toISOString()
         });
         alert('تم نشر شهادة الجودة والتحليل بنجاح!');
-        e.target.reset();
+        form.reset();
         loadAdminQualityCerts();
     } catch (err) {
         alert('خطأ أثناء حفظ الشهادة: ' + err.message);
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
@@ -1544,7 +1643,7 @@ document.getElementById('addQualityCertForm')?.addEventListener('submit', async 
 let driverAssignedVehicles = [];
 
 async function loadDriverPortal() {
-    if (!currentUser) return;
+    if (!currentUser || !isDriverRole(currentUserRole)) return;
     const emailEl = document.getElementById('driverEmailDisplay');
     const vehEl = document.getElementById('driverVehicleDisplay');
     const ordersList = document.getElementById('driverOrdersList');
@@ -1554,13 +1653,16 @@ async function loadDriverPortal() {
     if (ordersList) ordersList.innerHTML = `<p style="text-align:center; color:#888;">${t('جاري تحميل الشحنات...', 'Loading shipments...')}</p>`;
 
     try {
-        const vehSnap = await getDocs(collection(db, "vehicles"));
+        const isStaffUser = isStaffRole(currentUserRole);
+        // استعلام مطابق لقواعد الأمان: الإدارة ترى الكل والسائق يرى سيارته وشحناته فقط
+        const vehQuery = isStaffUser
+            ? collection(db, "vehicles")
+            : query(collection(db, "vehicles"), where("driver", "==", currentUser.email));
+
+        const vehSnap = await getDocs(vehQuery);
         driverAssignedVehicles = [];
         vehSnap.forEach(d => {
-            const v = { id: d.id, ...d.data() };
-            if (v.driver === currentUser.email || currentUserRole === 'admin') {
-                driverAssignedVehicles.push(v);
-            }
+            driverAssignedVehicles.push({ id: d.id, ...d.data() });
         });
 
         const myPlates = driverAssignedVehicles.map(v => v.plate);
@@ -1570,13 +1672,17 @@ async function loadDriverPortal() {
                 : t('لا توجد سيارة مسندة لحسابك حالياً', 'No vehicle assigned to your account');
         }
 
-        const ordersSnap = await getDocs(query(collection(db, "orders"), limit(80)));
+        const ordersQuery = isStaffUser
+            ? query(collection(db, "orders"), limit(80))
+            : query(collection(db, "orders"), where("assignedDriver", "==", currentUser.email), limit(80));
+
+        const ordersSnap = await getDocs(ordersQuery);
         const activeOrders = [];
         ordersSnap.forEach(d => {
             const o = { id: d.id, ...d.data() };
             const isDelivered = (o.status || '').includes('تم التسليم');
-            const matchesDriverVehicle = myPlates.includes(o.assignedVehicle);
-            if (!isDelivered && (matchesDriverVehicle || (currentUserRole === 'admin' && o.assignedVehicle && o.assignedVehicle !== 'غير محدد'))) {
+            const matchesDriver = o.assignedDriver === currentUser.email || myPlates.includes(o.assignedVehicle);
+            if (!isDelivered && (matchesDriver || (isStaffUser && o.assignedVehicle && o.assignedVehicle !== 'غير محدد'))) {
                 activeOrders.push(o);
             }
         });
@@ -1589,8 +1695,8 @@ async function loadDriverPortal() {
 
         ordersList.innerHTML = activeOrders.map(o => {
             const safeId = escapeHtml(o.id);
-            const hasCoords = o.lat && o.lng;
-            const navUrl = hasCoords ? `https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}` : '#';
+            const hasCoords = typeof o.lat === 'number' && typeof o.lng === 'number';
+            const navUrl = hasCoords ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(o.lat)},${encodeURIComponent(o.lng)}` : '#';
             const itemsSummary = Array.isArray(o.items) ? `${o.items.length} ${t('عنصر', 'items')}` : '';
 
             return `
@@ -1602,7 +1708,7 @@ async function loadDriverPortal() {
                             <p><strong>${t('الإجمالي المطلوب تحصيله:', 'Total Amount:')}</strong> ${escapeHtml(o.total)} ${t('ج.م', 'EGP')} (${escapeHtml(o.paymentType)}) | ${itemsSummary}</p>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:6px; justify-content:center; min-width:165px;">
-                            ${hasCoords ? `<a href="${navUrl}" target="_blank" style="background:#0284c7; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-diamond-turn-right"></i> ${t('بدء الملاحة GPS', 'Navigate GPS')}</a>` : ''}
+                            ${hasCoords ? `<a href="${navUrl}" target="_blank" rel="noopener noreferrer" style="background:#0284c7; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-diamond-turn-right"></i> ${t('بدء الملاحة GPS', 'Navigate GPS')}</a>` : ''}
                             <button onclick="driverConfirmDelivery('${safeId}')" style="background:#16a34a; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">
                                 <i class="fa-solid fa-circle-check"></i> ${t('تأكيد التسليم', 'Confirm Delivery')}
                             </button>
@@ -1632,11 +1738,13 @@ window.driverConfirmDelivery = async function(orderId) {
 
 document.getElementById('driverUpdateGpsBtn')?.addEventListener('click', async (e) => {
     const btn = e.currentTarget;
+    if (btn.disabled) return;
     if (driverAssignedVehicles.length === 0) {
         alert(t('لا توجد سيارة مسندة لحسابك لتحديث موقعها.', 'No vehicle assigned to update location.'));
         return;
     }
     const origHtml = btn.innerHTML;
+    btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t('جاري التحديث...', 'Updating...')}`;
     try {
         const loc = await getCurrentDeviceLocation();
@@ -1653,6 +1761,7 @@ document.getElementById('driverUpdateGpsBtn')?.addEventListener('click', async (
     } catch (err) {
         alert(err.message);
     } finally {
+        btn.disabled = false;
         btn.innerHTML = origHtml;
     }
 });
@@ -1769,12 +1878,20 @@ window.prefillClientPayment = function(email, remaining) {
 
 document.getElementById('recordPaymentForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const form = e.currentTarget;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
     const clientEmail = document.getElementById('payClientEmail').value.trim();
     const amount = Number(document.getElementById('payAmount').value);
     const note = document.getElementById('payNote').value.trim();
 
-    if (!clientEmail || amount <= 0) return;
+    if (!clientEmail || !(amount > 0)) {
+        alert('يرجى إدخال بريد العميل ومبلغ صحيح أكبر من صفر.');
+        return;
+    }
 
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await addDoc(collection(db, "credit_payments"), {
             clientEmail,
@@ -1785,10 +1902,12 @@ document.getElementById('recordPaymentForm')?.addEventListener('submit', async (
             createdAt: new Date().toISOString()
         });
         alert(`تم تسجيل دفعة سداد بقيمة ${amount} ج.م للعميل ${clientEmail} بنجاح!`);
-        e.target.reset();
+        form.reset();
         loadAdminAccounting();
     } catch (err) {
         alert('خطأ أثناء تسجيل الدفعة: ' + err.message);
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
@@ -1899,6 +2018,10 @@ userSendChatForm?.addEventListener('submit', async (e) => {
     const input = document.getElementById('userChatMessageInput');
     const msgText = input.value.trim();
     if (!msgText) return;
+    if (msgText.length > 2000) {
+        alert(t('الرسالة طويلة جداً (الحد الأقصى 2000 حرف).', 'Message is too long (max 2000 characters).'));
+        return;
+    }
 
     const nowIso = new Date().toISOString();
     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -1934,7 +2057,7 @@ userSendChatForm?.addEventListener('submit', async (e) => {
     }
 });
 
-// الاستماع لقائمة المحادثات المختصرة (قراءة واحدة لكل عميل بدلاً من مئات الرسائل)
+// الاستماع لقائمة المحادثات المختصرة
 function listenAdminChats() {
     if (unsubscribeAdminRecentChats) unsubscribeAdminRecentChats();
 
@@ -1960,7 +2083,6 @@ function listenAdminChats() {
     });
 }
 
-// ترحيل تلقائي لمرة واحدة للمحادثات القديمة الموجودة في chats قبل تفعيل chat_threads
 async function migrateLegacyChatsToThreads() {
     try {
         localStorage.setItem('omda_chat_threads_migrated_v1', '1');
@@ -2075,14 +2197,12 @@ window.selectClientForAdminChat = function(email, phone) {
     document.getElementById('adminActiveClientEmailInput').value = email;
     document.getElementById('adminActiveClientPhone').textContent = phone ? `هاتف: ${phone}` : 'بدون هاتف';
 
-    // التبديل إلى عرض المحادثة على الهواتف
     const layout = document.getElementById('adminChatLayout');
     if (layout) {
         layout.classList.remove('show-list');
         layout.classList.add('show-chat');
     }
 
-    // تصفير حالة عدم القراءة لهذا العميل إذا كانت مفعلة (بدون كتابة زائدة)
     const threadObj = recentAdminChatsCache.find(c => c.userEmail === email);
     if (threadObj && threadObj.unreadAdmin) {
         threadObj.unreadAdmin = false;
@@ -2098,7 +2218,6 @@ window.selectClientForAdminChat = function(email, phone) {
 
     if (unsubscribeActiveAdminThread) unsubscribeActiveAdminThread();
 
-    // فتح استماع مخصص لرسائل هذا العميل فقط (بحد أقصى 60 رسالة)
     const qClientThread = query(
         collection(db, "chats"),
         where("userEmail", "==", email),
@@ -2130,6 +2249,10 @@ adminSendChatForm?.addEventListener('submit', async (e) => {
         return;
     }
     if (!msgText) return;
+    if (msgText.length > 5000) {
+        alert('الرد طويل جداً (الحد الأقصى 5000 حرف).');
+        return;
+    }
 
     const nowIso = new Date().toISOString();
     const timeStr = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
@@ -2183,14 +2306,17 @@ window.renderProducts = function(category, searchTerm) {
         return;
     }
 
+    const fallbackImg = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80';
+
     filtered.forEach(prod => {
         const prodTitle = escapeHtml(getProdDisplayName(prod));
         const safeId = escapeHtml(prod.id);
-        let mediaHtml = `<img src="${escapeHtml(prod.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=500&q=80')}" alt="${prodTitle}" loading="lazy" decoding="async">`;
-        if (prod.mediaType === 'video') {
+        const safeMedia = sanitizeUrl(prod.mediaUrl, fallbackImg);
+        let mediaHtml = `<img src="${safeMedia}" alt="${prodTitle}" loading="lazy" decoding="async">`;
+        if (prod.mediaType === 'video' && safeMedia !== fallbackImg) {
             mediaHtml = `
                 <div style="position:relative; width:100%; height:100%; background:#000;">
-                    <video src="${escapeHtml(prod.mediaUrl)}#t=0.1" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
+                    <video src="${safeMedia}#t=0.1" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover;"></video>
                     <span style="position:absolute; bottom:8px; left:8px; background:rgba(0,0,0,0.7); color:#fff; width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.85rem; pointer-events:none;"><i class="fa-solid fa-play"></i></span>
                 </div>`;
         }
@@ -2238,8 +2364,8 @@ window.renderProducts = function(category, searchTerm) {
 
 window.addToCartDirect = function(prodOrId) {
     const product = resolveProduct(prodOrId);
-    if (!product) return;
-    cart.push(product);
+    if (!product || !(Number(product.price) > 0)) return;
+    cart.push({ ...product });
     localStorage.setItem('omda_cart', JSON.stringify(cart));
     updateCartUI();
 };
@@ -2253,9 +2379,11 @@ window.openProductModal = function(prodOrId) {
     document.getElementById('modalProdTitle').textContent = prodTitle;
     const body = document.getElementById('modalProdBody');
     
-    let mediaHtml = `<img src="${escapeHtml(product.mediaUrl || 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=90')}" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; background:#f8faf9; margin-bottom:12px;">`;
-    if (product.mediaType === 'video') {
-        mediaHtml = `<video src="${escapeHtml(product.mediaUrl)}" controls autoplay playsinline preload="auto" style="width:100%; max-height:320px; border-radius:12px; object-fit:contain; background:#000; margin-bottom:12px;"></video>`;
+    const fallbackImg = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=90';
+    const safeMedia = sanitizeUrl(product.mediaUrl, fallbackImg);
+    let mediaHtml = `<img src="${safeMedia}" style="width:100%; max-height:300px; border-radius:12px; object-fit:contain; background:#f8faf9; margin-bottom:12px;">`;
+    if (product.mediaType === 'video' && safeMedia !== fallbackImg) {
+        mediaHtml = `<video src="${safeMedia}" controls autoplay playsinline preload="auto" style="width:100%; max-height:320px; border-radius:12px; object-fit:contain; background:#000; margin-bottom:12px;"></video>`;
     }
 
     const isExportCategory = product.category === 'export_feed' || product.category === 'export' || product.isExport;
@@ -2296,7 +2424,7 @@ window.openProductModal = function(prodOrId) {
             <p style="font-size:1.2rem; font-weight:bold; color:var(--accent); margin-bottom:14px;">${t('السعر: ' + escapeHtml(product.price) + ' ج.م', 'Price: ' + escapeHtml(product.price) + ' EGP')}</p>
             <div class="input-group" style="margin-bottom:15px;">
                 <label>${t('حدد الكمية المطلوبة للحجز:', 'Specify required quantity:')}</label>
-                <input type="number" id="modalQtyInput" value="1" min="1" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
+                <input type="number" id="modalQtyInput" value="1" min="1" max="500" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100%;">
             </div>
             <button id="modalAddToCartBtn" class="btn-submit" style="background:var(--primary); padding:12px; font-size:0.95rem;">
                 <i class="fa-solid fa-cart-plus"></i> ${t('إضافة للسلة وحجز الكمية', 'Add to Cart & Reserve')}
@@ -2306,8 +2434,8 @@ window.openProductModal = function(prodOrId) {
         document.getElementById('modalAddToCartBtn').onclick = () => {
             const v = document.getElementById('productDetailModal')?.querySelector('video');
             if (v) v.pause();
-            const qty = parseInt(document.getElementById('modalQtyInput').value) || 1;
-            for (let i = 0; i < qty; i++) { cart.push(product); }
+            const qty = Math.min(Math.max(1, parseInt(document.getElementById('modalQtyInput').value) || 1), 500);
+            for (let i = 0; i < qty; i++) { cart.push({ ...product }); }
             localStorage.setItem('omda_cart', JSON.stringify(cart));
             updateCartUI();
             document.getElementById('productDetailModal').style.display = 'none';
@@ -2356,6 +2484,7 @@ function updateCartUI() {
 
     list.innerHTML = '';
     let totalSum = 0;
+    const fallbackImg = 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=150&q=80';
 
     Object.values(groupedCart).forEach(item => {
         const itemTotal = Number(item.price) * item.qty;
@@ -2363,11 +2492,11 @@ function updateCartUI() {
         const itemTitle = escapeHtml(getProdDisplayName(item));
         const safeKey = escapeHtml(item.id || item.name);
 
-        const imgUrl = (item.mediaType !== 'video' && item.mediaUrl) ? item.mediaUrl : 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=150&q=80';
+        const imgUrl = (item.mediaType !== 'video' && item.mediaUrl) ? sanitizeUrl(item.mediaUrl, fallbackImg) : fallbackImg;
 
         list.innerHTML += `
             <div class="cart-item-card">
-                <img src="${escapeHtml(imgUrl)}" class="cart-item-img" alt="${itemTitle}">
+                <img src="${imgUrl}" class="cart-item-img" alt="${itemTitle}">
                 <div class="cart-item-details">
                     <h4 class="cart-item-title">${itemTitle}</h4>
                     <span class="cart-item-price">${escapeHtml(item.price)} ${t('ج.م', 'EGP')}</span>
@@ -2390,6 +2519,7 @@ window.updateCartUI = updateCartUI;
 
 window.changeItemQty = function(identifier, delta) {
     if (delta === 1) {
+        if (cart.length >= 500) return;
         const item = cart.find(i => (i.id || i.name) === identifier);
         if (item) cart.push({ ...item });
     } else if (delta === -1) {
@@ -2407,6 +2537,7 @@ window.removeGroupFromCart = function(identifier) {
 };
 
 checkoutBtn?.addEventListener('click', async () => {
+    if (checkoutBtn.disabled) return;
     if (!currentUser) {
         alert(t('الرجاء تسجيل الدخول أولاً لإتمام الطلب', 'Please sign in first to complete your order'));
         if (authModal) authModal.style.display = 'flex';
@@ -2416,33 +2547,50 @@ checkoutBtn?.addEventListener('click', async () => {
         alert(t('السلة فارغة!', 'Your cart is empty!'));
         return;
     }
+    if (cart.length > 500) {
+        alert(t('الحد الأقصى للطلب الواحد هو 500 وحدة.', 'Maximum items per order is 500.'));
+        return;
+    }
 
     const phoneInput = document.getElementById('checkoutPhoneInput');
     const phoneVal = phoneInput ? phoneInput.value.trim() : '';
 
-    if (!phoneVal) {
-        alert(t('الرجاء إدخال رقم الهاتف للتواصل والشحن قبل إتمام الطلب.', 'Please enter your contact & shipping phone number before checkout.'));
+    if (!phoneVal || phoneVal.length < 6) {
+        alert(t('الرجاء إدخال رقم هاتف صحيح للتواصل والشحن قبل إتمام الطلب.', 'Please enter a valid contact & shipping phone number before checkout.'));
         if (phoneInput) phoneInput.focus();
         return;
     }
 
     const paymentType = document.getElementById('paymentTypeSelect').value;
+    checkoutBtn.disabled = true;
+
     try {
         userSavedPhone = phoneVal;
         const userRef = doc(db, "users", currentUser.email);
         await setDoc(userRef, { phone: phoneVal }, { merge: true });
 
-        const sanitizedItems = cart.map(item => ({
-            id: item.id || '',
-            name: item.name || '',
-            price: item.price || 0
-        }));
+        // التحقق من الأسعار الحقيقية من ذاكرة المتجر لمنع أي تلاعب في localStorage
+        const sanitizedItems = cart.map(item => {
+            const serverProd = item.id ? allProductsCache.find(p => p.id === item.id) : null;
+            const verifiedPrice = serverProd ? Number(serverProd.price) : Number(item.price || 0);
+            const verifiedName = serverProd ? (serverProd.name || item.name || '') : (item.name || '');
+            return {
+                id: item.id || '',
+                name: verifiedName,
+                price: verifiedPrice
+            };
+        }).filter(i => i.price > 0);
+
+        const grandTotal = sanitizedItems.reduce((sum, item) => sum + item.price, 0);
+        if (sanitizedItems.length === 0 || !(grandTotal > 0)) {
+            throw new Error(t('تعذر التحقق من أصناف السلة، يرجى إعادة المحاولة.', 'Unable to verify cart items.'));
+        }
 
         const orderRef = await addDoc(collection(db, "orders"), {
             userEmail: currentUser.email,
             phone: phoneVal,
             items: sanitizedItems,
-            total: cart.reduce((sum, item) => sum + Number(item.price), 0),
+            total: grandTotal,
             status: 'قيد المراجعة والشحن',
             paymentType: paymentType,
             lat: selectedLat,
@@ -2460,15 +2608,25 @@ checkoutBtn?.addEventListener('click', async () => {
         updateCartUI();
     } catch (err) {
         alert(t('خطأ أثناء إتمام الطلب: ', 'Checkout error: ') + err.message);
+    } finally {
+        checkoutBtn.disabled = false;
     }
 });
 
 addProductForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveBtn = document.getElementById('saveProductBtn');
+    if (saveBtn?.disabled) return;
+
     const editId = document.getElementById('editProductId').value;
     const fileInput = document.getElementById('prodFile');
-    const saveBtn = document.getElementById('saveProductBtn');
     const prodNameEnInput = document.getElementById('prodNameEn');
+    const priceNum = Number(document.getElementById('prodPrice').value);
+
+    if (!(priceNum >= 0)) {
+        alert('يرجى إدخال سعر صحيح للمنتج.');
+        return;
+    }
     
     let mediaUrl = editId ? editingOldMediaUrl : 'https://images.unsplash.com/photo-1500595046743-cd271d694d30?auto=format&fit=crop&w=800&q=85';
     let mediaType = editId ? editingOldMediaType : 'image';
@@ -2491,9 +2649,9 @@ addProductForm?.addEventListener('submit', async (e) => {
         saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري حفظ بيانات المنتج...`;
 
         const prodData = {
-            name: document.getElementById('prodName').value,
+            name: document.getElementById('prodName').value.trim(),
             nameEn: prodNameEnInput ? prodNameEnInput.value.trim() : '',
-            price: document.getElementById('prodPrice').value,
+            price: priceNum,
             category: document.getElementById('prodCategory').value,
             mediaUrl: mediaUrl,
             mediaType: mediaType,
@@ -2605,11 +2763,18 @@ window.deleteProduct = async function(id) {
 
 addCategoryForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveCatBtn = document.getElementById('saveCatBtn');
+    if (saveCatBtn?.disabled) return;
+
     const editCatId = document.getElementById('editCatId')?.value.trim() || '';
     const catId = editCatId || document.getElementById('catIdInput').value.trim();
     const catName = document.getElementById('catNameInput').value.trim();
     const catNameEn = document.getElementById('catNameEnInput')?.value.trim() || '';
     const catIcon = document.getElementById('catIconInput').value.trim();
+
+    if (!catId || !catName) return;
+
+    if (saveCatBtn) saveCatBtn.disabled = true;
     try {
         await setDoc(doc(db, "categories", catId), { name: catName, nameEn: catNameEn, icon: catIcon }, { merge: true });
         alert(editCatId ? 'تم تحديث القسم بنجاح!' : 'تم حفظ القسم بنجاح!');
@@ -2617,11 +2782,13 @@ addCategoryForm?.addEventListener('submit', async (e) => {
         if (document.getElementById('editCatId')) document.getElementById('editCatId').value = '';
         if (document.getElementById('catIdInput')) document.getElementById('catIdInput').disabled = false;
         if (document.getElementById('categoryFormTitle')) document.getElementById('categoryFormTitle').textContent = 'إضافة قسم جديد';
-        if (document.getElementById('saveCatBtn')) document.getElementById('saveCatBtn').textContent = 'حفظ القسم الجديد';
+        if (saveCatBtn) saveCatBtn.textContent = 'حفظ القسم الجديد';
         if (cancelCatEditBtn) cancelCatEditBtn.style.display = 'none';
         loadCategoriesForAdmin();
     } catch (err) {
         alert('خطأ: ' + err.message);
+    } finally {
+        if (saveCatBtn) saveCatBtn.disabled = false;
     }
 });
 
@@ -2721,11 +2888,15 @@ document.addEventListener('click', async (e) => {
 
 addVehicleForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
+    const saveVehBtn = document.getElementById('saveVehicleBtn');
+    if (saveVehBtn?.disabled) return;
+
     const editVehicleId = document.getElementById('editVehicleId').value;
-    const plate = document.getElementById('vehPlate').value;
-    const model = document.getElementById('vehModel').value;
+    const plate = document.getElementById('vehPlate').value.trim();
+    const model = document.getElementById('vehModel').value.trim();
     const driver = document.getElementById('vehDriverSelect').value;
 
+    if (saveVehBtn) saveVehBtn.disabled = true;
     try {
         const vehicleData = { plate, model, driver, lat: newVehLat, lng: newVehLng };
 
@@ -2734,7 +2905,7 @@ addVehicleForm?.addEventListener('submit', async (e) => {
             alert('تم تحديث بيانات سيارة الأسطول بنجاح!');
             document.getElementById('editVehicleId').value = '';
             document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
-            document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
+            if (saveVehBtn) saveVehBtn.textContent = 'تسجيل السيارة في الأسطول';
             if(cancelVehicleEditBtn) cancelVehicleEditBtn.style.display = 'none';
         } else {
             await addDoc(collection(db, "vehicles"), vehicleData);
@@ -2752,6 +2923,8 @@ addVehicleForm?.addEventListener('submit', async (e) => {
         loadVehiclesList();
     } catch (err) {
         alert('خطأ أثناء حفظ سيارة الأسطول: ' + err.message);
+    } finally {
+        if (saveVehBtn) saveVehBtn.disabled = false;
     }
 });
 
@@ -2770,9 +2943,11 @@ async function loadVehiclesList() {
     if (!list) return;
     try {
         const snapshot = await getDocs(collection(db, "vehicles"));
+        vehiclesCache = [];
         list.innerHTML = '';
         snapshot.forEach(docSnap => {
-            const v = docSnap.data();
+            const v = { id: docSnap.id, ...docSnap.data() };
+            vehiclesCache.push(v);
             const id = escapeHtml(docSnap.id);
             list.innerHTML += `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
@@ -2937,7 +3112,7 @@ async function loadAdminExportRfqs() {
                             <p style="font-size:0.8rem; color:#777;">البريد: ${escapeHtml(r.userEmail)} | التاريخ: ${escapeHtml(r.date || '')}</p>
                         </div>
                         <div style="display:flex; flex-direction:column; gap:5px; justify-content:center;">
-                            <a href="https://wa.me/${(r.phone || '').replace(/[^0-9]/g, '')}?text=${waMsg}" target="_blank" style="background:#25D366; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-brands fa-whatsapp"></i> تواصل واتساب</a>
+                            <a href="https://wa.me/${(r.phone || '').replace(/[^0-9]/g, '')}?text=${waMsg}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-brands fa-whatsapp"></i> تواصل واتساب</a>
                             <a href="tel:${escapeHtml(r.phone)}" style="background:#0284c7; color:#fff; padding:6px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-phone"></i> اتصال مباشر</a>
                             <button onclick="deleteRfqOrder('${id}')" style="background:#dc2626; color:#fff; border:none; padding:5px; border-radius:5px; cursor:pointer; font-size:0.8rem;"><i class="fa-solid fa-trash"></i> حذف الطلب</button>
                         </div>
@@ -2965,9 +3140,12 @@ async function loadAllOrders() {
         getDocs(collection(db, "vehicles"))
     ]);
 
+    vehiclesCache = [];
     let vehicleOptions = '<option value="">اختر السيارة للأسطول</option>';
     vehiclesSnap.forEach(v => {
-        vehicleOptions += `<option value="${escapeHtml(v.data().plate)}">${escapeHtml(v.data().plate)} (سائق: ${escapeHtml(v.data().driver)})</option>`;
+        const vData = { id: v.id, ...v.data() };
+        vehiclesCache.push(vData);
+        vehicleOptions += `<option value="${escapeHtml(vData.plate)}">${escapeHtml(vData.plate)} (سائق: ${escapeHtml(vData.driver)})</option>`;
     });
 
     list.innerHTML = '';
@@ -3017,9 +3195,16 @@ window.assignVehicleToOrder = async function(orderId) {
         alert('الرجاء اختيار السيارة أولاً');
         return;
     }
+    const matchedVeh = vehiclesCache.find(v => v.plate === veh);
+    const driverEmail = matchedVeh?.driver || 'غير محدد';
+
     try {
-        await updateDoc(doc(db, "orders", orderId), { assignedVehicle: veh, status: `جاري التوصيل عبر سيارة الأسطول (${veh})` });
-        alert('تم تعيين السيارة والشحنة بنجاح!');
+        await updateDoc(doc(db, "orders", orderId), {
+            assignedVehicle: veh,
+            assignedDriver: driverEmail,
+            status: `جاري التوصيل عبر سيارة الأسطول (${veh})`
+        });
+        alert('تم تعيين السيارة والسائق للشحنة بنجاح!');
         loadAllOrders();
     } catch (e) {
         alert('خطأ: ' + e.message);
@@ -3082,18 +3267,27 @@ window.changeUserRole = async function(email) {
 
 sendNotificationForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const title = document.getElementById('notifTitle').value;
-    const body = document.getElementById('notifBody').value;
+    const form = e.currentTarget;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn?.disabled) return;
+
+    const title = document.getElementById('notifTitle').value.trim();
+    const body = document.getElementById('notifBody').value.trim();
+
+    if (submitBtn) submitBtn.disabled = true;
     try {
         await addDoc(collection(db, "notifications"), { title, body, date: new Date().toLocaleString('ar-EG'), read: false });
         alert('تم إرسال الإشعار بنجاح!');
-        sendNotificationForm.reset();
+        form.reset();
     } catch (err) {
         alert('خطأ: ' + err.message);
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
 async function checkUnreadNotifications() {
+    if (!currentUser) return;
     try {
         const snapshot = await getDocs(query(collection(db, "notifications"), where("read", "==", false), limit(25)));
         const count = snapshot.size;
@@ -3107,6 +3301,10 @@ async function checkUnreadNotifications() {
 window.loadNotifications = async function() {
     const list = document.getElementById('notificationsListContent');
     if (!list) return;
+    if (!currentUser) {
+        list.innerHTML = `<p style="text-align:center; color:#888;">${t('يرجى تسجيل الدخول لعرض الإشعارات.', 'Please sign in to view notifications.')}</p>`;
+        return;
+    }
     const snapshot = await getDocs(query(collection(db, "notifications"), limit(30)));
     if (snapshot.empty) {
         list.innerHTML = `<p style="text-align:center; color:#888;" data-i18n="no_notifs">${t('لا توجد إشعارات حالياً.', 'No notifications currently.')}</p>`;
@@ -3160,7 +3358,6 @@ window.loadUserProfile = async function() {
             </div>`;
     });
 
-    // تحميل دفعات سداد الآجل للعميل لعرض كشف الرصيد الائتماني
     try {
         const qPay = query(collection(db, "credit_payments"), where("clientEmail", "==", currentUser.email), limit(40));
         const paySnap = await getDocs(qPay);
@@ -3222,14 +3419,12 @@ trackInvoiceBtn?.addEventListener('click', async () => {
     resultBox.innerHTML = t('جاري البحث...', 'Searching...');
 
     try {
-        // 1. البحث السريع في الذاكرة المحلية أولاً (0 قراءات)
         const cachedMatchKey = Object.keys(ordersCache).find(k => k.toLowerCase().startsWith(cleanId.toLowerCase()));
         if (cachedMatchKey) {
             resultBox.innerHTML = renderTrackResultCard({ id: cachedMatchKey, ...ordersCache[cachedMatchKey] });
             return;
         }
 
-        // 2. البحث بالمعرف الكامل
         const orderDocRef = doc(db, "orders", cleanId);
         const docSnap = await getDoc(orderDocRef);
 
@@ -3240,9 +3435,8 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             return;
         }
 
-        // 3. البحث بالرقم المختصر (6 أحرف) ضمن طلبات العميل أو الإدارة
         let qSearch;
-        if (["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole)) {
+        if (isStaffRole(currentUserRole)) {
             qSearch = query(collection(db, "orders"), limit(100));
         } else if (currentUser?.email) {
             qSearch = query(collection(db, "orders"), where("userEmail", "==", currentUser.email), limit(50));
@@ -3609,7 +3803,7 @@ async function refreshAdminMapMarkers() {
 
         snapshot.forEach(docSnap => {
             const v = docSnap.data();
-            if (v.lat && v.lng) {
+            if (typeof v.lat === 'number' && typeof v.lng === 'number') {
                 const marker = L.marker([v.lat, v.lng], { icon: vehicleIcon })
                     .bindPopup(`<b>سيارة أسطول:</b> ${escapeHtml(v.plate)}<br><b>النوع:</b> ${escapeHtml(v.model)}<br><b>السائق:</b> ${escapeHtml(v.driver)}`);
                 adminMapMarkersGroup.addLayer(marker);
