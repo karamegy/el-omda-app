@@ -1071,7 +1071,7 @@ function renderCategoriesUI() {
             
             if (fullCategoriesGrid) {
                 fullCategoriesGrid.innerHTML += `
-                    <div class="product-card" style="text-align:center; padding:20px; cursor:pointer;" onclick="switchSection('productsSection'); renderProducts('${safeCatId}', '');">
+                    <div class="product-card" data-cat="${safeCatId}" style="text-align:center; padding:20px; cursor:pointer;" onclick="switchSection('productsSection'); renderProducts(this.dataset.cat, '');">
                         <i class="${safeIcon}" style="font-size:2.2rem; color:var(--primary); margin-bottom:10px;"></i>
                         <h3 style="font-size:1rem;">${catLabel}</h3>
                         <p style="font-size:0.8rem; color:#666;">${t('تصفح قسم ' + catLabel, 'Browse ' + catLabel)}</p>
@@ -1482,6 +1482,7 @@ function renderQualitySpecsGrid() {
     const certs = qualityCertsCache.length > 0 ? qualityCertsCache : DEFAULT_QUALITY_CERTS;
     grid.innerHTML = certs.map(c => {
         const title = escapeHtml(currentLang === 'en' && c.titleEn ? c.titleEn : c.title);
+        const rawTitleAttr = escapeHtml(c.title || '');
         return `
             <div class="product-card" style="padding:16px; display:flex; flex-direction:column; gap:10px; border-top:4px solid var(--accent);">
                 <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -1496,8 +1497,11 @@ function renderQualitySpecsGrid() {
                     <div><strong>${t('الرطوبة:', 'Moisture:')}</strong> ${escapeHtml(c.moisture)}</div>
                     <div><strong>${t('الطاقة:', 'Energy:')}</strong> ${escapeHtml(c.energy)}</div>
                     <div><strong>${t('السموم:', 'Aflatoxin:')}</strong> ${escapeHtml(c.aflatoxin)}</div>
+                    ${c.fiber ? `<div><strong>${t('الألياف الخام:', 'Crude Fiber:')}</strong> ${escapeHtml(c.fiber)}</div>` : ''}
+                    ${c.ash ? `<div><strong>${t('الرماد الكلي:', 'Total Ash:')}</strong> ${escapeHtml(c.ash)}</div>` : ''}
+                    ${c.fat ? `<div><strong>${t('الدهون الخام:', 'Ether Extract:')}</strong> ${escapeHtml(c.fat)}</div>` : ''}
                 </div>
-                <button type="button" onclick='prefillSampleProduct(${JSON.stringify(c.title || '')})' class="btn-submit" style="padding:8px; font-size:0.85rem; margin-top:auto;">
+                <button type="button" data-title="${rawTitleAttr}" onclick="prefillSampleProduct(this.dataset.title)" class="btn-submit" style="padding:8px; font-size:0.85rem; margin-top:auto;">
                     <i class="fa-solid fa-vial"></i> ${t('طلب عينة فحص لهذا المنتج', 'Request Inspection Sample')}
                 </button>
             </div>`;
@@ -1601,11 +1605,12 @@ async function loadAdminQualityCerts() {
 
         list.innerHTML = items.map(c => {
             const safeId = escapeHtml(c.id);
+            const extraSpecs = `${c.fiber ? ` | ألياف: ${escapeHtml(c.fiber)}` : ''}${c.ash ? ` | رماد: ${escapeHtml(c.ash)}` : ''}${c.fat ? ` | دهون: ${escapeHtml(c.fat)}` : ''}`;
             return `
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                     <div>
                         <strong>${escapeHtml(c.title)}</strong> [<code>${escapeHtml(c.certNo)}</code>]<br>
-                        <small>بروتين: ${escapeHtml(c.protein)} | رطوبة: ${escapeHtml(c.moisture)} | طاقة: ${escapeHtml(c.energy)} | سموم: ${escapeHtml(c.aflatoxin)}</small>
+                        <small>بروتين: ${escapeHtml(c.protein)} | رطوبة: ${escapeHtml(c.moisture)} | طاقة: ${escapeHtml(c.energy)} | سموم: ${escapeHtml(c.aflatoxin)}${extraSpecs}</small>
                     </div>
                     <button onclick='deleteQualityCert("${safeId}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
                 </div>`;
@@ -1642,6 +1647,9 @@ document.getElementById('addQualityCertForm')?.addEventListener('submit', async 
             moisture: document.getElementById('qcMoisture').value.trim(),
             energy: document.getElementById('qcEnergy').value.trim(),
             aflatoxin: document.getElementById('qcAflatoxin').value.trim(),
+            fiber: document.getElementById('qcFiber')?.value.trim() || '',
+            ash: document.getElementById('qcAsh')?.value.trim() || '',
+            fat: document.getElementById('qcFat')?.value.trim() || '',
             createdAt: new Date().toISOString()
         });
         alert('تم نشر شهادة الجودة والتحليل بنجاح!');
@@ -1671,7 +1679,6 @@ async function loadDriverPortal() {
 
     try {
         const isStaffUser = isStaffRole(currentUserRole);
-        // استعلام مطابق لقواعد الأمان: الإدارة ترى الكل والسائق يرى سيارته وشحناته فقط
         const vehQuery = isStaffUser
             ? collection(db, "vehicles")
             : query(collection(db, "vehicles"), where("driver", "==", currentUser.email));
@@ -1891,7 +1898,6 @@ async function loadAdminAccounting() {
             clientLedger[email].payments.push(p);
         });
 
-        // ترتيب الدفعات من الأحدث للأقدم
         creditPaymentsCache.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
         Object.values(clientLedger).forEach(cl => {
             cl.payments.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
@@ -2698,6 +2704,11 @@ adminSendChatForm?.addEventListener('submit', async (e) => {
 // ==========================================
 window.renderProducts = function(category, searchTerm) {
     if (!productsGrid) return;
+
+    document.querySelectorAll('.cat-chip').forEach(b => {
+        b.classList.toggle('active', b.dataset.cat === category);
+    });
+
     productsGrid.innerHTML = '';
     const term = (searchTerm || '').toLowerCase();
     const filtered = allProductsCache.filter(prod => {
@@ -2907,11 +2918,11 @@ function updateCartUI() {
                     <span class="cart-item-price">${escapeHtml(item.price)} ${t('ج.م', 'EGP')}</span>
                 </div>
                 <div class="cart-qty-controls">
-                    <button class="btn-qty" onclick="changeItemQty('${safeKey}', -1)">-</button>
+                    <button class="btn-qty" data-key="${safeKey}" onclick="changeItemQty(this.dataset.key, -1)">-</button>
                     <span class="qty-val">${item.qty}</span>
-                    <button class="btn-qty" onclick="changeItemQty('${safeKey}', 1)">+</button>
+                    <button class="btn-qty" data-key="${safeKey}" onclick="changeItemQty(this.dataset.key, 1)">+</button>
                 </div>
-                <button class="btn-remove-item" onclick="removeGroupFromCart('${safeKey}')" title="${t('حذف', 'Remove')}">
+                <button class="btn-remove-item" data-key="${safeKey}" onclick="removeGroupFromCart(this.dataset.key)" title="${t('حذف', 'Remove')}">
                     <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
@@ -2974,7 +2985,6 @@ checkoutBtn?.addEventListener('click', async () => {
         const userRef = doc(db, "users", currentUser.email);
         await setDoc(userRef, { phone: phoneVal }, { merge: true });
 
-        // التحقق من الأسعار الحقيقية من ذاكرة المتجر لمنع أي تلاعب في localStorage
         const sanitizedItems = cart.map(item => {
             const serverProd = item.id ? allProductsCache.find(p => p.id === item.id) : null;
             const verifiedPrice = serverProd ? Number(serverProd.price) : Number(item.price || 0);
@@ -3337,6 +3347,13 @@ if(cancelVehicleEditBtn) {
     cancelVehicleEditBtn.addEventListener('click', () => {
         addVehicleForm.reset();
         document.getElementById('editVehicleId').value = '';
+        newVehLat = 30.0444;
+        newVehLng = 31.2357;
+        const display = document.getElementById('vehCoordsDisplay');
+        if (display) {
+            display.textContent = 'الإحداثيات الحالية: لم يتم التحديد (افتراضي القاهرة)';
+            display.style.color = "#666";
+        }
         document.getElementById('vehicleFormTitle').textContent = 'إضافة سيارة جديدة للأسطول ("سيارتي") وتعيين السائق الموظف';
         document.getElementById('saveVehicleBtn').textContent = 'تسجيل السيارة في الأسطول';
         cancelVehicleEditBtn.style.display = 'none';
@@ -3358,8 +3375,8 @@ async function loadVehiclesList() {
                 <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                     <div>سيارة: <strong>${escapeHtml(v.plate)}</strong> (${escapeHtml(v.model)}) | السائق المسؤول: <span style="color:var(--primary); font-weight:bold;">${escapeHtml(v.driver)}</span></div>
                     <div>
-                        <button onclick='editVehicle("${id}", ${JSON.stringify(v.plate || '')}, ${JSON.stringify(v.model || '')}, ${JSON.stringify(v.driver || '')}, ${v.lat || 30.0444}, ${v.lng || 31.2357})' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
-                        <button onclick='deleteVehicle("${id}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
+                        <button onclick="editVehicleById('${id}')" style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick="deleteVehicle('${id}')" style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
                     </div>
                 </div>`;
         });
@@ -3367,6 +3384,19 @@ async function loadVehiclesList() {
         list.innerHTML = 'خطأ في تحميل السيارات.';
     }
 }
+
+window.editVehicleById = function(id) {
+    const v = vehiclesCache.find(item => item.id === id);
+    if (!v) return;
+    editVehicle(
+        v.id,
+        v.plate || '',
+        v.model || '',
+        v.driver || '',
+        typeof v.lat === 'number' ? v.lat : 30.0444,
+        typeof v.lng === 'number' ? v.lng : 31.2357
+    );
+};
 
 window.editVehicle = function(id, plate, model, driver, lat, lng) {
     document.getElementById('editVehicleId').value = id;
@@ -3756,7 +3786,6 @@ window.loadNotifications = async function() {
         list.innerHTML += `<div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:8px; border-right:4px solid var(--accent);"><h4>${escapeHtml(n.title)}</h4><p>${escapeHtml(n.body)}</p></div>`;
     });
 
-    // حفظ معرّفات الإشعارات المقروءة لهذا المستخدم وتصفير الشارة فوراً
     localStorage.setItem(`omda_read_notifs_${currentUser.email}`, JSON.stringify([...readIds].slice(-100)));
     const notifCountElem = document.getElementById('notifCount');
     const drawerNotifElem = document.getElementById('drawerNotifCount');
@@ -3872,7 +3901,6 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             return;
         }
 
-        // محاولة الجلب المباشر فقط إذا كان المعرف كاملاً (20 حرفاً فأكثر)
         if (cleanId.length >= 20) {
             try {
                 const docSnap = await getDoc(doc(db, "orders", cleanId));
@@ -3883,7 +3911,6 @@ trackInvoiceBtn?.addEventListener('click', async () => {
                     return;
                 }
             } catch (_) {
-                // تجاهل خطأ الصلاحيات في حال عدم وجود المستند والانتقال للبحث في طلبات المستخدم
             }
         }
 
