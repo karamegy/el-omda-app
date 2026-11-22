@@ -5,7 +5,7 @@ import { getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc, deleteD
 // === التسجيل التلقائي والـ Service Worker ===
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/el-omda-app/sw.js', { scope: '/el-omda-app/' }).catch((error) => console.log('ServiceWorker registration error: ', error));
+    navigator.serviceWorker.register('./sw.js').catch((error) => console.log('SW error:', error));
   });
 }
 
@@ -79,7 +79,12 @@ const UI_TEXT_MAP = {
         drawer_brand: "مؤسسة الإخلاص",
         nav_home_store: "الرئيسية والمتجر",
         nav_cats_full: "أقسام الأعلاف والحبوب",
+        nav_market_prices: "بورصة الخامات اليومية",
+        live_badge: "مباشر",
+        nav_feed_calc: "حاسبة الأعلاف والتغذية",
+        nav_quality_specs: "شهادات الجودة والعينات",
         nav_profile_track: "حسابي وتتبع الشحنات",
+        nav_driver_portal: "بوابة السائق الميداني",
         nav_admin_panel: "لوحة تحكم الإدارة",
         nav_notifs: "الإشعارات والرسائل",
         cart_title: "سلة المشتريات",
@@ -94,10 +99,53 @@ const UI_TEXT_MAP = {
         load_more_btn: "عرض المزيد من المنتجات",
         browse_cats_title: "تصفح حسب أقسام الأعلاف والحبوب",
         browse_cats_sub: "اختر القسم لعرض المنتجات التابعة له مباشرة",
+        market_prices_title: "بورصة الأسعار اليومية للخامات والحبوب",
+        market_prices_sub: "تحديث يومي مباشر لأسعار الذرة الصفراء، كسب الصويا، الردة، والأعلاف المركزة للطن والشكارة",
+        market_updated_today: "تحديث اليوم",
+        market_prices_note: "الأسعار المعروضة استرشادية للطن أرض المصنع / الميناء وتُحدَّث يومياً وفق حركة السوق.",
+        feed_calc_title: "حاسبة الأعلاف والتغذية الذكية للمزارع",
+        feed_calc_sub: "احسب احتياج مزرعتك اليومي والشهري من العلف والتكلفة التقديرية وأضف الكمية للسلة فوراً",
+        calc_project_type: "نوع النشاط / القطيع",
+        calc_opt_broiler: "دواجن تسمين (بادي / نامي / ناهي)",
+        calc_opt_layer: "دواجن بياض إنتاجي",
+        calc_opt_cattle: "تسمين عجول وماشية",
+        calc_opt_dairy: "أبقار وجاموس حلاب",
+        calc_opt_sheep: "أغنام وماعز",
+        calc_opt_fish: "أسماك بلطي وبوري (علف طافي)",
+        calc_count_label: "عدد الرؤوس / الطيور",
+        calc_days_label: "مدة الدورة (بالأيام)",
+        calc_bag_weight: "وزن الشكارة القياسي (كجم)",
+        calc_bag_50: "50 كجم (شكارة قياسية)",
+        calc_bag_25: "25 كجم",
+        calc_btn_run: "احسب الاحتياج والتكلفة الآن",
+        calc_result_title: "نتائج التقدير الغذائي لمشروعك",
+        calc_add_cart_btn: "إضافة الكمية المحسوبة للسلة",
+        quality_specs_title: "شهادات الجودة والتحاليل المعملية",
+        quality_specs_sub: "مواصفات معتمدة ونسب البروتين والطاقة، مع إمكانية طلب عينة فحص للمزارع والمستوردين (B2B)",
+        sample_req_title: "طلب عينة فحص معملي / تجريبية (B2B & مزارع)",
+        sample_prod_label: "المنتج / العلف المطلوب فحص عينته",
+        sample_company_label: "اسم المزرعة / الشركة / الجهة المستوردة",
+        sample_weight_label: "حجم العينة المطلوبة",
+        sample_opt_1kg: "1 كجم (عينة تحليل معملي)",
+        sample_opt_5kg: "5 كجم (عينة تشغيل تجريبي)",
+        sample_opt_25kg: "25 كجم (شيكارة فحص)",
+        sample_phone_label: "رقم الهاتف / الواتساب",
+        sample_address_label: "عنوان استلام العينة (المحافظة / الدولة والميناء)",
+        sample_submit_btn: "إرسال طلب العينة الآن",
+        driver_portal_title: "بوابة السائق الميداني وخط السير",
+        driver_account_label: "حساب السائق:",
+        driver_vehicle_label: "السيارة المسندة:",
+        driver_update_gps_btn: "تحديث موقع السيارة الحي (GPS)",
+        driver_orders_title: "الشحنات المطلوب توصيلها حالياً",
+        driver_orders_sub: "اضغط على زر الخريطة لبدء الملاحة لموقع العميل، أو أكد التسليم عند الوصول",
         profile_header: "حسابي الشخصي وتتبع الشحنات",
         email_label: "البريد الإلكتروني:",
         saved_phone: "رقم الهاتف المحفوظ:",
         account_role: "رتبة الحساب:",
+        user_credit_title: "كشف الرصيد الائتماني والآجل",
+        credit_total_debit: "إجمالي الآجل",
+        credit_total_paid: "إجمالي المسدد",
+        credit_remaining: "الرصيد المتبقي",
         track_shipment_title: "تتبع شحنتك وسيارة التوصيل برقم الفاتورة",
         track_btn: "تتبع الشحنة",
         my_invoices_title: "فواتيري وحساباتي السابقة",
@@ -151,7 +199,12 @@ const UI_TEXT_MAP = {
         drawer_brand: "Al-Ekhlas Est.",
         nav_home_store: "Home & Store",
         nav_cats_full: "Feed & Grain Categories",
+        nav_market_prices: "Daily Commodity Market",
+        live_badge: "LIVE",
+        nav_feed_calc: "Feed & Nutrition Calculator",
+        nav_quality_specs: "Quality Certificates & Samples",
         nav_profile_track: "My Account & Shipment Tracking",
+        nav_driver_portal: "Field Driver Portal",
         nav_admin_panel: "Admin Control Panel",
         nav_notifs: "Notifications & Messages",
         cart_title: "Shopping Cart",
@@ -166,10 +219,53 @@ const UI_TEXT_MAP = {
         load_more_btn: "Load More Products",
         browse_cats_title: "Browse by Feed & Grain Categories",
         browse_cats_sub: "Select a category to view its products directly",
+        market_prices_title: "Daily Commodity & Grain Market Prices",
+        market_prices_sub: "Daily updates on Yellow Corn, Soybean Meal, Bran, and Concentrate Feeds per Ton & Bag",
+        market_updated_today: "Updated Today",
+        market_prices_note: "Listed prices are indicative per ton ex-factory/port and updated daily according to market movement.",
+        feed_calc_title: "Smart Farm Feed & Nutrition Calculator",
+        feed_calc_sub: "Calculate daily and cycle feed requirements, estimated cost, and add bags directly to your cart",
+        calc_project_type: "Livestock / Flock Type",
+        calc_opt_broiler: "Broiler Poultry (Starter / Grower / Finisher)",
+        calc_opt_layer: "Layer Poultry",
+        calc_opt_cattle: "Beef Cattle Fattening",
+        calc_opt_dairy: "Dairy Cows & Buffalo",
+        calc_opt_sheep: "Sheep & Goats",
+        calc_opt_fish: "Tilapia & Mullet Fish (Floating Feed)",
+        calc_count_label: "Number of Heads / Birds",
+        calc_days_label: "Cycle Duration (Days)",
+        calc_bag_weight: "Standard Bag Weight (kg)",
+        calc_bag_50: "50 kg (Standard Bag)",
+        calc_bag_25: "25 kg",
+        calc_btn_run: "Calculate Requirement & Cost Now",
+        calc_result_title: "Nutritional Estimation Results",
+        calc_add_cart_btn: "Add Calculated Bags to Cart",
+        quality_specs_title: "Quality Certificates & Lab Analyses",
+        quality_specs_sub: "Certified specs, protein & energy ratios, with lab sample requests for farms & B2B importers",
+        sample_req_title: "Request Lab / Trial Inspection Sample (B2B & Farms)",
+        sample_prod_label: "Product / Feed for Sample Inspection",
+        sample_company_label: "Farm / Company / Importer Name",
+        sample_weight_label: "Requested Sample Size",
+        sample_opt_1kg: "1 kg (Lab Analysis Sample)",
+        sample_opt_5kg: "5 kg (Trial Run Sample)",
+        sample_opt_25kg: "25 kg (Inspection Bag)",
+        sample_phone_label: "Phone / WhatsApp Number",
+        sample_address_label: "Sample Delivery Address (Governorate / Country & Port)",
+        sample_submit_btn: "Submit Sample Request Now",
+        driver_portal_title: "Field Driver Portal & Route",
+        driver_account_label: "Driver Account:",
+        driver_vehicle_label: "Assigned Vehicle:",
+        driver_update_gps_btn: "Update Live Vehicle Location (GPS)",
+        driver_orders_title: "Active Shipments Assigned for Delivery",
+        driver_orders_sub: "Click Navigate to open GPS directions to customer, or confirm delivery upon arrival",
         profile_header: "My Account & Shipment Tracking",
         email_label: "Email:",
         saved_phone: "Saved Phone:",
         account_role: "Account Role:",
+        user_credit_title: "Credit Account & Balance Statement",
+        credit_total_debit: "Total Credit",
+        credit_total_paid: "Total Paid",
+        credit_remaining: "Remaining Balance",
         track_shipment_title: "Track Your Shipment & Delivery Vehicle by Invoice #",
         track_btn: "Track Shipment",
         my_invoices_title: "My Invoices & Past Orders",
@@ -223,14 +319,20 @@ const UI_PLACEHOLDER_MAP = {
         track_input_ph: "أدخل رقم الفاتورة أو الطلب",
         chat_input_ph: "اكتب رسالتك للإدارة هنا...",
         rfq_company_ph: "مثال: شركة الخليج للتنمية الزراعية",
-        rfq_dest_ph: "مثال: السعودية - ميناء جدة الإسلامي"
+        rfq_dest_ph: "مثال: السعودية - ميناء جدة الإسلامي",
+        sample_prod_ph: "مثال: علف بادي تسمين 23% أو ذرة صفراء درجة أولى",
+        sample_company_ph: "مثال: مزارع النيل للإنتاج الحيواني",
+        sample_address_ph: "مثال: الجيزة - طريق مصر إسكندرية الصحراوي"
     },
     en: {
         search_placeholder: "Search for feeds, grains, supplements...",
         track_input_ph: "Enter invoice or order number",
         chat_input_ph: "Type your message to management here...",
         rfq_company_ph: "e.g., Gulf Agricultural Development Co.",
-        rfq_dest_ph: "e.g., Saudi Arabia - Jeddah Islamic Port"
+        rfq_dest_ph: "e.g., Saudi Arabia - Jeddah Islamic Port",
+        sample_prod_ph: "e.g., Broiler Starter 23% or Grade-A Yellow Corn",
+        sample_company_ph: "e.g., Nile Livestock Farms",
+        sample_address_ph: "e.g., Giza - Cairo-Alexandria Desert Rd"
     }
 };
 
@@ -303,6 +405,8 @@ window.applyAppLanguage = function(lang) {
         renderProducts(activeCat, currentSearch);
         startProductCarousel();
     }
+    if (marketPricesCache.length > 0) renderMarketPricesGrid();
+    if (qualityCertsCache.length > 0) renderQualitySpecsGrid();
     updateCartUI();
 };
 
@@ -400,6 +504,9 @@ let cart = JSON.parse(localStorage.getItem('omda_cart') || '[]');
 let allProductsCache = [];
 let allCategoriesCache = [];
 let ordersCache = {};
+let marketPricesCache = [];
+let qualityCertsCache = [];
+let lastCalcResult = null;
 let productsBatchLimit = 40;
 let unsubscribeProducts = null;
 
@@ -433,6 +540,7 @@ const closeAuthModal = document.querySelector('.close-auth-modal');
 const loginForm = document.getElementById('loginForm');
 const googleLoginBtn = document.getElementById('googleLoginBtn');
 const adminBtn = document.getElementById('adminBtn');
+const driverBtn = document.getElementById('driverBtn');
 const profileBtn = document.getElementById('profileBtn');
 const cartBtnHeader = document.getElementById('cartBtnHeader');
 const cartModal = document.getElementById('cartModal');
@@ -622,6 +730,10 @@ function stopAdminChatListeners() {
 
 window.switchSection = function(sectionId) {
     closeSideMenu();
+    if (sectionId === 'profileSection' && !currentUser) {
+        if (authModal) authModal.style.display = 'flex';
+        return;
+    }
     if (sectionId !== 'adminSection') {
         stopAdminChatListeners();
     }
@@ -633,6 +745,15 @@ window.switchSection = function(sectionId) {
     document.querySelectorAll('.bottom-nav .nav-item').forEach(btn => btn.classList.remove('active'));
     if (sectionId === 'productsSection') document.getElementById('navHomeBtn')?.classList.add('active');
     if (sectionId === 'categoriesSection') document.getElementById('navCatBtn')?.classList.add('active');
+    if (sectionId === 'marketPricesSection') {
+        loadMarketPricesSection();
+    }
+    if (sectionId === 'qualitySpecsSection') {
+        loadQualitySpecsSection();
+    }
+    if (sectionId === 'driverSection') {
+        loadDriverPortal();
+    }
     if (sectionId === 'profileSection') {
         document.getElementById('navProfileBtn')?.classList.add('active');
         loadUserProfile();
@@ -709,8 +830,13 @@ onAuthStateChanged(auth, async (user) => {
             }
             
             const isStaffUser = ["admin", "assistant_manager", "accountant", "employee"].includes(currentUserRole);
+            const isDriverUser = ["driver", "admin", "assistant_manager"].includes(currentUserRole);
+
             if (adminBtn) {
                 adminBtn.style.display = isStaffUser ? 'flex' : 'none';
+            }
+            if (driverBtn) {
+                driverBtn.style.display = isDriverUser ? 'flex' : 'none';
             }
             if (isStaffUser) {
                 listenAdminUnreadChatsCount();
@@ -721,6 +847,7 @@ onAuthStateChanged(auth, async (user) => {
             }
         } catch (err) {
             if (adminBtn) adminBtn.style.display = 'none';
+            if (driverBtn) driverBtn.style.display = 'none';
         }
 
         listenUserChat();
@@ -730,6 +857,7 @@ onAuthStateChanged(auth, async (user) => {
         userSavedPhone = '';
         updateAuthButtonLabel();
         if (adminBtn) adminBtn.style.display = 'none';
+        if (driverBtn) driverBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
         if (unsubscribeAdminUnreadCount) {
             unsubscribeAdminUnreadCount();
@@ -989,6 +1117,678 @@ rfqForm?.addEventListener('submit', async (e) => {
         window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(fullMsg)}`, '_blank');
     } catch (err) {
         alert(t('حدث خطأ أثناء حفظ طلب التسعير: ', 'Error saving quotation request: ') + err.message);
+    }
+});
+
+// ==========================================
+// === 1. بورصة الأسعار اليومية للخامات والحبوب ===
+// ==========================================
+const DEFAULT_MARKET_ITEMS = [
+    { id: 'def_corn', nameAr: 'ذرة صفراء أرجنتيني / برازيلي', nameEn: 'Argentine / Brazilian Yellow Corn', price: 14200, unit: 'طن صب أرض الميناء', trend: 'stable', change: 'ثبات' },
+    { id: 'def_soya', nameAr: 'كسب فول صويا 46% محلي ومستورد', nameEn: 'Soybean Meal 46% Local & Imported', price: 22800, unit: 'طن معبأ أرض المصنع', trend: 'down', change: '-150 ج.م' },
+    { id: 'def_bran', nameAr: 'ردة خشنة نخالة قمح ممتازة', nameEn: 'Coarse Wheat Bran Grade A', price: 11500, unit: 'طن معبأ', trend: 'up', change: '+100 ج.م' },
+    { id: 'def_broiler', nameAr: 'علف بادي تسمين سوبر 23%', nameEn: 'Super Broiler Starter Feed 23%', price: 21400, unit: 'طن معبأ (شكارة 50 كجم)', trend: 'stable', change: 'ثبات' }
+];
+
+function renderMarketPricesGrid() {
+    const grid = document.getElementById('marketPricesGrid');
+    if (!grid) return;
+
+    const items = marketPricesCache.length > 0 ? marketPricesCache : DEFAULT_MARKET_ITEMS;
+    grid.innerHTML = items.map(item => {
+        const title = escapeHtml(currentLang === 'en' && item.nameEn ? item.nameEn : item.nameAr);
+        const trend = item.trend || 'stable';
+        const trendIcon = trend === 'up' ? 'fa-arrow-trend-up' : (trend === 'down' ? 'fa-arrow-trend-down' : 'fa-minus');
+        const trendColor = trend === 'up' ? '#dc2626' : (trend === 'down' ? '#16a34a' : '#64748b');
+        const trendLabel = trend === 'up' ? t('صعود', 'Up') : (trend === 'down' ? t('هبوط', 'Down') : t('مستقر', 'Stable'));
+
+        return `
+            <div class="market-price-card" style="background:#fff; border:1px solid var(--border-color); border-radius:14px; padding:16px; box-shadow:0 4px 12px rgba(0,0,0,0.04); display:flex; flex-direction:column; justify-content:space-between; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+                    <h4 style="color:var(--primary); font-size:1rem; margin:0; line-height:1.4;">${title}</h4>
+                    <span style="background:${trendColor}15; color:${trendColor}; padding:3px 9px; border-radius:20px; font-size:0.78rem; font-weight:800; white-space:nowrap;">
+                        <i class="fa-solid ${trendIcon}"></i> ${escapeHtml(item.change || trendLabel)}
+                    </span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:baseline; border-top:1px dashed #e2e8f0; padding-top:10px;">
+                    <div>
+                        <span style="font-size:1.35rem; font-weight:900; color:var(--primary-dark);">${Number(item.price || 0).toLocaleString()}</span>
+                        <small style="color:var(--accent); font-weight:bold;"> ${t('ج.م', 'EGP')}</small>
+                    </div>
+                    <span style="font-size:0.8rem; color:#64748b;">${escapeHtml(item.unit || '')}</span>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+async function loadMarketPricesSection() {
+    const cached = await OmdaLocalDB.get('market_prices', []);
+    if (cached.length > 0) {
+        marketPricesCache = cached;
+    }
+    renderMarketPricesGrid();
+
+    try {
+        const snap = await getDocs(query(collection(db, "market_prices"), limit(40)));
+        const fresh = [];
+        snap.forEach(d => fresh.push({ id: d.id, ...d.data() }));
+        if (fresh.length > 0) {
+            marketPricesCache = fresh;
+            OmdaLocalDB.set('market_prices', fresh);
+            renderMarketPricesGrid();
+            const updatedBadge = document.getElementById('marketPricesUpdatedAt');
+            if (updatedBadge && fresh[0].updatedAtLabel) {
+                updatedBadge.textContent = fresh[0].updatedAtLabel;
+            }
+        }
+    } catch (e) {
+        console.warn("استخدام أسعار البورصة المحفوظة محلياً:", e.message);
+    }
+}
+
+async function loadAdminMarketPrices() {
+    const list = document.getElementById('adminMarketPricesList');
+    if (!list) return;
+    list.innerHTML = 'جاري التحميل...';
+
+    try {
+        const snap = await getDocs(query(collection(db, "market_prices"), limit(50)));
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        marketPricesCache = items;
+        OmdaLocalDB.set('market_prices', items);
+
+        if (items.length === 0) {
+            list.innerHTML = '<p style="color:#888;">لا توجد أسعار مسجلة بعد (تظهر الأسعار الاسترشادية الافتراضية للزوار حالياً).</p>';
+            return;
+        }
+
+        list.innerHTML = items.map(item => {
+            const safeId = escapeHtml(item.id);
+            return `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong>${escapeHtml(item.nameAr)}</strong> ${item.nameEn ? `(${escapeHtml(item.nameEn)})` : ''} — 
+                        <span style="color:var(--accent); font-weight:bold;">${Number(item.price).toLocaleString()} ج.م</span> / ${escapeHtml(item.unit)}
+                        <span style="font-size:0.8rem; color:#666;">[${escapeHtml(item.change || item.trend)}]</span>
+                    </div>
+                    <div>
+                        <button onclick='editMarketPriceItem("${safeId}")' style="background:#234d39; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-pen"></i> تعديل</button>
+                        <button onclick='deleteMarketPriceItem("${safeId}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer; margin-right:5px;"><i class="fa-solid fa-trash"></i> حذف</button>
+                    </div>
+                </div>`;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = 'خطأ في تحميل أسعار البورصة.';
+    }
+}
+
+window.editMarketPriceItem = function(id) {
+    const item = marketPricesCache.find(i => i.id === id);
+    if (!item) return;
+    document.getElementById('editMarketItemId').value = item.id;
+    document.getElementById('mpNameAr').value = item.nameAr || '';
+    document.getElementById('mpNameEn').value = item.nameEn || '';
+    document.getElementById('mpPrice').value = item.price || '';
+    document.getElementById('mpUnit').value = item.unit || 'طن صب / معبأ';
+    document.getElementById('mpTrend').value = item.trend || 'stable';
+    document.getElementById('mpChange').value = item.change || 'ثبات';
+    document.getElementById('saveMarketPriceBtn').textContent = 'تحديث السعر في البورصة';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.deleteMarketPriceItem = async function(id) {
+    if (!confirm('هل تريد حذف هذا الصنف من البورصة؟')) return;
+    try {
+        await deleteDoc(doc(db, "market_prices", id));
+        alert('تم الحذف بنجاح');
+        loadAdminMarketPrices();
+    } catch (e) {
+        alert('خطأ: ' + e.message);
+    }
+};
+
+document.getElementById('updateMarketPriceForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const editId = document.getElementById('editMarketItemId').value.trim();
+    const payload = {
+        nameAr: document.getElementById('mpNameAr').value.trim(),
+        nameEn: document.getElementById('mpNameEn').value.trim(),
+        price: Number(document.getElementById('mpPrice').value),
+        unit: document.getElementById('mpUnit').value.trim(),
+        trend: document.getElementById('mpTrend').value,
+        change: document.getElementById('mpChange').value.trim() || 'ثبات',
+        updatedAtLabel: new Date().toLocaleDateString('ar-EG'),
+        updatedAt: new Date().toISOString()
+    };
+
+    try {
+        if (editId) {
+            await updateDoc(doc(db, "market_prices", editId), payload);
+            alert('تم تحديث السعر في البورصة بنجاح!');
+        } else {
+            await addDoc(collection(db, "market_prices"), payload);
+            alert('تم نشر السعر الجديد في البورصة بنجاح!');
+        }
+        e.target.reset();
+        document.getElementById('editMarketItemId').value = '';
+        document.getElementById('saveMarketPriceBtn').textContent = 'حفظ ونشر في البورصة';
+        loadAdminMarketPrices();
+    } catch (err) {
+        alert('خطأ أثناء الحفظ: ' + err.message);
+    }
+});
+
+// ==========================================
+// === 2. حاسبة الأعلاف والتغذية الذكية وربطها بالسلة ===
+// ==========================================
+const FEED_RATES_CONFIG = {
+    broiler: { dailyKg: 0.11, labelAr: 'علف دواجن تسمين سوبر', labelEn: 'Super Broiler Feed', defaultBagPrice: 1070 },
+    layer:   { dailyKg: 0.115, labelAr: 'علف دواجن بياض إنتاجي', labelEn: 'Layer Production Feed', defaultBagPrice: 960 },
+    cattle:  { dailyKg: 6.5, labelAr: 'علف تسمين عجول وماشية', labelEn: 'Cattle Fattening Feed', defaultBagPrice: 820 },
+    dairy:   { dailyKg: 8.0, labelAr: 'علف حلائب عالي الإدرار', labelEn: 'High-Yield Dairy Feed', defaultBagPrice: 880 },
+    sheep:   { dailyKg: 1.2, labelAr: 'علف تسمين أغنام وماعز', labelEn: 'Sheep & Goat Feed', defaultBagPrice: 790 },
+    fish:    { dailyKg: 0.035, labelAr: 'علف أسماك طافي 30% بروتين', labelEn: 'Floating Fish Feed 30%', defaultBagPrice: 1150 }
+};
+
+document.getElementById('feedCalculatorForm')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const type = document.getElementById('calcLivestockType').value;
+    const heads = Math.max(1, Number(document.getElementById('calcHeadCount').value) || 1);
+    const days = Math.max(1, Number(document.getElementById('calcDaysCount').value) || 1);
+    const bagWeight = Number(document.getElementById('calcBagWeight').value) || 50;
+
+    const cfg = FEED_RATES_CONFIG[type] || FEED_RATES_CONFIG.broiler;
+    const dailyTotalKg = heads * cfg.dailyKg;
+    const cycleTotalKg = dailyTotalKg * days;
+    const totalTons = cycleTotalKg / 1000;
+    const totalBags = Math.ceil(cycleTotalKg / bagWeight);
+
+    // البحث عن أقرب منتج مطابق في المتجر لأخذ سعره الحقيقي إن وجد
+    const matchedProd = allProductsCache.find(p =>
+        (p.name && (p.name.includes('تسمين') && type === 'broiler' || p.name.includes('بياض') && type === 'layer' || p.name.includes('ماشية') && type === 'cattle' || p.name.includes('حلاب') && type === 'dairy' || p.name.includes('أسماك') && type === 'fish'))
+    );
+
+    const base50Price = matchedProd ? Number(matchedProd.price) : cfg.defaultBagPrice;
+    const unitBagPrice = bagWeight === 25 ? Math.round(base50Price / 2) : base50Price;
+    const estimatedTotalCost = totalBags * unitBagPrice;
+
+    lastCalcResult = {
+        product: matchedProd || {
+            id: `calc_${type}_${bagWeight}`,
+            name: `${cfg.labelAr} (${bagWeight} كجم)`,
+            nameEn: `${cfg.labelEn} (${bagWeight} kg)`,
+            price: unitBagPrice,
+            category: 'feed'
+        },
+        bagsCount: totalBags,
+        unitBagPrice
+    };
+
+    const resultBox = document.getElementById('feedCalcResultBox');
+    const statsGrid = document.getElementById('feedCalcStatsGrid');
+    const addBtn = document.getElementById('addCalcToCartBtn');
+
+    if (statsGrid) {
+        statsGrid.innerHTML = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(135px, 1fr)); gap:10px;">
+                <div style="background:#f8faf9; padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                    <span style="display:block; font-size:0.8rem; color:#666;">${t('الاستهلاك اليومي', 'Daily Consumption')}</span>
+                    <strong style="font-size:1.15rem; color:var(--primary);">${dailyTotalKg.toFixed(1)} ${t('كجم/يوم', 'kg/day')}</strong>
+                </div>
+                <div style="background:#f8faf9; padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                    <span style="display:block; font-size:0.8rem; color:#666;">${t('إجمالي الكمية للدورة', 'Total Cycle Feed')}</span>
+                    <strong style="font-size:1.15rem; color:var(--primary);">${totalTons.toFixed(2)} ${t('طن', 'Tons')}</strong>
+                </div>
+                <div style="background:#f8faf9; padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                    <span style="display:block; font-size:0.8rem; color:#666;">${t('عدد الشكاير المطلوبة', 'Required Bags')}</span>
+                    <strong style="font-size:1.15rem; color:var(--accent);">${totalBags} ${t('شكارة', 'Bags')}</strong>
+                </div>
+                <div style="background:#f8faf9; padding:12px; border-radius:10px; border:1px solid var(--border-color); text-align:center;">
+                    <span style="display:block; font-size:0.8rem; color:#666;">${t('التكلفة التقديرية', 'Estimated Cost')}</span>
+                    <strong style="font-size:1.15rem; color:#16a34a;">${estimatedTotalCost.toLocaleString()} ${t('ج.م', 'EGP')}</strong>
+                </div>
+            </div>`;
+    }
+
+    if (resultBox) resultBox.style.display = 'block';
+    if (addBtn) {
+        addBtn.style.display = 'block';
+        addBtn.innerHTML = `<i class="fa-solid fa-cart-plus"></i> ${t(`إضافة (${totalBags}) شكارة للسلة فوراً`, `Add (${totalBags}) Bags to Cart Now`)}`;
+    }
+});
+
+document.getElementById('addCalcToCartBtn')?.addEventListener('click', () => {
+    if (!lastCalcResult) return;
+    const countToAdd = Math.min(lastCalcResult.bagsCount, 500);
+    for (let i = 0; i < countToAdd; i++) {
+        cart.push({ ...lastCalcResult.product });
+    }
+    localStorage.setItem('omda_cart', JSON.stringify(cart));
+    updateCartUI();
+    alert(t(`تمت إضافة ${countToAdd} شكارة إلى سلة المشتريات بنجاح!`, `Added ${countToAdd} bags to your cart successfully!`));
+    openCartModal();
+});
+
+// ==========================================
+// === 3. شهادات الجودة والتحاليل المعملية وطلب العينات ===
+// ==========================================
+const DEFAULT_QUALITY_CERTS = [
+    { id: 'def_qc1', title: 'علف بادي تسمين سوبر 23% - مطابق للمواصفات القياسية', titleEn: 'Super Broiler Starter 23% - ISO & Lab Certified', certNo: 'LAB-EG-2026-104', protein: '23.4%', moisture: '11.0%', energy: '3050 kcal', aflatoxin: '< 5 ppb (آمن تماماً)' },
+    { id: 'def_qc2', title: 'ذرة صفراء درجة أولى (تصدير ومزارع)', titleEn: 'Grade-A Yellow Corn (Export & Farms)', certNo: 'LAB-EG-2026-219', protein: '8.9%', moisture: '12.5%', energy: '3350 kcal', aflatoxin: '< 4 ppb (خالي من السموم)' }
+];
+
+function renderQualitySpecsGrid() {
+    const grid = document.getElementById('qualitySpecsGrid');
+    if (!grid) return;
+
+    const certs = qualityCertsCache.length > 0 ? qualityCertsCache : DEFAULT_QUALITY_CERTS;
+    grid.innerHTML = certs.map(c => {
+        const title = escapeHtml(currentLang === 'en' && c.titleEn ? c.titleEn : c.title);
+        return `
+            <div class="product-card" style="padding:16px; display:flex; flex-direction:column; gap:10px; border-top:4px solid var(--accent);">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <span style="background:#173627; color:#fff; padding:3px 9px; border-radius:6px; font-size:0.75rem; font-weight:bold;">
+                        <i class="fa-solid fa-certificate" style="color:var(--accent);"></i> ${escapeHtml(c.certNo)}
+                    </span>
+                    <span style="color:#16a34a; font-size:0.78rem; font-weight:bold;"><i class="fa-solid fa-circle-check"></i> ${t('معتمد معملياً', 'Lab Certified')}</span>
+                </div>
+                <h4 style="color:var(--primary); font-size:1rem; margin:0;">${title}</h4>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; background:#f8faf9; padding:10px; border-radius:8px; font-size:0.83rem;">
+                    <div><strong>${t('البروتين:', 'Protein:')}</strong> ${escapeHtml(c.protein)}</div>
+                    <div><strong>${t('الرطوبة:', 'Moisture:')}</strong> ${escapeHtml(c.moisture)}</div>
+                    <div><strong>${t('الطاقة:', 'Energy:')}</strong> ${escapeHtml(c.energy)}</div>
+                    <div><strong>${t('السموم:', 'Aflatoxin:')}</strong> ${escapeHtml(c.aflatoxin)}</div>
+                </div>
+                <button type="button" onclick='prefillSampleProduct(${JSON.stringify(c.title || '')})' class="btn-submit" style="padding:8px; font-size:0.85rem; margin-top:auto;">
+                    <i class="fa-solid fa-vial"></i> ${t('طلب عينة فحص لهذا المنتج', 'Request Inspection Sample')}
+                </button>
+            </div>`;
+    }).join('');
+}
+
+window.prefillSampleProduct = function(prodName) {
+    const input = document.getElementById('sampleProductInput');
+    if (input) {
+        input.value = prodName;
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        input.focus();
+    }
+};
+
+async function loadQualitySpecsSection() {
+    const cached = await OmdaLocalDB.get('quality_certs', []);
+    if (cached.length > 0) qualityCertsCache = cached;
+    renderQualitySpecsGrid();
+
+    try {
+        const snap = await getDocs(query(collection(db, "quality_certs"), limit(40)));
+        const fresh = [];
+        snap.forEach(d => fresh.push({ id: d.id, ...d.data() }));
+        if (fresh.length > 0) {
+            qualityCertsCache = fresh;
+            OmdaLocalDB.set('quality_certs', fresh);
+            renderQualitySpecsGrid();
+        }
+    } catch (e) {
+        console.warn("استخدام شهادات الجودة المحلية:", e.message);
+    }
+}
+
+document.getElementById('sampleRequestForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const prodName = document.getElementById('sampleProductInput').value.trim();
+    const companyName = document.getElementById('sampleCompanyInput').value.trim();
+    const weight = document.getElementById('sampleWeightInput').value;
+    const phone = document.getElementById('samplePhoneInput').value.trim();
+    const address = document.getElementById('sampleAddressInput').value.trim();
+
+    try {
+        await addDoc(collection(db, "rfq_orders"), {
+            type: 'sample_request',
+            companyName,
+            destination: address,
+            quantity: weight,
+            incoterm: 'SAMPLE',
+            phone,
+            productTitle: `[طلب عينة فحص] ${prodName}`,
+            userEmail: currentUser ? currentUser.email : 'زائر / مزرعة',
+            date: new Date().toLocaleDateString('ar-EG'),
+            createdAt: new Date().toISOString(),
+            status: 'طلب عينة فحص معملي'
+        });
+
+        const waText = `*طلب عينة فحص معملي جديد - منصة الإخلاص*\n\n` +
+            `🧪 *المنتج:* ${prodName}\n` +
+            `⚖️ *حجم العينة:* ${weight}\n` +
+            `🏢 *الجهة / المزرعة:* ${companyName}\n` +
+            `📍 *العنوان:* ${address}\n` +
+            `📞 *الهاتف:* ${phone}`;
+
+        alert(t('تم تسجيل طلب العينة بنجاح! سيتم التواصل معك لتحديد موعد شحن العينة.', 'Sample request submitted! We will contact you shortly.'));
+        e.target.reset();
+        window.open(`https://wa.me/${EXPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(waText)}`, '_blank');
+    } catch (err) {
+        alert(t('حدث خطأ أثناء إرسال طلب العينة: ', 'Error submitting sample request: ') + err.message);
+    }
+});
+
+async function loadAdminQualityCerts() {
+    const list = document.getElementById('adminQualityCertsList');
+    if (!list) return;
+    list.innerHTML = 'جاري التحميل...';
+
+    try {
+        const snap = await getDocs(query(collection(db, "quality_certs"), limit(50)));
+        const items = [];
+        snap.forEach(d => items.push({ id: d.id, ...d.data() }));
+        qualityCertsCache = items;
+        OmdaLocalDB.set('quality_certs', items);
+
+        if (items.length === 0) {
+            list.innerHTML = '<p style="color:#888;">لا توجد شهادات مضافة يدوياً بعد (تظهر الشهادات الافتراضية للزوار حالياً).</p>';
+            return;
+        }
+
+        list.innerHTML = items.map(c => {
+            const safeId = escapeHtml(c.id);
+            return `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong>${escapeHtml(c.title)}</strong> [<code>${escapeHtml(c.certNo)}</code>]<br>
+                        <small>بروتين: ${escapeHtml(c.protein)} | رطوبة: ${escapeHtml(c.moisture)} | طاقة: ${escapeHtml(c.energy)} | سموم: ${escapeHtml(c.aflatoxin)}</small>
+                    </div>
+                    <button onclick='deleteQualityCert("${safeId}")' style="background:#e63946; color:#fff; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;"><i class="fa-solid fa-trash"></i> حذف</button>
+                </div>`;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = 'خطأ في تحميل الشهادات.';
+    }
+}
+
+window.deleteQualityCert = async function(id) {
+    if (!confirm('هل تريد حذف شهادة الجودة هذه؟')) return;
+    try {
+        await deleteDoc(doc(db, "quality_certs", id));
+        alert('تم حذف الشهادة بنجاح');
+        loadAdminQualityCerts();
+    } catch (e) {
+        alert('خطأ: ' + e.message);
+    }
+};
+
+document.getElementById('addQualityCertForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    try {
+        await addDoc(collection(db, "quality_certs"), {
+            title: document.getElementById('qcTitle').value.trim(),
+            titleEn: document.getElementById('qcTitleEn').value.trim(),
+            certNo: document.getElementById('qcCertNo').value.trim(),
+            protein: document.getElementById('qcProtein').value.trim(),
+            moisture: document.getElementById('qcMoisture').value.trim(),
+            energy: document.getElementById('qcEnergy').value.trim(),
+            aflatoxin: document.getElementById('qcAflatoxin').value.trim(),
+            createdAt: new Date().toISOString()
+        });
+        alert('تم نشر شهادة الجودة والتحليل بنجاح!');
+        e.target.reset();
+        loadAdminQualityCerts();
+    } catch (err) {
+        alert('خطأ أثناء حفظ الشهادة: ' + err.message);
+    }
+});
+
+// ==========================================
+// === 4. بوابة السائق الميداني (GPS والملاحة وإغلاق التسليم) ===
+// ==========================================
+let driverAssignedVehicles = [];
+
+async function loadDriverPortal() {
+    if (!currentUser) return;
+    const emailEl = document.getElementById('driverEmailDisplay');
+    const vehEl = document.getElementById('driverVehicleDisplay');
+    const ordersList = document.getElementById('driverOrdersList');
+
+    if (emailEl) emailEl.textContent = currentUser.email;
+    if (vehEl) vehEl.textContent = t('جاري التحقق...', 'Checking...');
+    if (ordersList) ordersList.innerHTML = `<p style="text-align:center; color:#888;">${t('جاري تحميل الشحنات...', 'Loading shipments...')}</p>`;
+
+    try {
+        const vehSnap = await getDocs(collection(db, "vehicles"));
+        driverAssignedVehicles = [];
+        vehSnap.forEach(d => {
+            const v = { id: d.id, ...d.data() };
+            if (v.driver === currentUser.email || currentUserRole === 'admin') {
+                driverAssignedVehicles.push(v);
+            }
+        });
+
+        const myPlates = driverAssignedVehicles.map(v => v.plate);
+        if (vehEl) {
+            vehEl.textContent = driverAssignedVehicles.length > 0
+                ? driverAssignedVehicles.map(v => `${v.plate} (${v.model})`).join(' | ')
+                : t('لا توجد سيارة مسندة لحسابك حالياً', 'No vehicle assigned to your account');
+        }
+
+        const ordersSnap = await getDocs(query(collection(db, "orders"), limit(80)));
+        const activeOrders = [];
+        ordersSnap.forEach(d => {
+            const o = { id: d.id, ...d.data() };
+            const isDelivered = (o.status || '').includes('تم التسليم');
+            const matchesDriverVehicle = myPlates.includes(o.assignedVehicle);
+            if (!isDelivered && (matchesDriverVehicle || (currentUserRole === 'admin' && o.assignedVehicle && o.assignedVehicle !== 'غير محدد'))) {
+                activeOrders.push(o);
+            }
+        });
+
+        if (!ordersList) return;
+        if (activeOrders.length === 0) {
+            ordersList.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">${t('لا توجد شحنات قيد التوصيل حالياً.', 'No active shipments assigned currently.')}</p>`;
+            return;
+        }
+
+        ordersList.innerHTML = activeOrders.map(o => {
+            const safeId = escapeHtml(o.id);
+            const hasCoords = o.lat && o.lng;
+            const navUrl = hasCoords ? `https://www.google.com/maps/dir/?api=1&destination=${o.lat},${o.lng}` : '#';
+            const itemsSummary = Array.isArray(o.items) ? `${o.items.length} ${t('عنصر', 'items')}` : '';
+
+            return `
+                <div class="data-item" style="border-right:4px solid var(--accent);">
+                    <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                        <div>
+                            <h4 style="color:var(--primary); margin-bottom:4px;">${t('شحنة رقم', 'Shipment')} #${safeId.slice(0,6)} — <span style="color:var(--accent);">${escapeHtml(o.assignedVehicle)}</span></h4>
+                            <p><strong>${t('العميل:', 'Client:')}</strong> ${escapeHtml(o.userEmail)} | <strong>${t('الهاتف:', 'Phone:')}</strong> <a href="tel:${escapeHtml(o.phone)}" style="color:#0284c7; font-weight:bold;">${escapeHtml(o.phone || '-')}</a></p>
+                            <p><strong>${t('الإجمالي المطلوب تحصيله:', 'Total Amount:')}</strong> ${escapeHtml(o.total)} ${t('ج.م', 'EGP')} (${escapeHtml(o.paymentType)}) | ${itemsSummary}</p>
+                        </div>
+                        <div style="display:flex; flex-direction:column; gap:6px; justify-content:center; min-width:165px;">
+                            ${hasCoords ? `<a href="${navUrl}" target="_blank" style="background:#0284c7; color:#fff; padding:8px 12px; border-radius:6px; text-decoration:none; text-align:center; font-weight:bold; font-size:0.85rem;"><i class="fa-solid fa-diamond-turn-right"></i> ${t('بدء الملاحة GPS', 'Navigate GPS')}</a>` : ''}
+                            <button onclick="driverConfirmDelivery('${safeId}')" style="background:#16a34a; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">
+                                <i class="fa-solid fa-circle-check"></i> ${t('تأكيد التسليم', 'Confirm Delivery')}
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+        }).join('');
+    } catch (err) {
+        if (ordersList) ordersList.innerHTML = `<p style="color:red;">${escapeHtml(err.message)}</p>`;
+    }
+}
+
+window.driverConfirmDelivery = async function(orderId) {
+    if (!confirm(t('هل تؤكد تسليم هذه الشحنة للعميل وإغلاقها؟', 'Confirm delivery of this shipment to customer?'))) return;
+    try {
+        await updateDoc(doc(db, "orders", orderId), {
+            status: 'تم التسليم بنجاح',
+            deliveredAt: new Date().toISOString(),
+            deliveredBy: currentUser?.email || 'driver'
+        });
+        alert(t('تم إغلاق الشحنة وتأكيد التسليم بنجاح!', 'Shipment marked as delivered!'));
+        loadDriverPortal();
+    } catch (e) {
+        alert('خطأ: ' + e.message);
+    }
+};
+
+document.getElementById('driverUpdateGpsBtn')?.addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    if (driverAssignedVehicles.length === 0) {
+        alert(t('لا توجد سيارة مسندة لحسابك لتحديث موقعها.', 'No vehicle assigned to update location.'));
+        return;
+    }
+    const origHtml = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${t('جاري التحديث...', 'Updating...')}`;
+    try {
+        const loc = await getCurrentDeviceLocation();
+        const myOwnVehicles = driverAssignedVehicles.filter(v => v.driver === currentUser?.email);
+        const targets = myOwnVehicles.length > 0 ? myOwnVehicles : [driverAssignedVehicles[0]];
+        await Promise.all(targets.map(v =>
+            updateDoc(doc(db, "vehicles", v.id), {
+                lat: loc.lat,
+                lng: loc.lng,
+                gpsUpdatedAt: new Date().toISOString()
+            })
+        ));
+        alert(t(`تم تحديث موقع السيارة الحي بنجاح! (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`, `Vehicle live GPS updated! (${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)})`));
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.innerHTML = origHtml;
+    }
+});
+
+document.getElementById('driverRefreshOrdersBtn')?.addEventListener('click', loadDriverPortal);
+
+// ==========================================
+// === 5. المحاسبة وكشف حساب الآجل والمديونيات ===
+// ==========================================
+async function loadAdminAccounting() {
+    const summaryBox = document.getElementById('accountingSummaryCards');
+    const listBox = document.getElementById('adminAccountingList');
+    if (!summaryBox || !listBox) return;
+
+    listBox.innerHTML = 'جاري تجميع البيانات المحاسبية...';
+
+    try {
+        const [ordersSnap, paymentsSnap] = await Promise.all([
+            getDocs(query(collection(db, "orders"), limit(150))),
+            getDocs(query(collection(db, "credit_payments"), limit(150)))
+        ]);
+
+        let totalSales = 0;
+        let totalCashSales = 0;
+        let totalCreditSales = 0;
+        let totalCreditPaid = 0;
+        const clientLedger = {};
+
+        ordersSnap.forEach(d => {
+            const o = d.data();
+            const amount = Number(o.total || 0);
+            totalSales += amount;
+            const isCredit = (o.paymentType || '').includes('آجل');
+
+            if (isCredit) {
+                totalCreditSales += amount;
+                const email = o.userEmail || 'غير معروف';
+                if (!clientLedger[email]) {
+                    clientLedger[email] = { email, phone: o.phone || '', debit: 0, paid: 0 };
+                }
+                clientLedger[email].debit += amount;
+                if (o.phone && !clientLedger[email].phone) clientLedger[email].phone = o.phone;
+            } else {
+                totalCashSales += amount;
+            }
+        });
+
+        paymentsSnap.forEach(d => {
+            const p = d.data();
+            const amt = Number(p.amount || 0);
+            totalCreditPaid += amt;
+            const email = p.clientEmail || 'غير معروف';
+            if (!clientLedger[email]) {
+                clientLedger[email] = { email, phone: '', debit: 0, paid: 0 };
+            }
+            clientLedger[email].paid += amt;
+        });
+
+        const netRemainingCredit = Math.max(0, totalCreditSales - totalCreditPaid);
+
+        summaryBox.innerHTML = `
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap:10px;">
+                <div style="background:#fff; padding:14px; border-radius:10px; border:1px solid var(--border-color); border-right:4px solid var(--primary);">
+                    <span style="font-size:0.8rem; color:#666;">إجمالي المبيعات</span>
+                    <strong style="display:block; font-size:1.2rem; color:var(--primary);">${totalSales.toLocaleString()} ج.م</strong>
+                </div>
+                <div style="background:#fff; padding:14px; border-radius:10px; border:1px solid var(--border-color); border-right:4px solid #16a34a;">
+                    <span style="font-size:0.8rem; color:#666;">المبيعات النقدية + المحصّل</span>
+                    <strong style="display:block; font-size:1.2rem; color:#16a34a;">${(totalCashSales + totalCreditPaid).toLocaleString()} ج.م</strong>
+                </div>
+                <div style="background:#fff; padding:14px; border-radius:10px; border:1px solid var(--border-color); border-right:4px solid var(--accent);">
+                    <span style="font-size:0.8rem; color:#666;">إجمالي فواتير الآجل</span>
+                    <strong style="display:block; font-size:1.2rem; color:var(--accent);">${totalCreditSales.toLocaleString()} ج.م</strong>
+                </div>
+                <div style="background:#fff; padding:14px; border-radius:10px; border:1px solid var(--border-color); border-right:4px solid #dc2626;">
+                    <span style="font-size:0.8rem; color:#666;">صافي المديونية المتبقية</span>
+                    <strong style="display:block; font-size:1.2rem; color:#dc2626;">${netRemainingCredit.toLocaleString()} ج.م</strong>
+                </div>
+            </div>`;
+
+        const clients = Object.values(clientLedger).sort((a, b) => (b.debit - b.paid) - (a.debit - a.paid));
+        if (clients.length === 0) {
+            listBox.innerHTML = '<p style="color:#888;">لا توجد حسابات آجلة مسجلة حالياً.</p>';
+            return;
+        }
+
+        listBox.innerHTML = clients.map(c => {
+            const rem = Math.max(0, c.debit - c.paid);
+            const safeEmail = escapeHtml(c.email);
+            return `
+                <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <strong><i class="fa-solid fa-user-tie"></i> ${safeEmail}</strong> ${c.phone ? `(${escapeHtml(c.phone)})` : ''}<br>
+                        <small>إجمالي الآجل: <strong>${c.debit.toLocaleString()} ج.م</strong> | المسدد: <strong style="color:#16a34a;">${c.paid.toLocaleString()} ج.م</strong> | المتبقي: <strong style="color:${rem > 0 ? '#dc2626' : '#16a34a'};">${rem.toLocaleString()} ج.م</strong></small>
+                    </div>
+                    <button onclick='prefillClientPayment(${JSON.stringify(c.email)}, ${rem})' style="background:#173627; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-size:0.85rem;">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> تسجيل سداد
+                    </button>
+                </div>`;
+        }).join('');
+    } catch (e) {
+        listBox.innerHTML = 'خطأ في تحميل بيانات المحاسبة: ' + escapeHtml(e.message);
+    }
+}
+
+window.prefillClientPayment = function(email, remaining) {
+    const emailInput = document.getElementById('payClientEmail');
+    const amountInput = document.getElementById('payAmount');
+    if (emailInput) emailInput.value = email;
+    if (amountInput && remaining > 0) amountInput.value = remaining;
+    emailInput?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    amountInput?.focus();
+};
+
+document.getElementById('recordPaymentForm')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const clientEmail = document.getElementById('payClientEmail').value.trim();
+    const amount = Number(document.getElementById('payAmount').value);
+    const note = document.getElementById('payNote').value.trim();
+
+    if (!clientEmail || amount <= 0) return;
+
+    try {
+        await addDoc(collection(db, "credit_payments"), {
+            clientEmail,
+            amount,
+            note: note || 'سداد دفعة نقدية',
+            recordedBy: currentUser?.email || 'admin',
+            date: new Date().toLocaleDateString('ar-EG'),
+            createdAt: new Date().toISOString()
+        });
+        alert(`تم تسجيل دفعة سداد بقيمة ${amount} ج.م للعميل ${clientEmail} بنجاح!`);
+        e.target.reset();
+        loadAdminAccounting();
+    } catch (err) {
+        alert('خطأ أثناء تسجيل الدفعة: ' + err.message);
     }
 });
 
@@ -1465,9 +2265,14 @@ window.openProductModal = function(prodOrId) {
             ${mediaHtml}
             <h3 style="color:var(--primary); font-size:1.1rem; margin-bottom:6px;">${safeTitle}</h3>
             <p style="font-size:0.95rem; font-weight:bold; color:#173627; margin-bottom:14px;"><i class="fa-solid fa-ship"></i> ${t('مخصص للتصدير والكميات الكبيرة (B2B)', 'Dedicated for Export & Bulk Quantities (B2B)')}</p>
-            <button id="modalRfqBtn" class="btn-submit" style="background:#173627; padding:12px; font-size:0.95rem;">
-                <i class="fa-solid fa-file-signature"></i> ${t('طلب عرض سعر جملة (RFQ)', 'Request Bulk Quotation (RFQ)')}
-            </button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button id="modalRfqBtn" class="btn-submit" style="background:#173627; padding:12px; font-size:0.95rem; flex:1;">
+                    <i class="fa-solid fa-file-signature"></i> ${t('طلب عرض سعر جملة (RFQ)', 'Request Bulk Quotation (RFQ)')}
+                </button>
+                <button id="modalSampleBtn" class="btn-submit" style="background:var(--accent); color:var(--primary-dark); padding:12px; font-size:0.95rem; flex:1;">
+                    <i class="fa-solid fa-vial"></i> ${t('طلب عينة فحص', 'Request Sample')}
+                </button>
+            </div>
         `;
 
         document.getElementById('modalRfqBtn').onclick = () => {
@@ -1475,6 +2280,14 @@ window.openProductModal = function(prodOrId) {
             if (v) v.pause();
             document.getElementById('productDetailModal').style.display = 'none';
             openExportRfqModal(product);
+        };
+
+        document.getElementById('modalSampleBtn').onclick = () => {
+            const v = document.getElementById('productDetailModal')?.querySelector('video');
+            if (v) v.pause();
+            document.getElementById('productDetailModal').style.display = 'none';
+            switchSection('qualitySpecsSection');
+            setTimeout(() => prefillSampleProduct(prodTitle), 150);
         };
     } else {
         body.innerHTML = `
@@ -2046,6 +2859,21 @@ window.switchAdminTab = function(tabName) {
         document.getElementById('adminOrdersTab').style.display = 'block';
         document.getElementById('tabOrdBtn').classList.add('active');
         loadAllOrders();
+    } else if (tabName === 'accounting') {
+        const accTab = document.getElementById('adminAccountingTab');
+        if (accTab) accTab.style.display = 'block';
+        document.getElementById('tabAccountingBtn')?.classList.add('active');
+        loadAdminAccounting();
+    } else if (tabName === 'market_prices') {
+        const mpTab = document.getElementById('adminMarketPricesTab');
+        if (mpTab) mpTab.style.display = 'block';
+        document.getElementById('tabMarketPricesBtn')?.classList.add('active');
+        loadAdminMarketPrices();
+    } else if (tabName === 'quality_certs') {
+        const qcTab = document.getElementById('adminQualityTab');
+        if (qcTab) qcTab.style.display = 'block';
+        document.getElementById('tabQualityBtn')?.classList.add('active');
+        loadAdminQualityCerts();
     } else if (tabName === 'messages') {
         const msgTab = document.getElementById('adminMessagesTab');
         if (msgTab) msgTab.style.display = 'block';
@@ -2088,19 +2916,23 @@ async function loadAdminExportRfqs() {
         const snapshot = await getDocs(query(collection(db, "rfq_orders"), limit(60)));
         list.innerHTML = '';
         if (snapshot.empty) {
-            list.innerHTML = '<p style="color:#888;">لا توجد طلبات تصدير حالياً.</p>';
+            list.innerHTML = '<p style="color:#888;">لا توجد طلبات تصدير أو عينات حالياً.</p>';
             return;
         }
         snapshot.forEach(docSnap => {
             const r = docSnap.data();
             const id = escapeHtml(docSnap.id);
-            const waMsg = encodeURIComponent(`أهلاً بك شركة ${r.companyName}، بخصوص طلب التصدير لمنتج ${r.productTitle} بكمية ${r.quantity} طن...`);
+            const isSample = r.type === 'sample_request' || r.incoterm === 'SAMPLE';
+            const badgeHtml = isSample
+                ? `<span style="background:var(--accent); color:var(--primary-dark); padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-inline-end:6px;">عينة فحص</span>`
+                : `<span style="background:#173627; color:#fff; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:bold; margin-inline-end:6px;">تصدير B2B</span>`;
+            const waMsg = encodeURIComponent(`أهلاً بك ${r.companyName}، بخصوص طلبك لـ ${r.productTitle} (${r.quantity})...`);
             list.innerHTML += `
                 <div class="data-item" style="border-right-color:#173627;">
                     <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
                         <div>
-                            <h4 style="color:#173627; margin-bottom:4px;"><i class="fa-solid fa-building"></i> ${escapeHtml(r.companyName)}</h4>
-                            <p><strong>المنتج:</strong> ${escapeHtml(r.productTitle)} | <strong>الكمية:</strong> ${escapeHtml(r.quantity)} طن (${escapeHtml(r.incoterm)})</p>
+                            <h4 style="color:#173627; margin-bottom:4px;">${badgeHtml}<i class="fa-solid fa-building"></i> ${escapeHtml(r.companyName)}</h4>
+                            <p><strong>المنتج:</strong> ${escapeHtml(r.productTitle)} | <strong>الكمية:</strong> ${escapeHtml(r.quantity)} ${isSample ? '' : `طن (${escapeHtml(r.incoterm)})`}</p>
                             <p><strong>الوجهة:</strong> ${escapeHtml(r.destination)} | <strong>الهاتف:</strong> ${escapeHtml(r.phone)}</p>
                             <p style="font-size:0.8rem; color:#777;">البريد: ${escapeHtml(r.userEmail)} | التاريخ: ${escapeHtml(r.date || '')}</p>
                         </div>
@@ -2118,9 +2950,9 @@ async function loadAdminExportRfqs() {
 }
 
 window.deleteRfqOrder = async function(id) {
-    if (confirm('هل أنت متأكد من حذف طلب التصدير هذا؟')) {
+    if (confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
         await deleteDoc(doc(db, "rfq_orders", id));
-        alert('تم حذف طلب التصدير بنجاح');
+        alert('تم حذف الطلب بنجاح');
         loadAdminExportRfqs();
     }
 };
@@ -2305,6 +3137,7 @@ window.loadUserProfile = async function() {
     } catch (e) { console.warn(e); }
 
     let invoicesHtml = '';
+    let userCreditDebit = 0;
 
     const qOrders = query(collection(db, "orders"), where("userEmail", "==", currentUser.email), limit(40));
     const ordersSnap = await getDocs(qOrders);
@@ -2314,6 +3147,11 @@ window.loadUserProfile = async function() {
         const safeId = escapeHtml(orderId);
         const order = docSnap.data();
         ordersCache[orderId] = order;
+
+        if ((order.paymentType || '').includes('آجل')) {
+            userCreditDebit += Number(order.total || 0);
+        }
+
         invoicesHtml += `
             <div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid var(--primary);">
                 ${t('رقم الفاتورة:', 'Invoice #:')} <strong>#${safeId.slice(0,6)}</strong> | ${t('الإجمالي:', 'Total:')} <strong>${escapeHtml(order.total)} ${t('ج.م', 'EGP')}</strong><br>
@@ -2322,15 +3160,38 @@ window.loadUserProfile = async function() {
             </div>`;
     });
 
+    // تحميل دفعات سداد الآجل للعميل لعرض كشف الرصيد الائتماني
+    try {
+        const qPay = query(collection(db, "credit_payments"), where("clientEmail", "==", currentUser.email), limit(40));
+        const paySnap = await getDocs(qPay);
+        let userCreditPaid = 0;
+        paySnap.forEach(p => { userCreditPaid += Number(p.data().amount || 0); });
+
+        const creditBox = document.getElementById('userCreditSummaryBox');
+        if (creditBox) {
+            if (userCreditDebit > 0 || userCreditPaid > 0) {
+                creditBox.style.display = 'block';
+                const rem = Math.max(0, userCreditDebit - userCreditPaid);
+                const cur = t('ج.م', 'EGP');
+                document.getElementById('userTotalCreditVal').textContent = `${userCreditDebit.toLocaleString()} ${cur}`;
+                document.getElementById('userTotalPaidVal').textContent = `${userCreditPaid.toLocaleString()} ${cur}`;
+                document.getElementById('userRemainingCreditVal').textContent = `${rem.toLocaleString()} ${cur}`;
+            } else {
+                creditBox.style.display = 'none';
+            }
+        }
+    } catch (e) { console.warn(e); }
+
     const qRfq = query(collection(db, "rfq_orders"), where("userEmail", "==", currentUser.email), limit(30));
     const rfqSnap = await getDocs(qRfq);
 
     rfqSnap.forEach((docSnap) => {
         const rfq = docSnap.data();
+        const isSample = rfq.type === 'sample_request' || rfq.incoterm === 'SAMPLE';
         invoicesHtml += `
             <div style="background:#f0f7f4; padding:12px; margin-bottom:10px; border-radius:6px; border-left:4px solid #173627;">
-                <span style="background:#173627; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid fa-ship"></i> ${t('طلب تصدير B2B', 'Export B2B Request')}</span>
-                <p style="margin-top:5px; margin-bottom:3px;">${t('المنتج:', 'Product:')} <strong>${escapeHtml(rfq.productTitle)}</strong> | ${t('الكمية:', 'Qty:')} <strong>${escapeHtml(rfq.quantity)} ${t('طن', 'Tons')} (${escapeHtml(rfq.incoterm)})</strong></p>
+                <span style="background:#173627; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.75rem;"><i class="fa-solid ${isSample ? 'fa-vial' : 'fa-ship'}"></i> ${isSample ? t('طلب عينة فحص', 'Sample Request') : t('طلب تصدير B2B', 'Export B2B Request')}</span>
+                <p style="margin-top:5px; margin-bottom:3px;">${t('المنتج:', 'Product:')} <strong>${escapeHtml(rfq.productTitle)}</strong> | ${t('الكمية:', 'Qty:')} <strong>${escapeHtml(rfq.quantity)} ${isSample ? '' : `${t('طن', 'Tons')} (${escapeHtml(rfq.incoterm)})`}</strong></p>
                 <p style="margin-bottom:3px; font-size:0.85rem; color:#555;">${t('الوجهة:', 'Destination:')} ${escapeHtml(rfq.destination)} | ${t('التاريخ:', 'Date:')} ${escapeHtml(rfq.date || '')}</p>
                 ${t('الحالة:', 'Status:')} <span style="color:#d4af37; font-weight:bold;">${escapeHtml(rfq.status || t('قيد المراجعة والدراسة', 'Under Review'))}</span>
             </div>`;
