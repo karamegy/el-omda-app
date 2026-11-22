@@ -55,6 +55,10 @@ function sanitizeUrl(url, fallback = '') {
     return fallback;
 }
 
+function isAdminRole(role) {
+    return role === "admin";
+}
+
 function isStaffRole(role) {
     return ["admin", "assistant_manager", "accountant", "employee"].includes(role);
 }
@@ -820,6 +824,10 @@ window.switchSection = function(sectionId) {
         }, 250);
     }
     if (sectionId === 'adminSection') {
+        const tabUserBtn = document.getElementById('tabUserBtn');
+        if (tabUserBtn) {
+            tabUserBtn.style.display = isAdminRole(currentUserRole) ? '' : 'none';
+        }
         loadCategoriesForAdmin();
         loadAdminProductsList();
     }
@@ -884,11 +892,16 @@ onAuthStateChanged(auth, async (user) => {
                 userSavedPhone = userData.phone || "";
             }
             
+            const isAdminUser = isAdminRole(currentUserRole);
             const isStaffUser = isStaffRole(currentUserRole);
             const isDriverUser = isDriverRole(currentUserRole);
 
             if (adminBtn) {
                 adminBtn.style.display = isStaffUser ? 'flex' : 'none';
+            }
+            const tabUserBtn = document.getElementById('tabUserBtn');
+            if (tabUserBtn) {
+                tabUserBtn.style.display = isAdminUser ? '' : 'none';
             }
             if (driverBtn) {
                 driverBtn.style.display = isDriverUser ? 'flex' : 'none';
@@ -903,6 +916,8 @@ onAuthStateChanged(auth, async (user) => {
         } catch (err) {
             if (adminBtn) adminBtn.style.display = 'none';
             if (driverBtn) driverBtn.style.display = 'none';
+            const tabUserBtn = document.getElementById('tabUserBtn');
+            if (tabUserBtn) tabUserBtn.style.display = 'none';
         }
 
         listenUserChat();
@@ -914,6 +929,8 @@ onAuthStateChanged(auth, async (user) => {
         if (adminBtn) adminBtn.style.display = 'none';
         if (driverBtn) driverBtn.style.display = 'none';
         if (profileBtn) profileBtn.style.display = 'none';
+        const tabUserBtn = document.getElementById('tabUserBtn');
+        if (tabUserBtn) tabUserBtn.style.display = 'none';
         if (unsubscribeAdminUnreadCount) {
             unsubscribeAdminUnreadCount();
             unsubscribeAdminUnreadCount = null;
@@ -3010,6 +3027,11 @@ async function loadDriversDropdown() {
 }
 
 window.switchAdminTab = function(tabName) {
+    if (tabName === 'users' && !isAdminRole(currentUserRole)) {
+        alert('عذراً، إدارة الرتب والصلاحيات مخصصة للمدير العام (Admin) فقط.');
+        return;
+    }
+
     if (tabName !== 'messages') {
         stopAdminChatListeners();
     }
@@ -3224,6 +3246,10 @@ window.updateOrderStatus = async function(orderId, newStatus) {
 async function loadAllUsers() {
     const list = document.getElementById('adminUsersList');
     if (!list) return;
+    if (!isAdminRole(currentUserRole)) {
+        list.innerHTML = '<p style="color:#dc2626; font-weight:bold;">عذراً، عرض وتعديل الرتب والصلاحيات متاح للمدير العام (Admin) فقط.</p>';
+        return;
+    }
     const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
     list.innerHTML = '';
     snapshot.forEach(docSnap => {
@@ -3250,6 +3276,10 @@ async function loadAllUsers() {
 }
 
 window.changeUserRole = async function(email) {
+    if (!isAdminRole(currentUserRole)) {
+        alert('عذراً، تعديل الرتب والصلاحيات مخصص للمدير العام (Admin) فقط.');
+        return;
+    }
     const selectId = `roleSelect_${email.replace(/[@.]/g, '_')}`;
     const newRole = document.getElementById(selectId).value;
     try {
@@ -3286,15 +3316,33 @@ sendNotificationForm?.addEventListener('submit', async (e) => {
     }
 });
 
+function getReadNotifIds() {
+    if (!currentUser) return [];
+    try {
+        const raw = JSON.parse(localStorage.getItem(`omda_read_notifs_${currentUser.email}`) || '[]');
+        return Array.isArray(raw) ? raw : [];
+    } catch (_) {
+        return [];
+    }
+}
+
 async function checkUnreadNotifications() {
     if (!currentUser) return;
     try {
         const snapshot = await getDocs(query(collection(db, "notifications"), where("read", "==", false), limit(25)));
-        const count = snapshot.size;
+        const readIds = getReadNotifIds();
+        let unreadCount = 0;
+
+        snapshot.forEach(docSnap => {
+            if (!readIds.includes(docSnap.id)) {
+                unreadCount++;
+            }
+        });
+
         const notifCountElem = document.getElementById('notifCount');
         const drawerNotifElem = document.getElementById('drawerNotifCount');
-        if (notifCountElem) notifCountElem.textContent = count;
-        if (drawerNotifElem) drawerNotifElem.textContent = count;
+        if (notifCountElem) notifCountElem.textContent = unreadCount;
+        if (drawerNotifElem) drawerNotifElem.textContent = unreadCount;
     } catch (e) { console.error(e); }
 }
 
@@ -3310,11 +3358,22 @@ window.loadNotifications = async function() {
         list.innerHTML = `<p style="text-align:center; color:#888;" data-i18n="no_notifs">${t('لا توجد إشعارات حالياً.', 'No notifications currently.')}</p>`;
         return;
     }
+
+    const readIds = new Set(getReadNotifIds());
     list.innerHTML = '';
+
     snapshot.forEach(docSnap => {
+        readIds.add(docSnap.id);
         const n = docSnap.data();
         list.innerHTML += `<div style="background:#f9f9f9; padding:12px; margin-bottom:10px; border-radius:8px; border-right:4px solid var(--accent);"><h4>${escapeHtml(n.title)}</h4><p>${escapeHtml(n.body)}</p></div>`;
     });
+
+    // حفظ معرّفات الإشعارات المقروءة لهذا المستخدم وتصفير الشارة فوراً
+    localStorage.setItem(`omda_read_notifs_${currentUser.email}`, JSON.stringify([...readIds].slice(-100)));
+    const notifCountElem = document.getElementById('notifCount');
+    const drawerNotifElem = document.getElementById('drawerNotifCount');
+    if (notifCountElem) notifCountElem.textContent = '0';
+    if (drawerNotifElem) drawerNotifElem.textContent = '0';
 };
 
 window.loadUserProfile = async function() {
@@ -3425,14 +3484,19 @@ trackInvoiceBtn?.addEventListener('click', async () => {
             return;
         }
 
-        const orderDocRef = doc(db, "orders", cleanId);
-        const docSnap = await getDoc(orderDocRef);
-
-        if (docSnap.exists()) {
-            const found = { id: docSnap.id, ...docSnap.data() };
-            ordersCache[found.id] = found;
-            resultBox.innerHTML = renderTrackResultCard(found);
-            return;
+        // محاولة الجلب المباشر فقط إذا كان المعرف كاملاً (20 حرفاً فأكثر)
+        if (cleanId.length >= 20) {
+            try {
+                const docSnap = await getDoc(doc(db, "orders", cleanId));
+                if (docSnap.exists()) {
+                    const found = { id: docSnap.id, ...docSnap.data() };
+                    ordersCache[found.id] = found;
+                    resultBox.innerHTML = renderTrackResultCard(found);
+                    return;
+                }
+            } catch (_) {
+                // تجاهل خطأ الصلاحيات في حال عدم وجود المستند والانتقال للبحث في طلبات المستخدم
+            }
         }
 
         let qSearch;
