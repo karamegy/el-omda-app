@@ -93,8 +93,29 @@
                 <span class="drawer-item-left"><i class="fa-solid fa-layer-group"></i> <span data-i18n="nav_cats_full">أقسام الأعلاف والحبوب</span></span>
             </button>
 
+            <!-- 1. رابط قسم بورصة الخامات اليومية -->
+            <button class="drawer-item" onclick="closeSideMenu(); switchSection('marketPricesSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-chart-line"></i> <span data-i18n="nav_market_prices">بورصة الخامات اليومية</span></span>
+                <span class="drawer-badge live-badge" data-i18n="live_badge">مباشر</span>
+            </button>
+
+            <!-- 2. رابط قسم حاسبة الأعلاف والتغذية -->
+            <button class="drawer-item" onclick="closeSideMenu(); switchSection('feedCalculatorSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-calculator"></i> <span data-i18n="nav_feed_calc">حاسبة الأعلاف والتغذية</span></span>
+            </button>
+
+            <!-- 3. رابط قسم شهادات الجودة وطلب العينات -->
+            <button class="drawer-item" onclick="closeSideMenu(); switchSection('qualitySpecsSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-award"></i> <span data-i18n="nav_quality_specs">شهادات الجودة والعينات</span></span>
+            </button>
+
             <button id="profileBtn" class="drawer-item" style="display:none;" onclick="closeSideMenu(); switchSection('profileSection'); loadUserProfile(); setTimeout(() => initUserMap(), 200);">
                 <span class="drawer-item-left"><i class="fa-solid fa-user-shield"></i> <span data-i18n="nav_profile_track">حسابي وتتبع الشحنات</span></span>
+            </button>
+
+            <!-- 4. رابط بوابة السائق الميداني (يظهر لرتبة السائق والإدارة) -->
+            <button id="driverBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('driverSection');">
+                <span class="drawer-item-left"><i class="fa-solid fa-truck-moving"></i> <span data-i18n="nav_driver_portal">بوابة السائق الميداني</span></span>
             </button>
 
             <button id="adminBtn" class="drawer-item admin-highlight" style="display:none;" onclick="closeSideMenu(); switchSection('adminSection'); loadCategoriesForAdmin(); loadAdminProductsList();">
@@ -177,11 +198,154 @@
             <div id="fullCategoriesGrid" class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); margin-top:15px;"></div>
         </section>
 
+        <!-- 1. قسم بورصة الأسعار اليومية للخامات والحبوب -->
+        <section id="marketPricesSection" class="app-section" style="display:none;">
+            <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3><i class="fa-solid fa-chart-line"></i> <span data-i18n="market_prices_title">بورصة الأسعار اليومية للخامات والحبوب</span></h3>
+                    <span data-i18n="market_prices_sub">تحديث يومي مباشر لأسعار الذرة الصفراء، كسب الصويا، الردة، والأعلاف المركزة للطن والشكارة</span>
+                </div>
+                <span id="marketPricesUpdatedAt" class="carousel-badge" data-i18n="market_updated_today">تحديث اليوم</span>
+            </div>
+
+            <div class="dynamic-carousel-card" style="margin-bottom: 16px;">
+                <div class="carousel-icon-box"><i class="fa-solid fa-scale-balanced"></i></div>
+                <div style="flex: 1; font-size: 0.85rem; color: var(--text-dark);" data-i18n="market_prices_note">
+                    الأسعار المعروضة استرشادية للطن أرض المصنع / الميناء وتُحدَّث يومياً وفق حركة السوق.
+                </div>
+            </div>
+
+            <div id="marketPricesGrid" class="market-prices-grid"></div>
+        </section>
+
+        <!-- 2. قسم حاسبة الأعلاف والتغذية الذكية -->
+        <section id="feedCalculatorSection" class="app-section" style="display:none;">
+            <div class="section-title">
+                <h3><i class="fa-solid fa-calculator"></i> <span data-i18n="feed_calc_title">حاسبة الأعلاف والتغذية الذكية للمزارع</span></h3>
+                <span data-i18n="feed_calc_sub">احسب احتياج مزرعتك اليومي والشهري من العلف والتكلفة التقديرية وأضف الكمية للسلة فوراً</span>
+            </div>
+
+            <div class="form-card" style="margin-bottom: 20px;">
+                <form id="feedCalculatorForm">
+                    <div class="input-group">
+                        <label data-i18n="calc_project_type">نوع النشاط / القطيع</label>
+                        <select id="calcLivestockType" required>
+                            <option value="broiler" data-i18n="calc_opt_broiler">دواجن تسمين (بادي / نامي / ناهي)</option>
+                            <option value="layer" data-i18n="calc_opt_layer">دواجن بياض إنتاجي</option>
+                            <option value="cattle" data-i18n="calc_opt_cattle">تسمين عجول وماشية</option>
+                            <option value="dairy" data-i18n="calc_opt_dairy">أبقار وجاموس حلاب</option>
+                            <option value="sheep" data-i18n="calc_opt_sheep">أغنام وماعز</option>
+                            <option value="fish" data-i18n="calc_opt_fish">أسماك بلطي وبوري (علف طافي)</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="input-group" style="flex: 1; min-width: 140px;">
+                            <label data-i18n="calc_count_label">عدد الرؤوس / الطيور</label>
+                            <input type="number" id="calcHeadCount" min="1" value="500" required>
+                        </div>
+                        <div class="input-group" style="flex: 1; min-width: 140px;">
+                            <label data-i18n="calc_days_label">مدة الدورة (بالأيام)</label>
+                            <input type="number" id="calcDaysCount" min="1" value="35" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="calc_bag_weight">وزن الشكارة القياسي (كجم)</label>
+                        <select id="calcBagWeight">
+                            <option value="50" data-i18n="calc_bag_50">50 كجم (شكارة قياسية)</option>
+                            <option value="25" data-i18n="calc_bag_25">25 كجم</option>
+                        </select>
+                    </div>
+                    <button type="submit" id="runFeedCalcBtn" class="btn-submit">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> <span data-i18n="calc_btn_run">احسب الاحتياج والتكلفة الآن</span>
+                    </button>
+                </form>
+            </div>
+
+            <div id="feedCalcResultBox" class="form-card" style="display:none; border-top: 4px solid var(--accent);">
+                <h3 style="margin-bottom: 12px;"><i class="fa-solid fa-chart-pie"></i> <span data-i18n="calc_result_title">نتائج التقدير الغذائي لمشروعك</span></h3>
+                <div id="feedCalcStatsGrid" class="calc-stats-grid"></div>
+                <button type="button" id="addCalcToCartBtn" class="btn-submit" style="margin-top: 15px; background: var(--accent); color: var(--primary-dark); display: none;">
+                    <i class="fa-solid fa-cart-plus"></i> <span data-i18n="calc_add_cart_btn">إضافة الكمية المحسوبة للسلة</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. قسم شهادات الجودة والتحاليل المعملية وطلب العينات B2B -->
+        <section id="qualitySpecsSection" class="app-section" style="display:none;">
+            <div class="section-title">
+                <h3><i class="fa-solid fa-award"></i> <span data-i18n="quality_specs_title">شهادات الجودة والتحاليل المعملية</span></h3>
+                <span data-i18n="quality_specs_sub">مواصفات معتمدة ونسب البروتين والطاقة، مع إمكانية طلب عينة فحص للمزارع والمستوردين (B2B)</span>
+            </div>
+
+            <div id="qualitySpecsGrid" class="products-grid" style="margin-bottom: 24px;"></div>
+
+            <div class="form-card" style="border-top: 4px solid var(--primary);">
+                <h3><i class="fa-solid fa-vial-circle-check"></i> <span data-i18n="sample_req_title">طلب عينة فحص معملي / تجريبية (B2B & مزارع)</span></h3>
+                <form id="sampleRequestForm">
+                    <div class="input-group">
+                        <label data-i18n="sample_prod_label">المنتج / العلف المطلوب فحص عينته</label>
+                        <input type="text" id="sampleProductInput" data-i18n-placeholder="sample_prod_ph" placeholder="مثال: علف بادي تسمين 23% أو ذرة صفراء درجة أولى" required>
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="sample_company_label">اسم المزرعة / الشركة / الجهة المستوردة</label>
+                        <input type="text" id="sampleCompanyInput" data-i18n-placeholder="sample_company_ph" placeholder="مثال: مزارع النيل للإنتاج الحيواني" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <div class="input-group" style="flex: 1; min-width: 140px;">
+                            <label data-i18n="sample_weight_label">حجم العينة المطلوبة</label>
+                            <select id="sampleWeightInput">
+                                <option value="1 كجم (عينة تحليل معملي)" data-i18n="sample_opt_1kg">1 كجم (عينة تحليل معملي)</option>
+                                <option value="5 كجم (عينة تشغيل تجريبي)" data-i18n="sample_opt_5kg">5 كجم (عينة تشغيل تجريبي)</option>
+                                <option value="25 كجم (شيكارة فحص)" data-i18n="sample_opt_25kg">25 كجم (شيكارة فحص)</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="flex: 1; min-width: 140px;">
+                            <label data-i18n="sample_phone_label">رقم الهاتف / الواتساب</label>
+                            <input type="tel" id="samplePhoneInput" placeholder="+20 111 409 9799" required>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label data-i18n="sample_address_label">عنوان استلام العينة (المحافظة / الدولة والميناء)</label>
+                        <input type="text" id="sampleAddressInput" data-i18n-placeholder="sample_address_ph" placeholder="مثال: الجيزة - طريق مصر إسكندرية الصحراوي" required>
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="fa-solid fa-paper-plane"></i> <span data-i18n="sample_submit_btn">إرسال طلب العينة الآن</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 4. بوابة السائق الميداني (مخصصة لرتبة driver والإدارة) -->
+        <section id="driverSection" class="app-section" style="display:none;">
+            <div class="profile-card-header" style="border-right: 5px solid var(--accent);">
+                <h2><i class="fa-solid fa-truck-moving"></i> <span data-i18n="driver_portal_title">بوابة السائق الميداني وخط السير</span></h2>
+                <div class="user-info-box" style="margin-top: 8px;">
+                    <p><strong data-i18n="driver_account_label">حساب السائق:</strong> <span id="driverEmailDisplay">-</span></p>
+                    <p><strong data-i18n="driver_vehicle_label">السيارة المسندة:</strong> <span id="driverVehicleDisplay" style="color: var(--primary); font-weight: 800;">جاري التحقق...</span></p>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap;">
+                    <button type="button" id="driverUpdateGpsBtn" class="btn-submit" style="flex: 1; background: var(--accent); color: var(--primary-dark);">
+                        <i class="fa-solid fa-satellite-dish"></i> <span data-i18n="driver_update_gps_btn">تحديث موقع السيارة الحي (GPS)</span>
+                    </button>
+                    <button type="button" id="driverRefreshOrdersBtn" class="btn-submit" style="width: auto; padding: 10px 16px;" title="تحديث الشحنات">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="section-title">
+                <h3 data-i18n="driver_orders_title">الشحنات المطلوب توصيلها حالياً</h3>
+                <span data-i18n="driver_orders_sub">اضغط على زر الخريطة لبدء الملاحة لموقع العميل، أو أكد التسليم عند الوصول</span>
+            </div>
+
+            <div id="driverOrdersList" class="data-list"></div>
+        </section>
+
         <!-- لوحة تحكم المدير الشاملة -->
         <section id="adminSection" class="app-section" style="display:none;">
             <div class="admin-header">
                 <h2><i class="fa-solid fa-gauge"></i> لوحة الإدارة والتحكم الشامل - العمدة</h2>
-                <p>إدارة المنتجات، الأقسام، طلبات الشراء، طلبات التصدير B2B، شات ومحادثات العملاء، أسطول السيارات، وصلاحيات الرتب.</p>
+                <p>إدارة المنتجات، الأقسام، طلبات الشراء، التصدير B2B، المحاسبة والآجل، البورصة، شهادات الجودة، شات العملاء، الأسطول، والرتب.</p>
             </div>
 
             <div class="admin-tabs">
@@ -189,6 +353,9 @@
                 <button onclick="switchAdminTab('categories')" class="tab-btn" id="tabCatBtn"><i class="fa-solid fa-folder-plus"></i> الأقسام</button>
                 <button onclick="switchAdminTab('export_rfq')" class="tab-btn" id="tabExportBtn"><i class="fa-solid fa-ship"></i> طلبات التصدير B2B</button>
                 <button onclick="switchAdminTab('orders')" class="tab-btn" id="tabOrdBtn"><i class="fa-solid fa-truck-fast"></i> طلبات الشراء</button>
+                <button onclick="switchAdminTab('accounting')" class="tab-btn" id="tabAccountingBtn"><i class="fa-solid fa-file-invoice-dollar"></i> المحاسبة والآجل</button>
+                <button onclick="switchAdminTab('market_prices')" class="tab-btn" id="tabMarketPricesBtn"><i class="fa-solid fa-chart-line"></i> تحديث البورصة</button>
+                <button onclick="switchAdminTab('quality_certs')" class="tab-btn" id="tabQualityBtn"><i class="fa-solid fa-award"></i> شهادات الجودة</button>
                 <button onclick="switchAdminTab('messages')" class="tab-btn" id="tabMessagesBtn"><i class="fa-solid fa-comments"></i> شات ومحادثات العملاء</button>
                 <button onclick="switchAdminTab('fleet')" class="tab-btn" id="tabFleetBtn"><i class="fa-solid fa-car"></i> سيارتي والأسطول</button>
                 <button onclick="switchAdminTab('map')" class="tab-btn" id="tabMapBtn"><i class="fa-solid fa-map-location-dot"></i> خريطة الشحنات</button>
@@ -259,13 +426,134 @@
             </div>
 
             <div id="adminExportTab" class="admin-panel" style="display:none;">
-                <h3>طلبات عروض الأسعار والتصدير بالجملة (B2B)</h3>
+                <h3>طلبات عروض الأسعار والتصدير بالجملة والعينات (B2B)</h3>
                 <div id="adminExportRfqList" class="data-list" style="margin-top: 15px;"></div>
             </div>
 
             <div id="adminOrdersTab" class="admin-panel" style="display:none;">
                 <h3>طلبات الشراء والتحكم الإداري الكامل وتعيين السيارات والسائقين</h3>
                 <div id="adminOrdersList" class="data-list"></div>
+            </div>
+
+            <!-- تبويب المحاسبة وكشف حساب الآجل -->
+            <div id="adminAccountingTab" class="admin-panel" style="display:none;">
+                <h3><i class="fa-solid fa-coins"></i> ملخص المبيعات وحسابات الآجل والمديونيات</h3>
+                <div id="accountingSummaryCards" style="margin: 12px 0 18px 0;"></div>
+
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3>تسجيل دفعة سداد نقدي من عميل (خصم من الآجل)</h3>
+                    <form id="recordPaymentForm">
+                        <div class="input-group">
+                            <label>البريد الإلكتروني للعميل</label>
+                            <input type="email" id="payClientEmail" placeholder="client@example.com" required>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 140px;">
+                                <label>المبلغ المسدد (ج.م)</label>
+                                <input type="number" id="payAmount" min="1" step="0.01" placeholder="0.00" required>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 140px;">
+                                <label>ملاحظة / رقم الإيصال</label>
+                                <input type="text" id="payNote" placeholder="مثال: سداد دفعة تحت الحساب">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">
+                            <i class="fa-solid fa-check-double"></i> تسجيل الدفعة وخصمها من الرصيد
+                        </button>
+                    </form>
+                </div>
+
+                <h3>كشف مديونيات العملاء (الحسابات الآجلة)</h3>
+                <div id="adminAccountingList" class="data-list" style="margin-top: 12px;"></div>
+            </div>
+
+            <!-- تبويب تحديث بورصة الأسعار اليومية -->
+            <div id="adminMarketPricesTab" class="admin-panel" style="display:none;">
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3>إضافة أو تحديث سعر خامة في البورصة اليومية</h3>
+                    <form id="updateMarketPriceForm">
+                        <input type="hidden" id="editMarketItemId" value="">
+                        <div class="input-group">
+                            <label>اسم الخامة / العلف (بالعربية)</label>
+                            <input type="text" id="mpNameAr" placeholder="مثال: ذرة صفراء أرجنتيني / كسب صويا 46%" required>
+                        </div>
+                        <div class="input-group">
+                            <label>اسم الخامة (بالإنجليزية - اختياري)</label>
+                            <input type="text" id="mpNameEn" placeholder="Example: Yellow Corn / Soybean Meal 46%">
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 120px;">
+                                <label>سعر الطن (ج.م)</label>
+                                <input type="number" id="mpPrice" min="1" placeholder="14500" required>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 120px;">
+                                <label>وحدة القياس</label>
+                                <input type="text" id="mpUnit" value="طن صب / معبأ" required>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 120px;">
+                                <label>مؤشر الحركة</label>
+                                <select id="mpTrend">
+                                    <option value="stable">استقرار (=)</option>
+                                    <option value="up">صعود (▲)</option>
+                                    <option value="down">هبوط (▼)</option>
+                                </select>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 120px;">
+                                <label>مقدار التغير</label>
+                                <input type="text" id="mpChange" placeholder="مثال: +200 ج.م أو ثبات" value="ثبات">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit" id="saveMarketPriceBtn">حفظ ونشر في البورصة</button>
+                    </form>
+                </div>
+                <h3>الأسعار المنشورة حالياً في البورصة</h3>
+                <div id="adminMarketPricesList" class="data-list" style="margin-top: 12px;"></div>
+            </div>
+
+            <!-- تبويب إدارة شهادات الجودة والتحاليل المعملية -->
+            <div id="adminQualityTab" class="admin-panel" style="display:none;">
+                <div class="form-card" style="margin-bottom: 20px;">
+                    <h3>إضافة شهادة جودة أو تحليل معملي جديد</h3>
+                    <form id="addQualityCertForm">
+                        <div class="input-group">
+                            <label>عنوان الشهادة / المنتج (بالعربية)</label>
+                            <input type="text" id="qcTitle" placeholder="مثال: علف بادي تسمين 23% - دفعة تصدير ISO" required>
+                        </div>
+                        <div class="input-group">
+                            <label>عنوان الشهادة (بالإنجليزية - اختياري للتصدير)</label>
+                            <input type="text" id="qcTitleEn" placeholder="Example: Broiler Starter 23% - ISO Batch">
+                        </div>
+                        <div class="input-group">
+                            <label>رقم الشهادة / المعمل المعتمد</label>
+                            <input type="text" id="qcCertNo" placeholder="مثال: LAB-EG-2026-884" required>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>نسبة البروتين (%)</label>
+                                <input type="text" id="qcProtein" placeholder="مثال: 23.4%" required>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>نسبة الرطوبة (%)</label>
+                                <input type="text" id="qcMoisture" placeholder="مثال: 11.2%" required>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>الطاقة الممثلة (kcal)</label>
+                                <input type="text" id="qcEnergy" placeholder="مثال: 3050 kcal" required>
+                            </div>
+                            <div class="input-group" style="flex: 1; min-width: 130px;">
+                                <label>السموم الفطرية (Aflatoxin)</label>
+                                <input type="text" id="qcAflatoxin" value="< 5 ppb (آمن تماماً)" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit" id="saveQualityCertBtn">نشر شهادة الجودة</button>
+                    </form>
+                </div>
+                <h3>الشهادات والتحاليل المنشورة</h3>
+                <div id="adminQualityCertsList" class="data-list" style="margin-top: 12px;"></div>
             </div>
 
             <!-- مركز شات الإدارة المحكم والثابت المقاس -->
@@ -379,6 +667,28 @@
                     <p><strong data-i18n="saved_phone">رقم الهاتف المحفوظ:</strong> <span id="userPhoneDisplay">غير محدد</span></p>
                     <p><strong data-i18n="account_role">رتبة الحساب:</strong> <span id="userRoleDisplay">عميل</span></p>
                 </div>
+
+                <!-- كشف الرصيد الائتماني والآجل للعميل -->
+                <div id="userCreditSummaryBox" class="user-credit-box" style="display:none; margin-top: 12px;">
+                    <h4 style="color: var(--primary); font-size: 0.92rem; margin-bottom: 6px;">
+                        <i class="fa-solid fa-scale-balanced"></i> <span data-i18n="user_credit_title">كشف الرصيد الائتماني والآجل</span>
+                    </h4>
+                    <div class="credit-grid">
+                        <div class="credit-pill">
+                            <span data-i18n="credit_total_debit">إجمالي الآجل</span>
+                            <strong id="userTotalCreditVal">0 ج.م</strong>
+                        </div>
+                        <div class="credit-pill">
+                            <span data-i18n="credit_total_paid">إجمالي المسدد</span>
+                            <strong id="userTotalPaidVal" style="color: #16a34a;">0 ج.م</strong>
+                        </div>
+                        <div class="credit-pill">
+                            <span data-i18n="credit_remaining">الرصيد المتبقي</span>
+                            <strong id="userRemainingCreditVal" style="color: #dc2626;">0 ج.م</strong>
+                        </div>
+                    </div>
+                </div>
+
                 <div style="margin-top: 12px; border-top: 1px solid var(--border-color); padding-top: 10px;">
                     <a href="privacy-policy.html" target="_blank" style="color: var(--primary); font-weight: bold; font-size: 0.88rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
                         <i class="fa-solid fa-shield-halved"></i> <span data-i18n="privacy_policy">سياسة الخصوصية وأمان البيانات</span>
