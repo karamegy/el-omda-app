@@ -7,7 +7,7 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2).
+ * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة وتنزيل أندرويد.
  * ============================================================================
  */
 
@@ -381,7 +381,6 @@ function initLiveShipmentTrackingAddon() {
 
     observer.observe(trackBox, { childList: true, subtree: true });
 
-    // دمج دبابيس العملاء في خريطة الإدارة عند فتح تبويب الخريطة أو تحديثها
     document.getElementById('tabMapBtn')?.addEventListener('click', () => {
         setTimeout(() => {
             if (capturedMaps['adminMap']) plotActiveCustomersOnAdminMap(capturedMaps['adminMap']);
@@ -554,7 +553,6 @@ function injectWholesaleFieldInAdminProductForm() {
     `;
     prodPriceInput.closest('.input-group')?.insertAdjacentElement('afterend', group);
 
-    // حفظ سعر الجملة عند إضافة أو تعديل المنتج
     addProductForm.addEventListener('submit', () => {
         const wsVal = Number(document.getElementById('addonWholesalePrice')?.value || 0);
         const prodName = document.getElementById('prodName')?.value.trim();
@@ -1073,7 +1071,7 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2)
+// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة وتنزيل أندرويد
 // ==========================================
 function loadScriptOnce(src) {
     return new Promise((resolve, reject) => {
@@ -1095,25 +1093,47 @@ async function ensureCaptureLibraries() {
     }
 }
 
-function downloadCsvFallback(filename, headers, rows) {
-    const escapeCsvCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
-    const csvContent = '\uFEFF' + [
-        headers.map(escapeCsvCell).join(','),
-        ...rows.map(r => r.map(escapeCsvCell).join(','))
-    ].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+// استدعاء قائمة المشاركة والتنزيل الأصلية للأندرويد (مع تنزيل مباشر للكمبيوتر)
+async function shareOrDownloadFile(blob, fileName, shareTitle) {
+    try {
+        const file = new File([blob], fileName, { type: blob.type });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: shareTitle,
+                text: `${shareTitle} - مؤسسة الإخلاص للأعلاف الطبيعية والحبوب`
+            });
+            return;
+        }
+    } catch (err) {
+        if (err && err.name === 'AbortError') return; // أغلق المستخدم القائمة يدوياً
+    }
+
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename + '.csv';
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
+async function downloadCsvFallback(filename, headers, rows, title) {
+    const escapeCsvCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const csvContent = '\uFEFF' + [
+        headers.map(escapeCsvCell).join(','),
+        ...rows.map(r => r.map(escapeCsvCell).join(','))
+    ].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    await shareOrDownloadFile(blob, filename + '.csv', title || filename);
+}
+
 function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, baseFilename }) {
     document.getElementById('addonReportExportBackdrop')?.remove();
+
+    // تحميل مكتبات التصوير مسبقاً في الخلفية لفتح قائمة مشاركة أندرويد فوراً عند النقر
+    ensureCaptureLibraries().catch(() => {});
 
     const backdrop = document.createElement('div');
     backdrop.id = 'addonReportExportBackdrop';
@@ -1179,10 +1199,10 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
             </div>
             <div class="addon-report-foot">
                 <button type="button" id="addonSaveReportPngBtn" class="addon-excel-btn" style="background:#173627;">
-                    <i class="fa-solid fa-image"></i> حفظ كصورة (PNG)
+                    <i class="fa-solid fa-image"></i> مشاركة / حفظ صورة (PNG)
                 </button>
                 <button type="button" id="addonSaveReportPdfBtn" class="addon-excel-btn" style="background:#b91c1c;">
-                    <i class="fa-solid fa-file-pdf"></i> حفظ ملف (PDF)
+                    <i class="fa-solid fa-file-pdf"></i> مشاركة / حفظ (PDF)
                 </button>
                 <button type="button" id="addonSaveReportCsvBtn" class="addon-excel-btn" style="background:#15803d;">
                     <i class="fa-solid fa-file-excel"></i> Excel
@@ -1211,7 +1231,7 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         if (e.target === backdrop) backdrop.remove();
     });
 
-    // حفظ كصورة PNG بنفس آلية حفظ الفواتير (scale: 2, useCORS: true)
+    // مشاركة / حفظ كصورة PNG عبر قائمة أندرويد (scale: 2, useCORS: true)
     document.getElementById('addonSaveReportPngBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
@@ -1225,24 +1245,22 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
                 backgroundColor: '#ffffff',
                 logging: false
             });
-            const dataUrl = canvas.toDataURL('image/png', 1.0);
-            const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.png`;
 
-            const link = document.createElement('a');
-            link.href = dataUrl;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const pngBlob = await new Promise((resolve, reject) => {
+                canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('فشل إنشاء الصورة'))), 'image/png', 1.0);
+            });
+
+            const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.png`;
+            await shareOrDownloadFile(pngBlob, fileName, `${title} (${selectedPaper.toUpperCase()})`);
         } catch (err) {
-            alert('تعذر حفظ الصورة: ' + err.message);
+            alert('تعذر مشاركة أو حفظ الصورة: ' + err.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = orig;
         }
     });
 
-    // حفظ كملف PDF بمقاس A4 أو A5 بدقة scale: 2
+    // مشاركة / حفظ كملف PDF بمقاس A4 أو A5 عبر قائمة أندرويد (scale: 2)
     document.getElementById('addonSaveReportPdfBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
@@ -1285,17 +1303,19 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
                 heightLeft -= (pageHeight - margin * 2);
             }
 
-            pdf.save(`${baseFilename}_${selectedPaper.toUpperCase()}.pdf`);
+            const pdfBlob = new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' });
+            const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.pdf`;
+            await shareOrDownloadFile(pdfBlob, fileName, `${title} (${selectedPaper.toUpperCase()})`);
         } catch (err) {
-            alert('تعذر حفظ ملف PDF: ' + err.message);
+            alert('تعذر مشاركة أو حفظ ملف PDF: ' + err.message);
         } finally {
             btn.disabled = false;
             btn.innerHTML = orig;
         }
     });
 
-    document.getElementById('addonSaveReportCsvBtn')?.addEventListener('click', () => {
-        downloadCsvFallback(baseFilename, headers, rows);
+    document.getElementById('addonSaveReportCsvBtn')?.addEventListener('click', async () => {
+        await downloadCsvFallback(baseFilename, headers, rows, title);
     });
 }
 
