@@ -26,6 +26,7 @@ import {
 // === متغيرات وعناصر لوحة الإدارة وبوابة السائق ===
 // ==========================================
 let vehiclesCache = [];
+let adminUsersCache = [];
 let adminMap = null;
 let adminMapMarkersGroup = null;
 let editingOldMediaUrl = '';
@@ -1843,25 +1844,98 @@ window.updateOrderStatus = async function(orderId, newStatus) {
     }
 };
 
-async function loadAllUsers() {
+function getUserRoleArabicLabel(role) {
+    const map = {
+        admin: 'مدير',
+        assistant_manager: 'مساعد مدير',
+        accountant: 'محاسب',
+        employee: 'موظف',
+        driver: 'سائق',
+        customer: 'عميل'
+    };
+    return map[role] || role || 'عميل';
+}
+
+function getUserRoleSelectId(email) {
+    return `roleSelect_${encodeURIComponent(email).replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+}
+
+function ensureAdminUsersSearchUI() {
+    const list = document.getElementById('adminUsersList');
+    if (!list || document.getElementById('adminUsersSearchWrapper')) return;
+
+    const searchWrapper = document.createElement('div');
+    searchWrapper.id = 'adminUsersSearchWrapper';
+    searchWrapper.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; background:#fff; padding:10px 12px; border-radius:10px; border:1px solid var(--border-color);';
+    searchWrapper.innerHTML = `
+        <div style="flex:1; min-width:200px;">
+            <input type="text" id="adminUsersSearchInput" placeholder="ابحث بالاسم، البريد، رقم الهاتف، أو الرتبة..." style="width:100%; padding:8px 12px; border-radius:8px; border:1px solid #cbd5e1; font-size:0.9rem;">
+        </div>
+        <select id="adminUsersRoleFilter" style="padding:8px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#f8faf9; font-weight:700; font-size:0.86rem;">
+            <option value="all">جميع الرتب</option>
+            <option value="admin">مدير (Admin)</option>
+            <option value="assistant_manager">مساعد مدير</option>
+            <option value="accountant">محاسب</option>
+            <option value="employee">موظف</option>
+            <option value="driver">سائق</option>
+            <option value="customer">عميل</option>
+        </select>
+        <span id="adminUsersCountBadge" style="background:#173627; color:#d4af37; padding:5px 10px; border-radius:8px; font-size:0.8rem; font-weight:800;">0 حساب</span>
+    `;
+
+    list.insertAdjacentElement('beforebegin', searchWrapper);
+    document.getElementById('adminUsersSearchInput')?.addEventListener('input', renderAdminUsersList);
+    document.getElementById('adminUsersRoleFilter')?.addEventListener('change', renderAdminUsersList);
+}
+
+function renderAdminUsersList() {
     const list = document.getElementById('adminUsersList');
     if (!list) return;
-    if (!isAdminRole(currentUserRole)) {
-        list.innerHTML = '<p style="color:#dc2626; font-weight:bold;">عذراً، عرض وتعديل الرتب والصلاحيات متاح للمدير العام (Admin) فقط.</p>';
+
+    const term = (document.getElementById('adminUsersSearchInput')?.value || '').trim().toLowerCase();
+    const roleFilter = document.getElementById('adminUsersRoleFilter')?.value || 'all';
+    const countBadge = document.getElementById('adminUsersCountBadge');
+
+    const filtered = adminUsersCache.filter(u => {
+        const userRole = u.role || u.rol || u.col || 'customer';
+        if (roleFilter !== 'all' && userRole !== roleFilter) return false;
+        if (!term) return true;
+
+        const name = (u.name || '').toLowerCase();
+        const email = (u.email || '').toLowerCase();
+        const phone = (u.phone || '').toLowerCase();
+        const roleEn = userRole.toLowerCase();
+        const roleAr = getUserRoleArabicLabel(userRole).toLowerCase();
+
+        return name.includes(term) || email.includes(term) || phone.includes(term) || roleEn.includes(term) || roleAr.includes(term);
+    });
+
+    if (countBadge) {
+        countBadge.textContent = `${filtered.length} من ${adminUsersCache.length}`;
+    }
+
+    if (filtered.length === 0) {
+        list.innerHTML = '<p style="color:#888; text-align:center; padding:16px;">لا توجد حسابات مطابقة لنتيجة البحث.</p>';
         return;
     }
-    const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
-    list.innerHTML = '';
-    snapshot.forEach(docSnap => {
-        const u = docSnap.data();
-        const email = docSnap.id;
+
+    list.innerHTML = filtered.map(u => {
+        const email = u.email;
         const safeEmail = escapeHtml(email);
+        const encodedEmail = encodeURIComponent(email);
         const userRole = u.role || u.rol || u.col || 'customer';
-        list.innerHTML += `
+        const selectId = getUserRoleSelectId(email);
+        const isProtectedAccount = email === 'haretg@gmail.com' || (currentUser && email === currentUser.email);
+
+        const deleteBtnHtml = isProtectedAccount
+            ? `<span style="background:#f1f5f9; color:#64748b; padding:6px 10px; border-radius:6px; font-size:0.78rem; font-weight:700;" title="حساب محمي"><i class="fa-solid fa-shield-halved"></i> محمي</span>`
+            : `<button type="button" onclick="deleteUserAccount(decodeURIComponent('${encodedEmail}'))" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold;"><i class="fa-solid fa-trash"></i> حذف</button>`;
+
+        return `
             <div class="data-item" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
                 <div>الاسم: ${escapeHtml(u.name || 'مستخدم')} | البريد: ${safeEmail} | الهاتف: <strong>${escapeHtml(u.phone || 'غير مسجل')}</strong> | الرتبة الحالية: <strong style="color:var(--accent);">${escapeHtml(userRole)}</strong></div>
-                <div>
-                    <select id="roleSelect_${email.replace(/[@.]/g, '_')}" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <select id="${selectId}" style="padding:6px; border-radius:6px; border:1px solid #ccc;">
                         <option value="admin" ${userRole === 'admin' ? 'selected' : ''}>مدير</option>
                         <option value="assistant_manager" ${userRole === 'assistant_manager' ? 'selected' : ''}>مساعد مدير</option>
                         <option value="accountant" ${userRole === 'accountant' ? 'selected' : ''}>محاسب</option>
@@ -1869,10 +1943,35 @@ async function loadAllUsers() {
                         <option value="driver" ${userRole === 'driver' ? 'selected' : ''}>سائق</option>
                         <option value="customer" ${userRole === 'customer' ? 'selected' : ''}>عميل</option>
                     </select>
-                    <button onclick='changeUserRole("${safeEmail}")' style="background:#234d39; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; margin-right:5px;">تحديث الرتبة</button>
+                    <button type="button" onclick="changeUserRole(decodeURIComponent('${encodedEmail}'))" style="background:#234d39; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer;">تحديث الرتبة</button>
+                    ${deleteBtnHtml}
                 </div>
             </div>`;
-    });
+    }).join('');
+}
+
+async function loadAllUsers() {
+    const list = document.getElementById('adminUsersList');
+    if (!list) return;
+    if (!isAdminRole(currentUserRole)) {
+        list.innerHTML = '<p style="color:#dc2626; font-weight:bold;">عذراً، عرض وتعديل الرتب والصلاحيات متاح للمدير العام (Admin) فقط.</p>';
+        return;
+    }
+
+    ensureAdminUsersSearchUI();
+    list.innerHTML = '<p style="color:#888; text-align:center; padding:12px;">جاري تحميل الحسابات...</p>';
+
+    try {
+        const snapshot = await getDocs(query(collection(db, "users"), limit(300)));
+        adminUsersCache = [];
+        snapshot.forEach(docSnap => {
+            const data = docSnap.data();
+            adminUsersCache.push({ email: docSnap.id, ...data });
+        });
+        renderAdminUsersList();
+    } catch (e) {
+        list.innerHTML = '<p style="color:#dc2626;">خطأ في تحميل الحسابات: ' + escapeHtml(e.message) + '</p>';
+    }
 }
 
 window.changeUserRole = async function(email) {
@@ -1880,18 +1979,50 @@ window.changeUserRole = async function(email) {
         alert('عذراً، تعديل الرتب والصلاحيات مخصص للمدير العام (Admin) فقط.');
         return;
     }
-    const selectId = `roleSelect_${email.replace(/[@.]/g, '_')}`;
-    const newRole = document.getElementById(selectId).value;
+    const selectId = getUserRoleSelectId(email);
+    const selectEl = document.getElementById(selectId);
+    if (!selectEl) return;
+    const newRole = selectEl.value;
     try {
         await updateDoc(doc(db, "users", email), { 
             role: newRole,
             rol: newRole,
             col: newRole 
         });
+        const cachedUser = adminUsersCache.find(u => u.email === email);
+        if (cachedUser) {
+            cachedUser.role = newRole;
+            cachedUser.rol = newRole;
+            cachedUser.col = newRole;
+        }
         alert('تم تحديث رتبة وصلاحية المستخدم بنجاح!');
-        loadAllUsers();
+        renderAdminUsersList();
     } catch (e) {
         alert('خطأ: ' + e.message);
+    }
+};
+
+window.deleteUserAccount = async function(email) {
+    if (!isAdminRole(currentUserRole)) {
+        alert('عذراً، حذف الحسابات مخصص للمدير العام (Admin) فقط.');
+        return;
+    }
+    if (email === 'haretg@gmail.com' || (currentUser && email === currentUser.email)) {
+        alert('لا يمكن حذف حساب المدير الرئيسي أو حسابك الحالي!');
+        return;
+    }
+
+    const target = adminUsersCache.find(u => u.email === email);
+    const displayName = target?.name ? `${target.name} (${email})` : email;
+    if (!confirm(`هل أنت متأكد من حذف حساب "${displayName}" نهائياً؟`)) return;
+
+    try {
+        await deleteDoc(doc(db, "users", email));
+        adminUsersCache = adminUsersCache.filter(u => u.email !== email);
+        alert('تم حذف حساب المستخدم بنجاح!');
+        renderAdminUsersList();
+    } catch (e) {
+        alert('خطأ أثناء حذف الحساب: ' + e.message);
     }
 };
 
