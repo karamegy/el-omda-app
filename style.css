@@ -28,7 +28,9 @@ html, body {
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
+    overflow-x: clip;
     -webkit-text-size-adjust: 100%;
+    -webkit-overflow-scrolling: touch;
     touch-action: manipulation;
     scroll-behavior: smooth;
 }
@@ -55,44 +57,15 @@ input, select, textarea {
 }
 
 /* ==========================================
-   خلفيات متحركة وتأثيرات بصرية خفيفة ومسرّعة بعتاد الرسوميات (GPU)
+   خلفيات ملكية ثابتة فائقة الخفة (بدون استهلاك GPU مستمر)
 ========================================== */
 body::before {
     content: '';
     position: fixed;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(212,175,55,0.09) 0%, rgba(23,54,39,0.04) 50%, transparent 70%);
+    inset: 0;
+    background: radial-gradient(circle at top center, rgba(212,175,55,0.08) 0%, rgba(23,54,39,0.04) 55%, transparent 75%);
     z-index: -3;
     pointer-events: none;
-    will-change: transform, opacity;
-    transform: translate3d(0, 0, 0);
-    animation: lightPulse 8s ease-in-out infinite alternate;
-}
-
-@keyframes lightPulse {
-    0% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.6; }
-    100% { transform: translate3d(0, 0, 0) scale(1.08); opacity: 1; }
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.15);
-    opacity: 0;
-    z-index: -1;
-    pointer-events: none;
-    will-change: opacity;
-    animation: lightningFlash 12s infinite;
-}
-
-@keyframes lightningFlash {
-    0%, 92%, 96%, 100% { opacity: 0; }
-    93%, 97% { opacity: 1; }
-    94% { opacity: 0.3; }
 }
 
 .smoke-bg {
@@ -103,45 +76,28 @@ body::after {
         radial-gradient(circle at 75% 30%, rgba(23, 54, 39, 0.04) 0%, transparent 50%);
     z-index: -2;
     pointer-events: none;
-    will-change: transform;
-    transform: translate3d(0, 0, 0);
-    animation: smokeDrift 20s linear infinite;
-}
-
-@keyframes smokeDrift {
-    0% { transform: translate3d(0, 0, 0) scale(1); }
-    50% { transform: translate3d(0, -18px, 0) scale(1.04); }
-    100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 
 .bg-logo-watermark {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate3d(-50%, -50%, 0);
-    width: 340px;
-    height: 340px;
-    opacity: 0.04;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    opacity: 0.035;
     background-image: url('icon1-512.png');
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
     z-index: -4;
     pointer-events: none;
-    will-change: transform;
-    animation: logoFloat 10s ease-in-out infinite alternate;
-}
-
-@keyframes logoFloat {
-    0% { transform: translate3d(-50%, -52%, 0) rotate(0deg) scale(1); }
-    100% { transform: translate3d(-50%, -48%, 0) rotate(2deg) scale(1.03); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    body::before,
-    body::after,
-    .smoke-bg,
-    .bg-logo-watermark,
+    html, body {
+        scroll-behavior: auto;
+    }
     .drawer-live-badge {
         animation: none !important;
     }
@@ -348,7 +304,7 @@ body::after {
 }
 
 /* ==========================================
-   القائمة الجانبية (Side Drawer Menu)
+   القائمة الجانبية (Side Drawer Menu - GPU Accelerated)
 ========================================== */
 .drawer-overlay {
     position: fixed;
@@ -357,8 +313,7 @@ body::after {
     z-index: 2500;
     opacity: 0;
     pointer-events: none;
-    will-change: opacity;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.24s ease;
 }
 
 .drawer-overlay.open {
@@ -369,7 +324,7 @@ body::after {
 .side-drawer {
     position: fixed;
     top: 0;
-    right: -310px;
+    right: 0;
     width: 285px;
     max-width: 84vw;
     height: 100vh;
@@ -377,8 +332,9 @@ body::after {
     background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     z-index: 2600;
-    will-change: right, left;
-    transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1), left 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    visibility: hidden;
+    transition: transform 0.26s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.26s;
     display: flex;
     flex-direction: column;
     box-shadow: -6px 0 28px rgba(0, 0, 0, 0.38);
@@ -386,20 +342,22 @@ body::after {
 }
 
 .side-drawer.open {
-    right: 0;
+    transform: translateX(0);
+    visibility: visible;
 }
 
 [dir="ltr"] .side-drawer {
     right: auto;
-    left: -310px;
+    left: 0;
+    transform: translateX(-100%);
     box-shadow: 6px 0 28px rgba(0, 0, 0, 0.38);
     border-left: none;
     border-right: 2px solid var(--accent);
 }
 
 [dir="ltr"] .side-drawer.open {
-    right: auto;
-    left: 0;
+    transform: translateX(0);
+    visibility: visible;
 }
 
 .drawer-header {
@@ -454,6 +412,8 @@ body::after {
     flex-direction: column;
     gap: 8px;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .drawer-item {
@@ -573,13 +533,14 @@ body::after {
 }
 
 /* ==========================================
-   شريط الأقسام الأفقية
+   شريط الأقسام الأفقية (تمرير لمسي فائق السرعة)
 ========================================== */
 .categories-nav {
     background: var(--white);
     padding: 12px 1.5rem;
     box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     margin-top: 6px;
     width: 100%;
@@ -629,11 +590,13 @@ body::after {
     margin: 16px auto;
     padding: 0 14px;
     overflow-x: hidden;
+    overflow-x: clip;
 }
 
 .app-section {
     width: 100%;
     max-width: 100%;
+    contain: layout style;
 }
 
 .hero-banner {
@@ -848,6 +811,8 @@ body::after {
 .market-price-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
     contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 155px;
 }
 
 .market-price-card:hover {
@@ -1088,6 +1053,8 @@ body::after {
     background: #f8faf9;
     max-height: 52vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 .cart-items-container {
@@ -1274,6 +1241,7 @@ body::after {
     justify-content: center;
     align-items: center;
     z-index: 2000;
+    overscroll-behavior: contain;
 }
 
 .modal-container {
@@ -1311,6 +1279,8 @@ body::after {
     padding: 18px;
     max-height: 60vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
 }
 
 /* ==========================================
@@ -1484,6 +1454,7 @@ body::after {
     gap: 8px;
     margin-bottom: 16px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     white-space: nowrap;
     padding-bottom: 6px;
     scrollbar-width: none;
@@ -1575,6 +1546,8 @@ body::after {
     font-size: 0.9rem;
     word-break: break-word;
     contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 95px;
 }
 
 [dir="ltr"] .data-item {
@@ -1661,6 +1634,9 @@ body::after {
     padding: 12px;
     margin-bottom: 10px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    contain: layout style;
+    content-visibility: auto;
+    contain-intrinsic-size: 85px;
 }
 
 [dir="ltr"] .payment-history-card {
@@ -1754,6 +1730,8 @@ body::after {
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding-left: 2px;
 }
 
@@ -1908,6 +1886,8 @@ body::after {
     padding: 12px;
     overflow-y: auto;
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -2017,6 +1997,11 @@ body::after {
     contain: layout size;
 }
 
+#userChatMessages {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+}
+
 #userChatMessages, 
 #adminChatMessages, 
 #adminConversationsList {
@@ -2094,6 +2079,21 @@ body::after {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* ==========================================
+   تسريع التمرير والأداء العام لكافة ملفات النواة الإضافية
+   (omda-pro, omda-addons, omda-export, omda-payments, omda-admin)
+========================================== */
+.export-subtabs,
+.admin-exp-subtabs {
+    -webkit-overflow-scrolling: touch;
+}
+
+.export-spec-card {
+    contain: layout style paint;
+    content-visibility: auto;
+    contain-intrinsic-size: 210px;
 }
 
 /* ==========================================
