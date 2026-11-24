@@ -7,7 +7,7 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة وتنزيل أندرويد.
+ * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة أندرويد (Capacitor).
  * ============================================================================
  */
 
@@ -271,7 +271,6 @@ function injectAddonStyles() {
             flex: 1;
             background: #e5e7eb;
             display: flex;
-            justify-content: center;
         }
         .addon-report-sheet {
             background: #ffffff;
@@ -283,6 +282,7 @@ function injectAddonStyles() {
             text-align: right;
             font-family: 'Cairo', sans-serif;
             box-sizing: border-box;
+            margin: 0 auto;
         }
         .addon-report-sheet.size-a4 {
             width: 794px;
@@ -1071,7 +1071,7 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة وتنزيل أندرويد
+// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة أندرويد
 // ==========================================
 function loadScriptOnce(src) {
     return new Promise((resolve, reject) => {
@@ -1093,26 +1093,86 @@ async function ensureCaptureLibraries() {
     }
 }
 
-// استدعاء قائمة المشاركة والتنزيل الأصلية للأندرويد (مع تنزيل مباشر للكمبيوتر)
+// تحويل Blob إلى Base64 صافي (بدون ترويسة data:...;base64,) ليتوافق مع أندرويد
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const res = String(reader.result || '');
+            const pureBase64 = res.includes(',') ? res.split(',')[1] : res;
+            resolve(pureBase64);
+        };
+        reader.onerror = () => reject(new Error('فشل قراءة بيانات الملف'));
+        reader.readAsDataURL(blob);
+    });
+}
+
+// تحويل اسم الملف الفعلي إلى أحرف إنجليزية وأرقام لتجنب رفض نظام ملفات أندرويد
+function toSafeAndroidFileName(fileName) {
+    const dotIdx = fileName.lastIndexOf('.');
+    const ext = dotIdx !== -1 ? fileName.slice(dotIdx) : '';
+    const namePart = dotIdx !== -1 ? fileName.slice(0, dotIdx) : fileName;
+    const cleanName = namePart
+        .replace(/[^\x20-\x7E]/g, '')
+        .replace(/[^a-zA-Z0-9_-]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+    const finalBase = /^[a-zA-Z]/.test(cleanName) ? cleanName : `Omda_Report_${cleanName || Date.now()}`;
+    return `${finalBase}${ext}`;
+}
+
+// استدعاء قائمة المشاركة الأصلية للأندرويد (Capacitor) مع بديل للمتصفح والكمبيوتر
 async function shareOrDownloadFile(blob, fileName, shareTitle) {
+    const shareText = `${shareTitle} - مؤسسة الإخلاص للأعلاف الطبيعية والحبوب`;
+    const safeFileName = toSafeAndroidFileName(fileName);
+
+    // 1. تطبيق أندرويد (Capacitor Native Filesystem + Share)
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share) {
+        try {
+            if (Capacitor.Plugins.Filesystem) {
+                const pureBase64Data = await blobToBase64(blob);
+                const savedFile = await Capacitor.Plugins.Filesystem.writeFile({
+                    path: safeFileName,
+                    data: pureBase64Data,
+                    directory: 'CACHE'
+                });
+
+                await Capacitor.Plugins.Share.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: savedFile.uri,
+                    dialogTitle: shareTitle
+                });
+                return;
+            }
+        } catch (err) {
+            const msg = String(err?.message || '').toLowerCase();
+            if (err?.name === 'AbortError' || msg.includes('cancel')) {
+                return; // أغلق المستخدم قائمة المشاركة يدوياً
+            }
+            console.warn('Capacitor Share fallback:', err);
+        }
+    }
+
+    // 2. متصفحات الهواتف التي تدعم مشاركة الملفات مباشرة
     try {
-        const file = new File([blob], fileName, { type: blob.type });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        const file = new File([blob], safeFileName, { type: blob.type });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
                 title: shareTitle,
-                text: `${shareTitle} - مؤسسة الإخلاص للأعلاف الطبيعية والحبوب`
+                text: shareText
             });
             return;
         }
     } catch (err) {
-        if (err && err.name === 'AbortError') return; // أغلق المستخدم القائمة يدوياً
+        if (err && err.name === 'AbortError') return;
     }
 
+    // 3. التنزيل المباشر للكمبيوتر
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = fileName;
+    link.download = safeFileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
