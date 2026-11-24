@@ -7,8 +7,8 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. عرض الجداول بتصميم متجاوب على التطبيق + صناعة الصورة (PNG) و PDF بمقاسي A4 و A5
- *    في الخلفية بعيداً عن عين المستخدم بدقة طباعة عالية ومنع قص الصفوف أو تداخل الأعمدة.
+ * 5. عرض الجداول بتصميم متجاوب على التطبيق + ورقة طباعة رسمية منسقة بالكامل
+ *    بمقاسي A4 و A5 (PNG و PDF) مع إطار وحدود كاملة ومنع قص الحواف أو تداخل الأعمدة.
  * ============================================================================
  */
 
@@ -296,7 +296,7 @@ function injectAddonStyles() {
         }
         .addon-app-table {
             width: 100%;
-            min-width: 640px;
+            min-width: 680px;
             border-collapse: collapse;
             font-size: 0.82rem;
             background: #ffffff;
@@ -335,45 +335,43 @@ function injectAddonStyles() {
         }
 
         /* =========================================================
-           قالب الطباعة الخلفي المعزول (Off-Screen Print Stage)
-           يُبنى بعيداً عن عين المستخدم لضمان دقة A4 و A5 دون قص أو تداخل
+           ورقة الطباعة الرسمية الكاملة (A4 / A5) المعزولة في الخلفية
            ========================================================= */
         #omdaOffscreenPrintHost {
-            position: fixed !important;
+            position: absolute !important;
             left: 0 !important;
             top: -35000px !important;
             z-index: -9999 !important;
             pointer-events: none !important;
             margin: 0 !important;
-            padding: 0 !important;
+            padding: 14px !important;
             background: #ffffff !important;
-            overflow: visible !important;
+            direction: ltr !important;
+            box-sizing: border-box !important;
         }
         .omda-print-sheet {
             background: #ffffff !important;
             color: #111827 !important;
             border: 2.5px solid #173627 !important;
-            border-radius: 0 !important;
+            border-top: 6px solid #d4af37 !important;
             direction: rtl !important;
             text-align: right !important;
             font-family: 'Cairo', Tahoma, Arial, sans-serif !important;
             box-sizing: border-box !important;
-            margin: 0 !important;
+            margin: 0 auto !important;
             overflow: visible !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
         }
         .omda-print-sheet.paper-a4 {
             width: 794px !important;
             min-width: 794px !important;
             max-width: 794px !important;
-            padding: 20px !important;
+            padding: 20px 22px !important;
         }
         .omda-print-sheet.paper-a5 {
             width: 559px !important;
             min-width: 559px !important;
             max-width: 559px !important;
-            padding: 13px !important;
+            padding: 12px 13px !important;
         }
         .omda-print-table {
             width: 100% !important;
@@ -381,33 +379,33 @@ function injectAddonStyles() {
             border-collapse: collapse !important;
             margin-top: 12px !important;
             background: #ffffff !important;
+            border: 1.5px solid #173627 !important;
         }
         .omda-print-sheet.paper-a4 .omda-print-table {
             font-size: 11px !important;
         }
         .omda-print-sheet.paper-a5 .omda-print-table {
-            font-size: 9px !important;
+            font-size: 8.5px !important;
         }
         .omda-print-table th {
             background-color: #173627 !important;
-            background: #173627 !important;
             color: #ffffff !important;
-            border: 1.2px solid #173627 !important;
+            border: 1px solid #2d5a43 !important;
             font-weight: 800 !important;
-            text-align: right !important;
             vertical-align: middle !important;
             line-height: 1.35 !important;
             overflow-wrap: break-word !important;
             word-break: break-word !important;
+            box-sizing: border-box !important;
         }
         .omda-print-sheet.paper-a4 .omda-print-table th {
-            padding: 7px 5px !important;
+            padding: 8px 5px !important;
         }
         .omda-print-sheet.paper-a5 .omda-print-table th {
-            padding: 5px 3px !important;
+            padding: 5px 2.5px !important;
         }
         .omda-print-table td {
-            border: 1px solid #94a3b8 !important;
+            border: 1px solid #cbd5e1 !important;
             color: #111827 !important;
             vertical-align: middle !important;
             line-height: 1.4 !important;
@@ -416,27 +414,17 @@ function injectAddonStyles() {
             box-sizing: border-box !important;
         }
         .omda-print-sheet.paper-a4 .omda-print-table td {
-            padding: 6px 5px !important;
+            padding: 7px 5px !important;
         }
         .omda-print-sheet.paper-a5 .omda-print-table td {
-            padding: 4.5px 3px !important;
+            padding: 4.5px 2.5px !important;
         }
-        .omda-print-table tr:nth-child(even) td {
-            background-color: #f1f5f9 !important;
-            background: #f1f5f9 !important;
-        }
-        .omda-print-table tr:nth-child(odd) td {
-            background-color: #ffffff !important;
-            background: #ffffff !important;
-        }
-        .omda-ltr-isolate {
+        .omda-ltr-cell {
+            display: block !important;
+            width: 100% !important;
             direction: ltr !important;
             unicode-bidi: isolate !important;
-            display: inline-block !important;
-            max-width: 100% !important;
-            text-align: left !important;
-            overflow-wrap: anywhere !important;
-            word-break: break-word !important;
+            box-sizing: border-box !important;
         }
     `;
     document.head.appendChild(style);
@@ -1187,7 +1175,7 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: معاينة متجاوبة على التطبيق + محرك طباعة خلفي A4 / A5 (PNG & PDF)
+// الإضافة 5: معاينة متجاوبة على التطبيق + ورقة طباعة رسمية A4 / A5 (PNG & PDF)
 // ==========================================
 let libsLoadingPromise = null;
 const scriptPromises = {};
@@ -1337,34 +1325,35 @@ async function downloadCsvFallback(filename, headers, rows, title) {
     });
 }
 
-// تنسيق محتوى الخلية بأمان وعزل النصوص الإنجليزية (البريد/الهاتف/الكود) لمنع تداخلها مع الخلايا المجاورة
+// تنسيق محتوى الخلية بأمان وعزل البريد الإلكتروني والهاتف وكود الفاتورة لمنع أي تداخل
 function formatPrintCellHtml(val, isMoneyCol = false) {
     const raw = String(val ?? '-').trim();
     if (!raw) return '-';
 
-    // عزل القيم الإنجليزية أو الأرقام الدولية أو أكواد الفواتير لمنع تداخل BiDi في RTL
-    if (
-        raw.startsWith('#') ||
-        raw.includes('@') ||
-        /^\+?[0-9\s\-()./]+$/.test(raw)
-    ) {
-        const noWrap = raw.startsWith('#') || /^\+?[0-9\-/]+$/.test(raw);
-        return `<span class="omda-ltr-isolate" style="${noWrap ? 'white-space:nowrap;' : ''}">${esc(raw)}</span>`;
+    // 1. البريد الإلكتروني أو النصوص الإنجليزية الطويلة: تلتف داخل عرض الخلية فقط دون الخروج منها
+    if (raw.includes('@')) {
+        return `<span class="omda-ltr-cell" style="text-align:left; overflow-wrap:anywhere; word-break:break-word;">${esc(raw)}</span>`;
     }
 
+    // 2. كود الفاتورة، الهاتف، أو التاريخ: معزول في سطر واحد متمركز بدقة
+    if (raw.startsWith('#') || /^\+?[0-9\s\-()./]+$/.test(raw)) {
+        return `<span class="omda-ltr-cell" style="text-align:center; white-space:nowrap; font-weight:700;">${esc(raw)}</span>`;
+    }
+
+    // 3. المبالغ المالية
     if (isMoneyCol || /ج\.م$/.test(raw)) {
-        return `<span style="white-space:nowrap; font-weight:800; color:#173627;">${esc(raw)}</span>`;
+        return `<span style="display:block; width:100%; text-align:center; white-space:nowrap; font-weight:800; color:#173627;">${esc(raw)}</span>`;
     }
 
     return esc(raw);
 }
 
-// حساب نسب عرض الأعمدة المثالية لكل جدول بحيث لا يتداخل أي عمود في A4 أو A5
+// توزيع نسب عرض الأعمدة بدقة متناهية لورقة A4 و A5
 function resolveColumnWidths(headers) {
     const count = headers.length;
     if (count === 9) {
         // ['الفاتورة', 'التاريخ', 'العميل', 'الهاتف', 'الأصناف', 'الإجمالي', 'الدفع', 'الحالة', 'السيارة']
-        return ['8%', '11%', '21%', '14%', '6%', '12%', '10%', '10%', '8%'];
+        return ['8%', '11%', '22%', '14%', '6%', '12%', '10%', '9%', '8%'];
     }
     if (count === 5) {
         // ['العميل', 'الهاتف', 'إجمالي الآجل', 'إجمالي المسدد', 'الرصيد المتبقي']
@@ -1375,19 +1364,33 @@ function resolveColumnWidths(headers) {
 }
 
 /**
- * بناء وتصوير الفاتورة/التقرير في الخلفية بعيداً عن عين المستخدم (Off-Screen Print Stage)
- * بمقاس A4 (794px) أو A5 (559px) مع دقة طباعة فائقة ومنع أي قص جانبي أو تداخل
+ * بناء وتصوير ورقة الطباعة الرسمية الكاملة (A4 أو A5) في الخلفية
+ * مع ضمان ظهور الإطار والترويسة الخضراء والحدود كاملة بدون أي قص جانبي
  */
 async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, headers, rows, paperSize }) {
     await ensureCaptureLibraries();
 
     document.getElementById('omdaOffscreenPrintHost')?.remove();
 
-    const host = document.createElement('div');
-    host.id = 'omdaOffscreenPrintHost';
-
     const isA5 = paperSize === 'a5';
     const sheetWidthPx = isA5 ? 559 : 794;
+    const hostPadPx = 14;
+    const hostTotalWidthPx = sheetWidthPx + hostPadPx * 2;
+
+    const host = document.createElement('div');
+    host.id = 'omdaOffscreenPrintHost';
+    host.style.cssText = `
+        position: absolute !important;
+        left: 0 !important;
+        top: -35000px !important;
+        width: ${hostTotalWidthPx}px !important;
+        padding: ${hostPadPx}px !important;
+        background: #ffffff !important;
+        direction: ltr !important;
+        box-sizing: border-box !important;
+        z-index: -9999 !important;
+    `;
+
     const todayStr = new Date().toLocaleDateString('ar-EG', {
         year: 'numeric', month: 'long', day: 'numeric'
     });
@@ -1396,60 +1399,80 @@ async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, head
     const colGroupHtml = `<colgroup>${colWidths.map(w => `<col style="width:${w};">`).join('')}</colgroup>`;
 
     const badgesHtml = (summaryBadges || []).map(b => `
-        <div style="background:#f0f7f4; border:1.5px solid #173627; padding:${isA5 ? '4px 9px' : '6px 13px'}; border-radius:6px; font-size:${isA5 ? '10.5px' : '12px'}; display:inline-flex; align-items:center; gap:5px;">
+        <div style="background:#f0f7f4; border:1.5px solid #173627; padding:${isA5 ? '4px 9px' : '6px 13px'}; border-radius:6px; font-size:${isA5 ? '10px' : '12px'}; display:inline-flex; align-items:center; gap:5px;">
             <span style="color:#374151; font-weight:700;">${esc(b.label)}:</span>
             <strong style="color:#173627; font-weight:900;">${esc(b.value)}</strong>
         </div>
     `).join('');
 
+    const thPad = isA5 ? '5px 2.5px' : '8px 5px';
+    const tdPad = isA5 ? '4.5px 2.5px' : '7px 5px';
+
     const thHtml = headers.map((h, idx) => {
-        const isCenter = h === 'الأصناف';
-        return `<th style="width:${colWidths[idx]}; text-align:${isCenter ? 'center' : 'right'} !important;">${esc(h)}</th>`;
+        const isCenter = ['الفاتورة', 'التاريخ', 'الهاتف', 'الأصناف', 'الإجمالي', 'إجمالي الآجل', 'إجمالي المسدد', 'الرصيد المتبقي'].includes(h);
+        return `<th style="width:${colWidths[idx]}; background-color:#173627; color:#ffffff; border:1px solid #2d5a43; padding:${thPad}; font-weight:800; text-align:${isCenter ? 'center' : 'right'}; vertical-align:middle;">${esc(h)}</th>`;
     }).join('');
 
     const tbodyHtml = rows.length
-        ? rows.map(r => {
+        ? rows.map((r, rIdx) => {
+            const rowBg = rIdx % 2 === 1 ? '#f1f5f9' : '#ffffff';
             const tds = r.map((cell, idx) => {
                 const hName = headers[idx] || '';
-                const isCenter = hName === 'الأصناف';
+                const isCenter = ['الفاتورة', 'التاريخ', 'الهاتف', 'الأصناف', 'الإجمالي', 'إجمالي الآجل', 'إجمالي المسدد', 'الرصيد المتبقي'].includes(hName);
                 const isMoney = hName.includes('الإجمالي') || hName.includes('الآجل') || hName.includes('المسدد') || hName.includes('المتبقي');
-                return `<td style="text-align:${isCenter ? 'center' : 'right'} !important;">${formatPrintCellHtml(cell, isMoney)}</td>`;
+                return `<td style="background-color:${rowBg}; border:1px solid #cbd5e1; padding:${tdPad}; color:#111827; text-align:${isCenter ? 'center' : 'right'}; vertical-align:middle;">${formatPrintCellHtml(cell, isMoney)}</td>`;
             }).join('');
             return `<tr>${tds}</tr>`;
         }).join('')
-        : `<tr><td colspan="${headers.length}" style="text-align:center !important; padding:18px !important;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
+        : `<tr><td colspan="${headers.length}" style="text-align:center; padding:18px; border:1px solid #cbd5e1;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
 
     const sheet = document.createElement('div');
     sheet.className = `omda-print-sheet ${isA5 ? 'paper-a5' : 'paper-a4'}`;
+    sheet.style.cssText = `
+        width: ${sheetWidthPx}px !important;
+        min-width: ${sheetWidthPx}px !important;
+        max-width: ${sheetWidthPx}px !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        border: 2.5px solid #173627 !important;
+        border-top: 6px solid #d4af37 !important;
+        padding: ${isA5 ? '12px 13px' : '20px 22px'} !important;
+        direction: rtl !important;
+        text-align: right !important;
+        font-family: 'Cairo', Tahoma, Arial, sans-serif !important;
+        box-sizing: border-box !important;
+        margin: 0 auto !important;
+    `;
+
     sheet.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2.5px solid #173627; padding-bottom:${isA5 ? '8px' : '11px'}; gap:10px;">
             <div>
-                <div style="font-size:${isA5 ? '14px' : '18px'}; font-weight:900; color:#173627; line-height:1.3;">
+                <div style="font-size:${isA5 ? '13.5px' : '18px'}; font-weight:900; color:#173627; line-height:1.3;">
                     مؤسسة الإخلاص للأعلاف الطبيعية والحبوب
                 </div>
-                <div style="font-size:${isA5 ? '11.5px' : '14px'}; font-weight:800; color:#b45309; margin-top:2px;">
+                <div style="font-size:${isA5 ? '11px' : '14px'}; font-weight:800; color:#b45309; margin-top:2px;">
                     ${esc(title)}
                 </div>
-                ${subtitle ? `<div style="font-size:${isA5 ? '9.5px' : '11px'}; color:#4b5563; margin-top:2px;">${esc(subtitle)}</div>` : ''}
+                ${subtitle ? `<div style="font-size:${isA5 ? '9px' : '11px'}; color:#4b5563; margin-top:2px;">${esc(subtitle)}</div>` : ''}
             </div>
-            <div style="text-align:left; font-size:${isA5 ? '9.5px' : '11.5px'}; color:#1f2937; white-space:nowrap; background:#f8fafc; border:1px solid #cbd5e1; padding:6px 10px; border-radius:6px;">
+            <div style="text-align:right; font-size:${isA5 ? '9px' : '11px'}; color:#1f2937; white-space:nowrap; background:#f8fafc; border:1.5px solid #cbd5e1; border-right:4px solid #173627; padding:${isA5 ? '5px 8px' : '6px 11px'}; border-radius:6px;">
                 <div><strong>التاريخ:</strong> ${esc(todayStr)}</div>
                 <div style="margin-top:2px;"><strong>عدد السجلات:</strong> ${rows.length}</div>
-                <div style="margin-top:2px;"><strong>المقاس:</strong> ${paperSize.toUpperCase()}</div>
+                <div style="margin-top:2px;"><strong>مقاس الورقة:</strong> ${paperSize.toUpperCase()}</div>
             </div>
         </div>
 
         ${badgesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:${isA5 ? '8px' : '11px'};">${badgesHtml}</div>` : ''}
 
-        <table class="omda-print-table">
+        <table class="omda-print-table" style="width:100%; table-layout:fixed; border-collapse:collapse; margin-top:12px; border:1.5px solid #173627;">
             ${colGroupHtml}
             <thead><tr>${thHtml}</tr></thead>
             <tbody>${tbodyHtml}</tbody>
         </table>
 
-        <div style="margin-top:${isA5 ? '10px' : '14px'}; padding-top:8px; border-top:1.5px dashed #94a3b8; display:flex; justify-content:space-between; align-items:center; font-size:${isA5 ? '9px' : '10.5px'}; color:#475569; font-weight:700;">
+        <div style="margin-top:${isA5 ? '12px' : '16px'}; padding-top:8px; border-top:1.5px dashed #94a3b8; display:flex; justify-content:space-between; align-items:center; font-size:${isA5 ? '8.5px' : '10.5px'}; color:#475569; font-weight:700;">
             <span>منصة العمدة / مؤسسة الإخلاص - شبرا منت، الجيزة</span>
-            <span>مستند معتمد للطباعة والمراجعة المحاسبية</span>
+            <span>مستند رسمي معتمد للطباعة والمراجعة المحاسبية</span>
         </div>
     `;
 
@@ -1462,17 +1485,17 @@ async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, head
         }
         await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
-        const sheetRect = sheet.getBoundingClientRect();
-        const domTotalHeight = Math.ceil(sheet.scrollHeight);
+        const hostRect = host.getBoundingClientRect();
+        const domTotalHeight = Math.ceil(host.scrollHeight);
         const rowBreaksDom = Array.from(sheet.querySelectorAll('tbody tr')).map(trEl => {
             const r = trEl.getBoundingClientRect();
             return {
-                top: Math.max(0, r.top - sheetRect.top),
-                bottom: Math.max(0, r.bottom - sheetRect.top)
+                top: Math.max(0, r.top - hostRect.top),
+                bottom: Math.max(0, r.bottom - hostRect.top)
             };
         });
 
-        const canvas = await window.html2canvas(sheet, {
+        const canvas = await window.html2canvas(host, {
             scale: 2,
             useCORS: true,
             allowTaint: true,
@@ -1480,17 +1503,43 @@ async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, head
             logging: false,
             imageTimeout: 0,
             removeContainer: true,
-            width: sheetWidthPx,
+            width: hostTotalWidthPx,
             height: domTotalHeight,
-            windowWidth: sheetWidthPx + 40,
+            windowWidth: hostTotalWidthPx + 40,
             windowHeight: domTotalHeight + 40,
             scrollX: 0,
             scrollY: 0,
             ignoreElements: (el) => {
-                if (!el || el === document.documentElement || el === document.body) return false;
+                if (!el) return true;
+                const tag = el.tagName;
+                if (el === document.documentElement || el === document.body) return false;
+                if (tag === 'HEAD' || tag === 'STYLE' || (tag === 'LINK' && el.rel === 'stylesheet')) return false;
                 if (el === host || host.contains(el)) return false;
-                if (el.tagName === 'STYLE' || (el.tagName === 'LINK' && el.rel === 'stylesheet')) return false;
                 return true;
+            },
+            onclone: (clonedDoc) => {
+                // تحييد اتجاه RTL على مستوى المستند المنسوخ حتى يبدأ التصوير من (0,0) بدقة 100% دون أي قص جانبي
+                clonedDoc.documentElement.setAttribute('dir', 'ltr');
+                clonedDoc.documentElement.style.direction = 'ltr';
+                clonedDoc.documentElement.style.margin = '0';
+                clonedDoc.documentElement.style.padding = '0';
+
+                clonedDoc.body.setAttribute('dir', 'ltr');
+                clonedDoc.body.style.direction = 'ltr';
+                clonedDoc.body.style.margin = '0';
+                clonedDoc.body.style.padding = '0';
+                clonedDoc.body.style.background = '#ffffff';
+                clonedDoc.body.style.width = `${hostTotalWidthPx}px`;
+
+                const clonedHost = clonedDoc.getElementById('omdaOffscreenPrintHost');
+                if (clonedHost) {
+                    clonedHost.style.position = 'static';
+                    clonedHost.style.top = '0';
+                    clonedHost.style.left = '0';
+                    clonedHost.style.width = `${hostTotalWidthPx}px`;
+                    clonedHost.style.padding = `${hostPadPx}px`;
+                    clonedHost.style.margin = '0';
+                }
             }
         });
 
@@ -1503,7 +1552,6 @@ async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, head
 function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, baseFilename }) {
     document.getElementById('addonReportExportBackdrop')?.remove();
 
-    // تحضير المكتبات فوراً
     ensureCaptureLibraries().catch(() => {});
 
     const backdrop = document.createElement('div');
@@ -1538,14 +1586,14 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
             </div>
             <div class="addon-report-controls">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:0.82rem; font-weight:800; color:#173627;">مقاس الطباعة:</span>
+                    <span style="font-size:0.82rem; font-weight:800; color:#173627;">مقاس ورقة الطباعة:</span>
                     <div class="addon-size-toggle">
                         <button type="button" data-paper="a4" class="active">A4</button>
                         <button type="button" data-paper="a5">A5</button>
                     </div>
                 </div>
                 <span style="font-size:0.78rem; color:#15803d; font-weight:700;">
-                    <i class="fa-solid fa-print"></i> جاهز للطباعة والمشاركة الفورية
+                    <i class="fa-solid fa-print"></i> ورقة كاملة منسقة للطباعة والمشاركة
                 </span>
             </div>
 
@@ -1666,7 +1714,7 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
 
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = selectedPaper === 'a5' ? 5 : 7;
+            const margin = selectedPaper === 'a5' ? 4 : 6;
             const usableWidthMm = pageWidth - margin * 2;
             const usableHeightMm = pageHeight - margin * 2;
 
@@ -1831,7 +1879,7 @@ function initAdminFiltersAndExcelExports() {
         `;
         accSummary.insertAdjacentElement('afterend', bar);
 
-        document.getElementById('addonExportAccountingExcelBtn')?.addEventListener('click', async (e) => {
+        document.getElementById('addonExportAccountingExportBtn')?.addEventListener('click', async (e) => {
             const btn = e.currentTarget;
             const origHtml = btn.innerHTML;
             btn.disabled = true;
