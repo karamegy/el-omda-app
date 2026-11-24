@@ -7,7 +7,8 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة أندرويد (Capacitor).
+ * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5
+ *    بأقصى سرعة عبر قائمة مشاركة أندرويد (Capacitor) مع منع قص الجداول والصفوف.
  * ============================================================================
  */
 
@@ -206,19 +207,19 @@ function injectAddonStyles() {
         .addon-report-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(16, 39, 28, 0.75);
+            background: rgba(16, 39, 28, 0.78);
             z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 12px;
+            padding: 10px;
             backdrop-filter: blur(3px);
         }
         .addon-report-modal {
             background: #ffffff;
             width: 100%;
-            max-width: 820px;
-            max-height: 92vh;
+            max-width: 840px;
+            max-height: 94vh;
             border-radius: 16px;
             overflow: hidden;
             display: flex;
@@ -233,16 +234,18 @@ function injectAddonStyles() {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         .addon-report-controls {
             background: #f0f7f4;
-            padding: 10px 14px;
+            padding: 9px 14px;
             border-bottom: 1px solid #d1fae5;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 8px;
+            flex-shrink: 0;
         }
         .addon-size-toggle {
             display: inline-flex;
@@ -265,24 +268,30 @@ function injectAddonStyles() {
             background: #173627;
             color: #d4af37;
         }
+        /* إصلاح تمدد الورقة ومنع قص الإطار والجدول في المنتصف */
         .addon-report-scroll {
-            padding: 14px;
-            overflow: auto;
+            padding: 12px;
+            overflow-y: auto;
+            overflow-x: auto;
             flex: 1;
             background: #e5e7eb;
-            display: flex;
+            display: block;
+            -webkit-overflow-scrolling: touch;
         }
         .addon-report-sheet {
             background: #ffffff;
             color: #111827;
             padding: 18px;
-            border: 1.5px solid #173627;
-            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            border: 2px solid #173627;
+            border-radius: 4px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
             direction: rtl;
             text-align: right;
             font-family: 'Cairo', sans-serif;
             box-sizing: border-box;
             margin: 0 auto;
+            height: auto;
+            overflow: visible;
         }
         .addon-report-sheet.size-a4 {
             width: 794px;
@@ -291,12 +300,17 @@ function injectAddonStyles() {
         .addon-report-sheet.size-a5 {
             width: 559px;
             min-width: 559px;
+            padding: 14px;
         }
         .addon-report-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 12px;
             font-size: 0.78rem;
+            table-layout: auto;
+        }
+        .addon-report-sheet.size-a5 .addon-report-table {
+            font-size: 0.71rem;
         }
         .addon-report-table th {
             background: #173627;
@@ -304,11 +318,27 @@ function injectAddonStyles() {
             padding: 7px 6px;
             border: 1px solid #173627;
             text-align: right;
+            white-space: nowrap;
+            font-weight: 800;
+        }
+        .addon-report-sheet.size-a5 .addon-report-table th,
+        .addon-report-sheet.size-a5 .addon-report-table td {
+            padding: 5px 4px;
+        }
+        .addon-report-table tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
         }
         .addon-report-table td {
             padding: 6px;
             border: 1px solid #cbd5e1;
-            word-break: break-word;
+            overflow-wrap: break-word;
+            word-break: normal;
+            vertical-align: middle;
+            line-height: 1.45;
+        }
+        .addon-report-table td.cell-nowrap {
+            white-space: nowrap;
         }
         .addon-report-table tr:nth-child(even) td {
             background: #f8fafc;
@@ -321,6 +351,7 @@ function injectAddonStyles() {
             gap: 8px;
             flex-wrap: wrap;
             justify-content: center;
+            flex-shrink: 0;
         }
     `;
     document.head.appendChild(style);
@@ -1071,40 +1102,73 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2) عبر قائمة مشاركة أندرويد
+// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 بأقصى سرعة عبر قائمة مشاركة أندرويد
 // ==========================================
+let libsLoadingPromise = null;
+const scriptPromises = {};
+
 function loadScriptOnce(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+    if (scriptPromises[src]) return scriptPromises[src];
+    scriptPromises[src] = new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${src}"]`);
+        if (existing && (existing.dataset.loaded === '1')) return resolve();
         const s = document.createElement('script');
         s.src = src;
-        s.onload = resolve;
-        s.onerror = reject;
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        s.onload = () => {
+            s.dataset.loaded = '1';
+            resolve();
+        };
+        s.onerror = () => {
+            delete scriptPromises[src];
+            reject(new Error(`فشل تحميل: ${src}`));
+        };
         document.head.appendChild(s);
     });
+    return scriptPromises[src];
 }
 
-async function ensureCaptureLibraries() {
-    if (typeof window.html2canvas === 'undefined') {
-        await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+function ensureCaptureLibraries() {
+    if (typeof window.html2canvas !== 'undefined' && (typeof window.jspdf !== 'undefined' || typeof window.jsPDF !== 'undefined')) {
+        return Promise.resolve();
     }
-    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
-        await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    if (!libsLoadingPromise) {
+        libsLoadingPromise = Promise.all([
+            typeof window.html2canvas === 'undefined'
+                ? loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js')
+                : Promise.resolve(),
+            (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined')
+                ? loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js')
+                : Promise.resolve()
+        ]).catch(err => {
+            libsLoadingPromise = null;
+            throw err;
+        });
     }
+    return libsLoadingPromise;
 }
 
-// تحويل Blob إلى Base64 صافي (بدون ترويسة data:...;base64,) ليتوافق مع أندرويد
+// تحويل Blob إلى Base64 صافي عند الحاجة فقط (مثل ملفات Excel/CSV)
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onloadend = () => {
             const res = String(reader.result || '');
-            const pureBase64 = res.includes(',') ? res.split(',')[1] : res;
-            resolve(pureBase64);
+            resolve(res.includes(',') ? res.split(',')[1] : res);
         };
         reader.onerror = () => reject(new Error('فشل قراءة بيانات الملف'));
         reader.readAsDataURL(blob);
     });
+}
+
+function base64ToBlob(base64, mimeType) {
+    const byteChars = atob(base64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) {
+        byteNumbers[i] = byteChars.charCodeAt(i);
+    }
+    return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
 }
 
 // تحويل اسم الملف الفعلي إلى أحرف إنجليزية وأرقام لتجنب رفض نظام ملفات أندرويد
@@ -1120,42 +1184,42 @@ function toSafeAndroidFileName(fileName) {
     return `${finalBase}${ext}`;
 }
 
-// استدعاء قائمة المشاركة الأصلية للأندرويد (Capacitor) مع بديل للمتصفح والكمبيوتر
-async function shareOrDownloadFile(blob, fileName, shareTitle) {
+// استدعاء قائمة المشاركة الأصلية للأندرويد (Capacitor) مباشرة عبر Base64 بدون تأخير
+async function shareOrDownloadFast({ pureBase64, blob, mimeType, fileName, shareTitle }) {
     const shareText = `${shareTitle} - مؤسسة الإخلاص للأعلاف الطبيعية والحبوب`;
     const safeFileName = toSafeAndroidFileName(fileName);
 
-    // 1. تطبيق أندرويد (Capacitor Native Filesystem + Share)
-    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share) {
+    // 1. المسار الفوري لتطبيق أندرويد (Capacitor Native Filesystem + Share)
+    if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share && Capacitor.Plugins?.Filesystem) {
         try {
-            if (Capacitor.Plugins.Filesystem) {
-                const pureBase64Data = await blobToBase64(blob);
-                const savedFile = await Capacitor.Plugins.Filesystem.writeFile({
-                    path: safeFileName,
-                    data: pureBase64Data,
-                    directory: 'CACHE'
-                });
+            const base64Data = pureBase64 || (blob ? await blobToBase64(blob) : '');
+            const savedFile = await Capacitor.Plugins.Filesystem.writeFile({
+                path: safeFileName,
+                data: base64Data,
+                directory: 'CACHE'
+            });
 
-                await Capacitor.Plugins.Share.share({
-                    title: shareTitle,
-                    text: shareText,
-                    url: savedFile.uri,
-                    dialogTitle: shareTitle
-                });
-                return;
-            }
+            await Capacitor.Plugins.Share.share({
+                title: shareTitle,
+                text: shareText,
+                url: savedFile.uri,
+                dialogTitle: shareTitle
+            });
+            return;
         } catch (err) {
             const msg = String(err?.message || '').toLowerCase();
             if (err?.name === 'AbortError' || msg.includes('cancel')) {
-                return; // أغلق المستخدم قائمة المشاركة يدوياً
+                return;
             }
             console.warn('Capacitor Share fallback:', err);
         }
     }
 
+    const finalBlob = blob || base64ToBlob(pureBase64, mimeType);
+
     // 2. متصفحات الهواتف التي تدعم مشاركة الملفات مباشرة
     try {
-        const file = new File([blob], safeFileName, { type: blob.type });
+        const file = new File([finalBlob], safeFileName, { type: mimeType });
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
             await navigator.share({
                 files: [file],
@@ -1169,7 +1233,7 @@ async function shareOrDownloadFile(blob, fileName, shareTitle) {
     }
 
     // 3. التنزيل المباشر للكمبيوتر
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(finalBlob);
     const link = document.createElement('a');
     link.href = url;
     link.download = safeFileName;
@@ -1186,13 +1250,69 @@ async function downloadCsvFallback(filename, headers, rows, title) {
         ...rows.map(r => r.map(escapeCsvCell).join(','))
     ].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    await shareOrDownloadFile(blob, filename + '.csv', title || filename);
+    await shareOrDownloadFast({
+        blob,
+        mimeType: 'text/csv;charset=utf-8;',
+        fileName: filename + '.csv',
+        shareTitle: title || filename
+    });
+}
+
+// تصوير التقرير بأقصى سرعة مع تجاهل عناصر الصفحة الأخرى وإعادة ضبط التحجيم مؤقتاً
+async function captureReportSheetFast(sheetEl, scrollContainer) {
+    await ensureCaptureLibraries();
+
+    const prevZoom = sheetEl.style.zoom || '';
+    const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
+    const prevScrollLeft = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+    // إعادة المقاس الطبيعي 100% أثناء اللقطة حتى لا يظهر التقرير مقصوصاً أو مصغراً
+    sheetEl.style.zoom = '1';
+    if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+        scrollContainer.scrollLeft = 0;
+    }
+
+    try {
+        const fullWidth = sheetEl.offsetWidth;
+        const fullHeight = sheetEl.scrollHeight;
+
+        const canvas = await window.html2canvas(sheetEl, {
+            scale: 1.5, // دقة فائقة وسرعة مضاعفة على الهواتف
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#ffffff',
+            logging: false,
+            imageTimeout: 0,
+            removeContainer: true,
+            width: fullWidth,
+            height: fullHeight,
+            windowWidth: fullWidth + 40,
+            windowHeight: fullHeight + 40,
+            scrollX: 0,
+            scrollY: 0,
+            // تجاهل كل عناصر الصفحة غير المرتبطة بالتقرير لتسريع النسخ بنسبة 70%
+            ignoreElements: (el) => {
+                if (!el || el === document.documentElement || el === document.body) return false;
+                if (el === sheetEl || sheetEl.contains(el) || el.contains(sheetEl)) return false;
+                if (el.tagName === 'STYLE' || (el.tagName === 'LINK' && el.rel === 'stylesheet')) return false;
+                return true;
+            }
+        });
+        return canvas;
+    } finally {
+        sheetEl.style.zoom = prevZoom;
+        if (scrollContainer) {
+            scrollContainer.scrollTop = prevScrollTop;
+            scrollContainer.scrollLeft = prevScrollLeft;
+        }
+    }
 }
 
 function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, baseFilename }) {
     document.getElementById('addonReportExportBackdrop')?.remove();
 
-    // تحميل مكتبات التصوير مسبقاً في الخلفية لفتح قائمة مشاركة أندرويد فوراً عند النقر
+    // ضمان جاهزية المكتبات فوراً
     ensureCaptureLibraries().catch(() => {});
 
     const backdrop = document.createElement('div');
@@ -1210,16 +1330,21 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         </div>
     `).join('');
 
+    const isNoWrapValue = (val) => {
+        const s = String(val ?? '').trim();
+        return s.startsWith('#') || /ج\.م$/.test(s) || /^[0-9+\-\s()./]+$/.test(s);
+    };
+
     const tableHeadHtml = headers.map(h => `<th>${esc(h)}</th>`).join('');
     const tableRowsHtml = rows.length
-        ? rows.map(r => `<tr>${r.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`).join('')
+        ? rows.map(r => `<tr>${r.map(cell => `<td class="${isNoWrapValue(cell) ? 'cell-nowrap' : ''}">${esc(cell)}</td>`).join('')}</tr>`).join('')
         : `<tr><td colspan="${headers.length}" style="text-align:center; padding:16px;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
 
     backdrop.innerHTML = `
         <div class="addon-report-modal">
             <div class="addon-report-head">
                 <strong><i class="fa-solid fa-file-invoice" style="color:#d4af37;"></i> ${esc(title)}</strong>
-                <button type="button" id="addonCloseReportModalBtn" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer;">&times;</button>
+                <button type="button" id="addonCloseReportModalBtn" style="background:none; border:none; color:#fff; font-size:1.35rem; cursor:pointer; line-height:1;">&times;</button>
             </div>
             <div class="addon-report-controls">
                 <div style="display:flex; align-items:center; gap:8px;">
@@ -1230,18 +1355,18 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
                     </div>
                 </div>
                 <span style="font-size:0.78rem; color:#15803d; font-weight:700;">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> دقة فائقة (Scale 2)
+                    <i class="fa-solid fa-bolt"></i> معاينة كاملة + مشاركة فورية
                 </span>
             </div>
-            <div class="addon-report-scroll">
+            <div id="addonReportScrollBox" class="addon-report-scroll">
                 <div id="addonReportCaptureSheet" class="addon-report-sheet size-a4">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #173627; padding-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #173627; padding-bottom:10px; gap:10px;">
                         <div>
-                            <h3 style="margin:0; color:#173627; font-size:1.15rem;">مؤسسة الإخلاص للأعلاف الطبيعية والحبوب</h3>
-                            <p style="margin:2px 0 0; color:#b45309; font-weight:800; font-size:0.88rem;">${esc(title)}</p>
+                            <h3 style="margin:0; color:#173627; font-size:1.12rem;">مؤسسة الإخلاص للأعلاف الطبيعية والحبوب</h3>
+                            <p style="margin:2px 0 0; color:#b45309; font-weight:800; font-size:0.86rem;">${esc(title)}</p>
                             ${subtitle ? `<small style="color:#6b7280;">${esc(subtitle)}</small>` : ''}
                         </div>
-                        <div style="text-align:left; font-size:0.78rem; color:#374151;">
+                        <div style="text-align:left; font-size:0.78rem; color:#374151; white-space:nowrap;">
                             <div><strong>التاريخ:</strong> ${esc(todayStr)}</div>
                             <div><strong>إجمالي السجلات:</strong> ${rows.length}</div>
                         </div>
@@ -1275,6 +1400,24 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
 
     let selectedPaper = 'a4';
     const sheetEl = document.getElementById('addonReportCaptureSheet');
+    const scrollBox = document.getElementById('addonReportScrollBox');
+
+    // تحجيم المعاينة تلقائياً لتظهر الفاتورة بعرضها الكامل على شاشة الهاتف بدون قص جانبي
+    const fitPreviewToMobileScreen = () => {
+        if (!sheetEl || !scrollBox) return;
+        const targetWidth = selectedPaper === 'a5' ? 559 : 794;
+        const availableWidth = Math.max(280, scrollBox.clientWidth - 24);
+        const scale = availableWidth < targetWidth ? Number((availableWidth / targetWidth).toFixed(3)) : 1;
+        sheetEl.style.zoom = String(scale);
+    };
+
+    requestAnimationFrame(fitPreviewToMobileScreen);
+    window.addEventListener('resize', fitPreviewToMobileScreen);
+
+    const closeModal = () => {
+        window.removeEventListener('resize', fitPreviewToMobileScreen);
+        backdrop.remove();
+    };
 
     backdrop.querySelectorAll('.addon-size-toggle button').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1283,35 +1426,33 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
             selectedPaper = btn.dataset.paper;
             sheetEl.classList.remove('size-a4', 'size-a5');
             sheetEl.classList.add(`size-${selectedPaper}`);
+            fitPreviewToMobileScreen();
         });
     });
 
-    document.getElementById('addonCloseReportModalBtn')?.addEventListener('click', () => backdrop.remove());
+    document.getElementById('addonCloseReportModalBtn')?.addEventListener('click', closeModal);
     backdrop.addEventListener('click', (e) => {
-        if (e.target === backdrop) backdrop.remove();
+        if (e.target === backdrop) closeModal();
     });
 
-    // مشاركة / حفظ كصورة PNG عبر قائمة أندرويد (scale: 2, useCORS: true)
+    // 1. مشاركة / حفظ كصورة PNG بأقصى سرعة (تحويل مباشر إلى Base64 دون FileReader)
     document.getElementById('addonSaveReportPngBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التصوير...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري المشاركة...`;
         try {
-            await ensureCaptureLibraries();
-            const canvas = await window.html2canvas(sheetEl, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            });
-
-            const pngBlob = await new Promise((resolve, reject) => {
-                canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('فشل إنشاء الصورة'))), 'image/png', 1.0);
-            });
-
+            const canvas = await captureReportSheetFast(sheetEl, scrollBox);
+            const dataUrl = canvas.toDataURL('image/png');
+            const pureBase64 = dataUrl.split(',')[1];
             const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.png`;
-            await shareOrDownloadFile(pngBlob, fileName, `${title} (${selectedPaper.toUpperCase()})`);
+
+            await shareOrDownloadFast({
+                pureBase64,
+                mimeType: 'image/png',
+                fileName,
+                shareTitle: `${title} (${selectedPaper.toUpperCase()})`
+            });
         } catch (err) {
             alert('تعذر مشاركة أو حفظ الصورة: ' + err.message);
         } finally {
@@ -1320,52 +1461,98 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         }
     });
 
-    // مشاركة / حفظ كملف PDF بمقاس A4 أو A5 عبر قائمة أندرويد (scale: 2)
+    // 2. مشاركة / حفظ كملف PDF بمقاس A4 أو A5 بأقصى سرعة مع منع قص الصفوف بين الصفحات
     document.getElementById('addonSaveReportPdfBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري المشاركة...`;
         try {
-            await ensureCaptureLibraries();
-            const canvas = await window.html2canvas(sheetEl, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
+            // قياس مواقع الصفوف قبل التصوير لضمان عدم قطع أي صف بين صفحتي PDF
+            const prevZoom = sheetEl.style.zoom || '';
+            sheetEl.style.zoom = '1';
+            const sheetRect = sheetEl.getBoundingClientRect();
+            const rowBreaksDom = Array.from(sheetEl.querySelectorAll('tbody tr')).map(trEl => {
+                const r = trEl.getBoundingClientRect();
+                return {
+                    top: r.top - sheetRect.top,
+                    bottom: r.bottom - sheetRect.top
+                };
             });
-            const imgData = canvas.toDataURL('image/png', 1.0);
+            const domTotalHeight = sheetEl.scrollHeight;
+            sheetEl.style.zoom = prevZoom;
+
+            const canvas = await captureReportSheetFast(sheetEl, scrollBox);
             const JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
             if (!JsPDFCtor) throw new Error('مكتبة PDF غير متاحة');
 
             const pdf = new JsPDFCtor({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: selectedPaper
+                format: selectedPaper,
+                compress: true
             });
 
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
             const margin = 6;
-            const imgWidth = pageWidth - margin * 2;
-            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            const usableWidthMm = pageWidth - margin * 2;
+            const usableHeightMm = pageHeight - margin * 2;
 
-            let heightLeft = imgHeight;
-            let position = margin;
+            // معامل التحويل بين بكسل الـ Canvas والمليمتر
+            const pxPerMm = canvas.width / usableWidthMm;
+            const maxSliceHeightPx = Math.floor(usableHeightMm * pxPerMm);
+            const domToCanvasRatio = canvas.height / Math.max(1, domTotalHeight);
 
-            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-            heightLeft -= (pageHeight - margin * 2);
+            const rowBreaksPx = rowBreaksDom.map(rb => ({
+                top: Math.floor(rb.top * domToCanvasRatio),
+                bottom: Math.ceil(rb.bottom * domToCanvasRatio)
+            }));
 
-            while (heightLeft > 0) {
-                position = heightLeft - imgHeight + margin;
-                pdf.addPage();
-                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
-                heightLeft -= (pageHeight - margin * 2);
+            let currentY = 0;
+            let pageIndex = 0;
+
+            while (currentY < canvas.height) {
+                let sliceEnd = Math.min(canvas.height, currentY + maxSliceHeightPx);
+
+                // إذا لم نصل لنهاية التقرير، نتراجع لنهاية آخر صف كامل حتى لا يُقص أي صف من المنتصف
+                if (sliceEnd < canvas.height) {
+                    const intersectingRow = rowBreaksPx.find(rb => rb.top < sliceEnd && rb.bottom > sliceEnd);
+                    if (intersectingRow && intersectingRow.top > currentY + 40) {
+                        sliceEnd = intersectingRow.top;
+                    }
+                }
+
+                const sliceHeight = Math.max(1, sliceEnd - currentY);
+                const pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = sliceHeight;
+                const ctx = pageCanvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+                ctx.drawImage(canvas, 0, currentY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
+
+                // استخدام JPEG عالي الجودة داخل PDF لتسريع التوليد والمشاركة بمقدار 4 أضعاف
+                const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.94);
+                const sliceHeightMm = sliceHeight / pxPerMm;
+
+                if (pageIndex > 0) pdf.addPage();
+                pdf.addImage(pageImgData, 'JPEG', margin, margin, usableWidthMm, sliceHeightMm, undefined, 'FAST');
+
+                currentY = sliceEnd;
+                pageIndex++;
             }
 
-            const pdfBlob = new Blob([pdf.output('arraybuffer')], { type: 'application/pdf' });
+            const pdfDataUri = pdf.output('datauristring');
+            const pureBase64 = pdfDataUri.split(',')[1];
             const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.pdf`;
-            await shareOrDownloadFile(pdfBlob, fileName, `${title} (${selectedPaper.toUpperCase()})`);
+
+            await shareOrDownloadFast({
+                pureBase64,
+                mimeType: 'application/pdf',
+                fileName,
+                shareTitle: `${title} (${selectedPaper.toUpperCase()})`
+            });
         } catch (err) {
             alert('تعذر مشاركة أو حفظ ملف PDF: ' + err.message);
         } finally {
@@ -1551,6 +1738,8 @@ onAuthStateChanged(auth, (user) => {
 
 function bootstrapOmdaAddonsCore() {
     injectAddonStyles();
+    // تحميل مكتبات التصوير والـ PDF فور بدء التشغيل لتكون جاهزة لحظياً عند المشاركة
+    ensureCaptureLibraries().catch(() => {});
     registerLeafletHook();
     loadProductsPricingMetadata();
     initLiveShipmentTrackingAddon();
