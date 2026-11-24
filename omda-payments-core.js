@@ -89,19 +89,72 @@ function getCartItems() {
 }
 
 // ==========================================
-// 2. حقن تنسيقات نواة المدفوعات تلقائياً
+// 2. حقن تنسيقات نواة المدفوعات وتثبيت زر الشراء داخل السلة
 // ==========================================
 function injectPaymentCoreStyles() {
     if (document.getElementById('omda-payments-core-styles')) return;
     const style = document.createElement('style');
     style.id = 'omda-payments-core-styles';
     style.textContent = `
+        /* ضبط تخطيط نافذة السلة لمنع اختفاء زر الشراء عند فتح بيانات التحويل */
+        #cartModal .cart-modal-container {
+            max-height: 92vh !important;
+            max-height: 92dvh !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        #cartModal .modal-header {
+            flex-shrink: 0 !important;
+        }
+        #cartModal .cart-modal-body {
+            flex: 0 1 auto !important;
+            max-height: 30vh !important;
+            min-height: 76px;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            padding: 12px 14px !important;
+            transition: max-height 0.22s ease;
+        }
+        #cartModal .cart-modal-container.has-transfer-open .cart-modal-body {
+            max-height: 17vh !important;
+            min-height: 70px;
+            padding: 8px 14px !important;
+        }
+        #cartModal .cart-modal-footer {
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+            padding: 12px 14px !important;
+            background: #ffffff;
+        }
+        #cartModal .cart-summary-card {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: 10px !important;
+            padding: 11px 12px !important;
+        }
+        #cartModal #checkoutBtn {
+            flex-shrink: 0 !important;
+            width: 100% !important;
+            margin-top: auto !important;
+            position: relative;
+            z-index: 5;
+        }
+        #addonCouponInput {
+            font-size: 0.85rem !important;
+            min-width: 0;
+        }
         .pay-transfer-box {
             background: linear-gradient(135deg, #f0f7f4 0%, #ffffff 100%);
             border: 1.5px solid #173627;
             border-radius: 12px;
-            padding: 14px;
-            margin-top: 12px;
+            padding: 12px;
+            margin-top: 10px;
             box-shadow: 0 4px 12px rgba(23, 54, 39, 0.08);
         }
         .pay-transfer-header {
@@ -111,12 +164,12 @@ function injectPaymentCoreStyles() {
             gap: 8px;
             border-bottom: 1px dashed #cbd5e1;
             padding-bottom: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .pay-account-pill {
             background: #173627;
             color: #ffffff;
-            padding: 10px 12px;
+            padding: 9px 11px;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
@@ -127,10 +180,11 @@ function injectPaymentCoreStyles() {
         }
         .pay-account-value {
             font-family: monospace, sans-serif;
-            font-size: 1.02rem;
+            font-size: 0.98rem;
             font-weight: 800;
             color: #d4af37;
             direction: ltr;
+            word-break: break-all;
         }
         .pay-copy-btn {
             background: #d4af37;
@@ -157,7 +211,7 @@ function injectPaymentCoreStyles() {
             background: #f8faf9;
             color: #173627;
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.84rem;
             cursor: pointer;
             margin-top: 6px;
             text-align: center;
@@ -165,7 +219,7 @@ function injectPaymentCoreStyles() {
         .pay-upload-label:hover { background: #ecfdf5; }
         .pay-receipt-preview {
             max-width: 100%;
-            max-height: 150px;
+            max-height: 130px;
             border-radius: 8px;
             border: 1px solid #cbd5e1;
             margin-top: 8px;
@@ -337,18 +391,18 @@ function buildTransferDetailsMarkup(methodType, amountText, prefixId) {
 
     return `
         <div class="pay-transfer-header">
-            <strong style="color:#173627; font-size:0.9rem;">
+            <strong style="color:#173627; font-size:0.88rem;">
                 <i class="fa-solid ${iconClass}" style="color:${badgeColor};"></i> ${title}
             </strong>
-            <span style="background:${badgeColor}; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.74rem; font-weight:800;">
+            <span style="background:${badgeColor}; color:#fff; padding:2px 8px; border-radius:12px; font-size:0.72rem; font-weight:800; white-space:nowrap;">
                 ${isInsta ? 'InstaPay' : 'Cash Wallet'}
             </span>
         </div>
 
-        <div style="font-size:0.82rem; color:#374151; margin-bottom:4px;">
+        <div style="font-size:0.81rem; color:#374151; margin-bottom:4px;">
             <strong>${tr('اسم المستفيد:', 'Beneficiary:')}</strong> ${esc(paymentAccountsConfig.beneficiaryName)}
         </div>
-        <div style="font-size:0.78rem; color:#6b7280;">${subLabel}</div>
+        <div style="font-size:0.77rem; color:#6b7280;">${subLabel}</div>
 
         <div class="pay-account-pill">
             <span class="pay-account-value" id="${prefixId}_accVal">${esc(accountTarget)}</span>
@@ -360,24 +414,24 @@ function buildTransferDetailsMarkup(methodType, amountText, prefixId) {
             </div>
         </div>
 
-        <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:8px 10px; font-size:0.84rem; color:#92400e; display:flex; justify-content:space-between; align-items:center;">
+        <div style="background:#fffbeb; border:1px solid #fcd34d; border-radius:8px; padding:8px 10px; font-size:0.83rem; color:#92400e; display:flex; justify-content:space-between; align-items:center;">
             <span>${tr('المبلغ المطلوب تحويله:', 'Amount to Transfer:')}</span>
-            <strong style="font-size:1.02rem; color:#173627;" id="${prefixId}_amountVal">${esc(amountText)}</strong>
+            <strong style="font-size:1rem; color:#173627;" id="${prefixId}_amountVal">${esc(amountText)}</strong>
         </div>
 
-        <p style="font-size:0.76rem; color:#4b5563; margin:8px 0;">
+        <p style="font-size:0.75rem; color:#4b5563; margin:8px 0;">
             <i class="fa-solid fa-circle-info" style="color:#173627;"></i> ${esc(paymentAccountsConfig.transferNotes)}
         </p>
 
         <div style="margin-top:8px;">
-            <label style="font-size:0.8rem; font-weight:800; color:#173627; display:block; margin-bottom:4px;">
+            <label style="font-size:0.79rem; font-weight:800; color:#173627; display:block; margin-bottom:4px;">
                 ${tr('رقم مرجع العملية (Transaction Ref):', 'Transaction Reference Number:')}
             </label>
             <input type="text" id="${prefixId}_refInput" placeholder="${tr('أدخل آخر 6 أرقام أو رقم مرجع التحويل', 'Enter transfer reference number')}" style="width:100%; padding:8px 10px; border-radius:8px; border:1px solid #cbd5e1; background:#fff;">
         </div>
 
         <div style="margin-top:8px;">
-            <label style="font-size:0.8rem; font-weight:800; color:#173627; display:block;">
+            <label style="font-size:0.79rem; font-weight:800; color:#173627; display:block;">
                 ${tr('صورة إشعار التحويل (Screenshot):', 'Transfer Receipt Screenshot:')}
             </label>
             <label class="pay-upload-label" for="${prefixId}_fileInput">
@@ -446,10 +500,12 @@ function initCartTransferPaymentUI() {
     const updateTransferBoxVisibility = () => {
         const val = paySelect.value || '';
         const isInsta = val.includes('إنستا باي') || val.toLowerCase().includes('instapay');
-        const isWallet = val.includes('محفظة') || val.includes('كاش') && !val.includes('عند الاستلام');
+        const isWallet = val.includes('محفظة') || (val.includes('كاش') && !val.includes('عند الاستلام'));
+        const modalContainer = document.querySelector('#cartModal .cart-modal-container');
 
         if (!isInsta && !isWallet) {
             transferContainer.style.display = 'none';
+            modalContainer?.classList.remove('has-transfer-open');
             return;
         }
 
@@ -463,6 +519,12 @@ function initCartTransferPaymentUI() {
             if (amtEl) amtEl.textContent = getDisplayedTotalLabel();
         }
         transferContainer.style.display = 'block';
+        modalContainer?.classList.add('has-transfer-open');
+
+        // تمرير بطاقة الملخص بلطف لإظهار بيانات التحويل فوق زر الشراء المثبت
+        requestAnimationFrame(() => {
+            transferContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        });
     };
 
     paySelect.addEventListener('change', updateTransferBoxVisibility);
