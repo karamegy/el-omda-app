@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-omda-cache-v36';
+const CACHE_NAME = 'el-omda-cache-v37';
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
