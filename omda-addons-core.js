@@ -7,7 +7,7 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل إلى Excel (CSV) على الهاتف والكمبيوتر.
+ * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2).
  * ============================================================================
  */
 
@@ -202,6 +202,125 @@ function injectAddonStyles() {
             margin-top: 10px;
             border: 1.5px solid #173627;
             z-index: 1;
+        }
+        .addon-report-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(16, 39, 28, 0.75);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            backdrop-filter: blur(3px);
+        }
+        .addon-report-modal {
+            background: #ffffff;
+            width: 100%;
+            max-width: 820px;
+            max-height: 92vh;
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+            border-top: 4px solid #d4af37;
+        }
+        .addon-report-head {
+            background: #173627;
+            color: #ffffff;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .addon-report-controls {
+            background: #f0f7f4;
+            padding: 10px 14px;
+            border-bottom: 1px solid #d1fae5;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .addon-size-toggle {
+            display: inline-flex;
+            background: #e2e8f0;
+            border-radius: 8px;
+            padding: 3px;
+            gap: 4px;
+        }
+        .addon-size-toggle button {
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 0.82rem;
+            cursor: pointer;
+            background: transparent;
+            color: #334155;
+        }
+        .addon-size-toggle button.active {
+            background: #173627;
+            color: #d4af37;
+        }
+        .addon-report-scroll {
+            padding: 14px;
+            overflow: auto;
+            flex: 1;
+            background: #e5e7eb;
+            display: flex;
+            justify-content: center;
+        }
+        .addon-report-sheet {
+            background: #ffffff;
+            color: #111827;
+            padding: 18px;
+            border: 1.5px solid #173627;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            direction: rtl;
+            text-align: right;
+            font-family: 'Cairo', sans-serif;
+            box-sizing: border-box;
+        }
+        .addon-report-sheet.size-a4 {
+            width: 794px;
+            min-width: 794px;
+        }
+        .addon-report-sheet.size-a5 {
+            width: 559px;
+            min-width: 559px;
+        }
+        .addon-report-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            font-size: 0.78rem;
+        }
+        .addon-report-table th {
+            background: #173627;
+            color: #ffffff;
+            padding: 7px 6px;
+            border: 1px solid #173627;
+            text-align: right;
+        }
+        .addon-report-table td {
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            word-break: break-word;
+        }
+        .addon-report-table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+        .addon-report-foot {
+            padding: 10px 14px;
+            background: #f8faf9;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
         }
     `;
     document.head.appendChild(style);
@@ -488,7 +607,6 @@ function calculateCartWholesaleAndCoupons() {
         const lineNormal = g.unitPrice * g.qty;
         subtotal += lineNormal;
         if (g.qty >= g.minQty) {
-            // إذا حدد المدير سعر جملة نستخدمه، وإلا نطبق خصم جملة تلقائي 3% للكميات >= 20 شكارة (1 طن)
             const effectiveWsPrice = (g.wholesalePrice > 0 && g.wholesalePrice < g.unitPrice)
                 ? g.wholesalePrice
                 : Math.round(g.unitPrice * 0.97);
@@ -568,7 +686,6 @@ function initCartWholesaleAndCouponsUI() {
         }
     };
 
-    // مراقبة تحديث عناصر السلة لتحديث خصومات الجملة والكوبون لحظياً
     const cartItemsList = document.getElementById('cartItemsList');
     if (cartItemsList) {
         new MutationObserver(refreshCartTotals).observe(cartItemsList, { childList: true, subtree: true });
@@ -587,7 +704,6 @@ function initCartWholesaleAndCouponsUI() {
                 if (c.active !== false) foundCoupon = { id: d.id, ...c };
             });
 
-            // كوبونات افتراضية جاهزة في حال عدم إنشاء كوبونات في قاعدة البيانات بعد
             if (!foundCoupon && (code === 'OMDA10' || code === 'FARM5')) {
                 foundCoupon = code === 'OMDA10'
                     ? { code: 'OMDA10', type: 'percent', value: 10, minOrder: 2000 }
@@ -629,7 +745,6 @@ function initCartWholesaleAndCouponsUI() {
         }
     });
 
-    // اعتراض زر إتمام الطلب فقط في حال وجود خصم جملة أو كوبون لتسجيل السعر الصافي بدقة
     const checkoutBtn = document.getElementById('checkoutBtn');
     checkoutBtn?.addEventListener('click', async (e) => {
         const stats = calculateCartWholesaleAndCoupons();
@@ -690,7 +805,6 @@ function initCartWholesaleAndCouponsUI() {
                 createdAt: new Date().toISOString()
             });
 
-            // تفريغ السلة في الذاكرة و localStorage معاً عبر دوال التطبيق الأساسية
             const uniqueKeys = [...new Set(currentCart.map(i => i.id || i.name))];
             if (typeof window.removeGroupFromCart === 'function') {
                 uniqueKeys.forEach(k => window.removeGroupFromCart(k));
@@ -923,7 +1037,6 @@ async function renderFeedDepletionReminder() {
 
         if (!latestOrder || !latestOrder.createdAt) return;
         const bagsCount = Array.isArray(latestOrder.items) ? latestOrder.items.length : 1;
-        // تقدير دورة الاستهلاك القياسية (14 يوم افتراضياً للدفعة)
         const estimatedCycleDays = Math.min(30, Math.max(7, Math.round(bagsCount * 0.7) || 14));
         const daysPassed = Math.floor((Date.now() - new Date(latestOrder.createdAt).getTime()) / (1000 * 60 * 60 * 24));
         const daysRemaining = Math.max(0, estimatedCycleDays - daysPassed);
@@ -960,62 +1073,234 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: فلترة وتصدير التقارير المحاسبية والطلبات (Excel / CSV) للهاتف والكمبيوتر
+// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 (scale: 2)
 // ==========================================
-async function downloadCsvForExcel(filename, headers, rows) {
-    const escapeCsvCell = (val) => {
-        const str = String(val ?? '').replace(/"/g, '""');
-        return `"${str}"`;
-    };
-    const csvLines = [
+function loadScriptOnce(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) return resolve();
+        const s = document.createElement('script');
+        s.src = src;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
+
+async function ensureCaptureLibraries() {
+    if (typeof window.html2canvas === 'undefined') {
+        await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+    }
+    if (typeof window.jspdf === 'undefined' && typeof window.jsPDF === 'undefined') {
+        await loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    }
+}
+
+function downloadCsvFallback(filename, headers, rows) {
+    const escapeCsvCell = (val) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const csvContent = '\uFEFF' + [
         headers.map(escapeCsvCell).join(','),
         ...rows.map(r => r.map(escapeCsvCell).join(','))
-    ];
-    // إضافة UTF-8 BOM لضمان ظهور الحروف العربية بشكل سليم تماماً داخل برنامج Excel
-    const csvContent = '\uFEFF' + csvLines.join('\r\n');
-
-    // 1. الحل المعتمد لتطبيق الأندرويد (TWA / WebView): فتح نافذة المشاركة/الحفظ في Excel أو واتساب أو مدير الملفات
-    try {
-        const file = new File([csvContent], filename, { type: 'text/csv;charset=utf-8;' });
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            await navigator.share({
-                files: [file],
-                title: filename,
-                text: 'تقرير منصة العمدة / مؤسسة الإخلاص'
-            });
-            return;
-        }
-    } catch (err) {
-        if (err && err.name === 'AbortError') return; // ألغى المستخدم نافذة المشاركة يدوياً
-    }
-
-    // 2. بديل Android WebView القديم في حال عدم دعم مشاركة الملفات
-    if (/; wv\)/.test(navigator.userAgent)) {
-        const dataLink = document.createElement('a');
-        dataLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
-        dataLink.download = filename;
-        dataLink.style.display = 'none';
-        document.body.appendChild(dataLink);
-        dataLink.click();
-        document.body.removeChild(dataLink);
-        return;
-    }
-
-    // 3. التحميل المباشر للمتصفحات والكمبيوتر
+    ].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = filename;
-    link.style.display = 'none';
+    link.download = filename + '.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
+function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, baseFilename }) {
+    document.getElementById('addonReportExportBackdrop')?.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'addonReportExportBackdrop';
+    backdrop.className = 'addon-report-backdrop';
+
+    const todayStr = new Date().toLocaleDateString('ar-EG', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const badgesHtml = (summaryBadges || []).map(b => `
+        <div style="background:#f0f7f4; border:1px solid #bbf7d0; padding:6px 12px; border-radius:8px; font-size:0.8rem;">
+            <span style="color:#4b5563;">${esc(b.label)}:</span>
+            <strong style="color:#173627; margin-right:4px;">${esc(b.value)}</strong>
+        </div>
+    `).join('');
+
+    const tableHeadHtml = headers.map(h => `<th>${esc(h)}</th>`).join('');
+    const tableRowsHtml = rows.length
+        ? rows.map(r => `<tr>${r.map(cell => `<td>${esc(cell)}</td>`).join('')}</tr>`).join('')
+        : `<tr><td colspan="${headers.length}" style="text-align:center; padding:16px;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
+
+    backdrop.innerHTML = `
+        <div class="addon-report-modal">
+            <div class="addon-report-head">
+                <strong><i class="fa-solid fa-file-invoice" style="color:#d4af37;"></i> ${esc(title)}</strong>
+                <button type="button" id="addonCloseReportModalBtn" style="background:none; border:none; color:#fff; font-size:1.3rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="addon-report-controls">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:0.82rem; font-weight:800; color:#173627;">مقاس الورقة:</span>
+                    <div class="addon-size-toggle">
+                        <button type="button" data-paper="a4" class="active">A4</button>
+                        <button type="button" data-paper="a5">A5</button>
+                    </div>
+                </div>
+                <span style="font-size:0.78rem; color:#15803d; font-weight:700;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> دقة فائقة (Scale 2)
+                </span>
+            </div>
+            <div class="addon-report-scroll">
+                <div id="addonReportCaptureSheet" class="addon-report-sheet size-a4">
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #173627; padding-bottom:10px;">
+                        <div>
+                            <h3 style="margin:0; color:#173627; font-size:1.15rem;">مؤسسة الإخلاص للأعلاف الطبيعية والحبوب</h3>
+                            <p style="margin:2px 0 0; color:#b45309; font-weight:800; font-size:0.88rem;">${esc(title)}</p>
+                            ${subtitle ? `<small style="color:#6b7280;">${esc(subtitle)}</small>` : ''}
+                        </div>
+                        <div style="text-align:left; font-size:0.78rem; color:#374151;">
+                            <div><strong>التاريخ:</strong> ${esc(todayStr)}</div>
+                            <div><strong>إجمالي السجلات:</strong> ${rows.length}</div>
+                        </div>
+                    </div>
+                    ${badgesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${badgesHtml}</div>` : ''}
+                    <table class="addon-report-table">
+                        <thead><tr>${tableHeadHtml}</tr></thead>
+                        <tbody>${tableRowsHtml}</tbody>
+                    </table>
+                    <div style="margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between; font-size:0.74rem; color:#6b7280;">
+                        <span>منصة العمدة / مؤسسة الإخلاص - شبرا منت، الجيزة</span>
+                        <span>تم الإصدار آلياً بدقة عالية</span>
+                    </div>
+                </div>
+            </div>
+            <div class="addon-report-foot">
+                <button type="button" id="addonSaveReportPngBtn" class="addon-excel-btn" style="background:#173627;">
+                    <i class="fa-solid fa-image"></i> حفظ كصورة (PNG)
+                </button>
+                <button type="button" id="addonSaveReportPdfBtn" class="addon-excel-btn" style="background:#b91c1c;">
+                    <i class="fa-solid fa-file-pdf"></i> حفظ ملف (PDF)
+                </button>
+                <button type="button" id="addonSaveReportCsvBtn" class="addon-excel-btn" style="background:#15803d;">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(backdrop);
+
+    let selectedPaper = 'a4';
+    const sheetEl = document.getElementById('addonReportCaptureSheet');
+
+    backdrop.querySelectorAll('.addon-size-toggle button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            backdrop.querySelectorAll('.addon-size-toggle button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPaper = btn.dataset.paper;
+            sheetEl.classList.remove('size-a4', 'size-a5');
+            sheetEl.classList.add(`size-${selectedPaper}`);
+        });
+    });
+
+    document.getElementById('addonCloseReportModalBtn')?.addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', (e) => {
+        if (e.target === backdrop) backdrop.remove();
+    });
+
+    // حفظ كصورة PNG بنفس آلية حفظ الفواتير (scale: 2, useCORS: true)
+    document.getElementById('addonSaveReportPngBtn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التصوير...`;
+        try {
+            await ensureCaptureLibraries();
+            const canvas = await window.html2canvas(sheetEl, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            const dataUrl = canvas.toDataURL('image/png', 1.0);
+            const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.png`;
+
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            alert('تعذر حفظ الصورة: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    });
+
+    // حفظ كملف PDF بمقاس A4 أو A5 بدقة scale: 2
+    document.getElementById('addonSaveReportPdfBtn')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...`;
+        try {
+            await ensureCaptureLibraries();
+            const canvas = await window.html2canvas(sheetEl, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            });
+            const imgData = canvas.toDataURL('image/png', 1.0);
+            const JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+            if (!JsPDFCtor) throw new Error('مكتبة PDF غير متاحة');
+
+            const pdf = new JsPDFCtor({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: selectedPaper
+            });
+
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 6;
+            const imgWidth = pageWidth - margin * 2;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+            let heightLeft = imgHeight;
+            let position = margin;
+
+            pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+            heightLeft -= (pageHeight - margin * 2);
+
+            while (heightLeft > 0) {
+                position = heightLeft - imgHeight + margin;
+                pdf.addPage();
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= (pageHeight - margin * 2);
+            }
+
+            pdf.save(`${baseFilename}_${selectedPaper.toUpperCase()}.pdf`);
+        } catch (err) {
+            alert('تعذر حفظ ملف PDF: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+    });
+
+    document.getElementById('addonSaveReportCsvBtn')?.addEventListener('click', () => {
+        downloadCsvFallback(baseFilename, headers, rows);
+    });
+}
+
 function initAdminFiltersAndExcelExports() {
-    // 1. شريط البحث والفلترة وتصدير Excel في تبويب الطلبات
+    // 1. شريط البحث والفلترة وتصدير تقرير الطلبات (صورة / PDF A4 & A5)
     const ordersList = document.getElementById('adminOrdersList');
     if (ordersList && !document.getElementById('addonOrdersToolbar')) {
         const toolbar = document.createElement('div');
@@ -1030,7 +1315,7 @@ function initAdminFiltersAndExcelExports() {
                 <option value="تم التسليم">تم التسليم بنجاح</option>
             </select>
             <button type="button" id="addonExportOrdersExcelBtn" class="addon-excel-btn">
-                <i class="fa-solid fa-file-excel"></i> تصدير الطلبات Excel
+                <i class="fa-solid fa-image"></i> تصدير الطلبات (صورة / PDF)
             </button>
         `;
         ordersList.insertAdjacentElement('beforebegin', toolbar);
@@ -1053,31 +1338,41 @@ function initAdminFiltersAndExcelExports() {
             const btn = e.currentTarget;
             const origHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الملف...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...`;
             try {
                 const snap = await getDocs(query(collection(db, "orders"), limit(500)));
                 const rows = [];
+                let totalSales = 0;
                 snap.forEach(d => {
                     const o = d.data();
+                    const amount = Number(o.total || 0);
+                    totalSales += amount;
                     rows.push([
-                        d.id,
-                        o.date || '',
-                        o.userEmail || '',
-                        o.phone || '',
+                        '#' + d.id.slice(0, 6),
+                        o.date || '-',
+                        o.userEmail || '-',
+                        o.phone || '-',
                         Array.isArray(o.items) ? o.items.length : 0,
-                        o.total || 0,
-                        o.paymentType || '',
-                        o.status || '',
+                        `${amount.toLocaleString()} ج.م`,
+                        o.paymentType || '-',
+                        o.status || '-',
                         o.assignedVehicle || 'غير محدد'
                     ]);
                 });
-                await downloadCsvForExcel(
-                    `تقرير_الطلبات_العمدة_${new Date().toISOString().slice(0, 10)}.csv`,
-                    ['رقم الفاتورة', 'التاريخ', 'البريد الإلكتروني للعميل', 'الهاتف', 'عدد الأصناف', 'الإجمالي (ج.م)', 'طريقة الدفع', 'حالة الشحنة', 'السيارة المعينة'],
-                    rows
-                );
+
+                openReportExportModal({
+                    title: 'تقرير الطلبات والمبيعات الشامل',
+                    subtitle: 'كشف تفصيلي بالطلبات وحالات الشحن والتحصيل',
+                    summaryBadges: [
+                        { label: 'عدد الطلبات', value: `${rows.length} طلب` },
+                        { label: 'إجمالي المبيعات', value: `${totalSales.toLocaleString()} ج.م` }
+                    ],
+                    headers: ['الفاتورة', 'التاريخ', 'العميل', 'الهاتف', 'الأصناف', 'الإجمالي', 'الدفع', 'الحالة', 'السيارة'],
+                    rows,
+                    baseFilename: `تقرير_الطلبات_العمدة_${new Date().toISOString().slice(0, 10)}`
+                });
             } catch (err) {
-                alert('خطأ أثناء تصدير الطلبات: ' + err.message);
+                alert('خطأ أثناء تجهيز التقرير: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
@@ -1085,7 +1380,7 @@ function initAdminFiltersAndExcelExports() {
         });
     }
 
-    // 2. زر تصدير كشف حساب الآجل والمدفوعات إلى Excel في تبويب المحاسبة
+    // 2. زر تصدير كشف حساب الآجل والمديونيات (صورة / PDF A4 & A5) في تبويب المحاسبة
     const accSummary = document.getElementById('accountingSummaryCards');
     if (accSummary && !document.getElementById('addonAccountingExportBar')) {
         const bar = document.createElement('div');
@@ -1093,7 +1388,7 @@ function initAdminFiltersAndExcelExports() {
         bar.style.cssText = 'display:flex; justify-content:flex-end; margin-bottom:12px;';
         bar.innerHTML = `
             <button type="button" id="addonExportAccountingExcelBtn" class="addon-excel-btn">
-                <i class="fa-solid fa-file-excel"></i> تصدير كشف المديونيات والآجل Excel
+                <i class="fa-solid fa-image"></i> تصدير كشف المديونيات (صورة / PDF)
             </button>
         `;
         accSummary.insertAdjacentElement('afterend', bar);
@@ -1102,7 +1397,7 @@ function initAdminFiltersAndExcelExports() {
             const btn = e.currentTarget;
             const origHtml = btn.innerHTML;
             btn.disabled = true;
-            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الكشف...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...`;
             try {
                 const [ordersSnap, paySnap] = await Promise.all([
                     getDocs(query(collection(db, "orders"), limit(500))),
@@ -1127,21 +1422,38 @@ function initAdminFiltersAndExcelExports() {
                     ledger[email].paid += Number(p.amount || 0);
                 });
 
-                const rows = Object.values(ledger).map(c => [
-                    c.email,
-                    c.phone,
-                    c.debit,
-                    c.paid,
-                    Math.max(0, c.debit - c.paid)
-                ]);
+                let sumDebit = 0;
+                let sumPaid = 0;
+                let sumRemain = 0;
 
-                await downloadCsvForExcel(
-                    `كشف_حساب_الآجل_والمديونيات_${new Date().toISOString().slice(0, 10)}.csv`,
-                    ['البريد الإلكتروني للعميل', 'رقم الهاتف', 'إجمالي فواتير الآجل (ج.م)', 'إجمالي المسدد (ج.م)', 'الرصيد المتبقي (ج.م)'],
-                    rows
-                );
+                const rows = Object.values(ledger).map(c => {
+                    const remain = Math.max(0, c.debit - c.paid);
+                    sumDebit += c.debit;
+                    sumPaid += c.paid;
+                    sumRemain += remain;
+                    return [
+                        c.email,
+                        c.phone || '-',
+                        `${c.debit.toLocaleString()} ج.م`,
+                        `${c.paid.toLocaleString()} ج.م`,
+                        `${remain.toLocaleString()} ج.م`
+                    ];
+                });
+
+                openReportExportModal({
+                    title: 'كشف حساب الآجل والمديونيات',
+                    subtitle: 'ملخص أرصدة العملاء والدفعات المسددة والمتبقية',
+                    summaryBadges: [
+                        { label: 'إجمالي الآجل', value: `${sumDebit.toLocaleString()} ج.م` },
+                        { label: 'إجمالي المسدد', value: `${sumPaid.toLocaleString()} ج.م` },
+                        { label: 'الرصيد المتبقي', value: `${sumRemain.toLocaleString()} ج.م` }
+                    ],
+                    headers: ['العميل', 'الهاتف', 'إجمالي الآجل', 'إجمالي المسدد', 'الرصيد المتبقي'],
+                    rows,
+                    baseFilename: `كشف_حساب_الآجل_والمديونيات_${new Date().toISOString().slice(0, 10)}`
+                });
             } catch (err) {
-                alert('خطأ أثناء تصدير كشف المحاسبة: ' + err.message);
+                alert('خطأ أثناء تجهيز كشف المحاسبة: ' + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = origHtml;
