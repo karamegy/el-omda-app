@@ -1,71 +1,130 @@
 const CACHE_NAME = 'el-omda-cache-v42';
+
 const assetsToCache = [
-  '/el-omda-app/',
-  '/el-omda-app/index.html',
-  '/el-omda-app/style.css',
-  '/el-omda-app/app.js',
-  '/el-omda-app/omda-admin-core.js',
-  '/el-omda-app/omda-pro-core.js',
-  '/el-omda-app/omda-addons-core.js',
-  '/el-omda-app/omda-payments-core.js',
-  '/el-omda-app/omda-export-core.js',
-  '/el-omda-app/privacy-policy.html',
-  '/el-omda-app/manifest.json'
+  './',
+  './index.html',
+  './style.css',
+  './app.js',
+  './omda-admin-core.js',
+  './omda-pro-core.js',
+  './omda-addons-core.js',
+  './omda-payments-core.js',
+  './omda-export-core.js',
+  './privacy-policy.html',
+  './manifest.json',
+  './icon1-192.png',
+  './icon1-512.png'
 ];
 
-// تثبيت التخزين المؤقت الأساسي
+// تثبيت التخزين المؤقت الأساسي فوراً
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(assetsToCache);
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(assetsToCache))
   );
   self.skipWaiting();
 });
 
-// تفعيل وتحديث النسخ القديمة وحذفها فوراً
+// تفعيل النسخة الجديدة وحذف أي كاش قديم فوراً
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
+    caches.keys().then((cacheNames) =>
+      Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
             return caches.delete(cache);
           }
         })
-      );
-    })
+      )
+    )
   );
   self.clientsClaim();
 });
 
-// جلب الملفات (استراتيجية الشبكة أولاً لملفات التطبيق لضمان التحديث الفوري)
+// استراتيجية ذكية هجينة: سرعة فورية + تحديث صامت + حماية بيانات Firestore
 self.addEventListener('fetch', (event) => {
-  // تجاهل الطلبات غير GET (مثل رفع الصور لـ Cloudinary وطلبات Firestore)
-  if (event.request.method !== 'GET' || !event.request.url.startsWith('http')) {
+  const req = event.request;
+  if (req.method !== 'GET' || !req.url.startsWith('http')) return;
+
+  const url = new URL(req.url);
+
+  // 1. عدم التدخل نهائياً في طلبات Firebase و Auth و Cloudinary و الخرائط الحية
+  if (
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('firebase') ||
+    url.hostname.includes('gstatic.com') && url.pathname.includes('firebase') ||
+    url.hostname.includes('cloudinary.com')
+  ) {
     return;
   }
 
+  // 2. مكتبات الأيقونات والخطوط الخارجية (Cache-First لعدم استهلاك الباقة)
+  if (url.origin !== self.location.origin) {
+    event.respondWith(
+      caches.match(req).then((cached) => {
+        if (cached) return cached;
+        return fetch(req)
+          .then((netRes) => {
+            if (netRes && netRes.status === 200) {
+              const clone = netRes.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+            }
+            return netRes;
+          })
+          .catch(() => new Response('', { status: 503, statusText: 'Offline' }));
+      })
+    );
+    return;
+  }
+
+  // 3. صفحة HTML الرئيسية: الشبكة أولاً بحد أقصى 2.5 ثانية لضمان التحديث الفوري دون تعليق
+  if (req.mode === 'navigate') {
+    event.respondWith(
+      fetchWithTimeout(req, 2500)
+        .then((netRes) => {
+          if (netRes && netRes.status === 200) {
+            const clone = netRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return netRes;
+        })
+        .catch(() =>
+          caches.match(req).then((cached) => cached || caches.match('./index.html'))
+        )
+    );
+    return;
+  }
+
+  // 4. ملفات التطبيق (CSS / JS / JSON / PNG): فتح فوري من الكاش في 0ms + تحديث صامت في الخلفية
   event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
+    caches.match(req).then((cached) => {
+      const networkUpdate = fetch(req)
+        .then((netRes) => {
+          if (netRes && netRes.status === 200) {
+            const clone = netRes.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
           }
-          if (event.request.mode === 'navigate') {
-            return caches.match('/el-omda-app/index.html');
-          }
-        });
-      })
+          return netRes;
+        })
+        .catch(() => cached || new Response('', { status: 503, statusText: 'Offline' }));
+
+      return cached || networkUpdate;
+    })
   );
 });
+
+// دالة مساعدة لمنع انتظار الشبكة البطيئة
+function fetchWithTimeout(request, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    fetch(request, { signal: controller.signal })
+      .then((response) => {
+        clearTimeout(timer);
+        resolve(response);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
