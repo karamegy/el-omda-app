@@ -7,8 +7,8 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل كصورة (PNG) و PDF بمقاسي A4 و A5
- *    بأقصى سرعة عبر قائمة مشاركة أندرويد (Capacitor) مع منع قص الجداول والصفوف.
+ * 5. عرض الجداول بتصميم متجاوب على التطبيق + صناعة الصورة (PNG) و PDF بمقاسي A4 و A5
+ *    في الخلفية بعيداً عن عين المستخدم بدقة طباعة عالية ومنع قص الصفوف أو تداخل الأعمدة.
  * ============================================================================
  */
 
@@ -204,10 +204,14 @@ function injectAddonStyles() {
             border: 1.5px solid #173627;
             z-index: 1;
         }
+
+        /* =========================================================
+           تصميم نافذة المعاينة المتجاوبة على شاشة التطبيق (App UI)
+           ========================================================= */
         .addon-report-backdrop {
             position: fixed;
             inset: 0;
-            background: rgba(16, 39, 28, 0.78);
+            background: rgba(16, 39, 28, 0.82);
             z-index: 10000;
             display: flex;
             align-items: center;
@@ -218,8 +222,9 @@ function injectAddonStyles() {
         .addon-report-modal {
             background: #ffffff;
             width: 100%;
-            max-width: 840px;
-            max-height: 94vh;
+            max-width: 900px;
+            max-height: 92vh;
+            max-height: 92dvh;
             border-radius: 16px;
             overflow: hidden;
             display: flex;
@@ -263,85 +268,60 @@ function injectAddonStyles() {
             cursor: pointer;
             background: transparent;
             color: #334155;
+            transition: all 0.15s ease;
         }
         .addon-size-toggle button.active {
             background: #173627;
             color: #d4af37;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
-        /* إصلاح تمدد الورقة ومنع قص الإطار والجدول في المنتصف */
-        .addon-report-scroll {
-            padding: 12px;
+        .addon-app-preview-body {
+            padding: 14px;
             overflow-y: auto;
-            overflow-x: auto;
             flex: 1;
-            background: #e5e7eb;
-            display: block;
-            -webkit-overflow-scrolling: touch;
-        }
-        .addon-report-sheet {
-            background: #ffffff;
-            color: #111827;
-            padding: 18px;
-            border: 2px solid #173627;
-            border-radius: 4px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+            background: #f8fafc;
             direction: rtl;
             text-align: right;
-            font-family: 'Cairo', sans-serif;
-            box-sizing: border-box;
-            margin: 0 auto;
-            height: auto;
-            overflow: visible;
+            -webkit-overflow-scrolling: touch;
         }
-        .addon-report-sheet.size-a4 {
-            width: 794px;
-            min-width: 794px;
-        }
-        .addon-report-sheet.size-a5 {
-            width: 559px;
-            min-width: 559px;
-            padding: 14px;
-        }
-        .addon-report-table {
+        .addon-app-table-wrap {
             width: 100%;
-            border-collapse: collapse;
+            overflow-x: auto;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 10px;
             margin-top: 12px;
-            font-size: 0.78rem;
-            table-layout: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            -webkit-overflow-scrolling: touch;
         }
-        .addon-report-sheet.size-a5 .addon-report-table {
-            font-size: 0.71rem;
+        .addon-app-table {
+            width: 100%;
+            min-width: 640px;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+            background: #ffffff;
         }
-        .addon-report-table th {
-            background: #173627;
-            color: #ffffff;
-            padding: 7px 6px;
-            border: 1px solid #173627;
-            text-align: right;
+        .addon-app-table th {
+            background: #173627 !important;
+            color: #ffffff !important;
+            padding: 9px 8px !important;
+            border: 1px solid #10271c !important;
+            text-align: right !important;
+            font-weight: 800 !important;
             white-space: nowrap;
-            font-weight: 800;
+            position: sticky;
+            top: 0;
+            z-index: 2;
         }
-        .addon-report-sheet.size-a5 .addon-report-table th,
-        .addon-report-sheet.size-a5 .addon-report-table td {
-            padding: 5px 4px;
-        }
-        .addon-report-table tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-        .addon-report-table td {
-            padding: 6px;
-            border: 1px solid #cbd5e1;
-            overflow-wrap: break-word;
-            word-break: normal;
+        .addon-app-table td {
+            padding: 8px !important;
+            border: 1px solid #cbd5e1 !important;
+            color: #111827 !important;
             vertical-align: middle;
             line-height: 1.45;
         }
-        .addon-report-table td.cell-nowrap {
-            white-space: nowrap;
-        }
-        .addon-report-table tr:nth-child(even) td {
-            background: #f8fafc;
+        .addon-app-table tr:nth-child(even) td {
+            background: #f8fafc !important;
         }
         .addon-report-foot {
             padding: 10px 14px;
@@ -352,6 +332,111 @@ function injectAddonStyles() {
             flex-wrap: wrap;
             justify-content: center;
             flex-shrink: 0;
+        }
+
+        /* =========================================================
+           قالب الطباعة الخلفي المعزول (Off-Screen Print Stage)
+           يُبنى بعيداً عن عين المستخدم لضمان دقة A4 و A5 دون قص أو تداخل
+           ========================================================= */
+        #omdaOffscreenPrintHost {
+            position: fixed !important;
+            left: 0 !important;
+            top: -35000px !important;
+            z-index: -9999 !important;
+            pointer-events: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+            overflow: visible !important;
+        }
+        .omda-print-sheet {
+            background: #ffffff !important;
+            color: #111827 !important;
+            border: 2.5px solid #173627 !important;
+            border-radius: 0 !important;
+            direction: rtl !important;
+            text-align: right !important;
+            font-family: 'Cairo', Tahoma, Arial, sans-serif !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .omda-print-sheet.paper-a4 {
+            width: 794px !important;
+            min-width: 794px !important;
+            max-width: 794px !important;
+            padding: 20px !important;
+        }
+        .omda-print-sheet.paper-a5 {
+            width: 559px !important;
+            min-width: 559px !important;
+            max-width: 559px !important;
+            padding: 13px !important;
+        }
+        .omda-print-table {
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+            margin-top: 12px !important;
+            background: #ffffff !important;
+        }
+        .omda-print-sheet.paper-a4 .omda-print-table {
+            font-size: 11px !important;
+        }
+        .omda-print-sheet.paper-a5 .omda-print-table {
+            font-size: 9px !important;
+        }
+        .omda-print-table th {
+            background-color: #173627 !important;
+            background: #173627 !important;
+            color: #ffffff !important;
+            border: 1.2px solid #173627 !important;
+            font-weight: 800 !important;
+            text-align: right !important;
+            vertical-align: middle !important;
+            line-height: 1.35 !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+        }
+        .omda-print-sheet.paper-a4 .omda-print-table th {
+            padding: 7px 5px !important;
+        }
+        .omda-print-sheet.paper-a5 .omda-print-table th {
+            padding: 5px 3px !important;
+        }
+        .omda-print-table td {
+            border: 1px solid #94a3b8 !important;
+            color: #111827 !important;
+            vertical-align: middle !important;
+            line-height: 1.4 !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+            box-sizing: border-box !important;
+        }
+        .omda-print-sheet.paper-a4 .omda-print-table td {
+            padding: 6px 5px !important;
+        }
+        .omda-print-sheet.paper-a5 .omda-print-table td {
+            padding: 4.5px 3px !important;
+        }
+        .omda-print-table tr:nth-child(even) td {
+            background-color: #f1f5f9 !important;
+            background: #f1f5f9 !important;
+        }
+        .omda-print-table tr:nth-child(odd) td {
+            background-color: #ffffff !important;
+            background: #ffffff !important;
+        }
+        .omda-ltr-isolate {
+            direction: ltr !important;
+            unicode-bidi: isolate !important;
+            display: inline-block !important;
+            max-width: 100% !important;
+            text-align: left !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
         }
     `;
     document.head.appendChild(style);
@@ -474,7 +559,7 @@ async function renderCustomerLiveTrackingMap(container, orderId) {
 
         if (typeof window.L === 'undefined') return;
         const map = window.L.map('customerLiveTrackMap', { center: [destLat, destLng], zoom: 12 });
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
+        window.L.tileLayer('https://{s}.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(map);
 
         const farmIcon = window.L.divIcon({
             className: 'addon-farm-pin',
@@ -1102,7 +1187,7 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: تصدير التقارير كصورة (PNG) و PDF بمقاسي A4 و A5 بأقصى سرعة عبر قائمة مشاركة أندرويد
+// الإضافة 5: معاينة متجاوبة على التطبيق + محرك طباعة خلفي A4 / A5 (PNG & PDF)
 // ==========================================
 let libsLoadingPromise = null;
 const scriptPromises = {};
@@ -1149,7 +1234,6 @@ function ensureCaptureLibraries() {
     return libsLoadingPromise;
 }
 
-// تحويل Blob إلى Base64 صافي عند الحاجة فقط (مثل ملفات Excel/CSV)
 function blobToBase64(blob) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -1171,7 +1255,6 @@ function base64ToBlob(base64, mimeType) {
     return new Blob([new Uint8Array(byteNumbers)], { type: mimeType });
 }
 
-// تحويل اسم الملف الفعلي إلى أحرف إنجليزية وأرقام لتجنب رفض نظام ملفات أندرويد
 function toSafeAndroidFileName(fileName) {
     const dotIdx = fileName.lastIndexOf('.');
     const ext = dotIdx !== -1 ? fileName.slice(dotIdx) : '';
@@ -1184,12 +1267,10 @@ function toSafeAndroidFileName(fileName) {
     return `${finalBase}${ext}`;
 }
 
-// استدعاء قائمة المشاركة الأصلية للأندرويد (Capacitor) مباشرة عبر Base64 بدون تأخير
 async function shareOrDownloadFast({ pureBase64, blob, mimeType, fileName, shareTitle }) {
     const shareText = `${shareTitle} - مؤسسة الإخلاص للأعلاف الطبيعية والحبوب`;
     const safeFileName = toSafeAndroidFileName(fileName);
 
-    // 1. المسار الفوري لتطبيق أندرويد (Capacitor Native Filesystem + Share)
     if (typeof Capacitor !== 'undefined' && Capacitor.Plugins?.Share && Capacitor.Plugins?.Filesystem) {
         try {
             const base64Data = pureBase64 || (blob ? await blobToBase64(blob) : '');
@@ -1217,7 +1298,6 @@ async function shareOrDownloadFast({ pureBase64, blob, mimeType, fileName, share
 
     const finalBlob = blob || base64ToBlob(pureBase64, mimeType);
 
-    // 2. متصفحات الهواتف التي تدعم مشاركة الملفات مباشرة
     try {
         const file = new File([finalBlob], safeFileName, { type: mimeType });
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -1232,7 +1312,6 @@ async function shareOrDownloadFast({ pureBase64, blob, mimeType, fileName, share
         if (err && err.name === 'AbortError') return;
     }
 
-    // 3. التنزيل المباشر للكمبيوتر
     const url = URL.createObjectURL(finalBlob);
     const link = document.createElement('a');
     link.href = url;
@@ -1258,61 +1337,173 @@ async function downloadCsvFallback(filename, headers, rows, title) {
     });
 }
 
-// تصوير التقرير بأقصى سرعة مع تجاهل عناصر الصفحة الأخرى وإعادة ضبط التحجيم مؤقتاً
-async function captureReportSheetFast(sheetEl, scrollContainer) {
-    await ensureCaptureLibraries();
+// تنسيق محتوى الخلية بأمان وعزل النصوص الإنجليزية (البريد/الهاتف/الكود) لمنع تداخلها مع الخلايا المجاورة
+function formatPrintCellHtml(val, isMoneyCol = false) {
+    const raw = String(val ?? '-').trim();
+    if (!raw) return '-';
 
-    const prevZoom = sheetEl.style.zoom || '';
-    const prevScrollTop = scrollContainer ? scrollContainer.scrollTop : 0;
-    const prevScrollLeft = scrollContainer ? scrollContainer.scrollLeft : 0;
-
-    // إعادة المقاس الطبيعي 100% أثناء اللقطة حتى لا يظهر التقرير مقصوصاً أو مصغراً
-    sheetEl.style.zoom = '1';
-    if (scrollContainer) {
-        scrollContainer.scrollTop = 0;
-        scrollContainer.scrollLeft = 0;
+    // عزل القيم الإنجليزية أو الأرقام الدولية أو أكواد الفواتير لمنع تداخل BiDi في RTL
+    if (
+        raw.startsWith('#') ||
+        raw.includes('@') ||
+        /^\+?[0-9\s\-()./]+$/.test(raw)
+    ) {
+        const noWrap = raw.startsWith('#') || /^\+?[0-9\-/]+$/.test(raw);
+        return `<span class="omda-ltr-isolate" style="${noWrap ? 'white-space:nowrap;' : ''}">${esc(raw)}</span>`;
     }
 
-    try {
-        const fullWidth = sheetEl.offsetWidth;
-        const fullHeight = sheetEl.scrollHeight;
+    if (isMoneyCol || /ج\.م$/.test(raw)) {
+        return `<span style="white-space:nowrap; font-weight:800; color:#173627;">${esc(raw)}</span>`;
+    }
 
-        const canvas = await window.html2canvas(sheetEl, {
-            scale: 1.5, // دقة فائقة وسرعة مضاعفة على الهواتف
+    return esc(raw);
+}
+
+// حساب نسب عرض الأعمدة المثالية لكل جدول بحيث لا يتداخل أي عمود في A4 أو A5
+function resolveColumnWidths(headers) {
+    const count = headers.length;
+    if (count === 9) {
+        // ['الفاتورة', 'التاريخ', 'العميل', 'الهاتف', 'الأصناف', 'الإجمالي', 'الدفع', 'الحالة', 'السيارة']
+        return ['8%', '11%', '21%', '14%', '6%', '12%', '10%', '10%', '8%'];
+    }
+    if (count === 5) {
+        // ['العميل', 'الهاتف', 'إجمالي الآجل', 'إجمالي المسدد', 'الرصيد المتبقي']
+        return ['32%', '18%', '16%', '17%', '17%'];
+    }
+    const equalPct = (100 / Math.max(1, count)).toFixed(2) + '%';
+    return headers.map(() => equalPct);
+}
+
+/**
+ * بناء وتصوير الفاتورة/التقرير في الخلفية بعيداً عن عين المستخدم (Off-Screen Print Stage)
+ * بمقاس A4 (794px) أو A5 (559px) مع دقة طباعة فائقة ومنع أي قص جانبي أو تداخل
+ */
+async function renderOffscreenPrintCanvas({ title, subtitle, summaryBadges, headers, rows, paperSize }) {
+    await ensureCaptureLibraries();
+
+    document.getElementById('omdaOffscreenPrintHost')?.remove();
+
+    const host = document.createElement('div');
+    host.id = 'omdaOffscreenPrintHost';
+
+    const isA5 = paperSize === 'a5';
+    const sheetWidthPx = isA5 ? 559 : 794;
+    const todayStr = new Date().toLocaleDateString('ar-EG', {
+        year: 'numeric', month: 'long', day: 'numeric'
+    });
+
+    const colWidths = resolveColumnWidths(headers);
+    const colGroupHtml = `<colgroup>${colWidths.map(w => `<col style="width:${w};">`).join('')}</colgroup>`;
+
+    const badgesHtml = (summaryBadges || []).map(b => `
+        <div style="background:#f0f7f4; border:1.5px solid #173627; padding:${isA5 ? '4px 9px' : '6px 13px'}; border-radius:6px; font-size:${isA5 ? '10.5px' : '12px'}; display:inline-flex; align-items:center; gap:5px;">
+            <span style="color:#374151; font-weight:700;">${esc(b.label)}:</span>
+            <strong style="color:#173627; font-weight:900;">${esc(b.value)}</strong>
+        </div>
+    `).join('');
+
+    const thHtml = headers.map((h, idx) => {
+        const isCenter = h === 'الأصناف';
+        return `<th style="width:${colWidths[idx]}; text-align:${isCenter ? 'center' : 'right'} !important;">${esc(h)}</th>`;
+    }).join('');
+
+    const tbodyHtml = rows.length
+        ? rows.map(r => {
+            const tds = r.map((cell, idx) => {
+                const hName = headers[idx] || '';
+                const isCenter = hName === 'الأصناف';
+                const isMoney = hName.includes('الإجمالي') || hName.includes('الآجل') || hName.includes('المسدد') || hName.includes('المتبقي');
+                return `<td style="text-align:${isCenter ? 'center' : 'right'} !important;">${formatPrintCellHtml(cell, isMoney)}</td>`;
+            }).join('');
+            return `<tr>${tds}</tr>`;
+        }).join('')
+        : `<tr><td colspan="${headers.length}" style="text-align:center !important; padding:18px !important;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
+
+    const sheet = document.createElement('div');
+    sheet.className = `omda-print-sheet ${isA5 ? 'paper-a5' : 'paper-a4'}`;
+    sheet.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2.5px solid #173627; padding-bottom:${isA5 ? '8px' : '11px'}; gap:10px;">
+            <div>
+                <div style="font-size:${isA5 ? '14px' : '18px'}; font-weight:900; color:#173627; line-height:1.3;">
+                    مؤسسة الإخلاص للأعلاف الطبيعية والحبوب
+                </div>
+                <div style="font-size:${isA5 ? '11.5px' : '14px'}; font-weight:800; color:#b45309; margin-top:2px;">
+                    ${esc(title)}
+                </div>
+                ${subtitle ? `<div style="font-size:${isA5 ? '9.5px' : '11px'}; color:#4b5563; margin-top:2px;">${esc(subtitle)}</div>` : ''}
+            </div>
+            <div style="text-align:left; font-size:${isA5 ? '9.5px' : '11.5px'}; color:#1f2937; white-space:nowrap; background:#f8fafc; border:1px solid #cbd5e1; padding:6px 10px; border-radius:6px;">
+                <div><strong>التاريخ:</strong> ${esc(todayStr)}</div>
+                <div style="margin-top:2px;"><strong>عدد السجلات:</strong> ${rows.length}</div>
+                <div style="margin-top:2px;"><strong>المقاس:</strong> ${paperSize.toUpperCase()}</div>
+            </div>
+        </div>
+
+        ${badgesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:${isA5 ? '8px' : '11px'};">${badgesHtml}</div>` : ''}
+
+        <table class="omda-print-table">
+            ${colGroupHtml}
+            <thead><tr>${thHtml}</tr></thead>
+            <tbody>${tbodyHtml}</tbody>
+        </table>
+
+        <div style="margin-top:${isA5 ? '10px' : '14px'}; padding-top:8px; border-top:1.5px dashed #94a3b8; display:flex; justify-content:space-between; align-items:center; font-size:${isA5 ? '9px' : '10.5px'}; color:#475569; font-weight:700;">
+            <span>منصة العمدة / مؤسسة الإخلاص - شبرا منت، الجيزة</span>
+            <span>مستند معتمد للطباعة والمراجعة المحاسبية</span>
+        </div>
+    `;
+
+    host.appendChild(sheet);
+    document.body.appendChild(host);
+
+    try {
+        if (document.fonts && document.fonts.ready) {
+            await document.fonts.ready.catch(() => {});
+        }
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        const sheetRect = sheet.getBoundingClientRect();
+        const domTotalHeight = Math.ceil(sheet.scrollHeight);
+        const rowBreaksDom = Array.from(sheet.querySelectorAll('tbody tr')).map(trEl => {
+            const r = trEl.getBoundingClientRect();
+            return {
+                top: Math.max(0, r.top - sheetRect.top),
+                bottom: Math.max(0, r.bottom - sheetRect.top)
+            };
+        });
+
+        const canvas = await window.html2canvas(sheet, {
+            scale: 2,
             useCORS: true,
             allowTaint: true,
             backgroundColor: '#ffffff',
             logging: false,
             imageTimeout: 0,
             removeContainer: true,
-            width: fullWidth,
-            height: fullHeight,
-            windowWidth: fullWidth + 40,
-            windowHeight: fullHeight + 40,
+            width: sheetWidthPx,
+            height: domTotalHeight,
+            windowWidth: sheetWidthPx + 40,
+            windowHeight: domTotalHeight + 40,
             scrollX: 0,
             scrollY: 0,
-            // تجاهل كل عناصر الصفحة غير المرتبطة بالتقرير لتسريع النسخ بنسبة 70%
             ignoreElements: (el) => {
                 if (!el || el === document.documentElement || el === document.body) return false;
-                if (el === sheetEl || sheetEl.contains(el) || el.contains(sheetEl)) return false;
+                if (el === host || host.contains(el)) return false;
                 if (el.tagName === 'STYLE' || (el.tagName === 'LINK' && el.rel === 'stylesheet')) return false;
                 return true;
             }
         });
-        return canvas;
+
+        return { canvas, domTotalHeight, rowBreaksDom };
     } finally {
-        sheetEl.style.zoom = prevZoom;
-        if (scrollContainer) {
-            scrollContainer.scrollTop = prevScrollTop;
-            scrollContainer.scrollLeft = prevScrollLeft;
-        }
+        host.remove();
     }
 }
 
 function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, baseFilename }) {
     document.getElementById('addonReportExportBackdrop')?.remove();
 
-    // ضمان جاهزية المكتبات فوراً
+    // تحضير المكتبات فوراً
     ensureCaptureLibraries().catch(() => {});
 
     const backdrop = document.createElement('div');
@@ -1324,64 +1515,63 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
     });
 
     const badgesHtml = (summaryBadges || []).map(b => `
-        <div style="background:#f0f7f4; border:1px solid #bbf7d0; padding:6px 12px; border-radius:8px; font-size:0.8rem;">
+        <div style="background:#ffffff; border:1px solid #bbf7d0; padding:7px 12px; border-radius:9px; font-size:0.82rem; box-shadow:0 1px 4px rgba(0,0,0,0.03);">
             <span style="color:#4b5563;">${esc(b.label)}:</span>
             <strong style="color:#173627; margin-right:4px;">${esc(b.value)}</strong>
         </div>
     `).join('');
 
-    const isNoWrapValue = (val) => {
-        const s = String(val ?? '').trim();
-        return s.startsWith('#') || /ج\.م$/.test(s) || /^[0-9+\-\s()./]+$/.test(s);
-    };
-
     const tableHeadHtml = headers.map(h => `<th>${esc(h)}</th>`).join('');
     const tableRowsHtml = rows.length
-        ? rows.map(r => `<tr>${r.map(cell => `<td class="${isNoWrapValue(cell) ? 'cell-nowrap' : ''}">${esc(cell)}</td>`).join('')}</tr>`).join('')
-        : `<tr><td colspan="${headers.length}" style="text-align:center; padding:16px;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
+        ? rows.map(r => `<tr>${r.map((cell, idx) => {
+            const hName = headers[idx] || '';
+            const isMoney = hName.includes('الإجمالي') || hName.includes('الآجل') || hName.includes('المسدد') || hName.includes('المتبقي');
+            return `<td>${formatPrintCellHtml(cell, isMoney)}</td>`;
+        }).join('')}</tr>`).join('')
+        : `<tr><td colspan="${headers.length}" style="text-align:center; padding:18px;">لا توجد بيانات مسجلة لعرضها</td></tr>`;
 
     backdrop.innerHTML = `
         <div class="addon-report-modal">
             <div class="addon-report-head">
                 <strong><i class="fa-solid fa-file-invoice" style="color:#d4af37;"></i> ${esc(title)}</strong>
-                <button type="button" id="addonCloseReportModalBtn" style="background:none; border:none; color:#fff; font-size:1.35rem; cursor:pointer; line-height:1;">&times;</button>
+                <button type="button" id="addonCloseReportModalBtn" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer; line-height:1;">&times;</button>
             </div>
             <div class="addon-report-controls">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="font-size:0.82rem; font-weight:800; color:#173627;">مقاس الورقة:</span>
+                    <span style="font-size:0.82rem; font-weight:800; color:#173627;">مقاس الطباعة:</span>
                     <div class="addon-size-toggle">
                         <button type="button" data-paper="a4" class="active">A4</button>
                         <button type="button" data-paper="a5">A5</button>
                     </div>
                 </div>
                 <span style="font-size:0.78rem; color:#15803d; font-weight:700;">
-                    <i class="fa-solid fa-bolt"></i> معاينة كاملة + مشاركة فورية
+                    <i class="fa-solid fa-print"></i> جاهز للطباعة والمشاركة الفورية
                 </span>
             </div>
-            <div id="addonReportScrollBox" class="addon-report-scroll">
-                <div id="addonReportCaptureSheet" class="addon-report-sheet size-a4">
-                    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #173627; padding-bottom:10px; gap:10px;">
-                        <div>
-                            <h3 style="margin:0; color:#173627; font-size:1.12rem;">مؤسسة الإخلاص للأعلاف الطبيعية والحبوب</h3>
-                            <p style="margin:2px 0 0; color:#b45309; font-weight:800; font-size:0.86rem;">${esc(title)}</p>
-                            ${subtitle ? `<small style="color:#6b7280;">${esc(subtitle)}</small>` : ''}
-                        </div>
-                        <div style="text-align:left; font-size:0.78rem; color:#374151; white-space:nowrap;">
-                            <div><strong>التاريخ:</strong> ${esc(todayStr)}</div>
-                            <div><strong>إجمالي السجلات:</strong> ${rows.length}</div>
-                        </div>
+
+            <!-- معاينة متجاوبة ونظيفة على شاشة التطبيق -->
+            <div class="addon-app-preview-body">
+                <div style="background:#ffffff; border:1px solid #d1fae5; border-right:4px solid #173627; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <strong style="color:#173627; font-size:0.96rem; display:block;">مؤسسة الإخلاص للأعلاف الطبيعية والحبوب</strong>
+                        ${subtitle ? `<small style="color:#6b7280;">${esc(subtitle)}</small>` : ''}
                     </div>
-                    ${badgesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${badgesHtml}</div>` : ''}
-                    <table class="addon-report-table">
+                    <div style="font-size:0.78rem; color:#374151;">
+                        <span><strong>التاريخ:</strong> ${esc(todayStr)}</span> |
+                        <span><strong>السجلات:</strong> ${rows.length}</span>
+                    </div>
+                </div>
+
+                ${badgesHtml ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">${badgesHtml}</div>` : ''}
+
+                <div class="addon-app-table-wrap">
+                    <table class="addon-app-table">
                         <thead><tr>${tableHeadHtml}</tr></thead>
                         <tbody>${tableRowsHtml}</tbody>
                     </table>
-                    <div style="margin-top:12px; padding-top:8px; border-top:1px dashed #cbd5e1; display:flex; justify-content:space-between; font-size:0.74rem; color:#6b7280;">
-                        <span>منصة العمدة / مؤسسة الإخلاص - شبرا منت، الجيزة</span>
-                        <span>تم الإصدار آلياً بدقة عالية</span>
-                    </div>
                 </div>
             </div>
+
             <div class="addon-report-foot">
                 <button type="button" id="addonSaveReportPngBtn" class="addon-excel-btn" style="background:#173627;">
                     <i class="fa-solid fa-image"></i> مشاركة / حفظ صورة (PNG)
@@ -1399,34 +1589,14 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
     document.body.appendChild(backdrop);
 
     let selectedPaper = 'a4';
-    const sheetEl = document.getElementById('addonReportCaptureSheet');
-    const scrollBox = document.getElementById('addonReportScrollBox');
 
-    // تحجيم المعاينة تلقائياً لتظهر الفاتورة بعرضها الكامل على شاشة الهاتف بدون قص جانبي
-    const fitPreviewToMobileScreen = () => {
-        if (!sheetEl || !scrollBox) return;
-        const targetWidth = selectedPaper === 'a5' ? 559 : 794;
-        const availableWidth = Math.max(280, scrollBox.clientWidth - 24);
-        const scale = availableWidth < targetWidth ? Number((availableWidth / targetWidth).toFixed(3)) : 1;
-        sheetEl.style.zoom = String(scale);
-    };
-
-    requestAnimationFrame(fitPreviewToMobileScreen);
-    window.addEventListener('resize', fitPreviewToMobileScreen);
-
-    const closeModal = () => {
-        window.removeEventListener('resize', fitPreviewToMobileScreen);
-        backdrop.remove();
-    };
+    const closeModal = () => backdrop.remove();
 
     backdrop.querySelectorAll('.addon-size-toggle button').forEach(btn => {
         btn.addEventListener('click', () => {
             backdrop.querySelectorAll('.addon-size-toggle button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             selectedPaper = btn.dataset.paper;
-            sheetEl.classList.remove('size-a4', 'size-a5');
-            sheetEl.classList.add(`size-${selectedPaper}`);
-            fitPreviewToMobileScreen();
         });
     });
 
@@ -1435,14 +1605,21 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         if (e.target === backdrop) closeModal();
     });
 
-    // 1. مشاركة / حفظ كصورة PNG بأقصى سرعة (تحويل مباشر إلى Base64 دون FileReader)
+    // 1. صناعة ومشاركة صورة PNG في الخلفية بمقاس A4 أو A5 بدقة فائقة
     document.getElementById('addonSaveReportPngBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري المشاركة...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...`;
         try {
-            const canvas = await captureReportSheetFast(sheetEl, scrollBox);
+            const { canvas } = await renderOffscreenPrintCanvas({
+                title,
+                subtitle,
+                summaryBadges,
+                headers,
+                rows,
+                paperSize: selectedPaper
+            });
             const dataUrl = canvas.toDataURL('image/png');
             const pureBase64 = dataUrl.split(',')[1];
             const fileName = `${baseFilename}_${selectedPaper.toUpperCase()}.png`;
@@ -1461,28 +1638,22 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         }
     });
 
-    // 2. مشاركة / حفظ كملف PDF بمقاس A4 أو A5 بأقصى سرعة مع منع قص الصفوف بين الصفحات
+    // 2. صناعة ومشاركة ملف PDF في الخلفية بمقاس A4 أو A5 مع تقسيم الصفحات بدقة ومنع قص أي صف
     document.getElementById('addonSaveReportPdfBtn')?.addEventListener('click', async (e) => {
         const btn = e.currentTarget;
         const orig = btn.innerHTML;
         btn.disabled = true;
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري المشاركة...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التجهيز...`;
         try {
-            // قياس مواقع الصفوف قبل التصوير لضمان عدم قطع أي صف بين صفحتي PDF
-            const prevZoom = sheetEl.style.zoom || '';
-            sheetEl.style.zoom = '1';
-            const sheetRect = sheetEl.getBoundingClientRect();
-            const rowBreaksDom = Array.from(sheetEl.querySelectorAll('tbody tr')).map(trEl => {
-                const r = trEl.getBoundingClientRect();
-                return {
-                    top: r.top - sheetRect.top,
-                    bottom: r.bottom - sheetRect.top
-                };
+            const { canvas, domTotalHeight, rowBreaksDom } = await renderOffscreenPrintCanvas({
+                title,
+                subtitle,
+                summaryBadges,
+                headers,
+                rows,
+                paperSize: selectedPaper
             });
-            const domTotalHeight = sheetEl.scrollHeight;
-            sheetEl.style.zoom = prevZoom;
 
-            const canvas = await captureReportSheetFast(sheetEl, scrollBox);
             const JsPDFCtor = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
             if (!JsPDFCtor) throw new Error('مكتبة PDF غير متاحة');
 
@@ -1495,11 +1666,10 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
 
             const pageWidth = pdf.internal.pageSize.getWidth();
             const pageHeight = pdf.internal.pageSize.getHeight();
-            const margin = 6;
+            const margin = selectedPaper === 'a5' ? 5 : 7;
             const usableWidthMm = pageWidth - margin * 2;
             const usableHeightMm = pageHeight - margin * 2;
 
-            // معامل التحويل بين بكسل الـ Canvas والمليمتر
             const pxPerMm = canvas.width / usableWidthMm;
             const maxSliceHeightPx = Math.floor(usableHeightMm * pxPerMm);
             const domToCanvasRatio = canvas.height / Math.max(1, domTotalHeight);
@@ -1515,7 +1685,6 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
             while (currentY < canvas.height) {
                 let sliceEnd = Math.min(canvas.height, currentY + maxSliceHeightPx);
 
-                // إذا لم نصل لنهاية التقرير، نتراجع لنهاية آخر صف كامل حتى لا يُقص أي صف من المنتصف
                 if (sliceEnd < canvas.height) {
                     const intersectingRow = rowBreaksPx.find(rb => rb.top < sliceEnd && rb.bottom > sliceEnd);
                     if (intersectingRow && intersectingRow.top > currentY + 40) {
@@ -1532,12 +1701,11 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
                 ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
                 ctx.drawImage(canvas, 0, currentY, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
 
-                // استخدام JPEG عالي الجودة داخل PDF لتسريع التوليد والمشاركة بمقدار 4 أضعاف
-                const pageImgData = pageCanvas.toDataURL('image/jpeg', 0.94);
+                const pageImgData = pageCanvas.toDataURL('image/png');
                 const sliceHeightMm = sliceHeight / pxPerMm;
 
                 if (pageIndex > 0) pdf.addPage();
-                pdf.addImage(pageImgData, 'JPEG', margin, margin, usableWidthMm, sliceHeightMm, undefined, 'FAST');
+                pdf.addImage(pageImgData, 'PNG', margin, margin, usableWidthMm, sliceHeightMm, undefined, 'FAST');
 
                 currentY = sliceEnd;
                 pageIndex++;
@@ -1565,6 +1733,9 @@ function openReportExportModal({ title, subtitle, summaryBadges, headers, rows, 
         await downloadCsvFallback(baseFilename, headers, rows, title);
     });
 }
+
+// إتاحة الدالة عالمياً لأي فاتورة أو كشف حساب إضافي
+window.openOmdaPrintReportModal = openReportExportModal;
 
 function initAdminFiltersAndExcelExports() {
     // 1. شريط البحث والفلترة وتصدير تقرير الطلبات (صورة / PDF A4 & A5)
@@ -1738,7 +1909,6 @@ onAuthStateChanged(auth, (user) => {
 
 function bootstrapOmdaAddonsCore() {
     injectAddonStyles();
-    // تحميل مكتبات التصوير والـ PDF فور بدء التشغيل لتكون جاهزة لحظياً عند المشاركة
     ensureCaptureLibraries().catch(() => {});
     registerLeafletHook();
     loadProductsPricingMetadata();
