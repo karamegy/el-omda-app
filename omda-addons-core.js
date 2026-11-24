@@ -7,7 +7,7 @@
  * 2. نظام التسعير المتدرج للجملة (قطاعي / طن) + كوبونات الخصم الترويجية.
  * 3. حاسبة تركيب العليقة وموازنة البروتين (Ration Mixer) المرتبطة بالبورصة الحية.
  * 4. إعادة الطلب بنقرة واحدة (One-Click Reorder) + تنبيه موعد نفاد العلف.
- * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل إلى Excel (CSV).
+ * 5. فلترة وبحث وتصدير تقارير الطلبات والمحاسبة والآجل إلى Excel (CSV) على الهاتف والكمبيوتر.
  * ============================================================================
  */
 
@@ -154,6 +154,7 @@ function injectAddonStyles() {
             white-space: nowrap;
         }
         .addon-excel-btn:hover { filter: brightness(1.08); }
+        .addon-excel-btn:disabled { opacity: 0.65; cursor: wait; }
         .addon-reorder-btn {
             background: #d4af37;
             color: #10271c;
@@ -720,7 +721,7 @@ function initCartWholesaleAndCouponsUI() {
 const RATION_FORMULAS = {
     '23': { labelAr: '23% بروتين (بادي تسمين سوبر)', labelEn: '23% Protein (Broiler Starter)', corn: 550, soya: 360, bran: 40, conc: 50 },
     '21': { labelAr: '21% بروتين (نامي تسمين)', labelEn: '21% Protein (Broiler Grower)', corn: 600, soya: 310, bran: 40, conc: 50 },
-    '19': { labelAr: '19% بروتين (ناهي تسمين)', labelEn: '19% Protein (Broiler Finisher)', corn: 650, soya: 260, bran: 40, conc: 50 },
+    '19': { labelAr: '19% بروتين (ناهي تسمين)', labelEn: '19% Protein (Finisher)', corn: 650, soya: 260, bran: 40, conc: 50 },
     '18': { labelAr: '18% بروتين (دواجن بياض إنتاجي)', labelEn: '18% Protein (Layer Production)', corn: 620, soya: 230, bran: 70, conc: 80 },
     '16': { labelAr: '16% بروتين (تسمين عجول وماشية)', labelEn: '16% Protein (Beef Cattle)', corn: 540, soya: 180, bran: 240, conc: 40 },
     '14': { labelAr: '14% بروتين (أبقار وجاموس حلاب)', labelEn: '14% Protein (Dairy Herd)', corn: 480, soya: 140, bran: 340, conc: 40 }
@@ -959,9 +960,9 @@ async function renderFeedDepletionReminder() {
 }
 
 // ==========================================
-// الإضافة 5: فلترة وتصدير التقارير المحاسبية والطلبات (Excel / CSV)
+// الإضافة 5: فلترة وتصدير التقارير المحاسبية والطلبات (Excel / CSV) للهاتف والكمبيوتر
 // ==========================================
-function downloadCsvForExcel(filename, headers, rows) {
+async function downloadCsvForExcel(filename, headers, rows) {
     const escapeCsvCell = (val) => {
         const str = String(val ?? '').replace(/"/g, '""');
         return `"${str}"`;
@@ -971,15 +972,46 @@ function downloadCsvForExcel(filename, headers, rows) {
         ...rows.map(r => r.map(escapeCsvCell).join(','))
     ];
     // إضافة UTF-8 BOM لضمان ظهور الحروف العربية بشكل سليم تماماً داخل برنامج Excel
-    const blob = new Blob(['\uFEFF' + csvLines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const csvContent = '\uFEFF' + csvLines.join('\r\n');
+
+    // 1. الحل المعتمد لتطبيق الأندرويد (TWA / WebView): فتح نافذة المشاركة/الحفظ في Excel أو واتساب أو مدير الملفات
+    try {
+        const file = new File([csvContent], filename, { type: 'text/csv;charset=utf-8;' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: filename,
+                text: 'تقرير منصة العمدة / مؤسسة الإخلاص'
+            });
+            return;
+        }
+    } catch (err) {
+        if (err && err.name === 'AbortError') return; // ألغى المستخدم نافذة المشاركة يدوياً
+    }
+
+    // 2. بديل Android WebView القديم في حال عدم دعم مشاركة الملفات
+    if (/; wv\)/.test(navigator.userAgent)) {
+        const dataLink = document.createElement('a');
+        dataLink.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+        dataLink.download = filename;
+        dataLink.style.display = 'none';
+        document.body.appendChild(dataLink);
+        dataLink.click();
+        document.body.removeChild(dataLink);
+        return;
+    }
+
+    // 3. التحميل المباشر للمتصفحات والكمبيوتر
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
     link.download = filename;
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
 }
 
 function initAdminFiltersAndExcelExports() {
@@ -1017,7 +1049,11 @@ function initAdminFiltersAndExcelExports() {
         document.getElementById('addonOrderSearchInput')?.addEventListener('input', applyOrderFilters);
         document.getElementById('addonOrderStatusFilter')?.addEventListener('change', applyOrderFilters);
 
-        document.getElementById('addonExportOrdersExcelBtn')?.addEventListener('click', async () => {
+        document.getElementById('addonExportOrdersExcelBtn')?.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الملف...`;
             try {
                 const snap = await getDocs(query(collection(db, "orders"), limit(500)));
                 const rows = [];
@@ -1035,13 +1071,16 @@ function initAdminFiltersAndExcelExports() {
                         o.assignedVehicle || 'غير محدد'
                     ]);
                 });
-                downloadCsvForExcel(
+                await downloadCsvForExcel(
                     `تقرير_الطلبات_العمدة_${new Date().toISOString().slice(0, 10)}.csv`,
                     ['رقم الفاتورة', 'التاريخ', 'البريد الإلكتروني للعميل', 'الهاتف', 'عدد الأصناف', 'الإجمالي (ج.م)', 'طريقة الدفع', 'حالة الشحنة', 'السيارة المعينة'],
                     rows
                 );
             } catch (err) {
                 alert('خطأ أثناء تصدير الطلبات: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
             }
         });
     }
@@ -1059,7 +1098,11 @@ function initAdminFiltersAndExcelExports() {
         `;
         accSummary.insertAdjacentElement('afterend', bar);
 
-        document.getElementById('addonExportAccountingExcelBtn')?.addEventListener('click', async () => {
+        document.getElementById('addonExportAccountingExcelBtn')?.addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const origHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري تجهيز الكشف...`;
             try {
                 const [ordersSnap, paySnap] = await Promise.all([
                     getDocs(query(collection(db, "orders"), limit(500))),
@@ -1092,13 +1135,16 @@ function initAdminFiltersAndExcelExports() {
                     Math.max(0, c.debit - c.paid)
                 ]);
 
-                downloadCsvForExcel(
+                await downloadCsvForExcel(
                     `كشف_حساب_الآجل_والمديونيات_${new Date().toISOString().slice(0, 10)}.csv`,
                     ['البريد الإلكتروني للعميل', 'رقم الهاتف', 'إجمالي فواتير الآجل (ج.م)', 'إجمالي المسدد (ج.م)', 'الرصيد المتبقي (ج.م)'],
                     rows
                 );
             } catch (err) {
                 alert('خطأ أثناء تصدير كشف المحاسبة: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
             }
         });
     }
