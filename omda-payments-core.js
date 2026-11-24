@@ -44,7 +44,7 @@ let pendingTransfersCount = 0;
 
 let paymentAccountsConfig = {
     beneficiaryName: "مؤسسة الإخلاص للأعلاف الطبيعية والحبوب",
-    instapayIpa: "alekhlas.feed@instapay",
+    instapayIpa: "karamhamdy12@instapay",
     instapayLink: "",
     walletNumbers: "01114099799",
     walletProviders: "فودافون كاش / اتصالات كاش / WE Pay",
@@ -366,7 +366,11 @@ async function loadPaymentAccountsConfig() {
     try {
         const snap = await getDoc(doc(db, "app_settings", "payments_config"));
         if (snap.exists()) {
-            paymentAccountsConfig = { ...paymentAccountsConfig, ...snap.data() };
+            const data = snap.data();
+            if (!data.instapayIpa || data.instapayIpa === "alekhlas.feed@instapay") {
+                data.instapayIpa = "karamhamdy12@instapay";
+            }
+            paymentAccountsConfig = { ...paymentAccountsConfig, ...data };
         }
     } catch (_) {}
 }
