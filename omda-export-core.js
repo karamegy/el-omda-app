@@ -6,10 +6,11 @@ import {
     addDoc,
     getDocs,
     doc,
+    getDoc,
+    setDoc,
     updateDoc,
     deleteDoc,
     query,
-    where,
     limit
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -29,13 +30,30 @@ const firebaseApp = getApps().length ? getApp() : initializeApp(FALLBACK_FIREBAS
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
 
-const EXPORT_WA_PHONE = "201114099799";
-const EXPORT_DIRECT_PHONE = "+201114099799";
-
 let exportCurrentUser = null;
 let exportSpecsCache = [];
+let exportSpecsFromDb = false;
+let exportDocsCache = [];
+let exportDocsFromDb = false;
 let exportRfqsCache = [];
 let lastContainerCalc = null;
+
+const DEFAULT_EXPORT_SETTINGS = {
+    enabled: true,
+    heroTitleAr: 'بوابة التصدير الدولي والصفقات الكبرى (B2B)',
+    heroTitleEn: 'International Export & Bulk Trade Portal (B2B)',
+    heroDescAr: 'تصدير أجود الأعلاف المصنعة، الدريس الحجازي، الذرة الصفراء، وكسب الصويا من الموانئ المصرية إلى الأسواق العربية والأفريقية والأوروبية بأعلى معايير الجودة.',
+    heroDescEn: 'Exporting premium manufactured feeds, alfalfa hay, yellow corn, and soybean meal from Egyptian ports to Arab, African & European markets.',
+    portsBannerAr: 'الإسكندرية • دمياط • العين السخنة',
+    portsBannerEn: 'Alexandria • Damietta • Sokhna',
+    waPhone: '201114099799',
+    directPhone: '+201114099799',
+    defaultUsdRate: 50.5,
+    cap20ft: 24,
+    cap40hc: 27
+};
+
+let exportSettingsCache = { ...DEFAULT_EXPORT_SETTINGS };
 
 function getLang() {
     return localStorage.getItem('omda_lang') === 'en' ? 'en' : 'ar';
@@ -56,7 +74,7 @@ function escapeHtml(str) {
 }
 
 // ==========================================
-// 2. البيانات الافتراضية للمواصفات القياسية وخطوات الشحن
+// 2. البيانات الافتراضية للمواصفات والمستندات ومراحل الشحن
 // ==========================================
 const DEFAULT_EXPORT_SPECS = [
     {
@@ -126,8 +144,9 @@ const EXPORT_SHIPMENT_STAGES = [
     { step: 6, key: 'arrived', ar: 'وصلت ميناء الوصول المستهدف', en: 'Arrived at Destination Port', icon: 'fa-anchor' }
 ];
 
-const EXPORT_DOCS_CHECKLIST = [
+const DEFAULT_EXPORT_DOCS = [
     {
+        id: 'exp_doc_1',
         code: 'CO / GAFTA / EUR.1',
         titleAr: 'شهادة المنشأ المعتمدة (إعفاء جمركي للدول العربية والأوروبية)',
         titleEn: 'Certified Certificate of Origin (GAFTA / Arab League / EUR.1)',
@@ -136,6 +155,7 @@ const EXPORT_DOCS_CHECKLIST = [
         icon: 'fa-earth-africa'
     },
     {
+        id: 'exp_doc_2',
         code: 'PHYTO / VET',
         titleAr: 'شهادة الحجر الزراعي والشهادة الصحية البيطرية',
         titleEn: 'Phytosanitary & Official Veterinary Health Certificate',
@@ -144,6 +164,7 @@ const EXPORT_DOCS_CHECKLIST = [
         icon: 'fa-seedling'
     },
     {
+        id: 'exp_doc_3',
         code: 'COA / AFLATOXIN',
         titleAr: 'شهادة التحليل المعملي وخلو السموم الفطرية',
         titleEn: 'Certificate of Analysis (COA) & Aflatoxin-Free Report',
@@ -152,6 +173,7 @@ const EXPORT_DOCS_CHECKLIST = [
         icon: 'fa-flask-vial'
     },
     {
+        id: 'exp_doc_4',
         code: 'CI / PL / B/L',
         titleAr: 'الفاتورة التجارية + قائمة التعبئة + بوليصة الشحن البحري',
         titleEn: 'Commercial Invoice + Packing List + Bill of Lading (B/L)',
@@ -160,6 +182,7 @@ const EXPORT_DOCS_CHECKLIST = [
         icon: 'fa-file-invoice-dollar'
     },
     {
+        id: 'exp_doc_5',
         code: 'SGS / INTERTEK',
         titleAr: 'شهادة الفحص والوزن قبل الشحن (حسب طلب المستورد)',
         titleEn: 'Pre-Shipment Inspection & Weight Certificate (Optional)',
@@ -170,7 +193,76 @@ const EXPORT_DOCS_CHECKLIST = [
 ];
 
 // ==========================================
-// 3. حقن التنسيقات البصرية (CSS) الخاصة بقسم التصدير
+// 3. تحميل ومزامنة بيانات التصدير من Firestore
+// ==========================================
+async function loadExportSettingsFromDb() {
+    try {
+        const snap = await getDoc(doc(db, "export_settings", "general"));
+        if (snap.exists()) {
+            exportSettingsCache = { ...DEFAULT_EXPORT_SETTINGS, ...snap.data() };
+        }
+    } catch (_) {}
+    applyExportSettingsToGlobalUI();
+    return exportSettingsCache;
+}
+
+async function loadExportSpecsFromDb() {
+    try {
+        const snap = await getDocs(query(collection(db, "export_specs"), limit(50)));
+        if (!snap.empty) {
+            exportSpecsCache = [];
+            snap.forEach(d => exportSpecsCache.push({ id: d.id, ...d.data() }));
+            exportSpecsFromDb = true;
+            return exportSpecsCache;
+        }
+    } catch (_) {}
+    exportSpecsFromDb = false;
+    exportSpecsCache = [...DEFAULT_EXPORT_SPECS];
+    return exportSpecsCache;
+}
+
+async function loadExportDocsFromDb() {
+    try {
+        const snap = await getDocs(query(collection(db, "export_docs"), limit(30)));
+        if (!snap.empty) {
+            exportDocsCache = [];
+            snap.forEach(d => exportDocsCache.push({ id: d.id, ...d.data() }));
+            exportDocsFromDb = true;
+            return exportDocsCache;
+        }
+    } catch (_) {}
+    exportDocsFromDb = false;
+    exportDocsCache = [...DEFAULT_EXPORT_DOCS];
+    return exportDocsCache;
+}
+
+async function syncAllExportPortalData() {
+    await Promise.all([
+        loadExportSettingsFromDb(),
+        loadExportSpecsFromDb(),
+        loadExportDocsFromDb()
+    ]);
+    updateExportDrawerButtonText();
+    renderExportHubContent();
+}
+
+function applyExportSettingsToGlobalUI() {
+    const drawerBtn = document.getElementById('drawerExportHubBtn');
+    if (drawerBtn) {
+        drawerBtn.style.display = exportSettingsCache.enabled === false ? 'none' : '';
+    }
+    const waBtn = document.getElementById('rfqWhatsAppBtn');
+    if (waBtn && exportSettingsCache.waPhone) {
+        waBtn.href = `https://wa.me/${exportSettingsCache.waPhone.replace(/[^0-9]/g, '')}`;
+    }
+    const callBtn = document.getElementById('rfqCallBtn');
+    if (callBtn && exportSettingsCache.directPhone) {
+        callBtn.href = `tel:${exportSettingsCache.directPhone}`;
+    }
+}
+
+// ==========================================
+// 4. حقن التنسيقات البصرية (CSS) الخاصة بقسم التصدير ولوحة الإدارة
 // ==========================================
 function injectExportCoreStyles() {
     if (document.getElementById('omda-export-core-styles')) return;
@@ -344,12 +436,42 @@ function injectExportCoreStyles() {
             flex-wrap: wrap;
             gap: 10px;
         }
+        .admin-exp-subtabs {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 4px 2px 10px 2px;
+            margin-bottom: 14px;
+            border-bottom: 1.5px solid #e5e7eb;
+            scrollbar-width: none;
+        }
+        .admin-exp-subtabs::-webkit-scrollbar { display: none; }
+        .admin-exp-subtab-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #173627;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 0.83rem;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+        .admin-exp-subtab-btn.active {
+            background: #173627;
+            color: #d4af37;
+            border-color: #173627;
+        }
     `;
     document.head.appendChild(style);
 }
 
 // ==========================================
-// 4. بناء واجهة بوابة التصدير الدولي وربطها بالقائمة
+// 5. بناء واجهة بوابة التصدير الدولي وربطها بالقائمة ولوحة الإدارة
 // ==========================================
 function injectExportHubUI() {
     injectExportCoreStyles();
@@ -374,7 +496,33 @@ function injectExportHubUI() {
         }
     }
 
-    // 2) إضافة القسم الرئيسي لبوابة التصدير داخل app-main
+    // 2) إضافة زر سريع في شريط تبويبات لوحة الإدارة للوصول الفوري لإعدادات بوابة التصدير
+    const adminTabs = document.querySelector('#adminSection .admin-tabs');
+    const tabExportBtn = document.getElementById('tabExportBtn');
+    if (adminTabs && tabExportBtn && !document.getElementById('tabExportPortalManageBtn')) {
+        const manageBtn = document.createElement('button');
+        manageBtn.type = 'button';
+        manageBtn.id = 'tabExportPortalManageBtn';
+        manageBtn.className = 'tab-btn';
+        manageBtn.innerHTML = '<i class="fa-solid fa-sliders"></i> إدارة بوابة التصدير';
+        manageBtn.addEventListener('click', () => {
+            if (typeof window.switchAdminTab === 'function') {
+                window.switchAdminTab('export_rfq');
+            }
+            activeAdminExportSubTab = 'specs';
+            enhanceAdminExportPanel();
+            renderAdminExportSubView();
+            adminTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            manageBtn.classList.add('active');
+        });
+        if (tabExportBtn.nextSibling) {
+            adminTabs.insertBefore(manageBtn, tabExportBtn.nextSibling);
+        } else {
+            adminTabs.appendChild(manageBtn);
+        }
+    }
+
+    // 3) إضافة القسم الرئيسي لبوابة التصدير داخل app-main
     const mainEl = document.querySelector('main.app-main');
     if (mainEl && !document.getElementById('exportHubSection')) {
         const section = document.createElement('section');
@@ -384,7 +532,7 @@ function injectExportHubUI() {
         mainEl.appendChild(section);
     }
 
-    // 3) إضافة شريط دخول سريع لبوابة التصدير داخل قسم المنتجات عند تصفية التصدير
+    // 4) إضافة شريط دخول سريع لبوابة التصدير داخل قسم المنتجات عند تصفية التصدير
     const productsGrid = document.getElementById('productsGrid');
     if (productsGrid && !document.getElementById('exportCategoryQuickBanner')) {
         const banner = document.createElement('div');
@@ -394,8 +542,11 @@ function injectExportHubUI() {
         productsGrid.parentNode.insertBefore(banner, productsGrid);
     }
 
+    exportSpecsCache = [...DEFAULT_EXPORT_SPECS];
+    exportDocsCache = [...DEFAULT_EXPORT_DOCS];
     updateExportDrawerButtonText();
     renderExportHubContent();
+    syncAllExportPortalData();
 }
 
 function updateExportDrawerButtonText() {
@@ -433,13 +584,19 @@ function updateExportDrawerButtonText() {
 }
 
 // ==========================================
-// 5. بناء محتوى بوابة التصدير التفاعلية (4 تبويبات متكاملة)
+// 6. بناء محتوى بوابة التصدير التفاعلية للعملاء (4 تبويبات)
 // ==========================================
 let activeExportSubTab = 'calculator';
 
 function renderExportHubContent() {
     const section = document.getElementById('exportHubSection');
     if (!section) return;
+
+    const cfg = exportSettingsCache;
+    const heroTitle = escapeHtml(getLang() === 'en' ? cfg.heroTitleEn : cfg.heroTitleAr);
+    const heroDesc = escapeHtml(getLang() === 'en' ? cfg.heroDescEn : cfg.heroDescAr);
+    const portsBanner = escapeHtml(getLang() === 'en' ? cfg.portsBannerEn : cfg.portsBannerAr);
+    const waClean = (cfg.waPhone || '201114099799').replace(/[^0-9]/g, '');
 
     section.innerHTML = `
         <div class="export-hero-card">
@@ -449,14 +606,14 @@ function renderExportHubContent() {
                         <i class="fa-solid fa-globe"></i> AL-EKHLAS GLOBAL EXPORT DIVISION
                     </span>
                     <h2 style="font-size: 1.45rem; font-weight: 900; margin: 4px 0 6px 0; color: #fff;">
-                        ${tx('بوابة التصدير الدولي والصفقات الكبرى (B2B)', 'International Export & Bulk Trade Portal (B2B)')}
+                        ${heroTitle}
                     </h2>
                     <p style="font-size: 0.88rem; opacity: 0.92; max-width: 680px;">
-                        ${tx('تصدير أجود الأعلاف المصنعة، الدريس الحجازي، الذرة الصفراء، وكسب الصويا من الموانئ المصرية إلى الأسواق العربية والأفريقية والأوروبية بأعلى معايير الجودة.', 'Exporting premium manufactured feeds, alfalfa hay, yellow corn, and soybean meal from Egyptian ports to Arab, African & European markets.')}
+                        ${heroDesc}
                     </p>
                 </div>
                 <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                    <a href="https://wa.me/${EXPORT_WA_PHONE}?text=${encodeURIComponent('السلام عليكم، استفسار بخصوص التصدير الدولي B2B من مؤسسة الإخلاص')}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:#fff; padding:9px 14px; border-radius:10px; text-decoration:none; font-weight:800; font-size:0.84rem; display:inline-flex; align-items:center; gap:6px;">
+                    <a href="https://wa.me/${waClean}?text=${encodeURIComponent('السلام عليكم، استفسار بخصوص التصدير الدولي B2B من مؤسسة الإخلاص')}" target="_blank" rel="noopener noreferrer" style="background:#25D366; color:#fff; padding:9px 14px; border-radius:10px; text-decoration:none; font-weight:800; font-size:0.84rem; display:inline-flex; align-items:center; gap:6px;">
                         <i class="fa-brands fa-whatsapp"></i> ${tx('واتساب التصدير', 'Export WhatsApp')}
                     </a>
                     <button type="button" id="hubDirectRfqBtn" style="background:var(--accent); color:var(--primary-dark); border:none; padding:9px 14px; border-radius:10px; font-weight:900; font-size:0.84rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
@@ -468,7 +625,7 @@ function renderExportHubContent() {
                 <span class="export-pill-badge"><i class="fa-solid fa-anchor"></i> FOB / CIF / EXW</span>
                 <span class="export-pill-badge"><i class="fa-solid fa-certificate"></i> GAFTA / EUR.1 / CO</span>
                 <span class="export-pill-badge"><i class="fa-solid fa-microscope"></i> Aflatoxin &lt; 5 ppb</span>
-                <span class="export-pill-badge"><i class="fa-solid fa-ship"></i> ${tx('الإسكندرية • دمياط • العين السخنة', 'Alexandria • Damietta • Sokhna')}</span>
+                <span class="export-pill-badge"><i class="fa-solid fa-ship"></i> ${portsBanner}</span>
             </div>
         </div>
 
@@ -496,7 +653,7 @@ function renderExportHubContent() {
                 id: 'export_general',
                 name: 'طلب تصدير جملة مخصص (B2B)',
                 nameEn: 'Custom Bulk Export Inquiry (B2B)',
-                minQty: tx('24 طن (حاوية 20 قدم)', '24 Tons (20ft Container)')
+                minQty: tx(`${cfg.cap20ft || 24} طن (حاوية 20 قدم)`, `${cfg.cap20ft || 24} Tons (20ft Container)`)
             });
         }
     });
@@ -518,12 +675,17 @@ function renderExportHubContent() {
 }
 
 // ==========================================
-// 6. تبويب حاسبة الحاويات والشحن البحري والـ Incoterms
+// 7. تبويب حاسبة الحاويات والشحن البحري
 // ==========================================
 function renderContainerCalculatorTab(container) {
     const specs = exportSpecsCache.length > 0 ? exportSpecsCache : DEFAULT_EXPORT_SPECS;
+    const cfg = exportSettingsCache;
+    const cap20 = Number(cfg.cap20ft || 24);
+    const cap40 = Number(cfg.cap40hc || 27);
+    const defaultRate = Number(cfg.defaultUsdRate || 50.5);
+
     const productOptions = specs.map((s, idx) => {
-        const label = escapeHtml(getLang() === 'en' ? s.nameEn : s.nameAr);
+        const label = escapeHtml(getLang() === 'en' ? (s.nameEn || s.nameAr) : s.nameAr);
         return `<option value="${idx}" data-fob="${Number(s.baseFobUsd || 400)}">${label} (~$${Number(s.baseFobUsd || 400)}/Ton)</option>`;
     }).join('');
 
@@ -539,8 +701,8 @@ function renderContainerCalculatorTab(container) {
                     <div class="input-group">
                         <label>${tx('نوع الحاوية / الشحن', 'Container / Vessel Type')}</label>
                         <select id="expCalcContainerType">
-                            <option value="20ft">${tx('حاوية 20 قدم جافة (24 طن)', '20ft Dry Container (24 Tons)')}</option>
-                            <option value="40hc">${tx('حاوية 40 قدم مرتفعة HC (27 طن)', '40ft High Cube Container (27 Tons)')}</option>
+                            <option value="20ft">${tx(`حاوية 20 قدم جافة (${cap20} طن)`, `20ft Dry Container (${cap20} Tons)`)}</option>
+                            <option value="40hc">${tx(`حاوية 40 قدم مرتفعة HC (${cap40} طن)`, `40ft High Cube Container (${cap40} Tons)`)}</option>
                             <option value="bulk">${tx('شحن صب بالسفن (Bulk Vessel)', 'Bulk Vessel Shipment')}</option>
                         </select>
                     </div>
@@ -555,7 +717,7 @@ function renderContainerCalculatorTab(container) {
                     </div>
                     <div class="input-group">
                         <label>${tx('الكمية المطلوبة (بالطن)', 'Required Quantity (Tons)')}</label>
-                        <input type="number" id="expCalcTons" min="10" max="500000" value="48" required>
+                        <input type="number" id="expCalcTons" min="10" max="500000" value="${cap20 * 2}" required>
                     </div>
                     <div class="input-group">
                         <label>${tx('شرط التسليم (Incoterm)', 'Incoterm')}</label>
@@ -567,7 +729,7 @@ function renderContainerCalculatorTab(container) {
                     </div>
                     <div class="input-group">
                         <label>${tx('سعر صرف الدولار (ج.م)', 'USD to EGP Rate')}</label>
-                        <input type="number" id="expCalcUsdRate" min="1" step="0.1" value="50.5" required>
+                        <input type="number" id="expCalcUsdRate" min="1" step="0.1" value="${defaultRate}" required>
                     </div>
                 </div>
                 <button type="submit" class="btn-submit" style="margin-top: 8px;">
@@ -594,11 +756,11 @@ function renderContainerCalculatorTab(container) {
 
         const contType = document.getElementById('expCalcContainerType').value;
         const unitKg = Number(document.getElementById('expCalcPackaging').value) || 50;
-        const tons = Math.max(10, Number(document.getElementById('expCalcTons').value) || 24);
+        const tons = Math.max(10, Number(document.getElementById('expCalcTons').value) || cap20);
         const incoterm = document.getElementById('expCalcIncoterm').value;
-        const usdRate = Math.max(1, Number(document.getElementById('expCalcUsdRate').value) || 50.5);
+        const usdRate = Math.max(1, Number(document.getElementById('expCalcUsdRate').value) || defaultRate);
 
-        const capacityPerCont = contType === '20ft' ? 24 : (contType === '40hc' ? 27 : 0);
+        const capacityPerCont = contType === '20ft' ? cap20 : (contType === '40hc' ? cap40 : 0);
         const containersCount = capacityPerCont > 0 ? Math.ceil(tons / capacityPerCont) : 0;
         const totalUnits = Math.ceil((tons * 1000) / unitKg);
 
@@ -670,19 +832,9 @@ function renderContainerCalculatorTab(container) {
 }
 
 // ==========================================
-// 7. تبويب دليل المواصفات القياسية والأكواد الجمركية HS Codes
+// 8. تبويب دليل المواصفات القياسية والأكواد الجمركية HS Codes
 // ==========================================
 async function renderExportSpecsTab(container) {
-    container.innerHTML = `<p style="text-align:center; color:#888; padding:20px;">${tx('جاري تحميل دليل المواصفات القياسية...', 'Loading Export Specs Directory...')}</p>`;
-
-    try {
-        const snap = await getDocs(query(collection(db, "export_specs"), limit(30)));
-        if (!snap.empty) {
-            exportSpecsCache = [];
-            snap.forEach(d => exportSpecsCache.push({ id: d.id, ...d.data() }));
-        }
-    } catch (_) {}
-
     const list = exportSpecsCache.length > 0 ? exportSpecsCache : DEFAULT_EXPORT_SPECS;
 
     container.innerHTML = `
@@ -692,9 +844,9 @@ async function renderExportSpecsTab(container) {
         </div>
         <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(275px, 1fr));">
             ${list.map(item => {
-                const title = escapeHtml(getLang() === 'en' ? item.nameEn : item.nameAr);
-                const pack = escapeHtml(getLang() === 'en' ? item.packagingEn : item.packagingAr);
-                const ports = escapeHtml(getLang() === 'en' ? item.portsEn : item.portsAr);
+                const title = escapeHtml(getLang() === 'en' ? (item.nameEn || item.nameAr) : item.nameAr);
+                const pack = escapeHtml(getLang() === 'en' ? (item.packagingEn || item.packagingAr) : item.packagingAr);
+                const ports = escapeHtml(getLang() === 'en' ? (item.portsEn || item.portsAr) : item.portsAr);
                 return `
                     <div class="export-spec-card">
                         <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
@@ -736,25 +888,27 @@ async function renderExportSpecsTab(container) {
 }
 
 // ==========================================
-// 8. تبويب مستندات وشهادات التصدير الدولية
+// 9. تبويب مستندات وشهادات التصدير الدولية
 // ==========================================
 function renderExportDocsTab(container) {
+    const docsList = exportDocsCache.length > 0 ? exportDocsCache : DEFAULT_EXPORT_DOCS;
+
     container.innerHTML = `
         <div class="section-title">
             <h3><i class="fa-solid fa-folder-open"></i> ${tx('حزمة مستندات التصدير والشهادات المعتمدة', 'Official Export Documentation & Compliance Package')}</h3>
             <span>${tx('نوفر كافة المستندات الجمركية والبيطرية والبنكية لضمان دخول سلس لبضائعكم في ميناء الوصول', 'We provide complete customs, veterinary & banking documents for smooth clearance at destination port')}</span>
         </div>
         <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(265px, 1fr));">
-            ${EXPORT_DOCS_CHECKLIST.map(docItem => `
+            ${docsList.map(docItem => `
                 <div class="export-spec-card" style="border-top-color: var(--accent);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="width:38px; height:38px; border-radius:10px; background:#eef7f2; color:var(--primary); display:flex; align-items:center; justify-content:center; font-size:1.1rem;">
-                            <i class="fa-solid ${docItem.icon}"></i>
+                            <i class="fa-solid ${escapeHtml(docItem.icon || 'fa-file-shield')}"></i>
                         </span>
                         <span class="export-hs-tag">${escapeHtml(docItem.code)}</span>
                     </div>
-                    <h4 style="color:var(--primary); font-size:0.96rem;">${escapeHtml(getLang() === 'en' ? docItem.titleEn : docItem.titleAr)}</h4>
-                    <p style="font-size:0.83rem; color:#555; line-height:1.5;">${escapeHtml(getLang() === 'en' ? docItem.descEn : docItem.descAr)}</p>
+                    <h4 style="color:var(--primary); font-size:0.96rem;">${escapeHtml(getLang() === 'en' ? (docItem.titleEn || docItem.titleAr) : docItem.titleAr)}</h4>
+                    <p style="font-size:0.83rem; color:#555; line-height:1.5;">${escapeHtml(getLang() === 'en' ? (docItem.descEn || docItem.descAr) : docItem.descAr)}</p>
                 </div>
             `).join('')}
         </div>
@@ -762,7 +916,7 @@ function renderExportDocsTab(container) {
 }
 
 // ==========================================
-// 9. تبويب تتبع شحنات التصدير والحاويات (B2B Tracker)
+// 10. تبويب تتبع شحنات التصدير والحاويات (B2B Tracker)
 // ==========================================
 function renderExportTrackingTab(container) {
     container.innerHTML = `
@@ -849,34 +1003,548 @@ function renderExportTrackingTab(container) {
 }
 
 // ==========================================
-// 10. تطوير إدارة طلبات التصدير في لوحة المدير + Proforma Invoice
+// 11. مركز التحكم الشامل في بوابة التصدير داخل لوحة الإدارة
 // ==========================================
+let activeAdminExportSubTab = 'specs';
+
 function enhanceAdminExportPanel() {
     const adminExportTab = document.getElementById('adminExportTab');
-    if (!adminExportTab || document.getElementById('adminExportProTools')) return;
+    if (!adminExportTab) return;
 
-    const proBox = document.createElement('div');
-    proBox.id = 'adminExportProTools';
-    proBox.className = 'form-card';
-    proBox.style.marginBottom = '18px';
-    proBox.style.borderTop = '4px solid var(--accent)';
-    proBox.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
-            <h3 style="margin:0;"><i class="fa-solid fa-ship"></i> إدارة شحنات التصدير والحاويات والفواتير المبدئية (Proforma Invoice)</h3>
-            <button type="button" id="refreshAdminExportProBtn" class="btn-submit" style="width:auto; padding:7px 14px; background:var(--accent); color:var(--primary-dark);">
-                <i class="fa-solid fa-rotate"></i> تحديث السجلات
-            </button>
-        </div>
-        <p style="font-size:0.84rem; color:#666; margin-bottom:10px;">
-            حدّث مرحلة الشحنة اللوجستية، رقم الحاوية/البوليصة، وسعر الطن بالدولار لأي طلب تصدير، أو أصدر فاتورة مبدئية دولية فوراً.
-        </p>
-        <div id="adminExportProList" class="data-list"></div>
-    `;
+    let controlHub = document.getElementById('adminExportFullControlCenter');
+    if (!controlHub) {
+        controlHub = document.createElement('div');
+        controlHub.id = 'adminExportFullControlCenter';
+        controlHub.style.marginBottom = '20px';
+        adminExportTab.insertBefore(controlHub, adminExportTab.firstChild);
+    }
 
-    adminExportTab.insertBefore(proBox, adminExportTab.firstChild);
-    proBox.querySelector('#refreshAdminExportProBtn')?.addEventListener('click', loadAdminExportProList);
+    renderAdminExportSubView();
 }
 
+function renderAdminExportSubView() {
+    const controlHub = document.getElementById('adminExportFullControlCenter');
+    if (!controlHub) return;
+
+    controlHub.innerHTML = `
+        <div class="form-card" style="border-top: 4px solid var(--accent); margin-bottom: 16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+                <h3 style="margin:0;"><i class="fa-solid fa-ship"></i> لوحة التحكم الكاملة في بوابة التصدير الدولي (B2B)</h3>
+                <button type="button" id="adminExpPreviewPortalBtn" class="btn-submit" style="width:auto; padding:6px 14px; background:var(--accent); color:var(--primary-dark); font-size:0.82rem;">
+                    <i class="fa-solid fa-eye"></i> معاينة بوابة التصدير
+                </button>
+            </div>
+
+            <div class="admin-exp-subtabs">
+                <button type="button" class="admin-exp-subtab-btn ${activeAdminExportSubTab === 'specs' ? 'active' : ''}" data-admintab="specs">
+                    <i class="fa-solid fa-barcode"></i> الأصناف والمواصفات و HS Codes
+                </button>
+                <button type="button" class="admin-exp-subtab-btn ${activeAdminExportSubTab === 'settings' ? 'active' : ''}" data-admintab="settings">
+                    <i class="fa-solid fa-sliders"></i> إعدادات البوابة وحاسبة الحاويات
+                </button>
+                <button type="button" class="admin-exp-subtab-btn ${activeAdminExportSubTab === 'docs' ? 'active' : ''}" data-admintab="docs">
+                    <i class="fa-solid fa-folder-open"></i> مستندات وشهادات التصدير
+                </button>
+                <button type="button" class="admin-exp-subtab-btn ${activeAdminExportSubTab === 'shipments' ? 'active' : ''}" data-admintab="shipments">
+                    <i class="fa-solid fa-file-invoice-dollar"></i> الشحنات والفواتير المبدئية ($)
+                </button>
+            </div>
+
+            <div id="adminExportSubBody"></div>
+        </div>
+    `;
+
+    controlHub.querySelector('#adminExpPreviewPortalBtn')?.addEventListener('click', () => {
+        if (typeof window.switchSection === 'function') window.switchSection('exportHubSection');
+        renderExportHubContent();
+    });
+
+    controlHub.querySelectorAll('.admin-exp-subtab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            activeAdminExportSubTab = btn.dataset.admintab;
+            renderAdminExportSubView();
+        });
+    });
+
+    const subBody = document.getElementById('adminExportSubBody');
+    if (!subBody) return;
+
+    if (activeAdminExportSubTab === 'specs') renderAdminExportSpecsManager(subBody);
+    else if (activeAdminExportSubTab === 'settings') renderAdminExportSettingsManager(subBody);
+    else if (activeAdminExportSubTab === 'docs') renderAdminExportDocsManager(subBody);
+    else if (activeAdminExportSubTab === 'shipments') {
+        subBody.innerHTML = `<div id="adminExportProList" class="data-list"></div>`;
+        loadAdminExportProList();
+    }
+}
+
+// --- 11.أ إدارة الأصناف والمواصفات و HS Codes ---
+async function renderAdminExportSpecsManager(container) {
+    container.innerHTML = `
+        <div style="background:#f8faf9; padding:14px; border-radius:12px; border:1px solid #d1e3da; margin-bottom:16px;">
+            <h4 id="adminExpSpecFormHeading" style="color:var(--primary); margin-bottom:10px;">
+                <i class="fa-solid fa-plus-circle"></i> إضافة أو تعديل صنف تصديري ومواصفاته القياسية
+            </h4>
+            <form id="adminExpSpecForm">
+                <input type="hidden" id="adminExpSpecId" value="">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px;">
+                    <div class="input-group">
+                        <label>اسم الصنف التصديري (بالعربية) *</label>
+                        <input type="text" id="adminExpSpecNameAr" placeholder="مثال: علف دواجن تسمين مركز (تصدير)" required>
+                    </div>
+                    <div class="input-group">
+                        <label>اسم الصنف (بالإنجليزية)</label>
+                        <input type="text" id="adminExpSpecNameEn" placeholder="Example: Concentrated Poultry Feed">
+                    </div>
+                    <div class="input-group">
+                        <label>البند الجمركي (HS Code) *</label>
+                        <input type="text" id="adminExpSpecHsCode" placeholder="مثال: 2309.90" required>
+                    </div>
+                    <div class="input-group">
+                        <label>سعر الطن الاسترشادي FOB ($) *</label>
+                        <input type="number" id="adminExpSpecFobUsd" min="1" step="0.5" placeholder="445" required>
+                    </div>
+                    <div class="input-group">
+                        <label>الحد الأدنى للطلب (طن) *</label>
+                        <input type="number" id="adminExpSpecMinTons" min="1" value="24" required>
+                    </div>
+                    <div class="input-group">
+                        <label>نسبة البروتين (%)</label>
+                        <input type="text" id="adminExpSpecProtein" placeholder="مثال: 21% - 23.5%" required>
+                    </div>
+                    <div class="input-group">
+                        <label>نسبة الرطوبة (%)</label>
+                        <input type="text" id="adminExpSpecMoisture" placeholder="مثال: Max 11.5%" required>
+                    </div>
+                    <div class="input-group">
+                        <label>التعبئة والتغليف (عربي)</label>
+                        <input type="text" id="adminExpSpecPackAr" placeholder="شكاير 50 كجم أو جامبو باج 1000 كجم" required>
+                    </div>
+                    <div class="input-group">
+                        <label>التعبئة والتغليف (إنجليزي)</label>
+                        <input type="text" id="adminExpSpecPackEn" placeholder="50kg PP Bags or 1000kg Jumbo Bags">
+                    </div>
+                    <div class="input-group">
+                        <label>موانئ الشحن (عربي)</label>
+                        <input type="text" id="adminExpSpecPortsAr" placeholder="ميناء الإسكندرية / دمياط / العين السخنة" required>
+                    </div>
+                    <div class="input-group">
+                        <label>موانئ الشحن (إنجليزي)</label>
+                        <input type="text" id="adminExpSpecPortsEn" placeholder="Alexandria / Damietta / Ain Sokhna Ports">
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+                    <button type="submit" id="adminExpSpecSaveBtn" class="btn-submit" style="flex:1; min-width:180px;">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ ونشر الصنف في بوابة التصدير
+                    </button>
+                    <button type="button" id="adminExpSpecCancelBtn" class="btn-submit" style="width:auto; background:#64748b; display:none;">
+                        إلغاء التعديل
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <h4 style="margin:0; color:var(--primary);"><i class="fa-solid fa-list-check"></i> الأصناف التصديرية المعروضة حالياً (${exportSpecsCache.length})</h4>
+            ${!exportSpecsFromDb ? `<button type="button" id="seedDefaultExportSpecsBtn" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-size:0.8rem; font-weight:bold; cursor:pointer;"><i class="fa-solid fa-cloud-arrow-up"></i> تثبيت القائمة الافتراضية بقاعدة البيانات</button>` : ''}
+        </div>
+        <div id="adminExpSpecsListContainer" class="data-list"></div>
+    `;
+
+    const resetForm = () => {
+        document.getElementById('adminExpSpecId').value = '';
+        document.getElementById('adminExpSpecForm').reset();
+        document.getElementById('adminExpSpecMinTons').value = '24';
+        document.getElementById('adminExpSpecFormHeading').innerHTML = '<i class="fa-solid fa-plus-circle"></i> إضافة أو تعديل صنف تصديري ومواصفاته القياسية';
+        document.getElementById('adminExpSpecSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ ونشر الصنف في بوابة التصدير';
+        document.getElementById('adminExpSpecCancelBtn').style.display = 'none';
+    };
+
+    document.getElementById('adminExpSpecCancelBtn')?.addEventListener('click', resetForm);
+
+    document.getElementById('seedDefaultExportSpecsBtn')?.addEventListener('click', async () => {
+        try {
+            for (const item of DEFAULT_EXPORT_SPECS) {
+                const { id, ...cleanData } = item;
+                await addDoc(collection(db, "export_specs"), { ...cleanData, updatedAt: new Date().toISOString() });
+            }
+            alert('تم حفظ الأصناف الافتراضية في قاعدة البيانات بنجاح!');
+            await syncAllExportPortalData();
+            renderAdminExportSpecsManager(container);
+        } catch (err) {
+            alert('خطأ أثناء الحفظ: ' + err.message);
+        }
+    });
+
+    document.getElementById('adminExpSpecForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('adminExpSpecId').value.trim();
+        const payload = {
+            nameAr: document.getElementById('adminExpSpecNameAr').value.trim(),
+            nameEn: document.getElementById('adminExpSpecNameEn').value.trim() || document.getElementById('adminExpSpecNameAr').value.trim(),
+            hsCode: document.getElementById('adminExpSpecHsCode').value.trim(),
+            baseFobUsd: Number(document.getElementById('adminExpSpecFobUsd').value) || 0,
+            minOrderTons: Number(document.getElementById('adminExpSpecMinTons').value) || 24,
+            protein: document.getElementById('adminExpSpecProtein').value.trim(),
+            moisture: document.getElementById('adminExpSpecMoisture').value.trim(),
+            packagingAr: document.getElementById('adminExpSpecPackAr').value.trim(),
+            packagingEn: document.getElementById('adminExpSpecPackEn').value.trim() || document.getElementById('adminExpSpecPackAr').value.trim(),
+            portsAr: document.getElementById('adminExpSpecPortsAr').value.trim(),
+            portsEn: document.getElementById('adminExpSpecPortsEn').value.trim() || document.getElementById('adminExpSpecPortsAr').value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            // إذا كانت البيانات ما زالت افتراضية ولم تُخزن في Firestore بعد، نحفظ باقي الأصناف أولاً حتى لا تختفي
+            if (!exportSpecsFromDb) {
+                for (const defItem of DEFAULT_EXPORT_SPECS) {
+                    if (defItem.id === editId) continue;
+                    const { id, ...cleanDef } = defItem;
+                    await addDoc(collection(db, "export_specs"), { ...cleanDef, updatedAt: new Date().toISOString() });
+                }
+                await addDoc(collection(db, "export_specs"), payload);
+            } else if (editId) {
+                await updateDoc(doc(db, "export_specs", editId), payload);
+            } else {
+                await addDoc(collection(db, "export_specs"), payload);
+            }
+
+            alert(editId ? 'تم تحديث مواصفات وسعر الصنف بنجاح!' : 'تمت إضافة الصنف التصديري الجديد بنجاح!');
+            resetForm();
+            await syncAllExportPortalData();
+            renderAdminExportSpecsManager(container);
+        } catch (err) {
+            alert('حدث خطأ أثناء الحفظ في Firestore: ' + err.message);
+        }
+    });
+
+    const listEl = document.getElementById('adminExpSpecsListContainer');
+    if (listEl) {
+        listEl.innerHTML = exportSpecsCache.map(item => `
+            <div class="data-item" style="border-right: 4px solid var(--primary);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <span class="export-hs-tag">HS: ${escapeHtml(item.hsCode)}</span>
+                        <strong style="color:var(--primary); font-size:0.98rem; margin-right:6px;">${escapeHtml(item.nameAr)}</strong>
+                        <div style="font-size:0.82rem; color:#555; margin-top:5px;">
+                            <span>البروتين: <strong>${escapeHtml(item.protein)}</strong></span> |
+                            <span>الرطوبة: <strong>${escapeHtml(item.moisture)}</strong></span> |
+                            <span>الحد الأدنى: <strong>${Number(item.minOrderTons)} طن</strong></span> |
+                            <span style="color:#16a34a;">FOB: <strong>$${Number(item.baseFobUsd)}/Ton</strong></span>
+                        </div>
+                        <div style="font-size:0.78rem; color:#666; margin-top:2px;">
+                            الموانئ: ${escapeHtml(item.portsAr)} | التعبئة: ${escapeHtml(item.packagingAr)}
+                        </div>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="btn-edit-exp-spec" data-id="${escapeHtml(item.id)}" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.8rem;">
+                            <i class="fa-solid fa-pen-to-square"></i> تعديل
+                        </button>
+                        <button type="button" class="btn-del-exp-spec" data-id="${escapeHtml(item.id)}" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.8rem;">
+                            <i class="fa-solid fa-trash"></i> حذف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        listEl.querySelectorAll('.btn-edit-exp-spec').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = exportSpecsCache.find(x => x.id === btn.dataset.id);
+                if (!item) return;
+                document.getElementById('adminExpSpecId').value = item.id;
+                document.getElementById('adminExpSpecNameAr').value = item.nameAr || '';
+                document.getElementById('adminExpSpecNameEn').value = item.nameEn || '';
+                document.getElementById('adminExpSpecHsCode').value = item.hsCode || '';
+                document.getElementById('adminExpSpecFobUsd').value = item.baseFobUsd || '';
+                document.getElementById('adminExpSpecMinTons').value = item.minOrderTons || 24;
+                document.getElementById('adminExpSpecProtein').value = item.protein || '';
+                document.getElementById('adminExpSpecMoisture').value = item.moisture || '';
+                document.getElementById('adminExpSpecPackAr').value = item.packagingAr || '';
+                document.getElementById('adminExpSpecPackEn').value = item.packagingEn || '';
+                document.getElementById('adminExpSpecPortsAr').value = item.portsAr || '';
+                document.getElementById('adminExpSpecPortsEn').value = item.portsEn || '';
+
+                document.getElementById('adminExpSpecFormHeading').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> تعديل الصنف: ${escapeHtml(item.nameAr)}`;
+                document.getElementById('adminExpSpecSaveBtn').innerHTML = '<i class="fa-solid fa-check"></i> حفظ التعديلات الآن';
+                document.getElementById('adminExpSpecCancelBtn').style.display = 'inline-block';
+                document.getElementById('adminExpSpecForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+        });
+
+        listEl.querySelectorAll('.btn-del-exp-spec').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('هل أنت متأكد من حذف هذا الصنف من بوابة التصدير؟')) return;
+                const delId = btn.dataset.id;
+                try {
+                    if (!exportSpecsFromDb) {
+                        for (const defItem of DEFAULT_EXPORT_SPECS) {
+                            if (defItem.id === delId) continue;
+                            const { id, ...cleanDef } = defItem;
+                            await addDoc(collection(db, "export_specs"), { ...cleanDef, updatedAt: new Date().toISOString() });
+                        }
+                    } else {
+                        await deleteDoc(doc(db, "export_specs", delId));
+                    }
+                    alert('تم حذف الصنف بنجاح!');
+                    await syncAllExportPortalData();
+                    renderAdminExportSpecsManager(container);
+                } catch (err) {
+                    alert('خطأ أثناء الحذف: ' + err.message);
+                }
+            });
+        });
+    }
+}
+
+// --- 11.ب إعدادات بوابة التصدير وحاسبة الحاويات ---
+function renderAdminExportSettingsManager(container) {
+    const cfg = exportSettingsCache;
+    container.innerHTML = `
+        <form id="adminExpSettingsForm" style="background:#f8faf9; padding:14px; border-radius:12px; border:1px solid #d1e3da;">
+            <h4 style="color:var(--primary); margin-bottom:12px;"><i class="fa-solid fa-sliders"></i> إعدادات العرض، التواصل، وسعر الصرف في بوابة التصدير</h4>
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:10px;">
+                <div class="input-group">
+                    <label>حالة ظهور بوابة التصدير للعملاء</label>
+                    <select id="cfgExpEnabled">
+                        <option value="true" ${cfg.enabled !== false ? 'selected' : ''}>مفعّلة وتظهر في القائمة</option>
+                        <option value="false" ${cfg.enabled === false ? 'selected' : ''}>مخفية مؤقتاً</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>سعر صرف الدولار الافتراضي (ج.م)</label>
+                    <input type="number" id="cfgExpUsdRate" step="0.1" min="1" value="${Number(cfg.defaultUsdRate || 50.5)}" required>
+                </div>
+                <div class="input-group">
+                    <label>سعة حاوية 20 قدم (طن)</label>
+                    <input type="number" id="cfgExpCap20" min="1" value="${Number(cfg.cap20ft || 24)}" required>
+                </div>
+                <div class="input-group">
+                    <label>سعة حاوية 40 قدم HC (طن)</label>
+                    <input type="number" id="cfgExpCap40" min="1" value="${Number(cfg.cap40hc || 27)}" required>
+                </div>
+                <div class="input-group">
+                    <label>رقم واتساب التصدير (بالكود الدولي بدون +)</label>
+                    <input type="text" id="cfgExpWaPhone" value="${escapeHtml(cfg.waPhone || '201114099799')}" required>
+                </div>
+                <div class="input-group">
+                    <label>رقم الاتصال المباشر للتصدير</label>
+                    <input type="text" id="cfgExpDirectPhone" value="${escapeHtml(cfg.directPhone || '+201114099799')}" required>
+                </div>
+                <div class="input-group">
+                    <label>عنوان البوابة الرئيسي (عربي)</label>
+                    <input type="text" id="cfgExpTitleAr" value="${escapeHtml(cfg.heroTitleAr)}" required>
+                </div>
+                <div class="input-group">
+                    <label>عنوان البوابة الرئيسي (إنجليزي)</label>
+                    <input type="text" id="cfgExpTitleEn" value="${escapeHtml(cfg.heroTitleEn)}" required>
+                </div>
+                <div class="input-group">
+                    <label>شريط الموانئ المعتمدة (عربي)</label>
+                    <input type="text" id="cfgExpPortsAr" value="${escapeHtml(cfg.portsBannerAr)}" required>
+                </div>
+                <div class="input-group">
+                    <label>شريط الموانئ المعتمدة (إنجليزي)</label>
+                    <input type="text" id="cfgExpPortsEn" value="${escapeHtml(cfg.portsBannerEn)}" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>الوصف التعريفي لبوابة التصدير (عربي)</label>
+                <textarea id="cfgExpDescAr" rows="2" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" required>${escapeHtml(cfg.heroDescAr)}</textarea>
+            </div>
+            <div class="input-group">
+                <label>الوصف التعريفي لبوابة التصدير (إنجليزي)</label>
+                <textarea id="cfgExpDescEn" rows="2" style="width:100%; padding:8px; border-radius:8px; border:1px solid #ccc;" required>${escapeHtml(cfg.heroDescEn)}</textarea>
+            </div>
+            <button type="submit" class="btn-submit" style="margin-top:6px;">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق إعدادات بوابة التصدير
+            </button>
+        </form>
+    `;
+
+    document.getElementById('adminExpSettingsForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const updatedSettings = {
+            enabled: document.getElementById('cfgExpEnabled').value === 'true',
+            defaultUsdRate: Number(document.getElementById('cfgExpUsdRate').value) || 50.5,
+            cap20ft: Number(document.getElementById('cfgExpCap20').value) || 24,
+            cap40hc: Number(document.getElementById('cfgExpCap40').value) || 27,
+            waPhone: document.getElementById('cfgExpWaPhone').value.trim(),
+            directPhone: document.getElementById('cfgExpDirectPhone').value.trim(),
+            heroTitleAr: document.getElementById('cfgExpTitleAr').value.trim(),
+            heroTitleEn: document.getElementById('cfgExpTitleEn').value.trim(),
+            portsBannerAr: document.getElementById('cfgExpPortsAr').value.trim(),
+            portsBannerEn: document.getElementById('cfgExpPortsEn').value.trim(),
+            heroDescAr: document.getElementById('cfgExpDescAr').value.trim(),
+            heroDescEn: document.getElementById('cfgExpDescEn').value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            await setDoc(doc(db, "export_settings", "general"), updatedSettings, { merge: true });
+            exportSettingsCache = { ...DEFAULT_EXPORT_SETTINGS, ...updatedSettings };
+            applyExportSettingsToGlobalUI();
+            renderExportHubContent();
+            alert('تم حفظ وتحديث إعدادات بوابة التصدير بنجاح!');
+        } catch (err) {
+            alert('حدث خطأ أثناء حفظ الإعدادات: ' + err.message);
+        }
+    });
+}
+
+// --- 11.ج إدارة مستندات وشهادات التصدير ---
+function renderAdminExportDocsManager(container) {
+    container.innerHTML = `
+        <div style="background:#f8faf9; padding:14px; border-radius:12px; border:1px solid #d1e3da; margin-bottom:16px;">
+            <h4 id="adminExpDocHeading" style="color:var(--primary); margin-bottom:10px;"><i class="fa-solid fa-folder-plus"></i> إضافة أو تعديل مستند / شهادة تصدير</h4>
+            <form id="adminExpDocForm">
+                <input type="hidden" id="adminExpDocId" value="">
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px;">
+                    <div class="input-group">
+                        <label>كود الشهادة / المستند *</label>
+                        <input type="text" id="adminExpDocCode" placeholder="مثال: CO / GAFTA / EUR.1" required>
+                    </div>
+                    <div class="input-group">
+                        <label>أيقونة FontAwesome</label>
+                        <input type="text" id="adminExpDocIcon" value="fa-file-shield" placeholder="fa-earth-africa">
+                    </div>
+                    <div class="input-group">
+                        <label>عنوان المستند (عربي) *</label>
+                        <input type="text" id="adminExpDocTitleAr" placeholder="مثال: شهادة المنشأ المعتمدة" required>
+                    </div>
+                    <div class="input-group">
+                        <label>عنوان المستند (إنجليزي)</label>
+                        <input type="text" id="adminExpDocTitleEn" placeholder="Example: Certified Certificate of Origin">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>الوصف والتفاصيل (عربي) *</label>
+                    <input type="text" id="adminExpDocDescAr" placeholder="شرح أهمية المستند للمستورد والتخليص الجمركي" required>
+                </div>
+                <div class="input-group">
+                    <label>الوصف والتفاصيل (إنجليزي)</label>
+                    <input type="text" id="adminExpDocDescEn" placeholder="English description of the export certificate">
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="submit" id="adminExpDocSaveBtn" class="btn-submit" style="flex:1;">
+                        <i class="fa-solid fa-floppy-disk"></i> حفظ المستند في بوابة التصدير
+                    </button>
+                    <button type="button" id="adminExpDocCancelBtn" class="btn-submit" style="width:auto; background:#64748b; display:none;">إلغاء</button>
+                </div>
+            </form>
+        </div>
+
+        <h4 style="color:var(--primary); margin-bottom:10px;">المستندات والشهادات المعروضة حالياً (${exportDocsCache.length})</h4>
+        <div id="adminExpDocsListContainer" class="data-list"></div>
+    `;
+
+    const resetDocForm = () => {
+        document.getElementById('adminExpDocId').value = '';
+        document.getElementById('adminExpDocForm').reset();
+        document.getElementById('adminExpDocIcon').value = 'fa-file-shield';
+        document.getElementById('adminExpDocHeading').innerHTML = '<i class="fa-solid fa-folder-plus"></i> إضافة أو تعديل مستند / شهادة تصدير';
+        document.getElementById('adminExpDocSaveBtn').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ المستند في بوابة التصدير';
+        document.getElementById('adminExpDocCancelBtn').style.display = 'none';
+    };
+
+    document.getElementById('adminExpDocCancelBtn')?.addEventListener('click', resetDocForm);
+
+    document.getElementById('adminExpDocForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('adminExpDocId').value.trim();
+        const payload = {
+            code: document.getElementById('adminExpDocCode').value.trim(),
+            icon: document.getElementById('adminExpDocIcon').value.trim() || 'fa-file-shield',
+            titleAr: document.getElementById('adminExpDocTitleAr').value.trim(),
+            titleEn: document.getElementById('adminExpDocTitleEn').value.trim() || document.getElementById('adminExpDocTitleAr').value.trim(),
+            descAr: document.getElementById('adminExpDocDescAr').value.trim(),
+            descEn: document.getElementById('adminExpDocDescEn').value.trim() || document.getElementById('adminExpDocDescAr').value.trim(),
+            updatedAt: new Date().toISOString()
+        };
+
+        try {
+            if (!exportDocsFromDb) {
+                for (const defDoc of DEFAULT_EXPORT_DOCS) {
+                    if (defDoc.id === editId) continue;
+                    const { id, ...cleanDoc } = defDoc;
+                    await addDoc(collection(db, "export_docs"), { ...cleanDoc, updatedAt: new Date().toISOString() });
+                }
+                await addDoc(collection(db, "export_docs"), payload);
+            } else if (editId) {
+                await updateDoc(doc(db, "export_docs", editId), payload);
+            } else {
+                await addDoc(collection(db, "export_docs"), payload);
+            }
+            alert('تم حفظ المستند التصديري بنجاح!');
+            resetDocForm();
+            await syncAllExportPortalData();
+            renderAdminExportDocsManager(container);
+        } catch (err) {
+            alert('خطأ أثناء الحفظ: ' + err.message);
+        }
+    });
+
+    const listEl = document.getElementById('adminExpDocsListContainer');
+    if (listEl) {
+        listEl.innerHTML = exportDocsCache.map(d => `
+            <div class="data-item" style="border-right: 4px solid var(--accent);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                    <div>
+                        <span class="export-hs-tag">${escapeHtml(d.code)}</span>
+                        <strong style="color:var(--primary); margin-right:6px;">${escapeHtml(d.titleAr)}</strong>
+                        <p style="font-size:0.82rem; color:#555; margin-top:4px;">${escapeHtml(d.descAr)}</p>
+                    </div>
+                    <div style="display:flex; gap:6px;">
+                        <button type="button" class="btn-edit-exp-doc" data-id="${escapeHtml(d.id)}" style="background:#0284c7; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.8rem;">تعديل</button>
+                        <button type="button" class="btn-del-exp-doc" data-id="${escapeHtml(d.id)}" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.8rem;">حذف</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        listEl.querySelectorAll('.btn-edit-exp-doc').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const item = exportDocsCache.find(x => x.id === btn.dataset.id);
+                if (!item) return;
+                document.getElementById('adminExpDocId').value = item.id;
+                document.getElementById('adminExpDocCode').value = item.code || '';
+                document.getElementById('adminExpDocIcon').value = item.icon || 'fa-file-shield';
+                document.getElementById('adminExpDocTitleAr').value = item.titleAr || '';
+                document.getElementById('adminExpDocTitleEn').value = item.titleEn || '';
+                document.getElementById('adminExpDocDescAr').value = item.descAr || '';
+                document.getElementById('adminExpDocDescEn').value = item.descEn || '';
+                document.getElementById('adminExpDocHeading').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> تعديل المستند: ${escapeHtml(item.code)}`;
+                document.getElementById('adminExpDocSaveBtn').innerHTML = '<i class="fa-solid fa-check"></i> حفظ التعديلات';
+                document.getElementById('adminExpDocCancelBtn').style.display = 'inline-block';
+            });
+        });
+
+        listEl.querySelectorAll('.btn-del-exp-doc').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('هل تريد حذف هذا المستند من قائمة التصدير؟')) return;
+                const delId = btn.dataset.id;
+                try {
+                    if (!exportDocsFromDb) {
+                        for (const defDoc of DEFAULT_EXPORT_DOCS) {
+                            if (defDoc.id === delId) continue;
+                            const { id, ...cleanDoc } = defDoc;
+                            await addDoc(collection(db, "export_docs"), { ...cleanDoc, updatedAt: new Date().toISOString() });
+                        }
+                    } else {
+                        await deleteDoc(doc(db, "export_docs", delId));
+                    }
+                    alert('تم حذف المستند بنجاح!');
+                    await syncAllExportPortalData();
+                    renderAdminExportDocsManager(container);
+                } catch (err) {
+                    alert('خطأ أثناء الحذف: ' + err.message);
+                }
+            });
+        });
+    }
+}
+
+// --- 11.د إدارة شحنات التصدير والحاويات والفواتير المبدئية ---
 async function loadAdminExportProList() {
     const list = document.getElementById('adminExportProList');
     if (!list) return;
@@ -907,9 +1575,14 @@ async function loadAdminExportProList() {
                             <span style="font-size:0.78rem; color:#666;">(#${safeId.slice(0, 6)})</span><br>
                             <small>الصنف: <strong>${escapeHtml(r.productTitle)}</strong> | الكمية: <strong>${escapeHtml(r.quantity)}</strong> | الوجهة: <strong>${escapeHtml(r.destination)}</strong></small>
                         </div>
-                        <button type="button" class="btn-proforma-inv" data-id="${safeId}" style="background:var(--primary); color:var(--accent); border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.82rem;">
-                            <i class="fa-solid fa-file-invoice-dollar"></i> إصدار Proforma Invoice ($)
-                        </button>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn-proforma-inv" data-id="${safeId}" style="background:var(--primary); color:var(--accent); border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:800; font-size:0.82rem;">
+                                <i class="fa-solid fa-file-invoice-dollar"></i> إصدار Proforma Invoice ($)
+                            </button>
+                            <button type="button" class="btn-del-exp-rfq" data-id="${safeId}" style="background:#dc2626; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.8rem;" title="حذف الطلب">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
                     </div>
                     <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap:8px; background:#f8faf9; padding:10px; border-radius:8px;">
                         <div>
@@ -958,6 +1631,19 @@ async function loadAdminExportProList() {
                     loadAdminExportProList();
                 } catch (e) {
                     alert('خطأ أثناء التحديث: ' + e.message);
+                }
+            });
+        });
+
+        list.querySelectorAll('.btn-del-exp-rfq').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                if (!confirm('هل تريد حذف طلب التصدير هذا نهائياً؟')) return;
+                try {
+                    await deleteDoc(doc(db, "rfq_orders", btn.dataset.id));
+                    alert('تم حذف الطلب بنجاح!');
+                    loadAdminExportProList();
+                } catch (e) {
+                    alert('خطأ أثناء الحذف: ' + e.message);
                 }
             });
         });
@@ -1034,10 +1720,9 @@ function openExportProformaInvoice(rfq) {
 }
 
 // ==========================================
-// 11. الربط مع أحداث التطبيق وتبديل اللغة والأقسام
+// 12. الربط مع أحداث التطبيق وتبديل اللغة والأقسام
 // ==========================================
 function hookIntoAppLifecycle() {
-    // مراقبة تبديل اللغة لتحديث نصوص بوابة التصدير فوراً
     if (typeof window.applyAppLanguage === 'function' && !window.applyAppLanguage._exportHooked) {
         const origApplyLang = window.applyAppLanguage;
         window.applyAppLanguage = function(lang) {
@@ -1048,7 +1733,6 @@ function hookIntoAppLifecycle() {
         window.applyAppLanguage._exportHooked = true;
     }
 
-    // مراقبة تصفية المنتجات لإظهار بانر التصدير الذكي عند اختيار قسم التصدير
     if (typeof window.renderProducts === 'function' && !window.renderProducts._exportHooked) {
         const origRenderProducts = window.renderProducts;
         window.renderProducts = function(category, searchTerm) {
@@ -1062,14 +1746,16 @@ function hookIntoAppLifecycle() {
         window.renderProducts._exportHooked = true;
     }
 
-    // مراقبة فتح تبويب طلبات التصدير في لوحة المدير
     if (typeof window.switchAdminTab === 'function' && !window.switchAdminTab._exportHooked) {
         const origSwitchAdmin = window.switchAdminTab;
         window.switchAdminTab = function(tabName) {
             origSwitchAdmin(tabName);
+            const manageBtn = document.getElementById('tabExportPortalManageBtn');
+            if (manageBtn && tabName !== 'export_rfq') {
+                manageBtn.classList.remove('active');
+            }
             if (tabName === 'export_rfq') {
                 enhanceAdminExportPanel();
-                loadAdminExportProList();
             }
         };
         window.switchAdminTab._exportHooked = true;
