@@ -496,7 +496,7 @@ function injectExportHubUI() {
         }
     }
 
-    // 2) إضافة زر سريع في شريط تبويبات لوحة الإدارة للوصول الفوري لإعدادات بوابة التصدير
+    // 2) إضافة زر مستقل لإدارة بوابة التصدير في شريط تبويبات لوحة الإدارة (منفصل عن طلبات التصدير B2B)
     const adminTabs = document.querySelector('#adminSection .admin-tabs');
     const tabExportBtn = document.getElementById('tabExportBtn');
     if (adminTabs && tabExportBtn && !document.getElementById('tabExportPortalManageBtn')) {
@@ -506,14 +506,12 @@ function injectExportHubUI() {
         manageBtn.className = 'tab-btn';
         manageBtn.innerHTML = '<i class="fa-solid fa-sliders"></i> إدارة بوابة التصدير';
         manageBtn.addEventListener('click', () => {
-            if (typeof window.switchAdminTab === 'function') {
-                window.switchAdminTab('export_rfq');
-            }
             activeAdminExportSubTab = 'specs';
-            enhanceAdminExportPanel();
-            renderAdminExportSubView();
-            adminTabs.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            manageBtn.classList.add('active');
+            if (typeof window.switchAdminTab === 'function') {
+                window.switchAdminTab('export_portal_manage');
+            } else {
+                openAdminExportControlCenterOnly();
+            }
         });
         if (tabExportBtn.nextSibling) {
             adminTabs.insertBefore(manageBtn, tabExportBtn.nextSibling);
@@ -521,6 +519,9 @@ function injectExportHubUI() {
             adminTabs.appendChild(manageBtn);
         }
     }
+
+    // إنشاء حاوية لوحة تحكم بوابة التصدير كقسم مستقل (Sibling) خارج قائمة الطلبات
+    ensureAdminExportControlCenter();
 
     // 3) إضافة القسم الرئيسي لبوابة التصدير داخل app-main
     const mainEl = document.querySelector('main.app-main');
@@ -1003,27 +1004,63 @@ function renderExportTrackingTab(container) {
 }
 
 // ==========================================
-// 11. مركز التحكم الشامل في بوابة التصدير داخل لوحة الإدارة
+// 11. مركز التحكم المستقل في بوابة التصدير داخل لوحة الإدارة
 // ==========================================
 let activeAdminExportSubTab = 'specs';
 
-function enhanceAdminExportPanel() {
+function ensureAdminExportControlCenter() {
     const adminExportTab = document.getElementById('adminExportTab');
-    if (!adminExportTab) return;
+    if (!adminExportTab || !adminExportTab.parentNode) return null;
 
     let controlHub = document.getElementById('adminExportFullControlCenter');
     if (!controlHub) {
         controlHub = document.createElement('div');
         controlHub.id = 'adminExportFullControlCenter';
+        controlHub.className = 'admin-tab-content';
+        controlHub.style.display = 'none';
         controlHub.style.marginBottom = '20px';
-        adminExportTab.insertBefore(controlHub, adminExportTab.firstChild);
+        adminExportTab.parentNode.insertBefore(controlHub, adminExportTab.nextSibling);
+    }
+    return controlHub;
+}
+
+function openAdminExportControlCenterOnly() {
+    const controlHub = ensureAdminExportControlCenter();
+    if (!controlHub) return;
+
+    const adminExportTab = document.getElementById('adminExportTab');
+    if (adminExportTab) {
+        adminExportTab.style.display = 'none';
     }
 
+    const tabExportBtn = document.getElementById('tabExportBtn');
+    if (tabExportBtn) {
+        tabExportBtn.classList.remove('active');
+    }
+
+    const manageBtn = document.getElementById('tabExportPortalManageBtn');
+    if (manageBtn) {
+        manageBtn.classList.add('active');
+    }
+
+    controlHub.style.display = 'block';
     renderAdminExportSubView();
 }
 
-function renderAdminExportSubView() {
+function hideAdminExportControlCenter() {
     const controlHub = document.getElementById('adminExportFullControlCenter');
+    if (controlHub) {
+        controlHub.style.display = 'none';
+    }
+
+    const manageBtn = document.getElementById('tabExportPortalManageBtn');
+    if (manageBtn) {
+        manageBtn.classList.remove('active');
+    }
+}
+
+function renderAdminExportSubView() {
+    const controlHub = ensureAdminExportControlCenter();
     if (!controlHub) return;
 
     controlHub.innerHTML = `
@@ -1195,7 +1232,6 @@ async function renderAdminExportSpecsManager(container) {
         };
 
         try {
-            // إذا كانت البيانات ما زالت افتراضية ولم تُخزن في Firestore بعد، نحفظ باقي الأصناف أولاً حتى لا تختفي
             if (!exportSpecsFromDb) {
                 for (const defItem of DEFAULT_EXPORT_SPECS) {
                     if (defItem.id === editId) continue;
@@ -1750,12 +1786,10 @@ function hookIntoAppLifecycle() {
         const origSwitchAdmin = window.switchAdminTab;
         window.switchAdminTab = function(tabName) {
             origSwitchAdmin(tabName);
-            const manageBtn = document.getElementById('tabExportPortalManageBtn');
-            if (manageBtn && tabName !== 'export_rfq') {
-                manageBtn.classList.remove('active');
-            }
-            if (tabName === 'export_rfq') {
-                enhanceAdminExportPanel();
+            if (tabName === 'export_portal_manage') {
+                openAdminExportControlCenterOnly();
+            } else {
+                hideAdminExportControlCenter();
             }
         };
         window.switchAdminTab._exportHooked = true;
