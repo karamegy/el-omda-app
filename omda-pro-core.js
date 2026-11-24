@@ -3,7 +3,7 @@
  * ملف النواة المتقدمة (الإصدار الاحترافي المُحسَّن) - منصة العمدة / مؤسسة الإخلاص
  * File: omda-pro-core.js
  * المميزات الخمس المدمجة بالكامل:
- * 1. تذكرة الميزان البسكول الرقمية + توليد رمز QR Code مدمج في الفاتورة (بدون إنترنت/CORS).
+ * 1. تذكرة الميزان البسكول الرقمية + توليد رمز QR Code مدمج في الفاتورة (بدون إنترنت/CORS) + عرض حالة الدفع والإيصال.
  * 2. مُحسِّن خط سير السائق (ترتيب من الأقرب للأبعد GPS) + لوحة التوقيع الإلكتروني (POD).
  * 3. حارس السقف الائتماني للآجل + إرسال كشف الحساب عبر واتساب بضغطة زر.
  * 4. جدول الطلب السريع للجملة والمزارع (Bulk Order Grid) + منبّه أسعار البورصة المستهدفة.
@@ -414,7 +414,7 @@ function generateQrCodeSvg(text, sizePx = 96) {
 }
 
 // ==========================================
-// الإضافة 1: تذكرة الميزان البسكول + QR Code مدمج في الفاتورة
+// الإضافة 1: تذكرة الميزان البسكول + QR Code مدمج في الفاتورة + بيانات الدفع والإيصال
 // ==========================================
 function initInvoiceQrAndWeighbridge() {
     const invContent = document.getElementById('printableInvoiceContent');
@@ -435,24 +435,86 @@ function initInvoiceQrAndWeighbridge() {
                 <div style="flex:1; min-width:180px; font-size:0.8rem; color:#374151;">
                     <strong style="color:#173627; display:block;"><i class="fa-solid fa-qrcode"></i> ${tr('ختم التحقق الرقمي للفاتورة', 'Digital Invoice Verification Seal')}</strong>
                     <span>${tr('رقم المرجع:', 'Ref ID:')} #${esc(shortId)}</span>
-                    <div id="proInvoiceExtraMetadata" style="margin-top:5px;"></div>
+                    <div id="proInvoiceExtraMetadata" style="margin-top:6px;"></div>
                 </div>
                 <div>${qrSvg}</div>
             `;
 
-            // الإدراج داخل #invoiceCanvasArea ليظهر في الصورة المحفوظة (PNG) عبر html2canvas
+            // الإدراج داخل #invoiceCanvasArea ليظهر في الصورة المحفوظة (PNG) والطباعة
             (invContent.querySelector('#invoiceCanvasArea') || invContent).appendChild(box);
 
             try {
-                const ordersSnap = await getDocs(query(collection(db, "orders"), limit(100)));
                 let matchedOrder = null;
-                ordersSnap.forEach(d => {
-                    if (d.id.startsWith(shortId) || d.id === shortId) matchedOrder = { id: d.id, ...d.data() };
-                });
+                if (shortId && shortId !== 'INV' && shortId.length >= 15) {
+                    const directSnap = await getDoc(doc(db, "orders", shortId));
+                    if (directSnap.exists()) {
+                        matchedOrder = { id: directSnap.id, ...directSnap.data() };
+                    }
+                }
+                if (!matchedOrder && shortId && shortId !== 'INV') {
+                    const ordersSnap = await getDocs(query(collection(db, "orders"), limit(150)));
+                    ordersSnap.forEach(d => {
+                        if (d.id.startsWith(shortId) || d.id === shortId) matchedOrder = { id: d.id, ...d.data() };
+                    });
+                }
 
                 const metaEl = document.getElementById('proInvoiceExtraMetadata');
                 if (matchedOrder && metaEl) {
                     let html = '';
+
+                    // 1. عرض حالة الدفع وبيانات التحويل والإيصال داخل الفاتورة
+                    const payType = matchedOrder.paymentType || '';
+                    const payStatus = matchedOrder.paymentStatus || '';
+                    const transferRef = matchedOrder.transferRef || '';
+                    const receiptUrl = (matchedOrder.receiptUrl && /^https?:\/\//i.test(matchedOrder.receiptUrl))
+                        ? matchedOrder.receiptUrl
+                        : '';
+
+                    const isPaidVerified = payStatus === 'verified' || (matchedOrder.status || '').includes('مدفوع');
+                    const isPendingVerify = payStatus === 'pending_verification' || (matchedOrder.status || '').includes('بانتظار مراجعة التحويل');
+                    const isRejectedPay = payStatus === 'rejected' || (matchedOrder.status || '').includes('مرفوض');
+
+                    if (isPaidVerified) {
+                        html += `
+                            <div style="background:#dcfce7; border:1.5px solid #16a34a; color:#15803d; padding:6px 10px; border-radius:8px; font-weight:800; margin-bottom:6px;">
+                                <i class="fa-solid fa-circle-check"></i> ${tr('مدفوعة بالكامل (تم تأكيد استلام التحويل)', 'Paid (Transfer Verified)')}
+                            </div>
+                        `;
+                    } else if (isPendingVerify) {
+                        html += `
+                            <div style="background:#fef3c7; border:1.5px solid #f59e0b; color:#b45309; padding:6px 10px; border-radius:8px; font-weight:800; margin-bottom:6px;">
+                                <i class="fa-solid fa-clock"></i> ${tr('بانتظار مراجعة وتأكيد التحويل', 'Pending Transfer Verification')}
+                            </div>
+                        `;
+                    } else if (isRejectedPay) {
+                        html += `
+                            <div style="background:#fee2e2; border:1.5px solid #dc2626; color:#b91c1c; padding:6px 10px; border-radius:8px; font-weight:800; margin-bottom:6px;">
+                                <i class="fa-solid fa-circle-xmark"></i> ${tr('التحويل مرفوض - يرجى مراجعة الإدارة', 'Transfer Rejected')}
+                            </div>
+                        `;
+                    }
+
+                    if (payType) {
+                        html += `<div style="color:#173627; font-weight:700; margin-bottom:3px;"><i class="fa-solid fa-wallet"></i> ${tr('طريقة الدفع:', 'Payment Method:')} ${esc(payType)}</div>`;
+                    }
+
+                    if (transferRef) {
+                        html += `<div style="color:#374151; font-weight:700; margin-bottom:4px;"><i class="fa-solid fa-hashtag"></i> ${tr('رقم مرجع التحويل:', 'Transfer Ref:')} <span dir="ltr">${esc(transferRef)}</span></div>`;
+                    }
+
+                    if (receiptUrl) {
+                        html += `
+                            <div style="margin:5px 0 6px;">
+                                <a href="${esc(receiptUrl)}" target="_blank" rel="noopener noreferrer"
+                                   onclick="if(typeof window.openReceiptLightbox==='function'){event.preventDefault();window.openReceiptLightbox('${esc(receiptUrl)}');}"
+                                   style="display:inline-flex; align-items:center; gap:5px; background:#f0f7f4; border:1px solid #173627; color:#173627; padding:4px 10px; border-radius:6px; text-decoration:none; font-weight:800; font-size:0.76rem;">
+                                    <i class="fa-solid fa-receipt"></i> ${tr('عرض إيصال الدفع المرفق', 'View Attached Payment Receipt')}
+                                </a>
+                            </div>
+                        `;
+                    }
+
+                    // 2. وزن البسكول وتوقيع المستلم (كما هي)
                     if (matchedOrder.weighbridgeNetKg) {
                         html += `<div style="color:#15803d; font-weight:700;"><i class="fa-solid fa-weight-scale"></i> ${tr('وزن البسكول الصافي:', 'Weighbridge Net:')} ${Number(matchedOrder.weighbridgeNetKg).toLocaleString()} ${tr('كجم', 'kg')} (${(matchedOrder.weighbridgeNetKg / 1000).toFixed(3)} ${tr('طن', 'Ton')})</div>`;
                     }
