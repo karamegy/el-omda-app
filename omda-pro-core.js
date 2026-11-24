@@ -7,7 +7,7 @@
  * 2. مُحسِّن خط سير السائق (ترتيب من الأقرب للأبعد GPS) + لوحة التوقيع الإلكتروني (POD).
  * 3. حارس السقف الائتماني للآجل + إرسال كشف الحساب عبر واتساب بضغطة زر.
  * 4. جدول الطلب السريع للجملة والمزارع (Bulk Order Grid) + منبّه أسعار البورصة المستهدفة.
- * 5. حاسبة معامل التحويل الغذائي (FCR) + تقييم جودة الدفعة والسائق بالنجوم.
+ * 5. حاسبة معامل التحويل الغذائي (FCR) + تقييم جودة الدفعة وعرض التقييمات والتعليقات في الإدارة.
  * ============================================================================
  */
 
@@ -236,6 +236,16 @@ function injectProStyles() {
             padding: 9px 12px;
             font-size: 0.82rem;
             margin-top: 8px;
+        }
+        .pro-admin-rating-inline {
+            margin-top: 8px;
+            padding: 8px 10px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            border-right: 4px solid #f59e0b;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            color: #78350f;
         }
     `;
     document.head.appendChild(style);
@@ -1254,7 +1264,7 @@ async function openBulkOrderGridModal() {
 }
 
 // ==========================================
-// الإضافة 5: حاسبة معامل التحويل الغذائي (FCR) وتقييم جودة الدفعة
+// الإضافة 5: حاسبة معامل التحويل الغذائي (FCR) وتقييم جودة الدفعة وعرضه في الإدارة
 // ==========================================
 function initFcrAndOrderRatings() {
     const profileSection = document.getElementById('profileSection');
@@ -1354,6 +1364,66 @@ function initFcrAndOrderRatings() {
             });
         }).observe(userInvoicesList, { childList: true });
     }
+
+    // زر وعارض سجل تقييمات وتعليقات العملاء في تبويب طلبات الإدارة
+    const adminOrdersTab = document.getElementById('adminOrdersTab');
+    if (adminOrdersTab && !document.getElementById('openAdminRatingsBtn')) {
+        const anchorBtn = document.getElementById('openWeighbridgeAdminBtn') || adminOrdersTab.querySelector('h3');
+        if (anchorBtn) {
+            const ratingsBtn = document.createElement('button');
+            ratingsBtn.type = 'button';
+            ratingsBtn.id = 'openAdminRatingsBtn';
+            ratingsBtn.className = 'pro-btn-emerald';
+            ratingsBtn.style.marginTop = '8px';
+            ratingsBtn.style.marginInlineStart = '8px';
+            ratingsBtn.innerHTML = `<i class="fa-solid fa-star" style="color:#d4af37;"></i> تقييمات وتعليقات العملاء`;
+            ratingsBtn.onclick = openAdminRatingsViewerModal;
+            anchorBtn.insertAdjacentElement('afterend', ratingsBtn);
+        }
+    }
+
+    // عرض تقييم وتعليق العميل مباشرة داخل بطاقة الطلب في قائمة الإدارة
+    const adminOrdersList = document.getElementById('adminOrdersList');
+    if (adminOrdersList) {
+        let ratingsByOrderCache = null;
+        new MutationObserver(async () => {
+            const cards = adminOrdersList.querySelectorAll('.data-item');
+            if (cards.length === 0) return;
+
+            try {
+                if (!ratingsByOrderCache) {
+                    const snap = await getDocs(query(collection(db, "order_ratings"), limit(150)));
+                    ratingsByOrderCache = {};
+                    snap.forEach(d => {
+                        const r = d.data();
+                        if (r.orderId) ratingsByOrderCache[r.orderId] = r;
+                    });
+                }
+
+                cards.forEach(card => {
+                    if (card.querySelector('.pro-admin-rating-inline')) return;
+                    const previewBtn = card.querySelector('button[onclick^="previewInvoice"]');
+                    const match = previewBtn?.getAttribute('onclick')?.match(/previewInvoice\(['"]([^'"]+)['"]\)/);
+                    const fullOrderId = match ? match[1] : '';
+                    const rating = fullOrderId ? ratingsByOrderCache[fullOrderId] : null;
+                    if (!rating) return;
+
+                    const starsCount = Math.min(5, Math.max(1, Number(rating.stars || 5)));
+                    const starsStr = '★'.repeat(starsCount) + '☆'.repeat(5 - starsCount);
+                    const badge = document.createElement('div');
+                    badge.className = 'pro-admin-rating-inline';
+                    badge.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <strong><i class="fa-solid fa-star" style="color:#f59e0b;"></i> تقييم العميل:</strong>
+                            <span style="color:#d97706; font-size:1rem; letter-spacing:1px;">${starsStr} (${starsCount}/5)</span>
+                        </div>
+                        ${rating.note ? `<div style="margin-top:4px; color:#1e293b;">"${esc(rating.note)}"</div>` : ''}
+                    `;
+                    card.appendChild(badge);
+                });
+            } catch (_) {}
+        }).observe(adminOrdersList, { childList: true });
+    }
 }
 
 function openOrderRatingModal(orderId) {
@@ -1411,6 +1481,73 @@ function openOrderRatingModal(orderId) {
             alert(err.message);
         }
     });
+}
+
+async function openAdminRatingsViewerModal() {
+    document.getElementById('proAdminRatingsModal')?.remove();
+    const modal = document.createElement('div');
+    modal.id = 'proAdminRatingsModal';
+    modal.className = 'pro-modal-backdrop';
+    modal.innerHTML = `
+        <div class="pro-modal-box">
+            <div class="pro-modal-head">
+                <h3 style="margin:0; font-size:1rem;"><i class="fa-solid fa-star" style="color:#d4af37;"></i> سجل تقييمات وتعليقات العملاء</h3>
+                <button type="button" id="closeAdminRatingsBtn" style="background:none; border:none; color:#fff; font-size:1.4rem; cursor:pointer;">&times;</button>
+            </div>
+            <div class="pro-modal-body" id="adminRatingsListBody">
+                <p style="text-align:center; color:#666;">جاري تحميل تقييمات العملاء...</p>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('closeAdminRatingsBtn')?.addEventListener('click', () => modal.remove());
+
+    const bodyEl = document.getElementById('adminRatingsListBody');
+    try {
+        const snap = await getDocs(query(collection(db, "order_ratings"), limit(120)));
+        if (snap.empty) {
+            bodyEl.innerHTML = `<p style="text-align:center; color:#64748b; padding:20px;">لا توجد تقييمات مسجلة من العملاء حتى الآن.</p>`;
+            return;
+        }
+
+        const list = [];
+        let sumStars = 0;
+        snap.forEach(d => {
+            const r = d.data();
+            sumStars += Number(r.stars || 5);
+            list.push({ id: d.id, ...r });
+        });
+        list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+        const avg = (sumStars / list.length).toFixed(1);
+        const cardsHtml = list.map(r => {
+            const starsCount = Math.min(5, Math.max(1, Number(r.stars || 5)));
+            const starsHtml = '★'.repeat(starsCount) + '☆'.repeat(5 - starsCount);
+            const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleDateString('ar-EG') : '';
+            return `
+                <div style="background:#f8faf9; border:1px solid #e2e8f0; border-right:4px solid #d4af37; border-radius:10px; padding:12px; margin-bottom:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
+                        <strong style="color:#173627; font-size:0.86rem;">طلب #${esc((r.orderId || '').slice(0, 6))} — ${esc(r.userEmail || 'عميل')}</strong>
+                        <span style="color:#f59e0b; font-size:1.05rem; letter-spacing:1px;">${starsHtml}</span>
+                    </div>
+                    <p style="margin:6px 0 4px; font-size:0.88rem; color:#1e293b; background:#fff; padding:8px 10px; border-radius:8px; border:1px solid #f1f5f9;">
+                        ${r.note ? esc(r.note) : '<span style="color:#94a3b8;">(تقييم بالنجوم بدون تعليق مكتوب)</span>'}
+                    </p>
+                    <small style="color:#64748b; font-size:0.75rem;">بتاريخ: ${esc(dateStr)}</small>
+                </div>
+            `;
+        }).join('');
+
+        bodyEl.innerHTML = `
+            <div style="background:#173627; color:#fff; padding:10px 14px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>إجمالي التقييمات: <strong>${list.length}</strong></span>
+                <span>متوسط الرضا العام: <strong style="color:#d4af37; font-size:1.1rem;">${avg} / 5 ★</strong></span>
+            </div>
+            ${cardsHtml}
+        `;
+    } catch (err) {
+        bodyEl.innerHTML = `<p style="color:#dc2626;">خطأ في جلب التقييمات: ${esc(err.message)}</p>`;
+    }
 }
 
 // ==========================================
