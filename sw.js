@@ -1,9 +1,10 @@
-const CACHE_NAME = 'el-omda-cache-v39';
+const CACHE_NAME = 'el-omda-cache-v40';
 const assetsToCache = [
   '/el-omda-app/',
   '/el-omda-app/index.html',
   '/el-omda-app/style.css',
   '/el-omda-app/app.js',
+  '/el-omda-app/omda-admin-core.js',
   '/el-omda-app/omda-pro-core.js',
   '/el-omda-app/omda-addons-core.js',
   '/el-omda-app/omda-payments-core.js',
