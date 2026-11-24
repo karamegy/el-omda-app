@@ -6,7 +6,7 @@
  * 1. الدفع عبر إنستا باي (InstaPay) والمحافظ الإلكترونية (كاش) عند إتمام الطلب.
  * 2. رفع صورة إشعار التحويل (Cloudinary) + رقم مرجع العملية مع ضغط تلقائي سريع.
  * 3. إمكانية سداد دفعات الآجل أونلاين من صفحة حساب العميل.
- * 4. لوحة إدارة لإعداد حسابات التحويل ومراجعة الإيصالات واعتمادها أو رفضها.
+ * 4. لوحة إدارة لإعداد حسابات التحويل ومراجعة الإيصالات واعتمادها أو رفضها أو حذفها.
  * ============================================================================
  */
 
@@ -14,7 +14,7 @@ import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebase
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
     getFirestore, collection, addDoc, getDocs, doc, getDoc, setDoc,
-    updateDoc, query, where, limit, onSnapshot
+    updateDoc, deleteDoc, query, where, limit, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // مشاركة نفس إعدادات Firebase و Cloudinary من app.js
@@ -247,6 +247,21 @@ function injectPaymentCoreStyles() {
         .pay-status-pending { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
         .pay-status-approved { background: #dcfce7; color: #15803d; border: 1px solid #86efac; }
         .pay-status-rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+        .pay-delete-btn {
+            background: #fff1f2;
+            color: #be123c;
+            border: 1px solid #fecdd3;
+            padding: 7px 12px;
+            border-radius: 7px;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 0.82rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .pay-delete-btn:hover { background: #ffe4e6; }
+        .pay-delete-btn:active { transform: scale(0.97); }
         .pay-lightbox-backdrop {
             position: fixed;
             inset: 0;
@@ -477,7 +492,6 @@ function initCartTransferPaymentUI() {
     const paySelect = document.getElementById('paymentTypeSelect');
     if (!paySelect || document.getElementById('omdaCartTransferContainer')) return;
 
-    // إضافة خياري إنستا باي والمحفظة الإلكترونية
     const instapayOpt = document.createElement('option');
     instapayOpt.value = 'تحويل إنستا باي (InstaPay)';
     instapayOpt.textContent = tr('تحويل لحظي - إنستا باي (InstaPay)', 'Instant Transfer - InstaPay');
@@ -525,7 +539,6 @@ function initCartTransferPaymentUI() {
         transferContainer.style.display = 'block';
         modalContainer?.classList.add('has-transfer-open');
 
-        // تمرير بطاقة الملخص بلطف لإظهار بيانات التحويل فوق زر الشراء المثبت
         requestAnimationFrame(() => {
             transferContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
@@ -533,7 +546,6 @@ function initCartTransferPaymentUI() {
 
     paySelect.addEventListener('change', updateTransferBoxVisibility);
 
-    // تحديث المبلغ المعروض تلقائياً إذا تغيرت السلة أو طُبق كوبون/خصم جملة
     const totalSpan = document.getElementById('cartTotalPrice');
     if (totalSpan) {
         new MutationObserver(() => {
@@ -542,7 +554,6 @@ function initCartTransferPaymentUI() {
         }).observe(totalSpan, { childList: true, characterData: true, subtree: true });
     }
 
-    // اعتراض زر إتمام الطلب في مرحلة الالتقاط (Capture) على مستوى document لضمان العمل قبل أي مستمع آخر
     document.addEventListener('click', async (e) => {
         const btn = e.target.closest('#checkoutBtn');
         if (!btn) return;
@@ -550,7 +561,7 @@ function initCartTransferPaymentUI() {
         const val = paySelect.value || '';
         const isInsta = val.includes('إنستا باي') || val.toLowerCase().includes('instapay');
         const isWallet = val.includes('محفظة') || (val.includes('كاش') && !val.includes('عند الاستلام'));
-        if (!isInsta && !isWallet) return; // دع التدفق العادي يعمل للنقدي أو الآجل
+        if (!isInsta && !isWallet) return;
 
         e.preventDefault();
         e.stopImmediatePropagation();
@@ -659,7 +670,6 @@ function initCartTransferPaymentUI() {
                 createdAt: nowIso
             });
 
-            // تفريغ السلة
             const uniqueKeys = [...new Set(currentCart.map(i => i.id || i.name))];
             if (typeof window.removeGroupFromCart === 'function') {
                 uniqueKeys.forEach(k => window.removeGroupFromCart(k));
@@ -887,12 +897,17 @@ function initAdminPaymentManagementUI() {
                     <i class="fa-solid fa-money-bill-transfer" style="color:#d4af37;"></i>
                     مراجعة واعتماد تحويلات إنستا باي والمحافظ الإلكترونية
                 </h3>
-                <select id="omdaTransferStatusFilter" style="padding:7px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#f8faf9; font-weight:700;">
-                    <option value="pending">بانتظار المراجعة فقط</option>
-                    <option value="all">جميع التحويلات</option>
-                    <option value="approved">المعتمدة</option>
-                    <option value="rejected">المرفوضة</option>
-                </select>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    <select id="omdaTransferStatusFilter" style="padding:7px 12px; border-radius:8px; border:1px solid #cbd5e1; background:#f8faf9; font-weight:700;">
+                        <option value="pending">بانتظار المراجعة فقط</option>
+                        <option value="all">جميع التحويلات</option>
+                        <option value="approved">المعتمدة</option>
+                        <option value="rejected">المرفوضة</option>
+                    </select>
+                    <button type="button" id="omdaBulkDeleteProcessedBtn" onclick="window.deleteAllProcessedTransfers()" class="pay-delete-btn" style="display:none;">
+                        <i class="fa-solid fa-trash-can"></i> حذف المؤكدة/المرفوضة
+                    </button>
+                </div>
             </div>
             <div id="omdaAdminTransfersList" class="data-list"></div>
         </div>
@@ -975,6 +990,12 @@ function renderAdminTransfersQueue() {
     const list = document.getElementById('omdaAdminTransfersList');
     if (!list) return;
 
+    const bulkDeleteBtn = document.getElementById('omdaBulkDeleteProcessedBtn');
+    const processedCount = transfersCache.filter(t => t.status === 'approved' || t.status === 'rejected').length;
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.style.display = (payUserRole === 'admin' && processedCount > 0) ? 'inline-flex' : 'none';
+    }
+
     const filter = document.getElementById('omdaTransferStatusFilter')?.value || 'pending';
     const filtered = filter === 'all'
         ? transfersCache
@@ -1007,6 +1028,12 @@ function renderAdminTransfersQueue() {
                </div>`
             : '';
 
+        const deleteBtnHtml = `
+            <button type="button" onclick="window.deletePaymentTransfer('${safeId}')" class="pay-delete-btn">
+                <i class="fa-solid fa-trash-can"></i> حذف التحويل
+            </button>
+        `;
+
         const actionsHtml = st === 'pending'
             ? `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px;">
                  <button type="button" onclick="window.approvePaymentTransfer('${safeId}')" style="background:#15803d; color:#fff; border:none; padding:7px 14px; border-radius:7px; font-weight:800; cursor:pointer; font-size:0.82rem;">
@@ -1015,8 +1042,11 @@ function renderAdminTransfersQueue() {
                  <button type="button" onclick="window.rejectPaymentTransfer('${safeId}')" style="background:#dc2626; color:#fff; border:none; padding:7px 12px; border-radius:7px; font-weight:700; cursor:pointer; font-size:0.82rem;">
                     <i class="fa-solid fa-xmark"></i> رفض
                  </button>
+                 ${deleteBtnHtml}
                </div>`
-            : '';
+            : `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; justify-content:flex-end;">
+                 ${deleteBtnHtml}
+               </div>`;
 
         return `
             <div class="data-item" style="border-right:4px solid ${st === 'approved' ? '#16a34a' : (st === 'rejected' ? '#dc2626' : '#7c3aed')};">
@@ -1069,11 +1099,7 @@ window.approvePaymentTransfer = async function(transferId) {
     if (!confirm(`هل تؤكد استلام مبلغ (${Number(item.amount).toLocaleString()} ج.م) من ${item.clientEmail}؟`)) return;
 
     try {
-        await updateDoc(doc(db, "payment_transfers", transferId), {
-            status: 'approved',
-            verifiedBy: payUser?.email || 'admin',
-            verifiedAt: new Date().toISOString()
-        });
+        let creditPaymentId = '';
 
         if (item.purpose === 'order' && item.orderId) {
             await updateDoc(doc(db, "orders", item.orderId), {
@@ -1081,7 +1107,7 @@ window.approvePaymentTransfer = async function(transferId) {
                 paymentStatus: 'verified'
             });
         } else if (item.purpose === 'credit_repayment') {
-            await addDoc(collection(db, "credit_payments"), {
+            const creditPayRef = await addDoc(collection(db, "credit_payments"), {
                 clientEmail: item.clientEmail,
                 amount: Number(item.amount || 0),
                 note: `${item.methodLabel || 'تحويل إلكتروني'} معتمد${item.transferRef ? ` - مرجع: ${item.transferRef}` : ''}`,
@@ -1089,7 +1115,15 @@ window.approvePaymentTransfer = async function(transferId) {
                 date: new Date().toLocaleDateString('ar-EG'),
                 createdAt: new Date().toISOString()
             });
+            creditPaymentId = creditPayRef.id;
         }
+
+        await updateDoc(doc(db, "payment_transfers", transferId), {
+            status: 'approved',
+            ...(creditPaymentId ? { creditPaymentId } : {}),
+            verifiedBy: payUser?.email || 'admin',
+            verifiedAt: new Date().toISOString()
+        });
 
         alert('تم اعتماد التحويل وترحيله محاسبياً بنجاح!');
     } catch (err) {
@@ -1113,15 +1147,93 @@ window.rejectPaymentTransfer = async function(transferId) {
         });
 
         if (item.purpose === 'order' && item.orderId) {
-            await updateDoc(doc(db, "orders", item.orderId), {
-                status: 'مرفوض - يرجى مراجعة بيانات التحويل',
-                paymentStatus: 'rejected'
-            });
+            try {
+                await updateDoc(doc(db, "orders", item.orderId), {
+                    status: 'مرفوض - يرجى مراجعة بيانات التحويل',
+                    paymentStatus: 'rejected'
+                });
+            } catch (_) {}
         }
 
         alert('تم رفض التحويل وتحديث الحالة.');
     } catch (err) {
         alert('خطأ: ' + err.message);
+    }
+};
+
+async function cleanupLinkedCreditPayment(item) {
+    if (!item || item.status !== 'approved' || item.purpose !== 'credit_repayment') return;
+    try {
+        if (item.creditPaymentId) {
+            await deleteDoc(doc(db, "credit_payments", item.creditPaymentId));
+            return;
+        }
+        // بحث احتياطي للتحويلات المعتمدة قبل التحديث
+        const qPay = query(
+            collection(db, "credit_payments"),
+            where("clientEmail", "==", item.clientEmail)
+        );
+        const snap = await getDocs(qPay);
+        const targetAmt = Number(item.amount || 0);
+        const refTag = item.transferRef ? `مرجع: ${item.transferRef}` : '';
+        for (const d of snap.docs) {
+            const pData = d.data();
+            const sameAmount = Number(pData.amount || 0) === targetAmt;
+            const matchesRef = refTag ? String(pData.note || '').includes(refTag) : String(pData.note || '').includes('تحويل');
+            if (sameAmount && matchesRef) {
+                await deleteDoc(doc(db, "credit_payments", d.id));
+                break;
+            }
+        }
+    } catch (_) {}
+}
+
+window.deletePaymentTransfer = async function(transferId) {
+    if (!isStaff(payUserRole)) return;
+    const item = transfersCache.find(t => t.id === transferId);
+    if (!item) return;
+
+    const extraNote = (item.status === 'approved' && item.purpose === 'credit_repayment')
+        ? '\nملاحظة: سيتم أيضاً حذف دفعة سداد الآجل المرتبطة به من سجل المدفوعات.'
+        : '';
+
+    const confirmed = confirm(
+        `هل أنت متأكد من حذف هذا التحويل نهائياً؟\n` +
+        `العميل: ${item.clientEmail}\n` +
+        `المبلغ: ${Number(item.amount || 0).toLocaleString()} ج.م${extraNote}`
+    );
+    if (!confirmed) return;
+
+    try {
+        await cleanupLinkedCreditPayment(item);
+        await deleteDoc(doc(db, "payment_transfers", transferId));
+        alert('تم حذف سجل التحويل بنجاح!');
+    } catch (err) {
+        alert('خطأ أثناء حذف التحويل: ' + err.message);
+    }
+};
+
+window.deleteAllProcessedTransfers = async function() {
+    if (payUserRole !== 'admin') return;
+    const targets = transfersCache.filter(t => t.status === 'approved' || t.status === 'rejected');
+    if (targets.length === 0) {
+        alert('لا توجد تحويلات مؤكدة أو مرفوضة لحذفها.');
+        return;
+    }
+
+    const confirmed = confirm(
+        `تحذير: سيتم حذف عدد (${targets.length}) من التحويلات المؤكدة والمرفوضة نهائياً لتنظيف السجل.\nهل تريد المتابعة؟`
+    );
+    if (!confirmed) return;
+
+    try {
+        for (const item of targets) {
+            await cleanupLinkedCreditPayment(item);
+            await deleteDoc(doc(db, "payment_transfers", item.id));
+        }
+        alert(`تم حذف (${targets.length}) تحويل بنجاح!`);
+    } catch (err) {
+        alert('خطأ أثناء الحذف الجماعي للتحويلات: ' + err.message);
     }
 };
 
